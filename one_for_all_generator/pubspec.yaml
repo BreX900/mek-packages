@@ -1,0 +1,29 @@
+name: one_for_all_generator
+description: A sample command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  args: ^2.4.2
+
+  logging: ^1.2.0
+  recase: ^4.1.0
+  collection: ^1.17.1
+  pure_extensions: ^5.0.0
+
+  analyzer: '>=5.12.0 <7.0.0'
+  path: ^1.8.3
+  glob: ^2.1.2
+
+  code_builder: ^4.5.0
+  dart_style: ^2.3.2
+  source_gen: ^1.4.0
+
+  one_for_all:
+    path: ../one_for_all
+
+dev_dependencies:
+  mek_lints: ^2.0.0

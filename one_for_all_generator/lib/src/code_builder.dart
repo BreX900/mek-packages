@@ -1,13 +1,14 @@
+import 'dart:io';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:one_for_all_generator/src/options.dart';
 
 /// https://docs.flutter.dev/platform-integration/platform-channels
-abstract class CodeBuffer {
-  final String outputPath;
+abstract class CodeGenerator {
+  final OneForAllOptions pluginOptions;
 
-  const CodeBuffer({
-    required this.outputPath,
-  });
+  const CodeGenerator(this.pluginOptions);
 
   void writeHostApiClass(ClassElement element);
 
@@ -15,7 +16,15 @@ abstract class CodeBuffer {
 
   void writeEnum(EnumElement element);
 
-  void writeFileOutput();
+  void writeToFile();
+}
+
+mixin WriteToOutputFile {
+  String get outputFile;
+
+  Future<void> writeToFile() async {
+    await File(outputFile).writeAsString(toString());
+  }
 }
 
 extension SupportedDartType on DartType {

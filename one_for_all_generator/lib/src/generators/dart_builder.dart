@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -7,16 +5,22 @@ import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:one_for_all_generator/src/code_builder.dart';
+import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
 import 'package:recase/recase.dart';
 
-class DartBuffer extends CodeBuffer {
+class DartGenerator extends CodeGenerator with WriteToOutputFile {
+  final DartOptions options;
   final _library = LibraryBuilder();
 
-  DartBuffer({
-    required super.outputPath,
-  }) {
-    _library.directives.add(Directive.partOf(basename(outputPath)));
+  @override
+  String get outputFile {
+    final path = pluginOptions.apiFile;
+    return '${dirname(path)}/${basenameWithoutExtension(basenameWithoutExtension(path))}.api.dart';
+  }
+
+  DartGenerator(super.pluginOptions, this.options) {
+    _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 
   Code? _buildFlutterApiConstructorCode(ClassElement element) {
@@ -124,13 +128,6 @@ class DartBuffer extends CodeBuffer {
 
   @override
   void writeEnum(EnumElement element) {}
-
-  @override
-  void writeFileOutput() {
-    final path =
-        '${dirname(outputPath)}/${basenameWithoutExtension(basenameWithoutExtension(outputPath))}.api.dart';
-    File(path).writeAsStringSync(toString());
-  }
 
   String _encodeDeserialization(DartType type, String varAccess) {
     if (type is VoidType) throw StateError('void type no supported');

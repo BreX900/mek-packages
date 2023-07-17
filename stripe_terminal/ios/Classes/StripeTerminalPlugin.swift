@@ -2,45 +2,89 @@
 import Flutter
 import UIKit
 
-public class StripeTerminalPlugin: StripeTerminalApi, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: registrar.messenger())
-    let instance = StripeTerminalPlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-  }
-
-  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    switch call.method {
-    case "getPlatformVersion":
-      result("iOS " + UIDevice.current.systemVersion)
-    default:
-      result(FlutterMethodNotImplemented)
+public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalHostApi {
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let api = StripeTerminalFlutterApi(registrar.messenger())
+        let instance = StripeTerminalPlugin(api)
+        setupStripeTerminalApi(registrar.messenger(), instance)
     }
-  }
-}
-
-class PlatformException: Error {
-    let code: String
-    let details: Any?
-
-    init(code: String, message: String?, details: Any?) {
-        super.init()
-        self.code = code
-        self.details = details
+    
+    private let api: StripeTerminalFlutterApi
+    
+    init(_ api: StripeTerminalFlutterApi) {
+        self.api = api
+    }
+    
+    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?) {
+        
     }
 }
 
-struct Result<T> {
-    private let result: FlutterResult
-    private let serializer: (T) -> Any?
+func setupStripeTerminalApi(_ binaryMessenger: FlutterBinaryMessenger, _ api: StripeTerminalHostApi) {
+    let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
+    channel.setMethodCallHandler { call, result in
+        guard let args = call.arguments as? [Any?] else {
+            result(FlutterError(code: "invalid_arguments", message: "Invalid arguments", details: nil))
+            return
+        }
 
-    func success(_ data: T) {
-        result(serializer(data))
+        switch call.method {
+        case "connectBluetoothReader":
+            let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+            api.onConnectBluetoothReader(result: res, readerSerialNumber: args[0] as! String, locationId: args[1] as? String)
+        default:
+            result(FlutterMethodNotImplemented)
+        }
     }
+}
 
-    func error(_ errorCode: String, _ errorMessage: String, _ errorDetails: Any?) {
-        result(FlutterError(code: errorCode, message: errorMessage, details: errorDetails))
+class PlatformException {
+    static func of(_ code: String, _ message: String?, _ details: Any?) -> FlutterError {
+        return FlutterError(code: code, message: message, details: details)
     }
+}
+
+//class Result<T> {
+//    private let result: FlutterResult
+//    private let serializer: (T) -> Any?
+//
+//    init(result: @escaping FlutterResult, serializer: @escaping (T) -> Any?) {
+//        self.result = result
+//        self.serializer = serializer
+//    }
+//
+//    func success(_ data: T) {
+//        result(serializer(data))
+//    }
+//
+//    func error(_ errorCode: String, _ errorMessage: String, _ errorDetails: Any?) {
+//        result(FlutterError(code: errorCode, message: errorMessage, details: errorDetails))
+//    }
+//}
+
+class StripeTerminalFlutterApi {
+    private let channel: FlutterMethodChannel
+    
+    init(_ binaryMessenger: FlutterBinaryMessenger) {
+        channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
+    }
+    
+    func requestConnectionToken() async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { result in
+                if let resultString = result as? String {
+                    continuation.resume(returning: resultString)
+                } else {
+                    let unknownError = NSError(domain: "com.example.app", code: -1, userInfo: nil)
+                    continuation.resume(throwing: unknownError)
+                }
+            }
+        }
+    }
+}
+
+protocol StripeTerminalHostApi {
+    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?);
 }
 
 class StripeReaderApi {
@@ -99,63 +143,4 @@ enum DeviceTypeApi: Int {
     case CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN
 }
 
-class StripeTerminalApi: NSObject, FlutterPlugin {
-    var channel: FlutterMethodChannel?
 
-    static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: registrar.messenger())
-        let instance = StripeTerminalApi()
-        instance.channel = channel
-        registrar.addMethodCallDelegate(instance, channel: channel)
-    }
-
-    func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        guard let args = call.arguments as? [Any?] else {
-            result(FlutterError(code: "invalid_arguments", message: "Invalid arguments", details: nil))
-            return
-        }
-
-        switch call.method {
-        case "connectBluetoothReader":
-            let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
-            onConnectBluetoothReader(result: res, readerSerialNumber: args[0] as! String, locationId: args[1] as? String)
-        default:
-            result(FlutterMethodNotImplemented)
-        }
-    }
-
-    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?) {
-        // Implement your logic for connecting a Bluetooth reader here and use the 'result' object to send the result back to Flutter
-        // For example:
-        // let reader = StripeReaderApi(...)
-        // result.success(reader)
-    }
-
-    func asyncTask<T>(_ task: @escaping (@escaping (T) -> Void, @escaping (Error) -> Void) -> Void) async throws -> T {
-        return try await withCheckedThrowingContinuation { continuation in
-            task(
-                { result in
-                    continuation.resume(returning: result)
-                },
-                { error in
-                    continuation.resume(throwing: error)
-                }
-            )
-        }
-    }
-    
-    func requestConnectionToken() async throws -> String {
-        return try await asyncTask { resolve, reject in
-            channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { (result: Any?, error: Error?) in
-                if let error = error {
-                    reject(error)
-                } else if let resultString = result as? String {
-                    resolve(resultString)
-                } else {
-                    let unknownError = NSError(domain: "com.example.app", code: -1, userInfo: nil)
-                    reject(unknownError)
-                }
-            }
-        }
-    }
-}

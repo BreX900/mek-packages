@@ -6,24 +6,41 @@ import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/src/code_builder.dart';
 import 'package:one_for_all_generator/src/generators/dart_builder.dart';
 import 'package:one_for_all_generator/src/generators/kotlin_builder.dart';
+import 'package:one_for_all_generator/src/generators/swift_generator.dart';
+import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart' as path_;
 import 'package:source_gen/source_gen.dart';
 
-class OneForAllGenerator {
-  final String apiPath;
-  final String kotlinPath;
-  final String kotlinPackage;
-  final String hostClassSuffix;
+export 'src/options.dart';
 
-  OneForAllGenerator({
-    required this.apiPath,
-    required this.kotlinPath,
-    required this.kotlinPackage,
-    this.hostClassSuffix = '',
+class OneForAll {
+  final OneForAllOptions options;
+  final List<CodeGenerator> Function(OneForAllOptions options) generatorsBuilder;
+
+  const OneForAll({
+    required this.options,
+    required this.generatorsBuilder,
   });
 
+  factory OneForAll.from({
+    required OneForAllOptions options,
+    DartOptions? dartOptions,
+    KotlinOptions? kotlinOptions,
+    SwiftOptions? swiftOptions,
+    List<CodeGenerator> generators = const [],
+  }) {
+    return OneForAll(
+      options: options,
+      generatorsBuilder: (options) => [
+        if (dartOptions != null) DartGenerator(options, dartOptions),
+        if (kotlinOptions != null) KotlinGenerator(options, kotlinOptions),
+        if (swiftOptions != null) SwiftGenerator(options, swiftOptions),
+      ],
+    );
+  }
+
   Future<void> build() async {
-    final apiAbsolutePath = path_.absolute(path_.normalize(apiPath));
+    final apiAbsolutePath = path_.absolute(path_.normalize(options.apiFile));
 
     final collection = AnalysisContextCollection(
       includedPaths: [apiAbsolutePath],
@@ -105,31 +122,22 @@ class OneForAllGenerator {
       }
     }
 
-    final buffers = [
-      DartBuffer(
-        outputPath: apiPath,
-      ),
-      KotlinBuffer(
-        package: kotlinPackage,
-        classPrefix: hostClassSuffix,
-        outputPath: kotlinPath,
-      ),
-    ];
+    final generators = generatorsBuilder(options);
 
-    for (final buffer in buffers) {
-      apiElements.forEach(buffer.writeHostApiClass);
+    for (final generator in generators) {
+      apiElements.forEach(generator.writeHostApiClass);
 
       for (final element in dataElements) {
         if (element is EnumElement) {
-          buffer.writeEnum(element);
+          generator.writeEnum(element);
         } else {
-          buffer.writeDataClass(element as ClassElement);
+          generator.writeDataClass(element as ClassElement);
         }
       }
     }
 
-    for (final buffer in buffers) {
-      buffer.writeFileOutput();
+    for (final generator in generators) {
+      generator.writeToFile();
     }
   }
 }

@@ -7,15 +7,16 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class PlatformException (
+class PlatformException(
     val code: String,
     message: String?,
-    val details: Any?
+    val details: Any?,
 ): RuntimeException(message ?: code)
 
-class Result<T> (
+
+class Result<T>(
     private val result: MethodChannel.Result,
-    private val serializer: (data: T) -> Any?
+    private val serializer: (data: T) -> Any?,
 ) {
     fun success(
         data: T,
@@ -24,11 +25,11 @@ class Result<T> (
     }
 
     fun error(
-        errorCode: String,
-        errorMessage: String,
-        errorDetails: Any?,
+        code: String,
+        message: String,
+        details: Any?,
     ) {
-        result.error(errorCode, errorMessage, errorDetails)
+        result.error(code, message, details)
     }
 }
 
@@ -233,7 +234,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     }
 }
 
-data class StripeReaderApi (
+data class StripeReaderApi(
     val locationStatus: LocationStatusApi,
     val batteryLevel: Double,
     val deviceType: DeviceTypeApi,
@@ -241,7 +242,7 @@ data class StripeReaderApi (
     val availableUpdate: Boolean,
     val locationId: String?,
     val serialNumber: String,
-    val label: String?
+    val label: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -269,10 +270,9 @@ data class StripeReaderApi (
                 locationId = serialized[5] as String?,
                 serialNumber = serialized[6] as String,
                 label = serialized[7] as String?,
-            );
+            )
         }
     }
-
 }
 
 enum class LocationStatusApi {
@@ -283,12 +283,12 @@ enum class DeviceTypeApi {
     CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN;
 }
 
-data class LocationApi (
+data class LocationApi(
     val address: AddressApi?,
     val displayName: String?,
     val id: String?,
     val livemode: Boolean?,
-    val metadata: HashMap<String, String>?
+    val metadata: HashMap<String, String>?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -310,19 +310,18 @@ data class LocationApi (
                 id = serialized[2] as String?,
                 livemode = serialized[3] as Boolean?,
                 metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-            );
+            )
         }
     }
-
 }
 
-data class AddressApi (
+data class AddressApi(
     val city: String?,
     val country: String?,
     val line1: String?,
     val line2: String?,
     val postalCode: String?,
-    val state: String?
+    val state: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -346,17 +345,16 @@ data class AddressApi (
                 line2 = serialized[3] as String?,
                 postalCode = serialized[4] as String?,
                 state = serialized[5] as String?,
-            );
+            )
         }
     }
-
 }
 
-data class CartApi (
+data class CartApi(
     val currency: String,
     val tax: Long,
     val total: Long,
-    val lineItems: List<CartLineItemApi>
+    val lineItems: List<CartLineItemApi>,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -376,16 +374,15 @@ data class CartApi (
                 tax = serialized[1] as Long,
                 total = serialized[2] as Long,
                 lineItems = (serialized[3] as List<*>).map{(it as List<Any?>).let{CartLineItemApi.deserialize(it)}},
-            );
+            )
         }
     }
-
 }
 
-data class CartLineItemApi (
+data class CartLineItemApi(
     val description: String,
     val quantity: Long,
-    val amount: Long
+    val amount: Long,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -403,22 +400,21 @@ data class CartLineItemApi (
                 description = serialized[0] as String,
                 quantity = serialized[1] as Long,
                 amount = serialized[2] as Long,
-            );
+            )
         }
     }
-
 }
 
 enum class ConnectionStatusApi {
     NOT_CONNECTED, CONNECTED, CONNECTING;
 }
 
-data class StripePaymentMethodApi (
+data class StripePaymentMethodApi(
     val id: String,
     val cardDetails: CardDetailsApi?,
     val customer: String?,
     val livemode: Boolean,
-    val metadata: HashMap<String, String>?
+    val metadata: HashMap<String, String>?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -440,20 +436,19 @@ data class StripePaymentMethodApi (
                 customer = serialized[2] as String?,
                 livemode = serialized[3] as Boolean,
                 metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-            );
+            )
         }
     }
-
 }
 
-data class CardDetailsApi (
+data class CardDetailsApi(
     val brand: String?,
     val country: String?,
     val expMonth: Long,
     val expYear: Long,
     val fingerprint: String?,
     val funding: String?,
-    val last4: String?
+    val last4: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -479,13 +474,12 @@ data class CardDetailsApi (
                 fingerprint = serialized[4] as String?,
                 funding = serialized[5] as String?,
                 last4 = serialized[6] as String?,
-            );
+            )
         }
     }
-
 }
 
-data class StripePaymentIntentApi (
+data class StripePaymentIntentApi(
     val id: String,
     val amount: Double,
     val amountCapturable: Double,
@@ -510,7 +504,7 @@ data class StripePaymentIntentApi (
     val review: String?,
     val receiptEmail: String?,
     val setupFutureUsage: String?,
-    val transferGroup: String?
+    val transferGroup: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -572,18 +566,17 @@ data class StripePaymentIntentApi (
                 receiptEmail = serialized[22] as String?,
                 setupFutureUsage = serialized[23] as String?,
                 transferGroup = serialized[24] as String?,
-            );
+            )
         }
     }
-
 }
 
 enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
 }
 
-data class CollectConfigurationApi (
-    val skipTipping: Boolean
+data class CollectConfigurationApi(
+    val skipTipping: Boolean,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -597,16 +590,15 @@ data class CollectConfigurationApi (
         ): CollectConfigurationApi {
             return CollectConfigurationApi(
                 skipTipping = serialized[0] as Boolean,
-            );
+            )
         }
     }
-
 }
 
-data class DiscoverConfigApi (
+data class DiscoverConfigApi(
     val discoveryMethod: DiscoveryMethodApi,
     val simulated: Boolean,
-    val locationId: String?
+    val locationId: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -624,10 +616,9 @@ data class DiscoverConfigApi (
                 discoveryMethod = (serialized[0] as Int).let{DiscoveryMethodApi.values()[it]},
                 simulated = serialized[1] as Boolean,
                 locationId = serialized[2] as String?,
-            );
+            )
         }
     }
-
 }
 
 enum class DiscoveryMethodApi {

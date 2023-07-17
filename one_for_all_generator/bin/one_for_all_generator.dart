@@ -8,10 +8,18 @@ void main(List<String> arguments) async {
     ..addOption('kotlin-package', mandatory: true);
   final args = argParser.parse(arguments);
 
-  await OneForAllGenerator(
-    apiPath: args['api-path'],
-    hostClassSuffix: 'Api',
-    kotlinPath: args['kotlin-path'],
-    kotlinPackage: args['kotlin-package'],
+  await OneForAll.from(
+    options: OneForAllOptions(
+      apiFile: args['api-path'],
+      hostClassSuffix: 'Api',
+    ),
+    dartOptions: DartOptions(),
+    kotlinOptions: KotlinOptions(
+      outputFile: args['kotlin-path'],
+      package: args['kotlin-package'],
+    ),
+    swiftOptions: SwiftOptions(
+      outputFile: '',
+    ),
   ).build();
 }

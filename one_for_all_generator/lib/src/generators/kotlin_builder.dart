@@ -1,47 +1,44 @@
-import 'dart:io';
-
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/code_builder.dart';
 import 'package:one_for_all_generator/src/kotlin_code.dart';
+import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
-class KotlinBuffer extends CodeBuffer {
-  final String package;
-  final String classPrefix;
-  final _classes = <KotlinClass>[];
+class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
+  final KotlinOptions options;
+  final _specs = <KotlinSpec>[];
 
-  KotlinBuffer({
-    required this.package,
-    this.classPrefix = '',
-    required super.outputPath,
-  }) {
-    _classes.add(const KotlinClass(
+  @override
+  String get outputFile => options.outputFile;
+
+  KotlinGenerator(super.pluginOptions, this.options) {
+    _specs.add(const KotlinClass(
       name: 'PlatformException',
       initializers: [
         KotlinField(name: 'code', type: 'String'),
         KotlinParameter(name: 'message', type: 'String?'),
         KotlinField(name: 'details', type: 'Any?'),
       ],
-      superTypes: ['RuntimeException(message ?: code)'],
+      implements: ['RuntimeException(message ?: code)'],
     ));
-    _classes.add(const KotlinClass(
+    _specs.add(const KotlinClass(
       name: 'Result<T>',
       initializers: [
         KotlinField(
-          visibility: KotlinFieldVisibility.private,
+          visibility: KotlinVisibility.private,
           name: 'result',
           type: 'MethodChannel.Result',
         ),
         KotlinField(
-          visibility: KotlinFieldVisibility.private,
+          visibility: KotlinVisibility.private,
           name: 'serializer',
           type: '(data: T) -> Any?',
         ),
       ],
-      methods: [
+      body: [
         KotlinMethod(
           name: 'success',
           parameters: [
@@ -52,11 +49,11 @@ class KotlinBuffer extends CodeBuffer {
         KotlinMethod(
           name: 'error',
           parameters: [
-            KotlinParameter(name: 'errorCode', type: 'String'),
-            KotlinParameter(name: 'errorMessage', type: 'String'),
-            KotlinParameter(name: 'errorDetails', type: 'Any?'),
+            KotlinParameter(name: 'code', type: 'String'),
+            KotlinParameter(name: 'message', type: 'String'),
+            KotlinParameter(name: 'details', type: 'Any?'),
           ],
-          body: 'result.error(errorCode, errorMessage, errorDetails)',
+          body: 'result.error(code, message, details)',
         ),
       ],
     ));
@@ -64,10 +61,10 @@ class KotlinBuffer extends CodeBuffer {
 
   @override
   void writeHostApiClass(ClassElement element) {
-    _classes.add(KotlinClass(
+    _specs.add(KotlinClass(
       modifier: KotlinClassModifier.abstract,
       name: _encodeType(element.thisType, false),
-      superTypes: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
+      implements: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
       fields: const [
         KotlinField(
           modifier: KotlinFieldModifier.lateInit,
@@ -75,7 +72,7 @@ class KotlinBuffer extends CodeBuffer {
           type: 'MethodChannel',
         ),
       ],
-      methods: [
+      body: [
         ...element.methods.where((e) => e.isFlutterMethod).map((e) {
           final returnType = e.returnType.singleTypeArg;
 
@@ -185,7 +182,7 @@ return suspendCoroutine { continuation ->
   void writeDataClass(ClassElement element) {
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
-    _classes.add(KotlinClass(
+    _specs.add(KotlinClass(
       modifier: KotlinClassModifier.data,
       name: _encodeType(element.thisType, false),
       initializers: fields.map((e) {
@@ -194,7 +191,7 @@ return suspendCoroutine { continuation ->
           type: _encodeType(e.type, true),
         );
       }).toList(),
-      methods: [
+      body: [
         KotlinMethod(
           name: 'serialize',
           returnType: 'List<Any?>',
@@ -202,12 +199,10 @@ return suspendCoroutine { continuation ->
             return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
           }).join()})',
         ),
-      ],
-      classes: [
         KotlinClass(
           modifier: KotlinClassModifier.companion,
           name: 'object',
-          methods: [
+          body: [
             KotlinMethod(
               name: 'deserialize',
               parameters: [
@@ -219,7 +214,7 @@ return suspendCoroutine { continuation ->
               returnType: _encodeType(element.thisType, true),
               body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
                 return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
-              }).join()});',
+              }).join()})',
             ),
           ],
         ),
@@ -229,17 +224,12 @@ return suspendCoroutine { continuation ->
 
   @override
   void writeEnum(EnumElement element) {
-    _classes.add(KotlinEnum(
+    _specs.add(KotlinEnum(
       name: _encodeType(element.thisType, false),
       values: element.fields.where((element) => element.isEnumConstant).map((e) {
         return _encodeVarName(e.name.constantCase);
       }).toList(),
     ));
-  }
-
-  @override
-  void writeFileOutput() {
-    File(outputPath).writeAsStringSync(toString());
   }
 
   String _encodeMethodName(String name) =>
@@ -320,7 +310,7 @@ return suspendCoroutine { continuation ->
 
   @override
   String toString() => '${KotlinEmitter().encode(KotlinLibrary(
-        package: package,
+        package: options.package,
         imports: [
           'io.flutter.embedding.engine.plugins.FlutterPlugin',
           'io.flutter.plugin.common.MethodCall',
@@ -331,32 +321,12 @@ return suspendCoroutine { continuation ->
           'kotlin.coroutines.resumeWithException',
           'kotlin.coroutines.suspendCoroutine',
         ],
-        classes: _classes,
+        body: _specs,
       ))}';
 }
 
 extension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
   String get questionOrEmpty => isNullable ? '?' : '';
-  String get exclamationOrEmpty => isNullable ? '!!' : '';
-
-  // String encodeDisplayName(bool withNullability) {
-  //   final questionOrEmpty = withNullability ? this.questionOrEmpty : '';
-  //   if (isDartCoreObject || this is DynamicType) return 'Any$questionOrEmpty';
-  //   if (this is VoidType) return 'Unit$questionOrEmpty';
-  //   if (isDartCoreNull) return 'null$questionOrEmpty';
-  //   if (isDartCoreBool) return 'Boolean$questionOrEmpty';
-  //   if (isDartCoreInt) return 'Long$questionOrEmpty';
-  //   if (isDartCoreDouble) return 'Double$questionOrEmpty';
-  //   if (isDartCoreString) return 'String$questionOrEmpty';
-  //   if (isDartCoreList) {
-  //     final typeArg = singleTypeArg;
-  //     return 'List<${typeArg.encodeDisplayName(withNullability)}>$questionOrEmpty';
-  //   }
-  //   if (isDartCoreMap) {
-  //     final typeArgs = doubleTypeArgs;
-  //     return 'HashMap<${typeArgs.$1.encodeDisplayName(withNullability)}, ${typeArgs.$2.encodeDisplayName(withNullability)}>$questionOrEmpty';
-  //   }
-  //   return getDisplayString(withNullability: withNullability);
-  // }
+  // String get exclamationOrEmpty => isNullable ? '!!' : '';
 }

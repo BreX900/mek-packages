@@ -2,8 +2,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
-import 'package:one_for_all_generator/src/code_builder.dart';
-import 'package:one_for_all_generator/src/kotlin_code.dart';
+import 'package:one_for_all_generator/src/code_generator.dart';
+import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 

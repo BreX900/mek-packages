@@ -23,7 +23,6 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import kotlinx.coroutines.runBlocking
 import com.stripe_terminal.api.StripeTerminalApi
 import com.stripe_terminal.api.Result
-import com.stripe_terminal.api.success
 import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
 import io.flutter.embedding.engine.plugins.FlutterPlugin

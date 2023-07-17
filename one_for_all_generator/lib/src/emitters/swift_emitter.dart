@@ -1,58 +1,44 @@
-sealed class SwiftLanguage {
-  const SwiftLanguage();
-}
-
-sealed class SwiftSpec extends SwiftLanguage {
-  const SwiftSpec();
-}
-
-class SwiftLibrary extends SwiftLanguage {
-  final List<String> imports;
-  final List<SwiftSpec> body;
-
-  const SwiftLibrary({
-    required this.imports,
-    required this.body,
-  });
-}
-
 enum SwiftVisibility { public, protected, private }
 
-class SwiftEnum extends SwiftProtocol {
-  final List<String> values;
+class SwiftParameter {
+  final String? fieldName;
+  final String label;
+  final String name;
+  final String? annotation;
+  final String type;
 
-  const SwiftEnum({
-    super.visibility,
-    required super.name,
-    super.implements = const [],
-    required this.values,
-    super.fields = const [],
-    super.methods = const [],
-  });
+  const SwiftParameter({
+    String? label,
+    required this.name,
+    this.annotation,
+    required this.type,
+  })  : label = label ?? name,
+        fieldName = null;
+
+  SwiftParameter.fromField(
+    SwiftField field, {
+    String? label,
+    String? name,
+    this.annotation,
+  })  : fieldName = field.name,
+        label = label ?? name ?? field.name,
+        name = name ?? field.name,
+        type = field.type;
 }
 
-class SwiftInit {
+class SwiftMethod extends SwiftSpec {
+  final SwiftVisibility? visibility;
+  final String name;
   final List<SwiftParameter> parameters;
+  final String? returnType;
   final String? body;
 
-  const SwiftInit({
-    required this.parameters,
+  const SwiftMethod({
+    this.visibility,
+    required this.name,
+    this.parameters = const [],
+    this.returnType,
     this.body,
-  });
-}
-
-class SwiftClass extends SwiftProtocol {
-  final String? extend;
-  final SwiftInit? init;
-
-  const SwiftClass({
-    super.visibility,
-    required super.name,
-    this.extend,
-    super.implements = const [],
-    super.fields = const [],
-    this.init,
-    super.methods = const [],
   });
 }
 
@@ -69,6 +55,19 @@ class SwiftProtocol extends SwiftSpec {
     this.implements = const [],
     this.fields = const [],
     this.methods = const [],
+  });
+}
+
+class SwiftEnum extends SwiftProtocol {
+  final List<String> values;
+
+  const SwiftEnum({
+    super.visibility,
+    required super.name,
+    super.implements = const [],
+    required this.values,
+    super.fields = const [],
+    super.methods = const [],
   });
 }
 
@@ -100,46 +99,47 @@ class SwiftField {
       );
 }
 
-class SwiftMethod extends SwiftSpec {
-  final SwiftVisibility? visibility;
-  final String name;
+class SwiftInit {
   final List<SwiftParameter> parameters;
-  final String? returnType;
   final String? body;
 
-  const SwiftMethod({
-    this.visibility,
-    required this.name,
-    this.parameters = const [],
-    this.returnType,
+  const SwiftInit({
+    required this.parameters,
     this.body,
   });
 }
 
-class SwiftParameter {
-  final String? fieldName;
-  final String label;
-  final String name;
-  final String? annotation;
-  final String type;
+class SwiftClass extends SwiftProtocol {
+  final String? extend;
+  final SwiftInit? init;
 
-  const SwiftParameter({
-    String? label,
-    required this.name,
-    this.annotation,
-    required this.type,
-  })  : label = label ?? name,
-        fieldName = null;
+  const SwiftClass({
+    super.visibility,
+    required super.name,
+    this.extend,
+    super.implements = const [],
+    super.fields = const [],
+    this.init,
+    super.methods = const [],
+  });
+}
 
-  SwiftParameter.fromField(
-    SwiftField field, {
-    String? label,
-    String? name,
-    this.annotation,
-  })  : fieldName = field.name,
-        label = label ?? name ?? field.name,
-        name = name ?? field.name,
-        type = field.type;
+class SwiftLibrary extends SwiftLanguage {
+  final List<String> imports;
+  final List<SwiftSpec> body;
+
+  const SwiftLibrary({
+    required this.imports,
+    required this.body,
+  });
+}
+
+sealed class SwiftSpec extends SwiftLanguage {
+  const SwiftSpec();
+}
+
+sealed class SwiftLanguage {
+  const SwiftLanguage();
 }
 
 class SwiftEmitter {

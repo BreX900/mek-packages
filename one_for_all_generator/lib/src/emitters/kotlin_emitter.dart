@@ -1,95 +1,14 @@
 import 'package:collection/collection.dart';
 
-sealed class KotlinLanguage {
-  const KotlinLanguage();
-}
-
-sealed class KotlinSpec extends KotlinLanguage {
-  const KotlinSpec();
-}
-
-class KotlinLibrary extends KotlinLanguage {
-  final String package;
-  final List<String> imports;
-  final List<KotlinSpec> body;
-
-  const KotlinLibrary({
-    required this.package,
-    this.imports = const [],
-    this.body = const [],
-  });
-}
-
 enum KotlinVisibility { public, protected, private }
 
-class KotlinInterface extends KotlinSpec {
-  final KotlinVisibility? visibility;
-  final String name;
-  final List<String> implements;
-  final List<KotlinField> fields;
-  final List<KotlinSpec> body;
-
-  const KotlinInterface({
-    this.visibility,
-    required this.name,
-    this.implements = const [],
-    this.fields = const [],
-    this.body = const [],
-  });
-
-  bool get hasBody => fields.isNotEmpty || body.isNotEmpty;
-}
-
-enum KotlinClassModifier { abstract, data, companion }
-
-class KotlinEnum extends KotlinInterface {
-  final List<String> values;
-
-  KotlinEnum({
-    super.visibility,
-    required super.name,
-    super.implements,
-    required this.values,
-    super.fields = const [],
-    super.body = const [],
-  });
-
-  @override
-  bool get hasBody => super.hasBody || values.isNotEmpty;
-}
-
-sealed class KotlinClassInitializer {
-  const KotlinClassInitializer();
-}
-
-class KotlinClass extends KotlinInterface {
-  final KotlinClassModifier? modifier;
-  final String? extend;
-  final List<KotlinClassInitializer> initializers;
-
-  const KotlinClass({
-    super.visibility,
-    this.modifier,
-    required super.name,
-    this.extend,
-    super.implements = const [],
-    this.initializers = const [],
-    super.fields = const [],
-    super.body = const [],
-  });
-}
-
-enum KotlinFieldModifier { var$, val, lateInit }
-
-class KotlinField extends KotlinClassInitializer {
-  final KotlinVisibility? visibility;
-  final KotlinFieldModifier modifier;
+class KotlinParameter implements KotlinClassInitializer {
+  final List<String> annotations;
   final String name;
   final String type;
 
-  const KotlinField({
-    this.visibility,
-    this.modifier = KotlinFieldModifier.val,
+  const KotlinParameter({
+    this.annotations = const [],
     required this.name,
     required this.type,
   });
@@ -115,16 +34,97 @@ class KotlinMethod extends KotlinSpec {
   });
 }
 
-class KotlinParameter implements KotlinClassInitializer {
-  final List<String> annotations;
+class KotlinInterface extends KotlinSpec {
+  final KotlinVisibility? visibility;
+  final String name;
+  final List<String> implements;
+  final List<KotlinField> fields;
+  final List<KotlinSpec> body;
+
+  const KotlinInterface({
+    this.visibility,
+    required this.name,
+    this.implements = const [],
+    this.fields = const [],
+    this.body = const [],
+  });
+
+  bool get hasBody => fields.isNotEmpty || body.isNotEmpty;
+}
+
+class KotlinEnum extends KotlinInterface {
+  final List<String> values;
+
+  KotlinEnum({
+    super.visibility,
+    required super.name,
+    super.implements,
+    required this.values,
+    super.fields = const [],
+    super.body = const [],
+  });
+
+  @override
+  bool get hasBody => super.hasBody || values.isNotEmpty;
+}
+
+enum KotlinFieldModifier { var$, val, lateInit }
+
+class KotlinField extends KotlinClassInitializer {
+  final KotlinVisibility? visibility;
+  final KotlinFieldModifier modifier;
   final String name;
   final String type;
 
-  const KotlinParameter({
-    this.annotations = const [],
+  const KotlinField({
+    this.visibility,
+    this.modifier = KotlinFieldModifier.val,
     required this.name,
     required this.type,
   });
+}
+
+enum KotlinClassModifier { abstract, data, companion }
+
+sealed class KotlinClassInitializer {
+  const KotlinClassInitializer();
+}
+
+class KotlinClass extends KotlinInterface {
+  final KotlinClassModifier? modifier;
+  final String? extend;
+  final List<KotlinClassInitializer> initializers;
+
+  const KotlinClass({
+    super.visibility,
+    this.modifier,
+    required super.name,
+    this.extend,
+    super.implements = const [],
+    this.initializers = const [],
+    super.fields = const [],
+    super.body = const [],
+  });
+}
+
+class KotlinLibrary extends KotlinLanguage {
+  final String package;
+  final List<String> imports;
+  final List<KotlinSpec> body;
+
+  const KotlinLibrary({
+    required this.package,
+    this.imports = const [],
+    this.body = const [],
+  });
+}
+
+sealed class KotlinSpec extends KotlinLanguage {
+  const KotlinSpec();
+}
+
+sealed class KotlinLanguage {
+  const KotlinLanguage();
 }
 
 class KotlinEmitter {

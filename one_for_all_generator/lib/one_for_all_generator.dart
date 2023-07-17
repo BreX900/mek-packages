@@ -3,7 +3,7 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all/one_for_all.dart';
-import 'package:one_for_all_generator/src/code_builder.dart';
+import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/generators/dart_builder.dart';
 import 'package:one_for_all_generator/src/generators/kotlin_builder.dart';
 import 'package:one_for_all_generator/src/generators/swift_generator.dart';

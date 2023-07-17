@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:one_for_all_generator/src/code_builder.dart';
+import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
@@ -242,29 +242,24 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
   String _encodeMethodName(String name) =>
       name.startsWith('_on') ? name.replaceFirst('_on', '').camelCase : 'on${name.pascalCase}';
 
-  String _encodeVarName(String name) {
-    return switch (name) {
-      'object' => '${name}_',
-      _ => name,
-    };
-  }
+  String _encodeVarName(String name) => name;
 
   String _encodeType(DartType type, bool withNullability) {
     final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
     if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
     if (type is VoidType) return 'Unit$questionOrEmpty';
-    if (type.isDartCoreNull) return 'null$questionOrEmpty';
-    if (type.isDartCoreBool) return 'Boolean$questionOrEmpty';
-    if (type.isDartCoreInt) return 'Long$questionOrEmpty';
+    if (type.isDartCoreNull) return 'nil$questionOrEmpty';
+    if (type.isDartCoreBool) return 'Bool$questionOrEmpty';
+    if (type.isDartCoreInt) return 'Int$questionOrEmpty';
     if (type.isDartCoreDouble) return 'Double$questionOrEmpty';
     if (type.isDartCoreString) return 'String$questionOrEmpty';
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return 'List<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
+      return 'Array<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
     }
     if (type.isDartCoreMap) {
       final typeArgs = type.doubleTypeArgs;
-      return 'HashMap<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
+      return 'Dictionary<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
     }
     return type
         .getDisplayString(withNullability: withNullability)
@@ -327,5 +322,5 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 extension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
   String get questionOrEmpty => isNullable ? '?' : '';
-  // String get exclamationOrEmpty => isNullable ? '!!' : '';
+  // String get exclamationOrEmpty => isNullable ? '!' : '';
 }

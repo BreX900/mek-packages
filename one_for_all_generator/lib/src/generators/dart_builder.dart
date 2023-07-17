@@ -4,7 +4,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
-import 'package:one_for_all_generator/src/code_builder.dart';
+import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
 import 'package:recase/recase.dart';

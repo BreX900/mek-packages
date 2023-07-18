@@ -201,7 +201,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
       methods: [
         SwiftMethod(
           name: 'serialize',
-          returnType: 'Array<Any?>',
+          returnType: '[Any?]',
           body: 'return [\n${fields.map((e) {
             return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
           }).join()}]',
@@ -213,7 +213,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
             const SwiftParameter(
               label: '_',
               name: 'serialized',
-              type: 'Array<Any?>',
+              type: '[Any?]',
             ),
           ],
           returnType: _encodeType(element.thisType, true),
@@ -252,11 +252,11 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
     if (type.isDartCoreString) return 'String$questionOrEmpty';
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return 'Array<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
+      return '[${_encodeType(typeArg, withNullability)}]$questionOrEmpty';
     }
     if (type.isDartCoreMap) {
       final typeArgs = type.doubleTypeArgs;
-      return 'Dictionary<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
+      return '[${_encodeType(typeArgs.$1, withNullability)}: ${_encodeType(typeArgs.$2, withNullability)}]$questionOrEmpty';
     }
     return type
         .getDisplayString(withNullability: withNullability)
@@ -292,30 +292,23 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
     }
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '($varAccess as${type.questionOrExclamation} Array<Any?>)'
+      return '($varAccess as${type.questionOrExclamation} [Any?])'
           '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, '\$0')}}';
     }
-    if (type.isDartCoreMap) {
-      final typesArgs = type.doubleTypeArgs;
-      return _encodeTernaryOperator(
-        type,
-        varAccess,
-        'Dictionary(uniqueKeysWithValues: ($varAccess as! Dictionary<AnyHashable, Any>)'
-        '.map{ (k, v) in (${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}) })',
-      );
+
+    String encodeDeserializer() {
+      if (type.isDartCoreMap) {
+        final typesArgs = type.doubleTypeArgs;
+        return 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable: Any])'
+            '.map{ (k, v) in (${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}) })';
+      }
+      if (type.isDartCoreEnum || type.element is EnumElement) {
+        return '${_encodeType(type, false)}(rawValue: $varAccess as! Int)!';
+      }
+      return '${_encodeType(type, false)}.deserialize($varAccess as! [Any?])';
     }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
-      return _encodeTernaryOperator(
-        type,
-        varAccess,
-        '${_encodeType(type, false)}(rawValue: $varAccess as! Int)',
-      );
-    }
-    return _encodeTernaryOperator(
-      type,
-      varAccess,
-      '${_encodeType(type, false)}.deserialize($varAccess as! Array<Any?>)',
-    );
+
+    return _encodeTernaryOperator(type, varAccess, encodeDeserializer());
   }
 
   String _encodeTernaryOperator(DartType type, String varAccess, String exsist) =>

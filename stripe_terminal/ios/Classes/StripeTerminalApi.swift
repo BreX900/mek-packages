@@ -37,7 +37,7 @@ struct StripeReaderApi {
     let serialNumber: String
     let label: String?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             locationStatus.rawValue,
             batteryLevel,
@@ -51,12 +51,12 @@ struct StripeReaderApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> StripeReaderApi {
         return StripeReaderApi(
-            locationStatus: LocationStatusApi(rawValue: serialized[0] as! Int),
+            locationStatus: LocationStatusApi(rawValue: serialized[0] as! Int)!,
             batteryLevel: serialized[1] as! Double,
-            deviceType: DeviceTypeApi(rawValue: serialized[2] as! Int),
+            deviceType: DeviceTypeApi(rawValue: serialized[2] as! Int)!,
             simulated: serialized[3] as! Bool,
             availableUpdate: serialized[4] as! Bool,
             locationId: serialized[5] as? String,
@@ -93,9 +93,9 @@ struct CartApi {
     let currency: String
     let tax: Int
     let total: Int
-    let lineItems: Array<CartLineItemApi>
+    let lineItems: [CartLineItemApi]
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             currency,
             tax,
@@ -105,13 +105,13 @@ struct CartApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> CartApi {
         return CartApi(
             currency: serialized[0] as! String,
             tax: serialized[1] as! Int,
             total: serialized[2] as! Int,
-            lineItems: (serialized[3] as! Array<Any?>).map{CartLineItemApi.deserialize($0 as! Array<Any?>)}
+            lineItems: (serialized[3] as! [Any?]).map{CartLineItemApi.deserialize($0 as! [Any?])}
         )
     }
 }
@@ -121,7 +121,7 @@ struct CartLineItemApi {
     let quantity: Int
     let amount: Int
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             description,
             quantity,
@@ -130,7 +130,7 @@ struct CartLineItemApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> CartLineItemApi {
         return CartLineItemApi(
             description: serialized[0] as! String,
@@ -151,9 +151,9 @@ struct StripePaymentMethodApi {
     let cardDetails: CardDetailsApi?
     let customer: String?
     let livemode: Bool
-    let metadata: Dictionary<String, String>?
+    let metadata: [String: String]?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             id,
             cardDetails?.serialize(),
@@ -164,14 +164,14 @@ struct StripePaymentMethodApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> StripePaymentMethodApi {
         return StripePaymentMethodApi(
             id: serialized[0] as! String,
-            cardDetails: serialized[1] != nil ? CardDetailsApi.deserialize(serialized[1] as! Array<Any?>) : nil,
+            cardDetails: serialized[1] != nil ? CardDetailsApi.deserialize(serialized[1] as! [Any?]) : nil,
             customer: serialized[2] as? String,
             livemode: serialized[3] as! Bool,
-            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! Dictionary<AnyHashable, Any>).map{ (k, v) in (k as! String, v as! String) }) : nil
+            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil
         )
     }
 }
@@ -185,7 +185,7 @@ struct CardDetailsApi {
     let funding: String?
     let last4: String?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             brand,
             country,
@@ -198,7 +198,7 @@ struct CardDetailsApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> CardDetailsApi {
         return CardDetailsApi(
             brand: serialized[0] as? String,
@@ -230,7 +230,7 @@ struct StripePaymentIntentApi {
     let description: String?
     let invoice: String?
     let livemode: Bool
-    let metadata: Dictionary<String, String>?
+    let metadata: [String: String]?
     let onBehalfOf: String?
     let paymentMethodId: String?
     let status: PaymentIntentStatusApi?
@@ -239,7 +239,7 @@ struct StripePaymentIntentApi {
     let setupFutureUsage: String?
     let transferGroup: String?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             id,
             amount,
@@ -270,7 +270,7 @@ struct StripePaymentIntentApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> StripePaymentIntentApi {
         return StripePaymentIntentApi(
             id: serialized[0] as! String,
@@ -290,10 +290,10 @@ struct StripePaymentIntentApi {
             description: serialized[14] as? String,
             invoice: serialized[15] as? String,
             livemode: serialized[16] as! Bool,
-            metadata: serialized[17] != nil ? Dictionary(uniqueKeysWithValues: (serialized[17] as! Dictionary<AnyHashable, Any>).map{ (k, v) in (k as! String, v as! String) }) : nil,
+            metadata: serialized[17] != nil ? Dictionary(uniqueKeysWithValues: (serialized[17] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil,
             onBehalfOf: serialized[18] as? String,
             paymentMethodId: serialized[19] as? String,
-            status: serialized[20] != nil ? PaymentIntentStatusApi(rawValue: serialized[20] as! Int) : nil,
+            status: serialized[20] != nil ? PaymentIntentStatusApi(rawValue: serialized[20] as! Int)! : nil,
             review: serialized[21] as? String,
             receiptEmail: serialized[22] as? String,
             setupFutureUsage: serialized[23] as? String,
@@ -314,14 +314,14 @@ enum PaymentIntentStatusApi: Int {
 struct CollectConfigurationApi {
     let skipTipping: Bool
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             skipTipping,
         ]
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> CollectConfigurationApi {
         return CollectConfigurationApi(
             skipTipping: serialized[0] as! Bool
@@ -334,9 +334,9 @@ struct LocationApi {
     let displayName: String?
     let id: String?
     let livemode: Bool?
-    let metadata: Dictionary<String, String>?
+    let metadata: [String: String]?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             address?.serialize(),
             displayName,
@@ -347,14 +347,14 @@ struct LocationApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> LocationApi {
         return LocationApi(
-            address: serialized[0] != nil ? AddressApi.deserialize(serialized[0] as! Array<Any?>) : nil,
+            address: serialized[0] != nil ? AddressApi.deserialize(serialized[0] as! [Any?]) : nil,
             displayName: serialized[1] as? String,
             id: serialized[2] as? String,
             livemode: serialized[3] as? Bool,
-            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! Dictionary<AnyHashable, Any>).map{ (k, v) in (k as! String, v as! String) }) : nil
+            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil
         )
     }
 }
@@ -367,7 +367,7 @@ struct AddressApi {
     let postalCode: String?
     let state: String?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             city,
             country,
@@ -379,7 +379,7 @@ struct AddressApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> AddressApi {
         return AddressApi(
             city: serialized[0] as? String,
@@ -397,7 +397,7 @@ struct DiscoverConfigApi {
     let simulated: Bool
     let locationId: String?
 
-    func serialize() -> Array<Any?> {
+    func serialize() -> [Any?] {
         return [
             discoveryMethod.rawValue,
             simulated,
@@ -406,10 +406,10 @@ struct DiscoverConfigApi {
     }
 
     static func deserialize(
-        _ serialized: Array<Any?>
+        _ serialized: [Any?]
     ) -> DiscoverConfigApi {
         return DiscoverConfigApi(
-            discoveryMethod: DiscoveryMethodApi(rawValue: serialized[0] as! Int),
+            discoveryMethod: DiscoveryMethodApi(rawValue: serialized[0] as! Int)!,
             simulated: serialized[1] as! Bool,
             locationId: serialized[2] as? String
         )

@@ -8,16 +8,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalHostAp
         let instance = StripeTerminalPlugin(api)
         setupStripeTerminalApi(registrar.messenger(), instance)
     }
-    
+
     private let api: StripeTerminalFlutterApi
-    
+
     init(_ api: StripeTerminalFlutterApi) {
         self.api = api
     }
-    
-    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?) {
-        
-    }
+
+    func onConnectBluetoothReader(result _: Result<StripeReaderApi>, readerSerialNumber _: String, locationId _: String?) {}
 }
 
 func setupStripeTerminalApi(_ binaryMessenger: FlutterBinaryMessenger, _ api: StripeTerminalHostApi) {
@@ -38,13 +36,13 @@ func setupStripeTerminalApi(_ binaryMessenger: FlutterBinaryMessenger, _ api: St
     }
 }
 
-class PlatformException {
+enum PlatformException {
     static func of(_ code: String, _ message: String?, _ details: Any?) -> FlutterError {
         return FlutterError(code: code, message: message, details: details)
     }
 }
 
-//class Result<T> {
+// class Result<T> {
 //    private let result: FlutterResult
 //    private let serializer: (T) -> Any?
 //
@@ -60,15 +58,15 @@ class PlatformException {
 //    func error(_ errorCode: String, _ errorMessage: String, _ errorDetails: Any?) {
 //        result(FlutterError(code: errorCode, message: errorMessage, details: errorDetails))
 //    }
-//}
+// }
 
 class StripeTerminalFlutterApi {
     private let channel: FlutterMethodChannel
-    
+
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
     }
-    
+
     func requestConnectionToken() async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { result in
@@ -83,11 +81,11 @@ class StripeTerminalFlutterApi {
     }
 }
 
-//protocol StripeTerminalHostApi {
+// protocol StripeTerminalHostApi {
 //    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?);
-//}
+// }
 //
-//class StripeReaderApi {
+// class StripeReaderApi {
 //    let locationStatus: LocationStatusApi
 //    let batteryLevel: Double
 //    let deviceType: DeviceTypeApi
@@ -133,14 +131,12 @@ class StripeTerminalFlutterApi {
 //            label: serialized[7] as? String
 //        )
 //    }
-//}
+// }
 //
-//enum LocationStatusApi: Int {
+// enum LocationStatusApi: Int {
 //    case UNKNOWN, SET, NOT_SET
-//}
+// }
 //
-//enum DeviceTypeApi: Int {
+// enum DeviceTypeApi: Int {
 //    case CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN
-//}
-
-
+// }

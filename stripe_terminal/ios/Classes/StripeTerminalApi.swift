@@ -100,7 +100,7 @@ struct CartApi {
             currency,
             tax,
             total,
-            lineItems.map{$0.serialize()},
+            lineItems.map { $0.serialize() },
         ]
     }
 
@@ -111,7 +111,7 @@ struct CartApi {
             currency: serialized[0] as! String,
             tax: serialized[1] as! Int,
             total: serialized[2] as! Int,
-            lineItems: (serialized[3] as! [Any?]).map{CartLineItemApi.deserialize($0 as! [Any?])}
+            lineItems: (serialized[3] as! [Any?]).map { CartLineItemApi.deserialize($0 as! [Any?]) }
         )
     }
 }
@@ -159,7 +159,7 @@ struct StripePaymentMethodApi {
             cardDetails?.serialize(),
             customer,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map{ k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
         ]
     }
 
@@ -171,7 +171,7 @@ struct StripePaymentMethodApi {
             cardDetails: serialized[1] != nil ? CardDetailsApi.deserialize(serialized[1] as! [Any?]) : nil,
             customer: serialized[2] as? String,
             livemode: serialized[3] as! Bool,
-            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil
+            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil
         )
     }
 }
@@ -258,7 +258,7 @@ struct StripePaymentIntentApi {
             description,
             invoice,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map{ k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
             onBehalfOf,
             paymentMethodId,
             status?.rawValue,
@@ -290,7 +290,7 @@ struct StripePaymentIntentApi {
             description: serialized[14] as? String,
             invoice: serialized[15] as? String,
             livemode: serialized[16] as! Bool,
-            metadata: serialized[17] != nil ? Dictionary(uniqueKeysWithValues: (serialized[17] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil,
+            metadata: serialized[17] != nil ? Dictionary(uniqueKeysWithValues: (serialized[17] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil,
             onBehalfOf: serialized[18] as? String,
             paymentMethodId: serialized[19] as? String,
             status: serialized[20] != nil ? PaymentIntentStatusApi(rawValue: serialized[20] as! Int)! : nil,
@@ -342,7 +342,7 @@ struct LocationApi {
             displayName,
             id,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map{ k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
         ]
     }
 
@@ -354,7 +354,7 @@ struct LocationApi {
             displayName: serialized[1] as? String,
             id: serialized[2] as? String,
             livemode: serialized[3] as? Bool,
-            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map{ (k, v) in (k as! String, v as! String) }) : nil
+            metadata: serialized[4] != nil ? Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil
         )
     }
 }

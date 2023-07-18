@@ -369,7 +369,7 @@ data class StripePaymentMethodApi(
             cardDetails?.serialize(),
             customer,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v as String}.toTypedArray())},
+            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
         )
     }
 
@@ -472,7 +472,7 @@ data class StripePaymentIntentApi(
             description,
             invoice,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v as String}.toTypedArray())},
+            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
             onBehalfOf,
             paymentMethodId,
             status?.ordinal,
@@ -555,7 +555,7 @@ data class LocationApi(
             displayName,
             id,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v as String}.toTypedArray())},
+            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
         )
     }
 

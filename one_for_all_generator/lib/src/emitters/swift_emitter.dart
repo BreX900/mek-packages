@@ -28,6 +28,7 @@ class SwiftParameter {
 
 class SwiftMethod extends SwiftSpec {
   final SwiftVisibility? visibility;
+  final bool static;
   final String name;
   final List<SwiftParameter> parameters;
   final String? returnType;
@@ -35,6 +36,7 @@ class SwiftMethod extends SwiftSpec {
 
   const SwiftMethod({
     this.visibility,
+    this.static = false,
     required this.name,
     this.parameters = const [],
     this.returnType,
@@ -55,6 +57,16 @@ class SwiftProtocol extends SwiftSpec {
     this.implements = const [],
     this.fields = const [],
     this.methods = const [],
+  });
+}
+
+class SwiftStruct extends SwiftProtocol {
+  const SwiftStruct({
+    super.visibility,
+    required super.name,
+    super.implements = const [],
+    super.fields = const [],
+    super.methods = const [],
   });
 }
 
@@ -182,6 +194,7 @@ class SwiftEmitter {
     final title = switch (spec) {
       SwiftClass() => 'class',
       SwiftEnum() => 'enum',
+      SwiftStruct() => 'struct',
       SwiftProtocol() => 'protocol',
     };
     buffer.write('$_space${_encodeVisibility(spec.visibility)}$title ${spec.name}');
@@ -267,6 +280,7 @@ class SwiftEmitter {
   Object _encodeMethod(SwiftMethod spec) {
     final buffer = StringBuffer();
     buffer.write(_space);
+    if (spec.static) buffer.write('static ');
     buffer.write('${_encodeVisibility(spec.visibility)}func ${spec.name}(');
     if (spec.parameters.isNotEmpty) {
       buffer.write('\n');
@@ -278,7 +292,7 @@ class SwiftEmitter {
     } else {
       buffer.write(')');
     }
-    if (spec.returnType != null) buffer.write(': ${spec.returnType}');
+    if (spec.returnType != null) buffer.write(' -> ${spec.returnType}');
 
     if (spec.body != null) {
       buffer.write(' {\n');

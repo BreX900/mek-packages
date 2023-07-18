@@ -343,7 +343,7 @@ return suspendCoroutine { continuation ->
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
       final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
-          '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
+          '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeSerialization(typesArgs.$2, 'v')}}'
           '.toTypedArray())';
       return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
     }

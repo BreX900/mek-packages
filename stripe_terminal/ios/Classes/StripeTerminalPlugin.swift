@@ -83,64 +83,64 @@ class StripeTerminalFlutterApi {
     }
 }
 
-protocol StripeTerminalHostApi {
-    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?);
-}
-
-class StripeReaderApi {
-    let locationStatus: LocationStatusApi
-    let batteryLevel: Double
-    let deviceType: DeviceTypeApi
-    let simulated: Bool
-    let availableUpdate: Bool
-    let locationId: String?
-    let serialNumber: String
-    let label: String?
-
-    init(locationStatus: LocationStatusApi, batteryLevel: Double, deviceType: DeviceTypeApi, simulated: Bool, availableUpdate: Bool, locationId: String?, serialNumber: String, label: String?) {
-        self.locationStatus = locationStatus
-        self.batteryLevel = batteryLevel
-        self.deviceType = deviceType
-        self.simulated = simulated
-        self.availableUpdate = availableUpdate
-        self.locationId = locationId
-        self.serialNumber = serialNumber
-        self.label = label
-    }
-
-    func serialize() -> [Any?] {
-        return [
-            locationStatus.rawValue,
-            batteryLevel,
-            deviceType.rawValue,
-            simulated,
-            availableUpdate,
-            locationId,
-            serialNumber,
-            label,
-        ]
-    }
-
-    static func deserialize(_ serialized: [Any?]) -> StripeReaderApi {
-        return StripeReaderApi(
-            locationStatus: LocationStatusApi(rawValue: serialized[0] as! Int)!,
-            batteryLevel: serialized[1] as! Double,
-            deviceType: DeviceTypeApi(rawValue: serialized[2] as! Int)!,
-            simulated: serialized[3] as! Bool,
-            availableUpdate: serialized[4] as! Bool,
-            locationId: serialized[5] as? String,
-            serialNumber: serialized[6] as! String,
-            label: serialized[7] as? String
-        )
-    }
-}
-
-enum LocationStatusApi: Int {
-    case UNKNOWN, SET, NOT_SET
-}
-
-enum DeviceTypeApi: Int {
-    case CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN
-}
+//protocol StripeTerminalHostApi {
+//    func onConnectBluetoothReader(result: Result<StripeReaderApi>, readerSerialNumber: String, locationId: String?);
+//}
+//
+//class StripeReaderApi {
+//    let locationStatus: LocationStatusApi
+//    let batteryLevel: Double
+//    let deviceType: DeviceTypeApi
+//    let simulated: Bool
+//    let availableUpdate: Bool
+//    let locationId: String?
+//    let serialNumber: String
+//    let label: String?
+//
+//    init(locationStatus: LocationStatusApi, batteryLevel: Double, deviceType: DeviceTypeApi, simulated: Bool, availableUpdate: Bool, locationId: String?, serialNumber: String, label: String?) {
+//        self.locationStatus = locationStatus
+//        self.batteryLevel = batteryLevel
+//        self.deviceType = deviceType
+//        self.simulated = simulated
+//        self.availableUpdate = availableUpdate
+//        self.locationId = locationId
+//        self.serialNumber = serialNumber
+//        self.label = label
+//    }
+//
+//    func serialize() -> [Any?] {
+//        return [
+//            locationStatus.rawValue,
+//            batteryLevel,
+//            deviceType.rawValue,
+//            simulated,
+//            availableUpdate,
+//            locationId,
+//            serialNumber,
+//            label,
+//        ]
+//    }
+//
+//    static func deserialize(_ serialized: [Any?]) -> StripeReaderApi {
+//        return StripeReaderApi(
+//            locationStatus: LocationStatusApi(rawValue: serialized[0] as! Int)!,
+//            batteryLevel: serialized[1] as! Double,
+//            deviceType: DeviceTypeApi(rawValue: serialized[2] as! Int)!,
+//            simulated: serialized[3] as! Bool,
+//            availableUpdate: serialized[4] as! Bool,
+//            locationId: serialized[5] as? String,
+//            serialNumber: serialized[6] as! String,
+//            label: serialized[7] as? String
+//        )
+//    }
+//}
+//
+//enum LocationStatusApi: Int {
+//    case UNKNOWN, SET, NOT_SET
+//}
+//
+//enum DeviceTypeApi: Int {
+//    case CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN
+//}
 
 

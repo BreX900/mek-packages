@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
 import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
@@ -187,58 +188,52 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 
   @override
   void writeDataClass(ClassElement element) {
-    // final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+    final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
-    // _specs.add(KotlinClass(
-    //   modifier: KotlinClassModifier.data,
-    //   name: _encodeType(element.thisType, false),
-    //   initializers: fields.map((e) {
-    //     return KotlinField(
-    //       name: _encodeVarName(e.name),
-    //       type: _encodeType(e.type, true),
-    //     );
-    //   }).toList(),
-    //   methods: [
-    //     KotlinMethod(
-    //       name: 'serialize',
-    //       returnType: 'List<Any?>',
-    //       body: 'return listOf(\n${fields.map((e) {
-    //         return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
-    //       }).join()})',
-    //     ),
-    //   ],
-    //   classes: [
-    //     KotlinClass(
-    //       modifier: KotlinClassModifier.companion,
-    //       name: 'object',
-    //       methods: [
-    //         KotlinMethod(
-    //           name: 'deserialize',
-    //           parameters: [
-    //             const KotlinParameter(
-    //               name: 'serialized',
-    //               type: 'List<Any?>',
-    //             ),
-    //           ],
-    //           returnType: _encodeType(element.thisType, true),
-    //           body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
-    //             return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
-    //           }).join()});',
-    //         ),
-    //       ],
-    //     ),
-    //   ],
-    // ));
+    _specs.add(SwiftStruct(
+      name: _encodeType(element.thisType, false),
+      fields: fields.map((e) {
+        return SwiftField(
+          name: _encodeVarName(e.name),
+          type: _encodeType(e.type, true),
+        );
+      }).toList(),
+      methods: [
+        SwiftMethod(
+          name: 'serialize',
+          returnType: 'Array<Any?>',
+          body: 'return [\n${fields.map((e) {
+            return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
+          }).join()}]',
+        ),
+        SwiftMethod(
+          static: true,
+          name: 'deserialize',
+          parameters: [
+            const SwiftParameter(
+              label: '_',
+              name: 'serialized',
+              type: 'Array<Any?>',
+            ),
+          ],
+          returnType: _encodeType(element.thisType, true),
+          body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
+            return '    ${_encodeVarName(e.name)}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
+          }).join(',\n')}\n)',
+        ),
+      ],
+    ));
   }
 
   @override
   void writeEnum(EnumElement element) {
-    // _specs.add(KotlinEnum(
-    //   name: _encodeType(element.thisType, false),
-    //   values: element.fields.where((element) => element.isEnumConstant).map((e) {
-    //     return _encodeVarName(e.name.constantCase);
-    //   }).toList(),
-    // ));
+    _specs.add(SwiftEnum(
+      name: _encodeType(element.thisType, false),
+      implements: ['Int'],
+      values: element.fields.where((element) => element.isEnumConstant).map((e) {
+        return _encodeVarName(e.name);
+      }).toList(),
+    ));
   }
 
   String _encodeMethodName(String name) =>
@@ -273,44 +268,58 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
     if (type.isPrimitive) return varAccess;
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '$varAccess${type.questionOrEmpty}.map{${_encodeSerialization(typeArg, 'it')}}';
+      return '$varAccess${type.questionOrEmpty}.map{${_encodeSerialization(typeArg, '\$0')}}';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
-          '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
-          '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+      return _encodeTernaryOperator(
+        type,
+        varAccess,
+        'Dictionary(uniqueKeysWithValues: $varAccess${type.exclamationOrEmpty}.map{ k, v in '
+        '(${_encodeSerialization(typesArgs.$1, 'k')}, ${_encodeSerialization(typesArgs.$2, 'v')}) })',
+      );
     }
     if (type.isDartCoreEnum || type.element is EnumElement) {
-      return '$varAccess${type.questionOrEmpty}.ordinal';
+      return '$varAccess${type.questionOrEmpty}.rawValue';
     }
     return '$varAccess${type.questionOrEmpty}.serialize()';
   }
 
   String _encodeDeserialization(DartType type, String varAccess) {
     if (type is VoidType) throw StateError('void type no supported');
-    if (type.isPrimitive) return '$varAccess as ${_encodeType(type, true)}';
+    if (type.isPrimitive) {
+      return '$varAccess as${type.questionOrExclamation} ${_encodeType(type, false)}';
+    }
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '($varAccess as List<*>${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, 'it')}}';
+      return '($varAccess as${type.questionOrExclamation} Array<Any?>)'
+          '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, '\$0')}}';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
-          '.map{(k, v) -> ${_encodeDeserialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
-          '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+      return _encodeTernaryOperator(
+        type,
+        varAccess,
+        'Dictionary(uniqueKeysWithValues: ($varAccess as! Dictionary<AnyHashable, Any>)'
+        '.map{ (k, v) in (${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}) })',
+      );
     }
-
     if (type.isDartCoreEnum || type.element is EnumElement) {
-      return '($varAccess as Int${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.let{${_encodeType(type, false)}.values()[it]}';
+      return _encodeTernaryOperator(
+        type,
+        varAccess,
+        '${_encodeType(type, false)}(rawValue: $varAccess as! Int)',
+      );
     }
-    return '($varAccess as List<Any?>${type.questionOrEmpty})'
-        '${type.questionOrEmpty}.let{${_encodeType(type, false)}.deserialize(it)}';
+    return _encodeTernaryOperator(
+      type,
+      varAccess,
+      '${_encodeType(type, false)}.deserialize($varAccess as! Array<Any?>)',
+    );
   }
+
+  String _encodeTernaryOperator(DartType type, String varAccess, String exsist) =>
+      type.isNullable ? '$varAccess != nil ? $exsist : nil' : exsist;
 
   @override
   String toString() => '${SwiftEmitter().encode(SwiftLibrary(
@@ -329,5 +338,6 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 extension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
   String get questionOrEmpty => isNullable ? '?' : '';
-  // String get exclamationOrEmpty => isNullable ? '!' : '';
+  String get questionOrExclamation => isNullable ? '?' : '!';
+  String get exclamationOrEmpty => isNullable ? '!' : '';
 }

@@ -14,9 +14,12 @@ class StripeTerminalException {
   final String? details;
 
   @override
-  String toString() => ['$runtimeType: $code', code.message, message, details]
-      .nonNulls
-      .join('\n');
+  String toString() => [
+        '$runtimeType: ${code.name}',
+        code.message,
+        message,
+        details
+      ].nonNulls.join('\n');
 }
 
 class _$StripeTerminal extends StripeTerminal {

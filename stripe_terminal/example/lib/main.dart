@@ -24,7 +24,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _api = StripeApi();
-  StripeTerminal? _stripeTerminal;
+  StripeTerminal? _terminal;
 
   var _locations = <Location>[];
   Location? _selectedLocation;
@@ -55,7 +55,7 @@ class _MyAppState extends State<MyApp> {
       fetchToken: _fetchConnectionToken,
     );
     setState(() {
-      _stripeTerminal = stripeTerminal;
+      _terminal = stripeTerminal;
     });
   }
 
@@ -139,6 +139,11 @@ class _MyAppState extends State<MyApp> {
   //   return jsonDecode(invoice.data)["paymentIntent"]["client_secret"];
   // }
 
+  // void _collectPaymentMethod() async {
+  //   final paymentIntent = await _api.createPaymentIntent();
+  //   _terminal.
+  // }
+
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
@@ -148,7 +153,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final terminal = _stripeTerminal;
+    final terminal = _terminal;
 
     final body = Column(
       children: [

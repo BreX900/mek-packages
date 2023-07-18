@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.stripe.stripeterminal.Terminal
+import com.stripe.stripeterminal.TerminalApplicationDelegate
 import com.stripe.stripeterminal.external.callable.*
 import com.stripe.stripeterminal.external.models.*
 import com.stripe.stripeterminal.external.callable.ConnectionTokenProvider
@@ -30,18 +31,14 @@ import kotlinx.coroutines.Dispatchers
 
 
 /** StripeTerminalPlugin */
-class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
-    ConnectionTokenProvider
-//    , PluginRegistry.RequestPermissionsResultListener, ActivityAware, FlutterActivityEvents
-{
-    //
-//    private lateinit var channel: MethodChannel
+class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
+    ConnectionTokenProvider {
+
+    val terminal: Terminal get() = Terminal.getInstance()
+
     private val REQUEST_CODE_LOCATION = 1012
 
-    //    private lateinit var tokenProvider: StripeTokenProvider
-//    private var cancelableDiscover: Cancelable? = null
-//    private var activeReaders: List<Reader> = arrayListOf()
-//    private var simulated = false
+    //    private var cancelableDiscover: Cancelable? = null
     private val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         arrayOf(
 //            Manifest.permission.ACCESS_FINE_LOCATION,
@@ -70,8 +67,10 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
         }
     }
 
-    //    var result: Result? = null
-    private fun requestPermissions(result: Result<Unit>): Boolean {
+    private var currentActivity: Activity? = null
+    private var activeReaders: List<Reader> = arrayListOf()
+
+    override fun onInit(result: Result<Unit>) {
         val permissionStatus = permissions.map {
             ContextCompat.checkSelfPermission(currentActivity!!, it)
         }
@@ -82,12 +81,12 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
                 "You have declined the necessary permission, please allow from settings to continue.",
                 null
             )
-            return false
+            return
         }
 
         if (Terminal.isInitialized()) {
             result.success(Unit)
-            return true
+            return
         }
 
         Terminal.initTerminal(
@@ -97,37 +96,6 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
             listener
         )
         result.success(Unit)
-        return true
-
-
-//        val cannotAskPermissions = permissions.map {
-//            ActivityCompat.shouldShowRequestPermissionRationale(currentActivity!!, it)
-//        }
-//
-//        if (cannotAskPermissions.contains(true)) {
-
-//        }
-//
-//        this.result = result
-//
-//        ActivityCompat.requestPermissions(currentActivity!!, permissions, REQUEST_CODE_LOCATION)
-//
-//        return false
-    }
-
-
-    private var currentActivity: Activity? = null
-    private var activeReaders: List<Reader> = arrayListOf()
-
-    override fun onInit(result: Result<Unit>) {
-        requestPermissions(result)
-//        Terminal.initTerminal(
-//            currentActivity!!.applicationContext,
-//            LogLevel.NONE,
-//            this,
-//            listener
-//        )
-//        result.success(Unit)
     }
 
     override fun onConnectBluetoothReader(
@@ -142,7 +110,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
         val config = ConnectionConfiguration.BluetoothConnectionConfiguration(
             locationId = locationId,
         )
-        Terminal.getInstance().connectBluetoothReader(
+        terminal.connectBluetoothReader(
             reader,
             config,
             object : BluetoothReaderListener {},
@@ -165,7 +133,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
             ConnectionConfiguration.InternetConnectionConfiguration(
                 failIfInUse = failIfInUse
             )
-        Terminal.getInstance().connectInternetReader(
+        terminal.connectInternetReader(
             reader,
             connectionConfig,
             object : TerminalErrorHandler(result), ReaderCallback {
@@ -185,7 +153,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
         val config = ConnectionConfiguration.LocalMobileConnectionConfiguration(
             locationId = locationId
         )
-        Terminal.getInstance().connectLocalMobileReader(
+        terminal.connectLocalMobileReader(
             reader,
             config,
             object : TerminalErrorHandler(result), ReaderCallback {
@@ -195,7 +163,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 
     override fun onListLocations(result: Result<List<LocationApi>>) {
         val params = ListLocationsParameters.Builder().build()
-        Terminal.getInstance()
+        terminal
             .listLocations(params, object : TerminalErrorHandler(result), LocationListCallback {
                 override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
                     result.success(locations.map { it.toApi() })
@@ -203,44 +171,38 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
     }
 
     override fun onDisconnectReader(result: Result<Unit>) {
-        Terminal.getInstance().disconnectReader(object : TerminalErrorHandler(result), Callback {
+
+        terminal.disconnectReader(object : TerminalErrorHandler(result), Callback {
             override fun onSuccess() = result.success(Unit)
         })
-//                if (Terminal.getInstance().connectedReader != null) {} else {
-//                    result.error(
-//                        "stripeTerminal#unableToDisconnect",
-//                        "No reader connected to disconnect from.",
-//                        null
-//                    )
-//                }
     }
 
     override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
-        Terminal.getInstance()
+        terminal
             .setReaderDisplay(cart.toHost(), object : TerminalErrorHandler(result), Callback {
                 override fun onSuccess() = result.success(Unit)
             })
     }
 
     override fun onClearReaderDisplay(result: Result<Unit>) {
-        Terminal.getInstance().clearReaderDisplay(object : TerminalErrorHandler(result), Callback {
+        terminal.clearReaderDisplay(object : TerminalErrorHandler(result), Callback {
             override fun onSuccess() = result.success(Unit)
         })
     }
 
     override fun onConnectionStatus(result: Result<ConnectionStatusApi>) {
-        result.success(Terminal.getInstance().connectionStatus.toApi())
+        result.success(terminal.connectionStatus.toApi())
     }
 
     override fun onFetchConnectedReader(result: Result<StripeReaderApi?>) {
-        result.success(Terminal.getInstance().connectedReader?.toApi())
+        result.success(terminal.connectedReader?.toApi())
     }
 
     override fun onReadReusableCardDetail(result: Result<StripePaymentMethodApi>) {
         ensureStatusIs(result, ConnectionStatus.CONNECTED) ?: return
 
         val params = ReadReusableCardParameters.Builder().build()
-        Terminal.getInstance()
+        terminal
             .readReusableCard(params, object : TerminalErrorHandler(result), PaymentMethodCallback {
                 override fun onSuccess(paymentMethod: PaymentMethod) =
                     result.success(paymentMethod.toApi())
@@ -253,7 +215,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
     ) {
         ensureStatusIs(result, ConnectionStatus.CONNECTED) ?: return
 
-        Terminal.getInstance().retrievePaymentIntent(
+        terminal.retrievePaymentIntent(
             clientSecret,
             object : TerminalErrorHandler(result), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) =
@@ -268,11 +230,11 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
     ) {
         ensureStatusIs(result, ConnectionStatus.CONNECTED) ?: return
 
-        Terminal.getInstance().retrievePaymentIntent(
+        terminal.retrievePaymentIntent(
             clientSecret,
             object : TerminalErrorHandler(result), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    Terminal.getInstance().collectPaymentMethod(
+                    terminal.collectPaymentMethod(
                         paymentIntent,
                         object : TerminalErrorHandler(result), PaymentIntentCallback {
                             override fun onSuccess(paymentIntent: PaymentIntent) =
@@ -291,11 +253,11 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
     ) {
         ensureStatusIs(result, ConnectionStatus.CONNECTED) ?: return
 
-        Terminal.getInstance().retrievePaymentIntent(
+        terminal.retrievePaymentIntent(
             clientSecret,
             object : TerminalErrorHandler(result), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    Terminal.getInstance().processPayment(
+                    terminal.processPayment(
                         paymentIntent,
                         object : TerminalErrorHandler(result), PaymentIntentCallback {
                             override fun onSuccess(paymentIntent: PaymentIntent) =
@@ -309,7 +271,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 
     override fun onStartDiscoverReaders(result: Result<Unit>, config: DiscoverConfigApi) {
         discoverReaderCancelable =
-            Terminal.getInstance().discoverReaders(config.toHost(), object : DiscoveryListener {
+            terminal.discoverReaders(config.toHost(), object : DiscoveryListener {
                 override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
                     activeReaders = readers
                     runBlocking(Dispatchers.Main) {
@@ -334,8 +296,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         currentActivity = binding.activity
-//        TerminalApplicationDelegate.onCreate(currentActivity!!.application)
-//        binding.addRequestPermissionsResultListener(this)
+        TerminalApplicationDelegate.onCreate(currentActivity!!.application)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -344,7 +305,6 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         currentActivity = binding.activity
-//        binding.addRequestPermissionsResultListener(this)
     }
 
     override fun onDetachedFromActivity() {
@@ -368,7 +328,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 
 
     private fun ensureStatusIs(result: Result<*>, targetStatus: ConnectionStatus): Any? {
-//        val currentStatus = Terminal.getInstance().connectionStatus
+//        val currentStatus = terminal.connectionStatus
 //        if (currentStatus == targetStatus) return true
 //        when (currentStatus) {
 //            ConnectionStatus.NOT_CONNECTED -> {
@@ -391,7 +351,7 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 //            ConnectionStatus.CONNECTED -> {
 //                result.error(
 //                    TerminalException.TerminalErrorCode.ALREADY_CONNECTED_TO_READER.name,
-//                    "A device with serial number ${Terminal.getInstance().connectedReader!!.serialNumber} is already connected",
+//                    "A device with serial number ${terminal.connectedReader!!.serialNumber} is already connected",
 //                    null
 //                )
 //            }
@@ -434,8 +394,8 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 //
 //    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
 //        channel.setMethodCallHandler(null)
-//        if (Terminal.getInstance().connectedReader != null) {
-//            Terminal.getInstance().disconnectReader(object : Callback {
+//        if (terminal.connectedReader != null) {
+//            terminal.disconnectReader(object : Callback {
 //                override fun onFailure(e: TerminalException) {
 //                }
 //
@@ -454,65 +414,4 @@ class StripeTerminalPlugin : FlutterPlugin, StripeTerminalApi(), ActivityAware,
 //        )
 //        cancelableDiscover = null
 //    }
-//
-//    /*
-//     These functions are stub functions that are not relevent to the plugin but needs to be defined in order to get the few necessary callbacks
-//    */
-//
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onNewIntent(intent: Intent?) {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onPause() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onStart() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onResume() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onPostResume() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onDestroy() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onStop() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onBackPressed(): Boolean {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onUserLeaveHint() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onConfigurationChanged(p0: Configuration) {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onLowMemory() {
-//        TODO("Not yet implemented")
-//    }
-//
-//    override fun onTrimMemory(p0: Int) {
-//        TerminalApplicationDelegate.onTrimMemory(currentActivity!!.application, p0)
-//    }
-//
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-//        TODO("Not yet implemented")
-//    }
 }
-

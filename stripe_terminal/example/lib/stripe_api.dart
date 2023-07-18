@@ -2,12 +2,10 @@
 
 import 'dart:convert';
 
-import 'package:shelf/shelf.dart';
 import 'package:stripe/stripe.dart';
 
 class StripeApi {
   static const _secretKey = String.fromEnvironment('SECRET_KEY');
-  // static const _customerId = String.fromEnvironment('CUSTOMER_ID');
 
   final _stripe = Stripe(_secretKey);
 
@@ -15,37 +13,38 @@ class StripeApi {
 
   Future<String> createTerminalConnectionToken() async {
     final terminalToken = await _stripe.client.post('/terminal/connection_tokens');
-    // {"object":"terminal.connection_token","secret":"pst_test_YWNjdF8xRkZtOUhJZnZPMHlkbjliLDhnQjdZRHFOWkJtMUZWMDRJSW9BRnUyUjVUWmJBSEk_00UK91zG2t"}
     print(jsonEncode(terminalToken));
-
-    // final data = await _stripe.client.post('/terminal/connection_tokens');
-    // // {"object":"terminal.connection_token","secret":"pst_test_YWNjdF8xRkZtOUhJZnZPMHlkbjliLDhnQjdZRHFOWkJtMUZWMDRJSW9BRnUyUjVUWmJBSEk_00UK91zG2t"}
-    // print(jsonEncode(data));
-
     return terminalToken['secret'] as String;
   }
 
-  Future<Map<String, dynamic>> createLocation(Request request) async {
+  Future<Map<String, dynamic>> createLocation() async {
     final location = await _stripe.client.post('/terminal/locations', data: {
-      'display_name': 'Kuama',
+      'display_name': 'Mek',
       'address': {
-        'line1': 'Via Germania',
-        'city': 'Vigonza',
-        'state': 'PD',
+        'line1': 'Via Roma',
+        'city': 'Venezia',
+        'state': 'ML',
         'country': 'IT',
-        'postal_code': '35010',
+        'postal_code': '35040',
       }
     });
-    // {id: tml_FKzZ8QFhWYrcfP, object: terminal.location, address: {city: Vigonza, country: IT, line1: Via Germania, line2: , postal_code: 35010, state: PD}, display_name: Kuama, livemode: false, metadata: {}}
-    print(location);
+    print(jsonEncode(location));
     return location;
   }
 
-  Future<Map<String, dynamic>> fetchLocations(Request request) async {
+  Future<Map<String, dynamic>> fetchLocations() async {
     final locations = await _stripe.client.get('/terminal/locations');
-    // {object: list, data: [{id: tml_FKzZ8QFhWYrcfP, object: terminal.location, address: {city: Vigonza, country: IT, line1: Via Germania, line2: , postal_code: 35010, state: PD}, display_name: Kuama, livemode: false, metadata: {}}], has_more: false, url: /v1/terminal/locations}
-    print(locations);
+    print(jsonEncode(locations));
     return locations;
+  }
+
+  Future<PaymentIntent> createPaymentIntent() async {
+    final paymentIntent = await _stripe.paymentIntent.create(CreatePaymentIntentRequest(
+      amount: 1000,
+      currency: 'eur',
+    ));
+    print(jsonEncode(paymentIntent.toJson()));
+    return paymentIntent;
   }
 
 // Future<Response> _handlePayment(Request request) async {

@@ -2,6 +2,7 @@ library stripe_terminal;
 
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/collect_configuration.dart';
@@ -10,11 +11,15 @@ import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
+import 'package:mek_stripe_terminal/src/stripe_terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
+import 'package:recase/recase.dart';
 
 part 'stripe_terminal.api.dart';
 
-@ApiScheme()
+@ApiScheme(
+  hostExceptionCodes: StripeTerminalExceptionCode,
+)
 abstract class StripeTerminal {
   Future<String> Function()? _fetchToken;
   StreamController<List<StripeReader>>? _readersController;
@@ -43,7 +48,7 @@ abstract class StripeTerminal {
     /// The id of the location on which you want to conenct this bluetooth reader with.
     ///
     /// Either you have to provide a location here or the device should already be registered to a location
-    String? locationId,
+    required String locationId,
   });
 
   /// Connects to a internet reader, only works if you have scanned devices within this session.
@@ -56,9 +61,13 @@ abstract class StripeTerminal {
     bool failIfInUse = false,
   });
 
-  Future<List<Location>> listLocations();
-
-  Future<StripeReader> connectMobileReader(String readerSerialNumber);
+  Future<StripeReader> connectMobileReader(
+    String readerSerialNumber, {
+    /// The id of the location on which you want to conenct this bluetooth reader with.
+    ///
+    /// Either you have to provide a location here or the device should already be registered to a location
+    required String locationId,
+  });
 
   /// Disconnects from a reader, only works if you are connected to a device
   ///
@@ -121,14 +130,21 @@ abstract class StripeTerminal {
   /// should return an instance of `StripePaymentIntent` with status `requiresPaymentMethod`;
   ///
   /// Only supports `swipe`, `tap` and `insert` method
-  Future<StripePaymentIntent> collectPaymentMethod({
+  Future<StripePaymentIntent> collectPaymentMethod(
+    // Client secret of the payment intent which you want to collect payment mwthod for
+    String clientSecret, {
     /// Configruation for the collection process
     CollectConfiguration collectConfiguration = const CollectConfiguration(
       skipTipping: true,
     ),
   });
 
-  Future<StripePaymentIntent> processPayment();
+  Future<StripePaymentIntent> processPayment(
+    // Client secret of the payment intent which you want to collect payment mwthod for
+    String clientSecret,
+  );
+
+  Future<List<Location>> listLocations();
 
   Future<void> _init();
 

@@ -64,5 +64,6 @@ android {
 }
 
 dependencies {
-    api "com.stripe:stripeterminal:2.22.0"
+    api "com.stripe:stripeterminal-localmobile:2.22.0"
+    api "com.stripe:stripeterminal-core:2.22.0"
 }

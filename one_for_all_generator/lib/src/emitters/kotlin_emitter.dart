@@ -6,11 +6,13 @@ class KotlinParameter implements KotlinClassInitializer {
   final List<String> annotations;
   final String name;
   final String type;
+  final String? defaultTo;
 
   const KotlinParameter({
     this.annotations = const [],
     required this.name,
     required this.type,
+    this.defaultTo,
   });
 }
 
@@ -22,6 +24,7 @@ class KotlinMethod extends KotlinSpec {
   final String name;
   final List<KotlinParameter> parameters;
   final String? returnType;
+  final bool lambda;
   final String? body;
 
   const KotlinMethod({
@@ -30,6 +33,7 @@ class KotlinMethod extends KotlinSpec {
     required this.name,
     this.parameters = const [],
     this.returnType,
+    this.lambda = false,
     this.body,
   });
 }

@@ -3,6 +3,7 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
+import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
@@ -65,7 +66,8 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ClassElement element) {
+  void writeHostApiClass(ApiClassHandler handler) {
+    // final ApiClassHandler(:element, :hostExceptionElement) = handler;
 //     _specs.add(KotlinClass(
 //       modifier: KotlinClassModifier.abstract,
 //       name: _encodeType(element.thisType, false),
@@ -185,7 +187,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 
   @override
   void writeDataClass(ClassElement element) {
-    final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+    // final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     // _specs.add(KotlinClass(
     //   modifier: KotlinClassModifier.data,
@@ -317,6 +319,11 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
         ],
         body: _specs,
       ))}';
+
+  @override
+  void writeException(EnumElement element) {
+    // TODO: implement writeException
+  }
 }
 
 extension on DartType {

@@ -7,6 +7,7 @@ import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/generators/dart_builder.dart';
 import 'package:one_for_all_generator/src/generators/kotlin_builder.dart';
 import 'package:one_for_all_generator/src/generators/swift_generator.dart';
+import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart' as path_;
 import 'package:source_gen/source_gen.dart';
@@ -56,7 +57,7 @@ class OneForAll {
     const apiChecker = TypeChecker.fromRuntime(ApiScheme);
     const dataChecker = TypeChecker.fromRuntime(DataScheme);
 
-    final apiElements = <ClassElement>{};
+    final apiHandles = <ApiClassHandler>{};
     final dataElements = <InterfaceElement>{};
 
     void writeDataClasses(DartType type) {
@@ -100,8 +101,17 @@ class OneForAll {
         // final apiClassElement = libraryReader.classes.firstWhereOrNull((e) => e.name == apiClassName);
         // if (apiClassElement != null) apiElements.add(apiClassElement);
 
-        apiElements
-            .addAll(libraryReader.annotatedWith(apiChecker).map((e) => e.element as ClassElement));
+        apiHandles.addAll(libraryReader.annotatedWith(apiChecker).map((e) {
+          final AnnotatedElement(:element, :annotation) = e;
+
+          return ApiClassHandler(
+            element: element as ClassElement,
+            hostExceptionElement:
+                annotation.read('hostExceptionCodes').typeValue.element as EnumElement,
+            flutterExceptionElement:
+                annotation.peek('flutterExceptionCodes')?.typeValue.element as EnumElement?,
+          );
+        }));
 
         libraryReader
             .annotatedWith(dataChecker)
@@ -110,8 +120,8 @@ class OneForAll {
       }
     }
 
-    for (final element in apiElements) {
-      for (final method in element.methods) {
+    for (final handle in apiHandles) {
+      for (final method in handle.element.methods) {
         if (!method.isHostMethod) continue;
 
         for (final parameter in method.parameters) {
@@ -125,7 +135,12 @@ class OneForAll {
     final generators = generatorsBuilder(options);
 
     for (final generator in generators) {
-      apiElements.forEach(generator.writeHostApiClass);
+      for (final handler in apiHandles) {
+        final ApiClassHandler(:flutterExceptionElement) = handler;
+        generator.writeException(handler.hostExceptionElement);
+        if (flutterExceptionElement != null) generator.writeException(flutterExceptionElement);
+        generator.writeHostApiClass(handler);
+      }
 
       for (final element in dataElements) {
         if (element is EnumElement) {

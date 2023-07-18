@@ -5,6 +5,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
+import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
 import 'package:recase/recase.dart';
@@ -43,7 +44,49 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ClassElement element) {
+  void writeException(EnumElement element) {
+    _library.body.add(Class((b) => b
+      ..name = element.name.replaceFirst('Code', '')
+      ..fields.add(Field((b) => b
+        ..modifier = FieldModifier.final$
+        ..type = Reference(element.name)
+        ..name = 'code'))
+      ..fields.add(Field((b) => b
+        ..modifier = FieldModifier.final$
+        ..type = Reference('String?')
+        ..name = 'message'))
+      ..fields.add(Field((b) => b
+        ..modifier = FieldModifier.final$
+        ..type = Reference('String?')
+        ..name = 'details'))
+      ..constructors.add(Constructor((b) => b
+        ..name = '_'
+        ..requiredParameters.add(Parameter((b) => b
+          ..toThis = true
+          ..name = 'code'))
+        ..requiredParameters.add(Parameter((b) => b
+          ..toThis = true
+          ..name = 'message'))
+        ..requiredParameters.add(Parameter((b) => b
+          ..toThis = true
+          ..name = 'details'))))
+      ..methods.add(Method((b) => b
+        ..annotations.add(CodeExpression(Code('override')))
+        ..returns = Reference('String')
+        ..name = 'toString'
+        ..lambda = true
+        ..body = Code('['
+            '\'\$runtimeType: \${code.name}\', '
+            'code.message, '
+            'message, '
+            'details'
+            '].nonNulls.join(\'\\n\')')))));
+  }
+
+  @override
+  void writeHostApiClass(ApiClassHandler handler) {
+    final ApiClassHandler(:element, :hostExceptionElement) = handler;
+
     _library.body.add(Class((b) => b
       ..name = '_\$${element.name}'
       ..extend = Reference(element.name)
@@ -55,6 +98,20 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
       ..constructors.add(Constructor((b) => b
         ..initializers.add(const Code('super._()'))
         ..body = _buildFlutterApiConstructorCode(element)))
+      ..methods.addAll([
+        Method((b) => b
+          ..returns = Reference('void')
+          ..name = 'throwIfIsHostException'
+          ..requiredParameters.add(Parameter((b) => b
+            ..type = Reference('PlatformException')
+            ..name = 'exception'))
+          ..body = Code('''
+final snakeCaseCode = exception.code.camelCase;
+final code = ${hostExceptionElement.name}.values.firstWhereOrNull((e) => e.name == snakeCaseCode);
+if (code == null) return;
+throw ${hostExceptionElement.name.replaceFirst('Code', '')}._(code, exception.message, exception.details);
+''')),
+      ])
       ..methods.addAll(element.methods.where((e) => e.isHostMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
@@ -75,6 +132,17 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
               'return ${_encodeDeserialization(returnType, 'result')};';
         }
 
+        String tryParseResult() {
+          // if (hostExceptionElement == null) return parseResult();
+          return '''
+try {
+  ${parseResult()}
+} on PlatformException catch(exception) {
+  throwIfIsHostException(exception);
+  rethrow;
+}''';
+        }
+
         return Method((b) => b
           ..annotations.add(const CodeExpression(Code('override')))
           ..returns = Reference('${e.returnType}')
@@ -92,7 +160,7 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
               ..defaultTo = e.defaultValueCode != null ? Code(e.defaultValueCode!) : null);
           }))
           ..modifier = MethodModifier.async
-          ..body = Code(parseResult()));
+          ..body = Code(tryParseResult()));
       }))));
   }
 

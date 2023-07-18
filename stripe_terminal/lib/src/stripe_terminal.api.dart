@@ -1,5 +1,24 @@
 part of 'stripe_terminal.dart';
 
+class StripeTerminalException {
+  StripeTerminalException._(
+    this.code,
+    this.message,
+    this.details,
+  );
+
+  final StripeTerminalExceptionCode code;
+
+  final String? message;
+
+  final String? details;
+
+  @override
+  String toString() => ['$runtimeType: $code', code.message, message, details]
+      .nonNulls
+      .join('\n');
+}
+
 class _$StripeTerminal extends StripeTerminal {
   _$StripeTerminal() : super._() {
     _channel.setMethodCallHandler((call) async {
@@ -16,16 +35,29 @@ class _$StripeTerminal extends StripeTerminal {
 
   static const _channel = MethodChannel('stripe_terminal');
 
+  void throwIfIsHostException(PlatformException exception) {
+    final snakeCaseCode = exception.code.camelCase;
+    final code = StripeTerminalExceptionCode.values
+        .firstWhereOrNull((e) => e.name == snakeCaseCode);
+    if (code == null) return;
+    throw StripeTerminalException._(code, exception.message, exception.details);
+  }
+
   @override
   Future<StripeReader> connectBluetoothReader(
     String readerSerialNumber, {
-    String? locationId,
+    required String locationId,
   }) async {
-    final result = await _channel.invokeMethod('connectBluetoothReader', [
-      readerSerialNumber,
-      locationId,
-    ]);
-    return _$deserializeStripeReader(result as List);
+    try {
+      final result = await _channel.invokeMethod('connectBluetoothReader', [
+        readerSerialNumber,
+        locationId,
+      ]);
+      return _$deserializeStripeReader(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
@@ -33,103 +65,187 @@ class _$StripeTerminal extends StripeTerminal {
     String readerSerialNumber, {
     bool failIfInUse = false,
   }) async {
-    final result = await _channel.invokeMethod('connectInternetReader', [
-      readerSerialNumber,
-      failIfInUse,
-    ]);
-    return _$deserializeStripeReader(result as List);
+    try {
+      final result = await _channel.invokeMethod('connectInternetReader', [
+        readerSerialNumber,
+        failIfInUse,
+      ]);
+      return _$deserializeStripeReader(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
-  Future<List<Location>> listLocations() async {
-    final result = await _channel.invokeMethod('listLocations', []);
-    return (result as List)
-        .map((e) => _$deserializeLocation(e as List))
-        .toList();
-  }
-
-  @override
-  Future<StripeReader> connectMobileReader(String readerSerialNumber) async {
-    final result = await _channel.invokeMethod('connectMobileReader', [
-      readerSerialNumber,
-    ]);
-    return _$deserializeStripeReader(result as List);
+  Future<StripeReader> connectMobileReader(
+    String readerSerialNumber, {
+    required String locationId,
+  }) async {
+    try {
+      final result = await _channel.invokeMethod('connectMobileReader', [
+        readerSerialNumber,
+        locationId,
+      ]);
+      return _$deserializeStripeReader(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> disconnectReader() async {
-    await _channel.invokeMethod('disconnectReader', []);
+    try {
+      await _channel.invokeMethod('disconnectReader', []);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> setReaderDisplay(Cart cart) async {
-    await _channel.invokeMethod('setReaderDisplay', [
-      _$serializeCart(cart),
-    ]);
+    try {
+      await _channel.invokeMethod('setReaderDisplay', [
+        _$serializeCart(cart),
+      ]);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> clearReaderDisplay() async {
-    await _channel.invokeMethod('clearReaderDisplay', []);
+    try {
+      await _channel.invokeMethod('clearReaderDisplay', []);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<ConnectionStatus> connectionStatus() async {
-    final result = await _channel.invokeMethod('connectionStatus', []);
-    return ConnectionStatus.values[result as int];
+    try {
+      final result = await _channel.invokeMethod('connectionStatus', []);
+      return ConnectionStatus.values[result as int];
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<StripeReader?> fetchConnectedReader() async {
-    final result = await _channel.invokeMethod('fetchConnectedReader', []);
-    return result != null ? _$deserializeStripeReader(result as List) : null;
+    try {
+      final result = await _channel.invokeMethod('fetchConnectedReader', []);
+      return result != null ? _$deserializeStripeReader(result as List) : null;
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<StripePaymentMethod> readReusableCardDetail() async {
-    final result = await _channel.invokeMethod('readReusableCardDetail', []);
-    return _$deserializeStripePaymentMethod(result as List);
+    try {
+      final result = await _channel.invokeMethod('readReusableCardDetail', []);
+      return _$deserializeStripePaymentMethod(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<StripePaymentIntent> retrievePaymentIntent(String clientSecret) async {
-    final result = await _channel.invokeMethod('retrievePaymentIntent', [
-      clientSecret,
-    ]);
-    return _$deserializeStripePaymentIntent(result as List);
+    try {
+      final result = await _channel.invokeMethod('retrievePaymentIntent', [
+        clientSecret,
+      ]);
+      return _$deserializeStripePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<StripePaymentIntent> collectPaymentMethod(
-      {CollectConfiguration collectConfiguration =
-          const CollectConfiguration(skipTipping: true)}) async {
-    final result = await _channel.invokeMethod('collectPaymentMethod', [
-      _$serializeCollectConfiguration(collectConfiguration),
-    ]);
-    return _$deserializeStripePaymentIntent(result as List);
+    String clientSecret, {
+    CollectConfiguration collectConfiguration =
+        const CollectConfiguration(skipTipping: true),
+  }) async {
+    try {
+      final result = await _channel.invokeMethod('collectPaymentMethod', [
+        clientSecret,
+        _$serializeCollectConfiguration(collectConfiguration),
+      ]);
+      return _$deserializeStripePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
-  Future<StripePaymentIntent> processPayment() async {
-    final result = await _channel.invokeMethod('processPayment', []);
-    return _$deserializeStripePaymentIntent(result as List);
+  Future<StripePaymentIntent> processPayment(String clientSecret) async {
+    try {
+      final result = await _channel.invokeMethod('processPayment', [
+        clientSecret,
+      ]);
+      return _$deserializeStripePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Location>> listLocations() async {
+    try {
+      final result = await _channel.invokeMethod('listLocations', []);
+      return (result as List)
+          .map((e) => _$deserializeLocation(e as List))
+          .toList();
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> _init() async {
-    await _channel.invokeMethod('_init', []);
+    try {
+      await _channel.invokeMethod('_init', []);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> _startDiscoverReaders(DiscoverConfig config) async {
-    await _channel.invokeMethod('_startDiscoverReaders', [
-      _$serializeDiscoverConfig(config),
-    ]);
+    try {
+      await _channel.invokeMethod('_startDiscoverReaders', [
+        _$serializeDiscoverConfig(config),
+      ]);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 
   @override
   Future<void> _stopDiscoverReaders() async {
-    await _channel.invokeMethod('_stopDiscoverReaders', []);
+    try {
+      await _channel.invokeMethod('_stopDiscoverReaders', []);
+    } on PlatformException catch (exception) {
+      throwIfIsHostException(exception);
+      rethrow;
+    }
   }
 }
 
@@ -153,39 +269,6 @@ StripeReader _$deserializeStripeReader(List<Object?> serialized) =>
         locationId: serialized[5] as String?,
         serialNumber: serialized[6] as String,
         label: serialized[7] as String?);
-List<Object?> _$serializeLocation(Location deserialized) => [
-      deserialized.address != null
-          ? _$serializeAddress(deserialized.address!)
-          : null,
-      deserialized.displayName,
-      deserialized.id,
-      deserialized.livemode,
-      deserialized.metadata?.map((k, v) => MapEntry(k, v))
-    ];
-Location _$deserializeLocation(List<Object?> serialized) => Location(
-    address: serialized[0] != null
-        ? _$deserializeAddress(serialized[0] as List)
-        : null,
-    displayName: serialized[1] as String?,
-    id: serialized[2] as String?,
-    livemode: serialized[3] as bool?,
-    metadata: (serialized[4] as Map?)
-        ?.map((k, v) => MapEntry(k as String, v as String)));
-List<Object?> _$serializeAddress(Address deserialized) => [
-      deserialized.city,
-      deserialized.country,
-      deserialized.line1,
-      deserialized.line2,
-      deserialized.postalCode,
-      deserialized.state
-    ];
-Address _$deserializeAddress(List<Object?> serialized) => Address(
-    city: serialized[0] as String?,
-    country: serialized[1] as String?,
-    line1: serialized[2] as String?,
-    line2: serialized[3] as String?,
-    postalCode: serialized[4] as String?,
-    state: serialized[5] as String?);
 List<Object?> _$serializeCart(Cart deserialized) => [
       deserialized.currency,
       deserialized.tax,
@@ -311,6 +394,39 @@ List<Object?> _$serializeCollectConfiguration(
 CollectConfiguration _$deserializeCollectConfiguration(
         List<Object?> serialized) =>
     CollectConfiguration(skipTipping: serialized[0] as bool);
+List<Object?> _$serializeLocation(Location deserialized) => [
+      deserialized.address != null
+          ? _$serializeAddress(deserialized.address!)
+          : null,
+      deserialized.displayName,
+      deserialized.id,
+      deserialized.livemode,
+      deserialized.metadata?.map((k, v) => MapEntry(k, v))
+    ];
+Location _$deserializeLocation(List<Object?> serialized) => Location(
+    address: serialized[0] != null
+        ? _$deserializeAddress(serialized[0] as List)
+        : null,
+    displayName: serialized[1] as String?,
+    id: serialized[2] as String?,
+    livemode: serialized[3] as bool?,
+    metadata: (serialized[4] as Map?)
+        ?.map((k, v) => MapEntry(k as String, v as String)));
+List<Object?> _$serializeAddress(Address deserialized) => [
+      deserialized.city,
+      deserialized.country,
+      deserialized.line1,
+      deserialized.line2,
+      deserialized.postalCode,
+      deserialized.state
+    ];
+Address _$deserializeAddress(List<Object?> serialized) => Address(
+    city: serialized[0] as String?,
+    country: serialized[1] as String?,
+    line1: serialized[2] as String?,
+    line2: serialized[3] as String?,
+    postalCode: serialized[4] as String?,
+    state: serialized[5] as String?);
 List<Object?> _$serializeDiscoverConfig(DiscoverConfig deserialized) => [
       deserialized.discoveryMethod.index,
       deserialized.simulated,

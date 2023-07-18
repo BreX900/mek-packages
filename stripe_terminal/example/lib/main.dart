@@ -93,11 +93,11 @@ class _MyAppState extends State<MyApp> {
     final connectedReader = switch (_discoveringMethod) {
       DiscoveryMethod.bluetoothScan => await terminal.connectBluetoothReader(
           reader.serialNumber,
-          locationId: _selectedLocation?.id,
+          locationId: (_selectedLocation?.id ?? reader.locationId)!,
         ),
       DiscoveryMethod.localMobile => await terminal.connectMobileReader(
           reader.serialNumber,
-          // locationId: _selectedLocation?.id,
+          locationId: (_selectedLocation?.id ?? reader.locationId)!,
         ),
       DiscoveryMethod.internet ||
       DiscoveryMethod.handOff ||

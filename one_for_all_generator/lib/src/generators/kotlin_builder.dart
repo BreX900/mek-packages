@@ -4,8 +4,31 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
+import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
+
+// class FlutterApiException(
+//     val code: String,
+//     val info: String?,
+//     val details: Any?,
+// ) : RuntimeException(if (info != null) "$code: $info" else code) {
+//     companion object {
+//         fun locationNotProvided(message: String?, details: Any?) =
+//             FlutterApiException("locationNotProvided", message, details)
+//     }
+// }
+//
+// class HostApiException(
+//     val code: String,
+//     val info: String?,
+//     val details: Any?,
+// ) : RuntimeException(if (info != null) "$code: $info" else code) {
+//     companion object {
+//         fun locationNotProvided(message: String?, details: Any?) =
+//             HostApiException("locationNotProvided", message, details)
+//     }
+// }
 
 class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   final KotlinOptions options;
@@ -14,9 +37,54 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   @override
   String get outputFile => options.outputFile;
 
+  @override
+  void writeException(EnumElement element) {
+    final name = element.name.replaceFirst('Code', '');
+    _specs.add(KotlinEnum(
+      name: element.name,
+      values: element.fields.where((e) => e.isEnumConstant).map((e) => e.name).toList(),
+    ));
+    _specs.add(KotlinClass(
+      name: name,
+      initializers: [
+        KotlinField(name: 'code', type: 'String'),
+        KotlinParameter(name: 'message', type: 'String?'),
+        KotlinField(name: 'details', type: 'Any?'),
+      ],
+      implements: ['RuntimeException(if (message != null) "\$code: \$message" else code)'],
+      body: [
+        // KotlinClass(
+        //   modifier: KotlinClassModifier.companion,
+        //   name: 'object',
+        //   body: element.fields.where((e) => e.isEnumConstant).map((e) {
+        //     return KotlinMethod(
+        //       name: e.name,
+        //       parameters: [
+        //         KotlinParameter(name: 'message', type: 'Any?', defaultTo: 'null'),
+        //         KotlinParameter(name: 'details', type: 'Any?', defaultTo: 'null'),
+        //       ],
+        //       lambda: true,
+        //       body:
+        //           'throw $name("${e.name}", ${e.documentationComment != null ? '"${e.documentationComment}"' : 'null'}, details)',
+        //     );
+        //   }).toList(),
+        // ),
+      ],
+    ));
+  }
+
   KotlinGenerator(super.pluginOptions, this.options) {
+    // _specs.add(const KotlinClass(
+    //   name: 'HostApiException',
+    //   initializers: [
+    //     KotlinField(name: 'code', type: 'String'),
+    //     KotlinParameter(name: 'message', type: 'String?'),
+    //     KotlinField(name: 'details', type: 'Any?'),
+    //   ],
+    //   implements: ['RuntimeException(message ?: code)'],
+    // ));
     _specs.add(const KotlinClass(
-      name: 'PlatformException',
+      name: 'FlutterApiException',
       initializers: [
         KotlinField(name: 'code', type: 'String'),
         KotlinParameter(name: 'message', type: 'String?'),
@@ -41,16 +109,15 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
       body: [
         KotlinMethod(
           name: 'success',
-          parameters: [
-            KotlinParameter(name: 'data', type: 'T'),
-          ],
+          parameters: [KotlinParameter(name: 'data', type: 'T')],
+          lambda: true,
           body: 'result.success(serializer(data))',
         ),
         KotlinMethod(
           name: 'error',
           parameters: [
             KotlinParameter(name: 'code', type: 'String'),
-            KotlinParameter(name: 'message', type: 'String'),
+            KotlinParameter(name: 'message', type: 'String?'),
             KotlinParameter(name: 'details', type: 'Any?'),
           ],
           body: 'result.error(code, message, details)',
@@ -60,7 +127,9 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ClassElement element) {
+  void writeHostApiClass(ApiClassHandler handler) {
+    final ApiClassHandler(:element) = handler;
+
     _specs.add(KotlinClass(
       modifier: KotlinClassModifier.abstract,
       name: _encodeType(element.thisType, false),
@@ -98,8 +167,8 @@ return suspendCoroutine { continuation ->
             override fun success(result: Any?) {
                 continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
             }
-            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                continuation.resumeWithException(PlatformException(errorCode, errorMessage, errorDetails))
+            override fun error(code: String, message: String?, details: Any?) {
+                continuation.resumeWithException(FlutterApiException(code, message, details))
             }
             override fun notImplemented() {}
         }

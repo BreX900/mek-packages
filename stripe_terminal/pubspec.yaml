@@ -21,15 +21,17 @@ dependencies:
   flutter:
     sdk: flutter
 
-  mek_data_class: ^1.4.0
+  collection: ^1.17.0
+  recase: ^4.1.0
 
+  mek_data_class: ^1.4.0
   one_for_all:
     path: ../one_for_all
 
 dev_dependencies:
   mek_lints: ^2.0.0
 
-  pigeon: ^10.1.3
+#  pigeon: ^10.1.3
   path: ^1.8.3
   build_runner: ^2.4.6
   mek_data_class_generator: ^1.5.1

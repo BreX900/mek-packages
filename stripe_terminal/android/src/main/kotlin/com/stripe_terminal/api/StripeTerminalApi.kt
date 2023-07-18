@@ -7,7 +7,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class PlatformException(
+class FlutterApiException(
     val code: String,
     message: String?,
     val details: Any?,
@@ -26,12 +26,23 @@ class Result<T>(
 
     fun error(
         code: String,
-        message: String,
+        message: String?,
         details: Any?,
     ) {
         result.error(code, message, details)
     }
 }
+
+enum class StripeTerminalExceptionCode {
+    cancelFailed, notConnectedToReader, alreadyConnectedToReader, bluetoothPermissionDenied, processInvalidPaymentIntent, invalidClientSecret, unsupportedOperation, unexpectedOperation, unsupportedSdk, usbPermissionDenied, missingRequiredParameter, invalidRequiredParameter, invalidTipParameter, localMobileLibraryNotIncluded, localMobileUnsupportedDevice, localMobileUnsupportedAndroidVersion, localMobileDeviceTampered, localMobileDebugNotSupported, offlineModeUnsupportedAndroidVersion, canceled, locationServicesDisabled, bluetoothScanTimedOut, bluetoothLowEnergyUnsupported, readerSoftwareUpdateFailedBatteryLow, readerSoftwareUpdateFailedInterrupted, cardInsertNotRead, cardSwipeNotRead, cardReadTimedOut, cardRemoved, customerConsentRequired, cardLeftInReader, usbDiscoveryTimedOut, featureNotEnabledOnAccount, readerBusy, readerCommunicationError, bluetoothError, bluetoothDisconnected, bluetoothReconnectStarted, usbDisconnected, usbReconnectStarted, readerConnectedToAnotherDevice, readerSoftwareUpdateFailed, readerSoftwareUpdateFailedReaderError, readerSoftwareUpdateFailedServerError, localMobileNfcDisabled, unsupportedReaderVersion, unexpectedSdkError, declinedByStripeApi, declinedByReader, requestTimedOut, stripeApiConnectionError, stripeApiError, stripeApiResponseDecodingError, connectionTokenProviderError, sessionExpired, androidApiLevelError, amountExceedsMaxOfflineAmount, offlinePaymentsDatabaseTooLarge, readerConnectionNotAvailableOffline, readerConnectionOfflineLocationMismatch, noLastSeenAccount, invalidOfflineCurrency, cardSwipeNotAvailable, interacNotSupportedOffline, onlinePinNotSupportedOffline, offlineAndCardExpired, offlineTransactionDeclined, offlineCollectAndProcessMismatch, offlineTestmodePaymentInLivemode, offlineLivemodePaymentInTestmode, offlinePaymentIntentNotFound, missingEmvData, connectionTokenProviderErrorWhileForwarding, accountIdMismatchWhileForwarding, forceOfflineWithFeatureDisabled, notConnectedToInternetAndRequireOnlineSet;
+}
+
+class StripeTerminalException(
+    val code: String,
+    message: String?,
+    val details: Any?,
+): RuntimeException(if (message != null) "$code: $message" else code)
+
 
 abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
     lateinit var channel: MethodChannel
@@ -45,8 +56,8 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                     override fun success(result: Any?) {
                         continuation.resume(result as String)
                     }
-                    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                        continuation.resumeWithException(PlatformException(errorCode, errorMessage, errorDetails))
+                    override fun error(code: String, message: String?, details: Any?) {
+                        continuation.resumeWithException(FlutterApiException(code, message, details))
                     }
                     override fun notImplemented() {}
                 }
@@ -65,8 +76,8 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                     override fun success(result: Any?) {
                         continuation.resume(Unit)
                     }
-                    override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-                        continuation.resumeWithException(PlatformException(errorCode, errorMessage, errorDetails))
+                    override fun error(code: String, message: String?, details: Any?) {
+                        continuation.resumeWithException(FlutterApiException(code, message, details))
                     }
                     override fun notImplemented() {}
                 }
@@ -77,7 +88,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     abstract fun onConnectBluetoothReader(
         result: Result<StripeReaderApi>,
         readerSerialNumber: String,
-        locationId: String?,
+        locationId: String,
     )
 
     abstract fun onConnectInternetReader(
@@ -86,13 +97,10 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         failIfInUse: Boolean,
     )
 
-    abstract fun onListLocations(
-        result: Result<List<LocationApi>>,
-    )
-
     abstract fun onConnectMobileReader(
         result: Result<StripeReaderApi>,
         readerSerialNumber: String,
+        locationId: String,
     )
 
     abstract fun onDisconnectReader(
@@ -127,11 +135,17 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
 
     abstract fun onCollectPaymentMethod(
         result: Result<StripePaymentIntentApi>,
+        clientSecret: String,
         collectConfiguration: CollectConfigurationApi,
     )
 
     abstract fun onProcessPayment(
         result: Result<StripePaymentIntentApi>,
+        clientSecret: String,
+    )
+
+    abstract fun onListLocations(
+        result: Result<List<LocationApi>>,
     )
 
     abstract fun onInit(
@@ -155,19 +169,15 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         when (call.method) {
             "connectBluetoothReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectBluetoothReader(res, args[0] as String, args[1] as String?)
+                onConnectBluetoothReader(res, args[0] as String, args[1] as String)
             }
             "connectInternetReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
                 onConnectInternetReader(res, args[0] as String, args[1] as Boolean)
             }
-            "listLocations" -> {
-                val res = Result<List<LocationApi>>(result) {it.map{it.serialize()}}
-                onListLocations(res)
-            }
             "connectMobileReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectMobileReader(res, args[0] as String)
+                onConnectMobileReader(res, args[0] as String, args[1] as String)
             }
             "disconnectReader" -> {
                 val res = Result<Unit>(result) {null}
@@ -199,11 +209,15 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
             }
             "collectPaymentMethod" -> {
                 val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onCollectPaymentMethod(res, (args[0] as List<Any?>).let{CollectConfigurationApi.deserialize(it)})
+                onCollectPaymentMethod(res, args[0] as String, (args[1] as List<Any?>).let{CollectConfigurationApi.deserialize(it)})
             }
             "processPayment" -> {
                 val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onProcessPayment(res)
+                onProcessPayment(res, args[0] as String)
+            }
+            "listLocations" -> {
+                val res = Result<List<LocationApi>>(result) {it.map{it.serialize()}}
+                onListLocations(res)
             }
             "_init" -> {
                 val res = Result<Unit>(result) {null}
@@ -281,73 +295,6 @@ enum class LocationStatusApi {
 
 enum class DeviceTypeApi {
     CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN;
-}
-
-data class LocationApi(
-    val address: AddressApi?,
-    val displayName: String?,
-    val id: String?,
-    val livemode: Boolean?,
-    val metadata: HashMap<String, String>?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            address?.serialize(),
-            displayName,
-            id,
-            livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v as String}.toTypedArray())},
-        )
-    }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): LocationApi {
-            return LocationApi(
-                address = (serialized[0] as List<Any?>?)?.let{AddressApi.deserialize(it)},
-                displayName = serialized[1] as String?,
-                id = serialized[2] as String?,
-                livemode = serialized[3] as Boolean?,
-                metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-            )
-        }
-    }
-}
-
-data class AddressApi(
-    val city: String?,
-    val country: String?,
-    val line1: String?,
-    val line2: String?,
-    val postalCode: String?,
-    val state: String?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            city,
-            country,
-            line1,
-            line2,
-            postalCode,
-            state,
-        )
-    }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): AddressApi {
-            return AddressApi(
-                city = serialized[0] as String?,
-                country = serialized[1] as String?,
-                line1 = serialized[2] as String?,
-                line2 = serialized[3] as String?,
-                postalCode = serialized[4] as String?,
-                state = serialized[5] as String?,
-            )
-        }
-    }
 }
 
 data class CartApi(
@@ -590,6 +537,73 @@ data class CollectConfigurationApi(
         ): CollectConfigurationApi {
             return CollectConfigurationApi(
                 skipTipping = serialized[0] as Boolean,
+            )
+        }
+    }
+}
+
+data class LocationApi(
+    val address: AddressApi?,
+    val displayName: String?,
+    val id: String?,
+    val livemode: Boolean?,
+    val metadata: HashMap<String, String>?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            address?.serialize(),
+            displayName,
+            id,
+            livemode,
+            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v as String}.toTypedArray())},
+        )
+    }
+
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): LocationApi {
+            return LocationApi(
+                address = (serialized[0] as List<Any?>?)?.let{AddressApi.deserialize(it)},
+                displayName = serialized[1] as String?,
+                id = serialized[2] as String?,
+                livemode = serialized[3] as Boolean?,
+                metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
+            )
+        }
+    }
+}
+
+data class AddressApi(
+    val city: String?,
+    val country: String?,
+    val line1: String?,
+    val line2: String?,
+    val postalCode: String?,
+    val state: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            city,
+            country,
+            line1,
+            line2,
+            postalCode,
+            state,
+        )
+    }
+
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): AddressApi {
+            return AddressApi(
+                city = serialized[0] as String?,
+                country = serialized[1] as String?,
+                line1 = serialized[2] as String?,
+                line2 = serialized[3] as String?,
+                postalCode = serialized[4] as String?,
+                state = serialized[5] as String?,
             )
         }
     }

@@ -29,15 +29,18 @@ class StripeTerminalException {
       ['$runtimeType: ${code.name}', code.message, message, details].nonNulls.join('\n');
 }
 
-@ApiScheme(
+@HostApiScheme(
   hostExceptionHandler: StripeTerminal._throwIfIsHostException,
 )
 abstract class StripeTerminal {
-  Future<String> Function()? _fetchToken;
-  StreamController<List<StripeReader>>? _readersController;
+  final _StripeTerminalHandlers _handlers;
 
   /// Creates an internal `StripeTerminal` instance
-  StripeTerminal._();
+  StripeTerminal._({
+    required Future<String> Function() fetchToken,
+  }) : _handlers = _StripeTerminalHandlers(fetchToken: fetchToken) {
+    _$setupStripeTerminalHandlers(_handlers);
+  }
 
   /// Initializes the terminal SDK
   static Future<StripeTerminal> getInstance({
@@ -45,8 +48,7 @@ abstract class StripeTerminal {
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
   }) async {
-    final StripeTerminal stripeTerminal = _$StripeTerminal();
-    stripeTerminal._fetchToken = fetchToken;
+    final StripeTerminal stripeTerminal = _$StripeTerminal(fetchToken: fetchToken);
     await stripeTerminal._init();
     return stripeTerminal;
   }
@@ -117,15 +119,15 @@ abstract class StripeTerminal {
     /// Configuration for the discovry process
     DiscoverConfig config,
   ) {
-    _readersController ??= StreamController(
+    _handlers._readersController ??= StreamController(
       onListen: () async => await _startDiscoverReaders(config),
       onCancel: () async {
         await _stopDiscoverReaders();
-        _readersController = null;
+        _handlers._readersController = null;
       },
     );
 
-    return _readersController!.stream;
+    return _handlers._readersController!.stream;
   }
 
   /// Starts reading payment method based on payment intent.
@@ -164,17 +166,27 @@ abstract class StripeTerminal {
 
   Future<void> _stopDiscoverReaders();
 
-  Future<String> _onRequestConnectionToken() async => await _fetchToken!();
-
-  Future<void> _onReadersFound(List<StripeReader> readers) async {
-    _readersController!.add(readers);
-  }
-
   static void _throwIfIsHostException(PlatformException exception) {
     final snakeCaseCode = exception.code.camelCase;
     final code =
         StripeTerminalExceptionCode.values.firstWhereOrNull((e) => e.name == snakeCaseCode);
     if (code == null) return;
     throw StripeTerminalException._(code, exception.message, exception.details);
+  }
+}
+
+@FlutterApiScheme()
+class _StripeTerminalHandlers {
+  final Future<String> Function() _fetchToken;
+  StreamController<List<StripeReader>>? _readersController;
+
+  _StripeTerminalHandlers({
+    required Future<String> Function() fetchToken,
+  }) : _fetchToken = fetchToken;
+
+  Future<String> _onRequestConnectionToken() async => await _fetchToken();
+
+  Future<void> _onReadersFound(List<StripeReader> readers) async {
+    _readersController!.add(readers);
   }
 }

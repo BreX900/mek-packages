@@ -15,6 +15,10 @@ import 'package:source_gen/source_gen.dart';
 export 'src/options.dart';
 
 class OneForAll {
+  static const hostApiChecker = TypeChecker.fromRuntime(HostApiScheme);
+  static const flutterApiChecker = TypeChecker.fromRuntime(FlutterApiScheme);
+  static const dataChecker = TypeChecker.fromRuntime(DataScheme);
+
   final OneForAllOptions options;
   final List<CodeGenerator> Function(OneForAllOptions options) generatorsBuilder;
 
@@ -45,19 +49,10 @@ class OneForAll {
 
     final collection = AnalysisContextCollection(
       includedPaths: [apiAbsolutePath],
-      // // If using an in-memory file, also provide a layered ResourceProvider:
-      // resourceProvider: OverlayResourceProvider(PhysicalResourceProvider())
-      //   ..setOverlay(
-      //     filePath,
-      //     content: File(filePath).readAsStringSync(),
-      //     modificationStamp: 0,
-      //   ),
     );
 
-    const apiChecker = TypeChecker.fromRuntime(ApiScheme);
-    const dataChecker = TypeChecker.fromRuntime(DataScheme);
-
-    final apiHandles = <ApiClassHandler>{};
+    final hostApiHandles = <ApiClassHandler>{};
+    final flutterApiElements = <ClassElement>{};
     final dataElements = <InterfaceElement>{};
 
     void writeDataClasses(DartType type) {
@@ -101,17 +96,22 @@ class OneForAll {
         // final apiClassElement = libraryReader.classes.firstWhereOrNull((e) => e.name == apiClassName);
         // if (apiClassElement != null) apiElements.add(apiClassElement);
 
-        apiHandles.addAll(libraryReader.annotatedWith(apiChecker).map(ApiClassHandler.from));
+        hostApiHandles
+            .addAll(libraryReader.annotatedWith(hostApiChecker).map(ApiClassHandler.from));
+
+        flutterApiElements.addAll(
+            libraryReader.annotatedWith(flutterApiChecker).map((e) => e.element as ClassElement));
 
         libraryReader
             .annotatedWith(dataChecker)
-            .map((e) => (e.element as ClassElement).thisType)
+            .map((e) => (e.element as InterfaceElement).thisType)
             .forEach(writeDataClasses);
       }
     }
 
-    for (final handle in apiHandles) {
-      for (final method in handle.element.methods) {
+    final apiElements = hostApiHandles.map((e) => e.element).followedBy(flutterApiElements);
+    for (final element in apiElements) {
+      for (final method in element.methods) {
         if (!method.isHostMethod) continue;
 
         for (final parameter in method.parameters) {
@@ -125,11 +125,12 @@ class OneForAll {
     final generators = generatorsBuilder(options);
 
     for (final generator in generators) {
-      for (final handler in apiHandles) {
-        final ApiClassHandler() = handler;
-        // generator.writeException(handler.hostExceptionElement);
-        // if (flutterExceptionElement != null) generator.writeException(flutterExceptionElement);
+      for (final handler in hostApiHandles) {
         generator.writeHostApiClass(handler);
+      }
+
+      for (final element in flutterApiElements) {
+        generator.writeFlutterApiClass(element);
       }
 
       for (final element in dataElements) {

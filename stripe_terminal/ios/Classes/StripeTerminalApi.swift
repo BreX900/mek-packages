@@ -33,7 +33,7 @@ class Result<T> {
     }
 }
 
-protocol StripeTerminalHostApi {
+protocol StripeTerminalApi {
     func onConnectBluetoothReader(
         _ result: Result<StripeReaderApi>,
         _ readerSerialNumber: String,
@@ -113,7 +113,7 @@ protocol StripeTerminalHostApi {
 
 func setupStripeTerminalApi(
     _ binaryMessenger: FlutterBinaryMessenger,
-    _ hostApi: StripeTerminalHostApi
+    _ hostApi: StripeTerminalApi
 ) {
     let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
     channel.setMethodCallHandler { call, result in

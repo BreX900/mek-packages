@@ -1,11 +1,15 @@
 library;
 
-class ApiScheme {
+class HostApiScheme {
   final Function? hostExceptionHandler;
 
-  const ApiScheme({
+  const HostApiScheme({
     this.hostExceptionHandler,
   });
+}
+
+class FlutterApiScheme {
+  const FlutterApiScheme();
 }
 
 class DataScheme {

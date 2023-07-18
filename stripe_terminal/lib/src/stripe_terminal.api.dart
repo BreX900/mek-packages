@@ -1,19 +1,7 @@
 part of 'stripe_terminal.dart';
 
 class _$StripeTerminal extends StripeTerminal {
-  _$StripeTerminal() : super._() {
-    _channel.setMethodCallHandler((call) async {
-      final args = call.arguments as List<Object?>;
-      return switch (call.method) {
-        '_onRequestConnectionToken' => await _onRequestConnectionToken(),
-        '_onReadersFound' => await _onReadersFound((args[0] as List)
-            .map((e) => _$deserializeStripeReader(e as List))
-            .toList()),
-        _ => throw UnsupportedError(
-            'StripeTerminal#Flutter.${call.method} method'),
-      };
-    });
-  }
+  _$StripeTerminal({required super.fetchToken}) : super._();
 
   static const _channel = MethodChannel('stripe_terminal');
 
@@ -221,6 +209,21 @@ class _$StripeTerminal extends StripeTerminal {
       rethrow;
     }
   }
+}
+
+void _$setupStripeTerminalHandlers(_StripeTerminalHandlers hostApi) {
+  const channel = MethodChannel('stripe_terminal_handlers');
+  channel.setMethodCallHandler((call) async {
+    final args = call.arguments as List<Object?>;
+    return switch (call.method) {
+      '_onRequestConnectionToken' => await hostApi._onRequestConnectionToken(),
+      '_onReadersFound' => await hostApi._onReadersFound((args[0] as List)
+          .map((e) => _$deserializeStripeReader(e as List))
+          .toList()),
+      _ => throw UnsupportedError(
+          '_StripeTerminalHandlers#Flutter.${call.method} method'),
+    };
+  });
 }
 
 List<Object?> _$serializeStripeReader(StripeReader deserialized) => [

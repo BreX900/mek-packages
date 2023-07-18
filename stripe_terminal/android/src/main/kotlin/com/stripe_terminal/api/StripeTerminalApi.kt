@@ -1,6 +1,7 @@
 package com.stripe_terminal.api
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlin.coroutines.resume
@@ -35,44 +36,6 @@ class Result<T>(
 
 abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
     lateinit var channel: MethodChannel
-
-    suspend fun requestConnectionToken(): String {
-        return suspendCoroutine { continuation ->
-            channel.invokeMethod(
-                "_onRequestConnectionToken",
-                listOf<Any?>(),
-                object : MethodChannel.Result {
-                    override fun success(result: Any?) {
-                        continuation.resume(result as String)
-                    }
-                    override fun error(code: String, message: String?, details: Any?) {
-                        continuation.resumeWithException(PlatformException(code, message, details))
-                    }
-                    override fun notImplemented() {}
-                }
-            )
-        }
-    }
-
-    suspend fun readersFound(
-        readers: List<StripeReaderApi>,
-    ) {
-        return suspendCoroutine { continuation ->
-            channel.invokeMethod(
-                "_onReadersFound",
-                listOf<Any?>(readers.map{it.serialize()}),
-                object : MethodChannel.Result {
-                    override fun success(result: Any?) {
-                        continuation.resume(Unit)
-                    }
-                    override fun error(code: String, message: String?, details: Any?) {
-                        continuation.resumeWithException(PlatformException(code, message, details))
-                    }
-                    override fun notImplemented() {}
-                }
-            )
-        }
-    }
 
     abstract fun onConnectBluetoothReader(
         result: Result<StripeReaderApi>,
@@ -234,6 +197,50 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         flutterPluginBinding: FlutterPlugin.FlutterPluginBinding,
     ) {
         channel.setMethodCallHandler(null)
+    }
+}
+
+class StripeTerminalHandlersApi(
+    binaryMessenger: BinaryMessenger,
+) {
+    val channel: MethodChannel = MethodChannel(binaryMessenger, "stripe_terminal_handlers")
+
+    suspend fun requestConnectionToken(): String {
+        return suspendCoroutine { continuation ->
+            channel.invokeMethod(
+                "_onRequestConnectionToken",
+                listOf<Any?>(),
+                object : MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        continuation.resume(result as String)
+                    }
+                    override fun error(code: String, message: String?, details: Any?) {
+                        continuation.resumeWithException(PlatformException(code, message, details))
+                    }
+                    override fun notImplemented() {}
+                }
+            )
+        }
+    }
+
+    suspend fun readersFound(
+        readers: List<StripeReaderApi>,
+    ) {
+        return suspendCoroutine { continuation ->
+            channel.invokeMethod(
+                "_onReadersFound",
+                listOf<Any?>(readers.map{it.serialize()}),
+                object : MethodChannel.Result {
+                    override fun success(result: Any?) {
+                        continuation.resume(Unit)
+                    }
+                    override fun error(code: String, message: String?, details: Any?) {
+                        continuation.resumeWithException(PlatformException(code, message, details))
+                    }
+                    override fun notImplemented() {}
+                }
+            )
+        }
     }
 }
 

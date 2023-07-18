@@ -11,9 +11,11 @@ abstract class CodeGenerator {
 
   const CodeGenerator(this.pluginOptions);
 
-  void writeException(EnumElement element);
-
   void writeHostApiClass(ApiClassHandler handler);
+
+  void writeFlutterApiClass(ClassElement element);
+
+  void writeException(EnumElement element);
 
   void writeDataClass(ClassElement element);
 
@@ -30,18 +32,11 @@ mixin WriteToOutputFile {
   }
 }
 
-extension SupportedDartType on DartType {
-  bool get isPrimitive =>
-      this is DynamicType ||
-      isDartCoreNull ||
-      isDartCoreObject ||
-      isDartCoreBool ||
-      isDartCoreInt ||
-      isDartCoreDouble ||
-      isDartCoreString;
+extension CleanNameInterface on InterfaceOrAugmentationElement {
+  String get cleanName => name.replaceFirst('_', '');
+}
 
-  bool get isSupported => isPrimitive || isDartCoreList || isDartCoreMap;
-
+extension TypeArgsDartType on DartType {
   DartType get singleTypeArg {
     final element = this as ParameterizedType;
     return element.typeArguments.single;
@@ -53,7 +48,20 @@ extension SupportedDartType on DartType {
   }
 }
 
+extension SupportedDartType on DartType {
+  bool get isPrimitive =>
+      this is DynamicType ||
+      isDartCoreNull ||
+      isDartCoreObject ||
+      isDartCoreBool ||
+      isDartCoreInt ||
+      isDartCoreDouble ||
+      isDartCoreString;
+
+  bool get isSupported => isPrimitive || isDartCoreList || isDartCoreMap;
+}
+
 extension SupportedMethodElement on MethodElement {
   bool get isHostMethod => isAbstract && returnType.isDartAsyncFuture;
-  bool get isFlutterMethod => name.startsWith('_on');
+  bool get isFlutterMethod => name.startsWith('on') || name.startsWith('_on');
 }

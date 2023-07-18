@@ -24,49 +24,43 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 
-  Code? _buildFlutterApiConstructorCode(ClassElement element) {
-    final methods = element.methods.where((e) => e.isFlutterMethod);
-    if (methods.isEmpty) return null;
-
-    return Code('''
-      _channel.setMethodCallHandler((call) async {
-        final args = call.arguments as List<Object?>;
-        return switch (call.method) {
-        ${methods.map((e) {
-      return '''
-          '${e.name}' => await ${e.name}(${e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
-              ''';
-    }).join('\n')}
-         _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),
-        };
-      });''');
-  }
-
   @override
   void writeHostApiClass(ApiClassHandler handler) {
     final ApiClassHandler(:element, :hostExceptionHandler) = handler;
 
+    final constructor = element.constructors.singleOrNull;
+
+    void updateParameter(ParameterElement e, ParameterBuilder b) => b
+      ..type = Reference('${e.type}')
+      ..name = e.name;
+
     _library.body.add(Class((b) => b
-      ..name = '_\$${element.name}'
+      ..name = '_\$${element.cleanName}'
       ..extend = Reference(element.name)
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
         ..name = '_channel'
         ..assignment = Code('MethodChannel(\'${element.name.snakeCase}\')')))
-      ..constructors.add(Constructor((b) => b
-        ..initializers.add(const Code('super._()'))
-        ..body = _buildFlutterApiConstructorCode(element)))
-      // ..methods.addAll([
-      //   if (hostExceptionElement != null)
-      //     Method((b) => b
-      //       ..annotations.add(CodeExpression(Code('protected')))
-      //       ..returns = Reference('void')
-      //       ..name = 'throwIfIsHostException'
-      //       ..requiredParameters.add(Parameter((b) => b
-      //         ..type = Reference('PlatformException')
-      //         ..name = 'exception'))),
-      // ])
+      ..constructors.addAll([
+        if (constructor != null)
+          Constructor((b) => b
+            ..initializers.add(const Code('super._()'))
+            ..requiredParameters
+                .addAll(constructor.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
+              return Parameter((b) => b
+                ..toSuper = true
+                ..name = e.name);
+            }))
+            ..optionalParameters
+                .addAll(constructor.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
+              return Parameter((b) => b
+                ..required = e.isRequired
+                ..toSuper = true
+                ..name = e.name
+                ..named = e.isNamed);
+            })))
+      ])
       ..methods.addAll(element.methods.where((e) => e.isHostMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
@@ -74,10 +68,6 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
           if (e.type.isSupported) return '${e.name},\n';
           return '_\$serialize${e.type.getDisplayString(withNullability: false)}(${e.name}),\n';
         }).join()}]';
-
-        void updateParameter(ParameterElement e, ParameterBuilder b) => b
-          ..type = Reference('${e.type}')
-          ..name = e.name;
 
         String parseResult() {
           final code = 'await _channel.invokeMethod(\'${e.name}\', $invocationParameters);';
@@ -117,6 +107,31 @@ try {
           ..modifier = MethodModifier.async
           ..body = Code(tryParseResult()));
       }))));
+  }
+
+  @override
+  void writeFlutterApiClass(ClassElement element) {
+    final methods = element.methods.where((e) => e.isFlutterMethod);
+
+    _library.body.add(Method((b) => b
+      ..returns = Reference('void')
+      ..name = '_\$setup${element.cleanName}'
+      ..requiredParameters.add(Parameter((b) => b
+        ..type = Reference(element.name)
+        ..name = 'hostApi'))
+      ..body = Code('''
+const channel = MethodChannel('${element.cleanName.snakeCase}');
+channel.setMethodCallHandler((call) async {
+  final args = call.arguments as List<Object?>;
+  return switch (call.method) {
+  ${methods.map((e) {
+        return '''
+    '${e.name}' => await hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
+        ''';
+      }).join('\n')}
+    _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),
+  };
+});''')));
   }
 
   @override
@@ -243,7 +258,7 @@ try {
 extension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
   String get questionOrEmpty => isNullable ? '?' : '';
-  String get exclamationOrEmpty => isNullable ? '!' : '';
+  // String get exclamationOrEmpty => isNullable ? '!' : '';
 
   String get displayName => getDisplayString(withNullability: false);
   String get displayNameNullable => getDisplayString(withNullability: true);

@@ -84,10 +84,11 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   @override
   void writeHostApiClass(ApiClassHandler handler) {
     final ApiClassHandler(:element) = handler;
+    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(KotlinClass(
       modifier: KotlinClassModifier.abstract,
-      name: _encodeType(element.thisType, false),
+      name: className,
       implements: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
       fields: const [
         KotlinField(
@@ -97,40 +98,6 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
         ),
       ],
       body: [
-        ...element.methods.where((e) => e.isFlutterMethod).map((e) {
-          final returnType = e.returnType.singleTypeArg;
-
-          final parameters =
-              e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
-
-          return KotlinMethod(
-            modifiers: {KotlinMethodModifier.suspend},
-            name: _encodeMethodName(e.name),
-            parameters: e.parameters.map((e) {
-              return KotlinParameter(
-                name: e.name,
-                type: _encodeType(e.type, true),
-              );
-            }).toList(),
-            returnType: returnType is VoidType ? null : _encodeType(returnType, true),
-            body: '''
-return suspendCoroutine { continuation ->
-    channel.invokeMethod(
-        "${e.name}",
-        listOf<Any?>($parameters),
-        object : MethodChannel.Result {
-            override fun success(result: Any?) {
-                continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
-            }
-            override fun error(code: String, message: String?, details: Any?) {
-                continuation.resumeWithException(PlatformException(code, message, details))
-            }
-            override fun notImplemented() {}
-        }
-    )
-}''',
-          );
-        }),
         ...element.methods.where((e) => e.isHostMethod).map((e) {
           final returnType = e.returnType.singleTypeArg;
 
@@ -203,6 +170,61 @@ return suspendCoroutine { continuation ->
   }
 
   @override
+  void writeFlutterApiClass(ClassElement element) {
+    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
+
+    _specs.add(KotlinClass(
+      name: className,
+      initializers: [
+        KotlinParameter(
+          name: 'binaryMessenger',
+          type: 'BinaryMessenger',
+        ),
+      ],
+      fields: [
+        KotlinField(
+          name: 'channel',
+          type: 'MethodChannel',
+          assignment: 'MethodChannel(binaryMessenger, "${element.cleanName.snakeCase}")',
+        ),
+      ],
+      body: element.methods.where((e) => e.isFlutterMethod).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+
+        return KotlinMethod(
+          modifiers: {KotlinMethodModifier.suspend},
+          name: _encodeMethodName(e.name),
+          parameters: e.parameters.map((e) {
+            return KotlinParameter(
+              name: e.name,
+              type: _encodeType(e.type, true),
+            );
+          }).toList(),
+          returns: returnType is VoidType ? null : _encodeType(returnType, true),
+          body: '''
+return suspendCoroutine { continuation ->
+    channel.invokeMethod(
+        "${e.name}",
+        listOf<Any?>($parameters),
+        object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
+            }
+            override fun error(code: String, message: String?, details: Any?) {
+                continuation.resumeWithException(PlatformException(code, message, details))
+            }
+            override fun notImplemented() {}
+        }
+    )
+}''',
+        );
+      }).toList(),
+    ));
+  }
+
+  @override
   void writeDataClass(ClassElement element) {
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
@@ -218,7 +240,7 @@ return suspendCoroutine { continuation ->
       body: [
         KotlinMethod(
           name: 'serialize',
-          returnType: 'List<Any?>',
+          returns: 'List<Any?>',
           body: 'return listOf(\n${fields.map((e) {
             return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
           }).join()})',
@@ -235,7 +257,7 @@ return suspendCoroutine { continuation ->
                   type: 'List<Any?>',
                 ),
               ],
-              returnType: _encodeType(element.thisType, true),
+              returns: _encodeType(element.thisType, true),
               body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
                 return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
               }).join()})',
@@ -373,10 +395,9 @@ return suspendCoroutine { continuation ->
         package: options.package,
         imports: [
           'io.flutter.embedding.engine.plugins.FlutterPlugin',
+          'io.flutter.plugin.common.BinaryMessenger',
           'io.flutter.plugin.common.MethodCall',
           'io.flutter.plugin.common.MethodChannel',
-          // 'io.flutter.plugin.common.MethodChannel.MethodCallHandler',
-          // 'io.flutter.plugin.common.MethodChannel.Result',
           'kotlin.coroutines.resume',
           'kotlin.coroutines.resumeWithException',
           'kotlin.coroutines.suspendCoroutine',

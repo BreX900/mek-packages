@@ -23,7 +23,7 @@ class KotlinMethod extends KotlinSpec {
   final Set<KotlinMethodModifier> modifiers;
   final String name;
   final List<KotlinParameter> parameters;
-  final String? returnType;
+  final String? returns;
   final bool lambda;
   final String? body;
 
@@ -32,7 +32,7 @@ class KotlinMethod extends KotlinSpec {
     this.modifiers = const {},
     required this.name,
     this.parameters = const [],
-    this.returnType,
+    this.returns,
     this.lambda = false,
     this.body,
   });
@@ -79,12 +79,14 @@ class KotlinField extends KotlinClassInitializer {
   final KotlinFieldModifier modifier;
   final String name;
   final String type;
+  final String? assignment;
 
   const KotlinField({
     this.visibility,
     this.modifier = KotlinFieldModifier.val,
     required this.name,
     required this.type,
+    this.assignment,
   });
 }
 
@@ -237,12 +239,14 @@ class KotlinEmitter {
   }
 
   Object _encodeField(KotlinField spec) {
+    final visibility = _encodeVisibility(spec.visibility);
     final modifier = switch (spec.modifier) {
       KotlinFieldModifier.var$ => 'var',
       KotlinFieldModifier.val => 'val',
       KotlinFieldModifier.lateInit => 'lateinit var',
     };
-    return '$_space${_encodeVisibility(spec.visibility)}$modifier ${spec.name}: ${spec.type}';
+    final assignment = spec.assignment != null ? ' = ${spec.assignment}' : '';
+    return '$_space$visibility$modifier ${spec.name}: ${spec.type}$assignment';
   }
 
   Object _encodeMethod(KotlinMethod spec) {
@@ -262,7 +266,7 @@ class KotlinEmitter {
     } else {
       buffer.write(')');
     }
-    if (spec.returnType != null) buffer.write(': ${spec.returnType}');
+    if (spec.returns != null) buffer.write(': ${spec.returns}');
 
     if (spec.body != null) {
       buffer.write(' {\n');

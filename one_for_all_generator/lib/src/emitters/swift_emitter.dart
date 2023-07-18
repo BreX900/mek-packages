@@ -34,7 +34,7 @@ class SwiftMethod extends SwiftSpec {
   final bool throws;
   final String name;
   final List<SwiftParameter> parameters;
-  final String? returnType;
+  final String? returns;
   final String? body;
 
   const SwiftMethod({
@@ -44,7 +44,7 @@ class SwiftMethod extends SwiftSpec {
     this.throws = false,
     required this.name,
     this.parameters = const [],
-    this.returnType,
+    this.returns,
     this.body,
   });
 }
@@ -300,7 +300,7 @@ class SwiftEmitter {
     }
     if (spec.async) buffer.write(' async');
     if (spec.throws) buffer.write(' throws');
-    if (spec.returnType != null) buffer.write(' -> ${spec.returnType}');
+    if (spec.returns != null) buffer.write(' -> ${spec.returns}');
 
     if (spec.body != null) {
       buffer.write(' {\n');

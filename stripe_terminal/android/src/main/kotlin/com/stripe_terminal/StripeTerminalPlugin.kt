@@ -24,6 +24,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import kotlinx.coroutines.runBlocking
 import com.stripe_terminal.api.StripeTerminalApi
 import com.stripe_terminal.api.Result
+import com.stripe_terminal.api.StripeTerminalHandlersApi
 import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -33,8 +34,10 @@ import kotlinx.coroutines.Dispatchers
 /** StripeTerminalPlugin */
 class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
     ConnectionTokenProvider {
+    private var _handlers: StripeTerminalHandlersApi? = null
+    private val handlers: StripeTerminalHandlersApi get() = _handlers!!
 
-    val terminal: Terminal get() = Terminal.getInstance()
+    private val terminal: Terminal get() = Terminal.getInstance()
 
     private val REQUEST_CODE_LOCATION = 1012
 
@@ -275,7 +278,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
                 override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
                     activeReaders = readers
                     runBlocking(Dispatchers.Main) {
-                        readersFound(readers.map { it.toApi() })
+                        handlers.readersFound(readers.map { it.toApi() })
                     }
                 }
             }, object : TerminalErrorHandler(result), Callback {
@@ -311,12 +314,22 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
         currentActivity = null
     }
 
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        super.onAttachedToEngine(flutterPluginBinding)
+        _handlers = StripeTerminalHandlersApi(flutterPluginBinding.binaryMessenger)
+    }
+
+    override fun onDetachedFromEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+        _handlers = null
+        super.onDetachedFromEngine(flutterPluginBinding)
+    }
+
     // ======================== STRIPE
 
     override fun fetchConnectionToken(callback: ConnectionTokenCallback) {
         runBlocking(Dispatchers.Main) {
             try {
-                val token = requestConnectionToken()
+                val token = handlers.requestConnectionToken()
                 callback.onSuccess(token)
             } catch (error: Throwable) {
                 callback.onFailure(ConnectionTokenException("", error))

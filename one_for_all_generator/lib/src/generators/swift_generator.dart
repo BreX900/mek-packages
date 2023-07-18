@@ -69,8 +69,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
   @override
   void writeHostApiClass(ApiClassHandler handler) {
     final ApiClassHandler(:element) = handler;
-
-    final className = '${element.name}HostApi';
+    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(SwiftProtocol(
       name: className,
@@ -188,6 +187,11 @@ channel.setMethodCallHandler { call, result in
   }
 
   @override
+  void writeFlutterApiClass(ClassElement element) {
+    // TODO: implement writeFlutterApiClass
+  }
+
+  @override
   void writeDataClass(ClassElement element) {
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
@@ -202,7 +206,7 @@ channel.setMethodCallHandler { call, result in
       methods: [
         SwiftMethod(
           name: 'serialize',
-          returnType: '[Any?]',
+          returns: '[Any?]',
           body: 'return [\n${fields.map((e) {
             return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
           }).join()}]',
@@ -217,7 +221,7 @@ channel.setMethodCallHandler { call, result in
               type: '[Any?]',
             ),
           ],
-          returnType: _encodeType(element.thisType, true),
+          returns: _encodeType(element.thisType, true),
           body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
             return '    ${_encodeVarName(e.name)}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
           }).join(',\n')}\n)',

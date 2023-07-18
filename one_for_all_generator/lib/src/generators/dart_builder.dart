@@ -37,55 +37,14 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
           '${e.name}' => await ${e.name}(${e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
               ''';
     }).join('\n')}
-         _ => throw StateError('Not supported: \${call.method}'),
+         _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),
         };
-      });
-      ''');
-  }
-
-  @override
-  void writeException(EnumElement element) {
-    _library.body.add(Class((b) => b
-      ..name = element.name.replaceFirst('Code', '')
-      ..fields.add(Field((b) => b
-        ..modifier = FieldModifier.final$
-        ..type = Reference(element.name)
-        ..name = 'code'))
-      ..fields.add(Field((b) => b
-        ..modifier = FieldModifier.final$
-        ..type = Reference('String?')
-        ..name = 'message'))
-      ..fields.add(Field((b) => b
-        ..modifier = FieldModifier.final$
-        ..type = Reference('String?')
-        ..name = 'details'))
-      ..constructors.add(Constructor((b) => b
-        ..name = '_'
-        ..requiredParameters.add(Parameter((b) => b
-          ..toThis = true
-          ..name = 'code'))
-        ..requiredParameters.add(Parameter((b) => b
-          ..toThis = true
-          ..name = 'message'))
-        ..requiredParameters.add(Parameter((b) => b
-          ..toThis = true
-          ..name = 'details'))))
-      ..methods.add(Method((b) => b
-        ..annotations.add(CodeExpression(Code('override')))
-        ..returns = Reference('String')
-        ..name = 'toString'
-        ..lambda = true
-        ..body = Code('['
-            '\'\$runtimeType: \${code.name}\', '
-            'code.message, '
-            'message, '
-            'details'
-            '].nonNulls.join(\'\\n\')')))));
+      });''');
   }
 
   @override
   void writeHostApiClass(ApiClassHandler handler) {
-    final ApiClassHandler(:element, :hostExceptionElement) = handler;
+    final ApiClassHandler(:element, :hostExceptionHandler) = handler;
 
     _library.body.add(Class((b) => b
       ..name = '_\$${element.name}'
@@ -98,20 +57,16 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
       ..constructors.add(Constructor((b) => b
         ..initializers.add(const Code('super._()'))
         ..body = _buildFlutterApiConstructorCode(element)))
-      ..methods.addAll([
-        Method((b) => b
-          ..returns = Reference('void')
-          ..name = 'throwIfIsHostException'
-          ..requiredParameters.add(Parameter((b) => b
-            ..type = Reference('PlatformException')
-            ..name = 'exception'))
-          ..body = Code('''
-final snakeCaseCode = exception.code.camelCase;
-final code = ${hostExceptionElement.name}.values.firstWhereOrNull((e) => e.name == snakeCaseCode);
-if (code == null) return;
-throw ${hostExceptionElement.name.replaceFirst('Code', '')}._(code, exception.message, exception.details);
-''')),
-      ])
+      // ..methods.addAll([
+      //   if (hostExceptionElement != null)
+      //     Method((b) => b
+      //       ..annotations.add(CodeExpression(Code('protected')))
+      //       ..returns = Reference('void')
+      //       ..name = 'throwIfIsHostException'
+      //       ..requiredParameters.add(Parameter((b) => b
+      //         ..type = Reference('PlatformException')
+      //         ..name = 'exception'))),
+      // ])
       ..methods.addAll(element.methods.where((e) => e.isHostMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
@@ -133,12 +88,12 @@ throw ${hostExceptionElement.name.replaceFirst('Code', '')}._(code, exception.me
         }
 
         String tryParseResult() {
-          // if (hostExceptionElement == null) return parseResult();
+          if (hostExceptionHandler == null) return parseResult();
           return '''
 try {
   ${parseResult()}
 } on PlatformException catch(exception) {
-  throwIfIsHostException(exception);
+  ${hostExceptionHandler.accessor}(exception);
   rethrow;
 }''';
         }
@@ -239,6 +194,46 @@ try {
     return type.isNullable
         ? '$varAccess != null ? $serializer($varAccess!) : null'
         : '$serializer($varAccess)';
+  }
+
+  @override
+  void writeException(EnumElement element) {
+    // _library.body.add(Class((b) => b
+    //   ..name = element.name.replaceFirst('Code', '')
+    //   ..fields.add(Field((b) => b
+    //     ..modifier = FieldModifier.final$
+    //     ..type = Reference(element.name)
+    //     ..name = 'code'))
+    //   ..fields.add(Field((b) => b
+    //     ..modifier = FieldModifier.final$
+    //     ..type = Reference('String?')
+    //     ..name = 'message'))
+    //   ..fields.add(Field((b) => b
+    //     ..modifier = FieldModifier.final$
+    //     ..type = Reference('String?')
+    //     ..name = 'details'))
+    //   ..constructors.add(Constructor((b) => b
+    //     ..name = '_'
+    //     ..requiredParameters.add(Parameter((b) => b
+    //       ..toThis = true
+    //       ..name = 'code'))
+    //     ..requiredParameters.add(Parameter((b) => b
+    //       ..toThis = true
+    //       ..name = 'message'))
+    //     ..requiredParameters.add(Parameter((b) => b
+    //       ..toThis = true
+    //       ..name = 'details'))))
+    //   ..methods.add(Method((b) => b
+    //     ..annotations.add(CodeExpression(Code('override')))
+    //     ..returns = Reference('String')
+    //     ..name = 'toString'
+    //     ..lambda = true
+    //     ..body = Code('['
+    //         '\'\$runtimeType: \${code.name}\', '
+    //         'code.message, '
+    //         'message, '
+    //         'details'
+    //         '].nonNulls.join(\'\\n\')')))));
   }
 
   @override

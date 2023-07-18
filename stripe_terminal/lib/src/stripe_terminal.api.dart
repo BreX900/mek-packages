@@ -1,27 +1,5 @@
 part of 'stripe_terminal.dart';
 
-class StripeTerminalException {
-  StripeTerminalException._(
-    this.code,
-    this.message,
-    this.details,
-  );
-
-  final StripeTerminalExceptionCode code;
-
-  final String? message;
-
-  final String? details;
-
-  @override
-  String toString() => [
-        '$runtimeType: ${code.name}',
-        code.message,
-        message,
-        details
-      ].nonNulls.join('\n');
-}
-
 class _$StripeTerminal extends StripeTerminal {
   _$StripeTerminal() : super._() {
     _channel.setMethodCallHandler((call) async {
@@ -31,20 +9,13 @@ class _$StripeTerminal extends StripeTerminal {
         '_onReadersFound' => await _onReadersFound((args[0] as List)
             .map((e) => _$deserializeStripeReader(e as List))
             .toList()),
-        _ => throw StateError('Not supported: ${call.method}'),
+        _ => throw UnsupportedError(
+            'StripeTerminal#Flutter.${call.method} method'),
       };
     });
   }
 
   static const _channel = MethodChannel('stripe_terminal');
-
-  void throwIfIsHostException(PlatformException exception) {
-    final snakeCaseCode = exception.code.camelCase;
-    final code = StripeTerminalExceptionCode.values
-        .firstWhereOrNull((e) => e.name == snakeCaseCode);
-    if (code == null) return;
-    throw StripeTerminalException._(code, exception.message, exception.details);
-  }
 
   @override
   Future<StripeReader> connectBluetoothReader(
@@ -58,7 +29,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripeReader(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -75,7 +46,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripeReader(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -92,7 +63,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripeReader(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -102,7 +73,7 @@ class _$StripeTerminal extends StripeTerminal {
     try {
       await _channel.invokeMethod('disconnectReader', []);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -114,7 +85,7 @@ class _$StripeTerminal extends StripeTerminal {
         _$serializeCart(cart),
       ]);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -124,7 +95,7 @@ class _$StripeTerminal extends StripeTerminal {
     try {
       await _channel.invokeMethod('clearReaderDisplay', []);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -135,7 +106,7 @@ class _$StripeTerminal extends StripeTerminal {
       final result = await _channel.invokeMethod('connectionStatus', []);
       return ConnectionStatus.values[result as int];
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -146,7 +117,7 @@ class _$StripeTerminal extends StripeTerminal {
       final result = await _channel.invokeMethod('fetchConnectedReader', []);
       return result != null ? _$deserializeStripeReader(result as List) : null;
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -157,7 +128,7 @@ class _$StripeTerminal extends StripeTerminal {
       final result = await _channel.invokeMethod('readReusableCardDetail', []);
       return _$deserializeStripePaymentMethod(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -170,7 +141,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -188,7 +159,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -201,7 +172,7 @@ class _$StripeTerminal extends StripeTerminal {
       ]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -214,7 +185,7 @@ class _$StripeTerminal extends StripeTerminal {
           .map((e) => _$deserializeLocation(e as List))
           .toList();
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -224,7 +195,7 @@ class _$StripeTerminal extends StripeTerminal {
     try {
       await _channel.invokeMethod('_init', []);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -236,7 +207,7 @@ class _$StripeTerminal extends StripeTerminal {
         _$serializeDiscoverConfig(config),
       ]);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -246,7 +217,7 @@ class _$StripeTerminal extends StripeTerminal {
     try {
       await _channel.invokeMethod('_stopDiscoverReaders', []);
     } on PlatformException catch (exception) {
-      throwIfIsHostException(exception);
+      StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }

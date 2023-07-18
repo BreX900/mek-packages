@@ -2,18 +2,17 @@ enum SwiftVisibility { public, protected, private }
 
 class SwiftParameter {
   final String? fieldName;
-  final String label;
+  final String? label;
   final String name;
   final String? annotation;
   final String type;
 
   const SwiftParameter({
-    String? label,
+    this.label,
     required this.name,
     this.annotation,
     required this.type,
-  })  : label = label ?? name,
-        fieldName = null;
+  }) : fieldName = null;
 
   SwiftParameter.fromField(
     SwiftField field, {
@@ -26,9 +25,13 @@ class SwiftParameter {
         type = field.type;
 }
 
+enum SwiftMethodModifier { static, override }
+
 class SwiftMethod extends SwiftSpec {
   final SwiftVisibility? visibility;
-  final bool static;
+  final SwiftMethodModifier? modifier;
+  final bool async;
+  final bool throws;
   final String name;
   final List<SwiftParameter> parameters;
   final String? returnType;
@@ -36,7 +39,9 @@ class SwiftMethod extends SwiftSpec {
 
   const SwiftMethod({
     this.visibility,
-    this.static = false,
+    this.modifier,
+    this.async = false,
+    this.throws = false,
     required this.name,
     this.parameters = const [],
     this.returnType,
@@ -280,8 +285,9 @@ class SwiftEmitter {
   Object _encodeMethod(SwiftMethod spec) {
     final buffer = StringBuffer();
     buffer.write(_space);
-    if (spec.static) buffer.write('static ');
-    buffer.write('${_encodeVisibility(spec.visibility)}func ${spec.name}(');
+    if (spec.visibility != null) buffer.write(_encodeVisibility(spec.visibility!));
+    if (spec.modifier != null) buffer.write('${spec.modifier!.name} ');
+    buffer.write('func ${spec.name}(');
     if (spec.parameters.isNotEmpty) {
       buffer.write('\n');
       _indent += 1;
@@ -292,6 +298,8 @@ class SwiftEmitter {
     } else {
       buffer.write(')');
     }
+    if (spec.async) buffer.write(' async');
+    if (spec.throws) buffer.write(' throws');
     if (spec.returnType != null) buffer.write(' -> ${spec.returnType}');
 
     if (spec.body != null) {
@@ -305,7 +313,8 @@ class SwiftEmitter {
   }
 
   Object _encodeParameter(SwiftParameter spec) {
-    final annotation = spec.annotation;
-    return '$_space${spec.label} ${spec.name}: ${annotation != null ? '@$annotation ' : ''}${spec.type}';
+    final annotation = spec.annotation != null ? '@${spec.annotation} ' : '';
+    final label = spec.label != null ? '${spec.label} ' : '';
+    return '$_space$label${spec.name}: $annotation${spec.type}';
   }
 }

@@ -1,12 +1,10 @@
 library;
 
 class ApiScheme {
-  final Type hostExceptionCodes;
-  final Type? flutterExceptionCodes;
+  final Function? hostExceptionHandler;
 
   const ApiScheme({
-    required this.hostExceptionCodes,
-    this.flutterExceptionCodes,
+    this.hostExceptionHandler,
   });
 }
 

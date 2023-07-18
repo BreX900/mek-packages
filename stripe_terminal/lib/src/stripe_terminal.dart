@@ -17,8 +17,20 @@ import 'package:recase/recase.dart';
 
 part 'stripe_terminal.api.dart';
 
+class StripeTerminalException {
+  final StripeTerminalExceptionCode code;
+  final String? message;
+  final String? details;
+
+  const StripeTerminalException._(this.code, this.message, this.details);
+
+  @override
+  String toString() =>
+      ['$runtimeType: ${code.name}', code.message, message, details].nonNulls.join('\n');
+}
+
 @ApiScheme(
-  hostExceptionCodes: StripeTerminalExceptionCode,
+  hostExceptionHandler: StripeTerminal._throwIfIsHostException,
 )
 abstract class StripeTerminal {
   Future<String> Function()? _fetchToken;
@@ -156,5 +168,13 @@ abstract class StripeTerminal {
 
   Future<void> _onReadersFound(List<StripeReader> readers) async {
     _readersController!.add(readers);
+  }
+
+  static void _throwIfIsHostException(PlatformException exception) {
+    final snakeCaseCode = exception.code.camelCase;
+    final code =
+        StripeTerminalExceptionCode.values.firstWhereOrNull((e) => e.name == snakeCaseCode);
+    if (code == null) return;
+    throw StripeTerminalException._(code, exception.message, exception.details);
   }
 }

@@ -1,5 +1,11 @@
 import Flutter
 
+struct PlatformError: Error {
+    let code: String
+    let message: String?
+    let details: String?
+}
+
 class Result<T> {
     private let result: FlutterResult
     private let serializer: (T) -> Any?
@@ -15,7 +21,7 @@ class Result<T> {
     func success(
         _ data: T
     ) {
-        result.success(serializer(data))
+        result(serializer(data))
     }
 
     func error(
@@ -27,6 +33,152 @@ class Result<T> {
     }
 }
 
+protocol StripeTerminalHostApi {
+    func onConnectBluetoothReader(
+        _ result: Result<StripeReaderApi>,
+        _ readerSerialNumber: String,
+        _ locationId: String
+    )
+
+    func onConnectInternetReader(
+        _ result: Result<StripeReaderApi>,
+        _ readerSerialNumber: String,
+        _ failIfInUse: Bool
+    )
+
+    func onConnectMobileReader(
+        _ result: Result<StripeReaderApi>,
+        _ readerSerialNumber: String,
+        _ locationId: String
+    )
+
+    func onDisconnectReader(
+        _ result: Result<Unit>
+    )
+
+    func onSetReaderDisplay(
+        _ result: Result<Unit>,
+        _ cart: CartApi
+    )
+
+    func onClearReaderDisplay(
+        _ result: Result<Unit>
+    )
+
+    func onConnectionStatus(
+        _ result: Result<ConnectionStatusApi>
+    )
+
+    func onFetchConnectedReader(
+        _ result: Result<StripeReaderApi?>
+    )
+
+    func onReadReusableCardDetail(
+        _ result: Result<StripePaymentMethodApi>
+    )
+
+    func onRetrievePaymentIntent(
+        _ result: Result<StripePaymentIntentApi>,
+        _ clientSecret: String
+    )
+
+    func onCollectPaymentMethod(
+        _ result: Result<StripePaymentIntentApi>,
+        _ clientSecret: String,
+        _ collectConfiguration: CollectConfigurationApi
+    )
+
+    func onProcessPayment(
+        _ result: Result<StripePaymentIntentApi>,
+        _ clientSecret: String
+    )
+
+    func onListLocations(
+        _ result: Result<[LocationApi]>
+    )
+
+    func onInit(
+        _ result: Result<Unit>
+    )
+
+    func onStartDiscoverReaders(
+        _ result: Result<Unit>,
+        _ config: DiscoverConfigApi
+    )
+
+    func onStopDiscoverReaders(
+        _ result: Result<Unit>
+    )
+}
+
+func setupStripeTerminalApi(
+    _ binaryMessenger: FlutterBinaryMessenger,
+    _ hostApi: StripeTerminalHostApi
+) {
+    let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
+    channel.setMethodCallHandler { call, result in
+        do {
+            let args = call.arguments as! [Any?]
+                        
+            switch call.method {
+                    case "connectBluetoothReader":
+              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+              hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String)
+            case "connectInternetReader":
+              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+              hostApi.onConnectInternetReader(res, args[0] as! String, args[1] as! Bool)
+            case "connectMobileReader":
+              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+              hostApi.onConnectMobileReader(res, args[0] as! String, args[1] as! String)
+            case "disconnectReader":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onDisconnectReader(res)
+            case "setReaderDisplay":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onSetReaderDisplay(res, CartApi.deserialize(args[0] as! [Any?]))
+            case "clearReaderDisplay":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onClearReaderDisplay(res)
+            case "connectionStatus":
+              let res = Result<ConnectionStatusApi>(result: result) { $0.serialize() }
+              hostApi.onConnectionStatus(res)
+            case "fetchConnectedReader":
+              let res = Result<StripeReaderApi?>(result: result) { $0.serialize() }
+              hostApi.onFetchConnectedReader(res)
+            case "readReusableCardDetail":
+              let res = Result<StripePaymentMethodApi>(result: result) { $0.serialize() }
+              hostApi.onReadReusableCardDetail(res)
+            case "retrievePaymentIntent":
+              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              hostApi.onRetrievePaymentIntent(res, args[0] as! String)
+            case "collectPaymentMethod":
+              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              hostApi.onCollectPaymentMethod(res, args[0] as! String, CollectConfigurationApi.deserialize(args[1] as! [Any?]))
+            case "processPayment":
+              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              hostApi.onProcessPayment(res, args[0] as! String)
+            case "listLocations":
+              let res = Result<[LocationApi]>(result: result) { $0.serialize() }
+              hostApi.onListLocations(res)
+            case "_init":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onInit(res)
+            case "_startDiscoverReaders":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onStartDiscoverReaders(res, DiscoverConfigApi.deserialize(args[0] as! [Any?]))
+            case "_stopDiscoverReaders":
+              let res = Result<Unit>(result: result) { $0.serialize() }
+              hostApi.onStopDiscoverReaders(res)
+            default:
+                result(FlutterMethodNotImplemented)
+            }
+        } catch let error as PlatformError {
+            result(FlutterError(code: error.code, message: error.message, details: error.details))
+        } catch {
+            result(FlutterError(code: "", message: error.localizedDescription, details: nil))
+        }
+    }
+}
 struct StripeReaderApi {
     let locationStatus: LocationStatusApi
     let batteryLevel: Double

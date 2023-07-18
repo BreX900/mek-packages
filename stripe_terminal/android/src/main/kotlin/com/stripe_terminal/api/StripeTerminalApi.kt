@@ -7,7 +7,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class FlutterApiException(
+class PlatformException(
     val code: String,
     message: String?,
     val details: Any?,
@@ -33,17 +33,6 @@ class Result<T>(
     }
 }
 
-enum class StripeTerminalExceptionCode {
-    cancelFailed, notConnectedToReader, alreadyConnectedToReader, bluetoothPermissionDenied, processInvalidPaymentIntent, invalidClientSecret, unsupportedOperation, unexpectedOperation, unsupportedSdk, usbPermissionDenied, missingRequiredParameter, invalidRequiredParameter, invalidTipParameter, localMobileLibraryNotIncluded, localMobileUnsupportedDevice, localMobileUnsupportedAndroidVersion, localMobileDeviceTampered, localMobileDebugNotSupported, offlineModeUnsupportedAndroidVersion, canceled, locationServicesDisabled, bluetoothScanTimedOut, bluetoothLowEnergyUnsupported, readerSoftwareUpdateFailedBatteryLow, readerSoftwareUpdateFailedInterrupted, cardInsertNotRead, cardSwipeNotRead, cardReadTimedOut, cardRemoved, customerConsentRequired, cardLeftInReader, usbDiscoveryTimedOut, featureNotEnabledOnAccount, readerBusy, readerCommunicationError, bluetoothError, bluetoothDisconnected, bluetoothReconnectStarted, usbDisconnected, usbReconnectStarted, readerConnectedToAnotherDevice, readerSoftwareUpdateFailed, readerSoftwareUpdateFailedReaderError, readerSoftwareUpdateFailedServerError, localMobileNfcDisabled, unsupportedReaderVersion, unexpectedSdkError, declinedByStripeApi, declinedByReader, requestTimedOut, stripeApiConnectionError, stripeApiError, stripeApiResponseDecodingError, connectionTokenProviderError, sessionExpired, androidApiLevelError, amountExceedsMaxOfflineAmount, offlinePaymentsDatabaseTooLarge, readerConnectionNotAvailableOffline, readerConnectionOfflineLocationMismatch, noLastSeenAccount, invalidOfflineCurrency, cardSwipeNotAvailable, interacNotSupportedOffline, onlinePinNotSupportedOffline, offlineAndCardExpired, offlineTransactionDeclined, offlineCollectAndProcessMismatch, offlineTestmodePaymentInLivemode, offlineLivemodePaymentInTestmode, offlinePaymentIntentNotFound, missingEmvData, connectionTokenProviderErrorWhileForwarding, accountIdMismatchWhileForwarding, forceOfflineWithFeatureDisabled, notConnectedToInternetAndRequireOnlineSet;
-}
-
-class StripeTerminalException(
-    val code: String,
-    message: String?,
-    val details: Any?,
-): RuntimeException(if (message != null) "$code: $message" else code)
-
-
 abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
     lateinit var channel: MethodChannel
 
@@ -57,7 +46,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                         continuation.resume(result as String)
                     }
                     override fun error(code: String, message: String?, details: Any?) {
-                        continuation.resumeWithException(FlutterApiException(code, message, details))
+                        continuation.resumeWithException(PlatformException(code, message, details))
                     }
                     override fun notImplemented() {}
                 }
@@ -77,7 +66,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                         continuation.resume(Unit)
                     }
                     override fun error(code: String, message: String?, details: Any?) {
-                        continuation.resumeWithException(FlutterApiException(code, message, details))
+                        continuation.resumeWithException(PlatformException(code, message, details))
                     }
                     override fun notImplemented() {}
                 }

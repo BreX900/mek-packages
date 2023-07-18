@@ -101,17 +101,7 @@ class OneForAll {
         // final apiClassElement = libraryReader.classes.firstWhereOrNull((e) => e.name == apiClassName);
         // if (apiClassElement != null) apiElements.add(apiClassElement);
 
-        apiHandles.addAll(libraryReader.annotatedWith(apiChecker).map((e) {
-          final AnnotatedElement(:element, :annotation) = e;
-
-          return ApiClassHandler(
-            element: element as ClassElement,
-            hostExceptionElement:
-                annotation.read('hostExceptionCodes').typeValue.element as EnumElement,
-            flutterExceptionElement:
-                annotation.peek('flutterExceptionCodes')?.typeValue.element as EnumElement?,
-          );
-        }));
+        apiHandles.addAll(libraryReader.annotatedWith(apiChecker).map(ApiClassHandler.from));
 
         libraryReader
             .annotatedWith(dataChecker)
@@ -136,9 +126,9 @@ class OneForAll {
 
     for (final generator in generators) {
       for (final handler in apiHandles) {
-        final ApiClassHandler(:flutterExceptionElement) = handler;
-        generator.writeException(handler.hostExceptionElement);
-        if (flutterExceptionElement != null) generator.writeException(flutterExceptionElement);
+        final ApiClassHandler() = handler;
+        // generator.writeException(handler.hostExceptionElement);
+        // if (flutterExceptionElement != null) generator.writeException(flutterExceptionElement);
         generator.writeHostApiClass(handler);
       }
 

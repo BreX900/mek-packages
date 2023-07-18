@@ -37,54 +37,9 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   @override
   String get outputFile => options.outputFile;
 
-  @override
-  void writeException(EnumElement element) {
-    final name = element.name.replaceFirst('Code', '');
-    _specs.add(KotlinEnum(
-      name: element.name,
-      values: element.fields.where((e) => e.isEnumConstant).map((e) => e.name).toList(),
-    ));
-    _specs.add(KotlinClass(
-      name: name,
-      initializers: [
-        KotlinField(name: 'code', type: 'String'),
-        KotlinParameter(name: 'message', type: 'String?'),
-        KotlinField(name: 'details', type: 'Any?'),
-      ],
-      implements: ['RuntimeException(if (message != null) "\$code: \$message" else code)'],
-      body: [
-        // KotlinClass(
-        //   modifier: KotlinClassModifier.companion,
-        //   name: 'object',
-        //   body: element.fields.where((e) => e.isEnumConstant).map((e) {
-        //     return KotlinMethod(
-        //       name: e.name,
-        //       parameters: [
-        //         KotlinParameter(name: 'message', type: 'Any?', defaultTo: 'null'),
-        //         KotlinParameter(name: 'details', type: 'Any?', defaultTo: 'null'),
-        //       ],
-        //       lambda: true,
-        //       body:
-        //           'throw $name("${e.name}", ${e.documentationComment != null ? '"${e.documentationComment}"' : 'null'}, details)',
-        //     );
-        //   }).toList(),
-        // ),
-      ],
-    ));
-  }
-
   KotlinGenerator(super.pluginOptions, this.options) {
-    // _specs.add(const KotlinClass(
-    //   name: 'HostApiException',
-    //   initializers: [
-    //     KotlinField(name: 'code', type: 'String'),
-    //     KotlinParameter(name: 'message', type: 'String?'),
-    //     KotlinField(name: 'details', type: 'Any?'),
-    //   ],
-    //   implements: ['RuntimeException(message ?: code)'],
-    // ));
-    _specs.add(const KotlinClass(
-      name: 'FlutterApiException',
+    _specs.add(KotlinClass(
+      name: 'PlatformException',
       initializers: [
         KotlinField(name: 'code', type: 'String'),
         KotlinParameter(name: 'message', type: 'String?'),
@@ -168,7 +123,7 @@ return suspendCoroutine { continuation ->
                 continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
             }
             override fun error(code: String, message: String?, details: Any?) {
-                continuation.resumeWithException(FlutterApiException(code, message, details))
+                continuation.resumeWithException(PlatformException(code, message, details))
             }
             override fun notImplemented() {}
         }
@@ -375,6 +330,42 @@ return suspendCoroutine { continuation ->
     }
     return '($varAccess as List<Any?>${type.questionOrEmpty})'
         '${type.questionOrEmpty}.let{${_encodeType(type, false)}.deserialize(it)}';
+  }
+
+  @override
+  void writeException(EnumElement element) {
+    // final name = element.name.replaceFirst('Code', '');
+    // _specs.add(KotlinEnum(
+    //   name: element.name,
+    //   values: element.fields.where((e) => e.isEnumConstant).map((e) => e.name).toList(),
+    // ));
+    // _specs.add(KotlinClass(
+    //   name: name,
+    //   initializers: [
+    //     KotlinField(name: 'code', type: 'String'),
+    //     KotlinParameter(name: 'message', type: 'String?'),
+    //     KotlinField(name: 'details', type: 'Any?'),
+    //   ],
+    //   implements: ['RuntimeException(if (message != null) "\$code: \$message" else code)'],
+    //   body: [
+    //     // KotlinClass(
+    //     //   modifier: KotlinClassModifier.companion,
+    //     //   name: 'object',
+    //     //   body: element.fields.where((e) => e.isEnumConstant).map((e) {
+    //     //     return KotlinMethod(
+    //     //       name: e.name,
+    //     //       parameters: [
+    //     //         KotlinParameter(name: 'message', type: 'Any?', defaultTo: 'null'),
+    //     //         KotlinParameter(name: 'details', type: 'Any?', defaultTo: 'null'),
+    //     //       ],
+    //     //       lambda: true,
+    //     //       body:
+    //     //           'throw $name("${e.name}", ${e.documentationComment != null ? '"${e.documentationComment}"' : 'null'}, details)',
+    //     //     );
+    //     //   }).toList(),
+    //     // ),
+    //   ],
+    // ));
   }
 
   @override

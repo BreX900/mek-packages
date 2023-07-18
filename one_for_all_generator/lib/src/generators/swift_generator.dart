@@ -16,15 +16,15 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
   String get outputFile => options.outputFile;
 
   SwiftGenerator(super.pluginOptions, this.options) {
-    // _specs.add(SwiftClass(
-    //   name: 'PlatformException',
-    //   fields: [
-    //     SwiftField(name: 'code', type: 'String'),
-    //     SwiftParameter(name: 'message', type: 'String?'),
-    //     SwiftField(name: 'details', type: 'Any?'),
-    //   ],
-    //   superTypes: ['RuntimeException(message ?: code)'],
-    // ));
+    _specs.add(SwiftStruct(
+      name: 'PlatformError',
+      implements: ['Error'],
+      fields: [
+        SwiftField(name: 'code', type: 'String'),
+        SwiftField(name: 'message', type: 'String?'),
+        SwiftField(name: 'details', type: 'String?'),
+      ],
+    ));
     final resultFields = [
       SwiftField(
         visibility: SwiftVisibility.private,
@@ -51,7 +51,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
           parameters: [
             SwiftParameter(label: '_', name: 'data', type: 'T'),
           ],
-          body: 'result.success(serializer(data))',
+          body: 'result(serializer(data))',
         ),
         SwiftMethod(
           name: 'error',
@@ -68,40 +68,109 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 
   @override
   void writeHostApiClass(ApiClassHandler handler) {
-    // final ApiClassHandler(:element, :hostExceptionElement) = handler;
-//     _specs.add(KotlinClass(
-//       modifier: KotlinClassModifier.abstract,
+    final ApiClassHandler(:element) = handler;
+
+    final className = '${element.name}HostApi';
+
+    _specs.add(SwiftProtocol(
+      name: className,
+      methods: element.methods.where((e) => e.isHostMethod).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        return SwiftMethod(
+          name: _encodeMethodName(e.name),
+          parameters: [
+            SwiftParameter(
+              label: '_',
+              name: 'result',
+              type: 'Result<${_encodeType(returnType, true)}>',
+            ),
+            ...e.parameters.map((e) {
+              return SwiftParameter(
+                label: '_',
+                name: e.name,
+                type: _encodeType(e.type, true),
+              );
+            }),
+          ],
+        );
+      }).toList(),
+    ));
+    _specs.add(SwiftMethod(
+      name: 'setup${_encodeType(element.thisType, false)}',
+      parameters: [
+        const SwiftParameter(label: '_', name: 'binaryMessenger', type: 'FlutterBinaryMessenger'),
+        SwiftParameter(label: '_', name: 'hostApi', type: className),
+      ],
+      body: '''
+let channel = FlutterMethodChannel(name: "${element.name.snakeCase}", binaryMessenger: binaryMessenger)
+channel.setMethodCallHandler { call, result in
+    do {
+        let args = call.arguments as! [Any?]
+                    
+        switch call.method {
+        ${element.methods.where((e) => e.isHostMethod).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        final parameters =
+            e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
+
+        return '''
+        case "${e.name}":
+          let res = Result<${_encodeType(returnType, true)}>(result: result) { \$0.serialize() }
+          hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''';
+      }).join('\n')}
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    } catch let error as PlatformError {
+        result(FlutterError(code: error.code, message: error.message, details: error.details))
+    } catch {
+        result(FlutterError(code: "", message: error.localizedDescription, details: nil))
+    }
+}''',
+    ));
+
+//     _specs.add(SwiftClass(
 //       name: _encodeType(element.thisType, false),
-//       superTypes: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
 //       fields: const [
-//         KotlinField(
-//           modifier: KotlinFieldModifier.lateInit,
+//         SwiftField(
 //           name: 'channel',
 //           type: 'MethodChannel',
 //         ),
 //       ],
-//       methods: [
-//         ...element.methods.where((e) => e.isFlutterMethod).map((e) {
-//           final returnType = e.returnType.singleTypeArg;
+//       init: SwiftInit(parameters: [
+//         SwiftParameter(
+//           label: '_',
+//           name: 'binaryMessenger',
+//           type: 'FlutterBinaryMessenger',
+//         ),
+//       ], body: '''
+// channel = FlutterMethodChannel(
+//     name: ${element.name.snakeCase},
+//     binaryMessenger: binaryMessenger
+// )'''),
+//       methods: element.methods.where((e) => e.isFlutterMethod).map((e) {
+//         final returnType = e.returnType.singleTypeArg;
 //
-//           final parameters =
-//               e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+//         final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
 //
-//           return KotlinMethod(
-//             modifiers: {KotlinMethodModifier.suspend},
-//             name: _encodeMethodName(e.name),
-//             parameters: e.parameters.map((e) {
-//               return KotlinParameter(
-//                 name: e.name,
-//                 type: _encodeType(e.type, true),
-//               );
-//             }).toList(),
-//             returnType: returnType is VoidType ? null : _encodeType(returnType, true),
-//             body: '''
-// return suspendCoroutine { continuation ->
+//         return SwiftMethod(
+//           name: _encodeMethodName(e.name),
+//           parameters: e.parameters.map((e) {
+//             return SwiftParameter(
+//               name: e.name,
+//               type: _encodeType(e.type, true),
+//             );
+//           }).toList(),
+//           async: true,
+//           throws: true,
+//           returnType: returnType is VoidType ? null : _encodeType(returnType, true),
+//           body: '''
+// return try await withCheckedThrowingContinuation { continuation in
 //     channel.invokeMethod(
 //         "${e.name}",
-//         listOf<Any?>($parameters),
+//         [$parameters],
 //         object : MethodChannel.Result {
 //             override fun success(result: Any?) {
 //                 continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
@@ -113,76 +182,8 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
 //         }
 //     )
 // }''',
-//           );
-//         }),
-//         ...element.methods.where((e) => e.isHostMethod).map((e) {
-//           final returnType = e.returnType.singleTypeArg;
-//
-//           return KotlinMethod(
-//             name: _encodeMethodName(e.name),
-//             parameters: [
-//               // if (returnType is! VoidType)
-//               KotlinParameter(
-//                 name: 'result',
-//                 type: 'Result<${_encodeType(returnType, true)}>',
-//               ),
-//               ...e.parameters.map((e) {
-//                 return KotlinParameter(
-//                   name: e.name,
-//                   type: _encodeType(e.type, true),
-//                 );
-//               }),
-//             ],
-//           );
-//         }),
-//         KotlinMethod(
-//           modifiers: {KotlinMethodModifier.override},
-//           name: 'onMethodCall',
-//           parameters: const [
-//             KotlinParameter(annotations: ['NonNull'], name: 'call', type: 'MethodCall'),
-//             KotlinParameter(annotations: ['NonNull'], name: 'result', type: 'MethodChannel.Result'),
-//           ],
-//           body: 'val args = call.arguments<List<Any?>>()!!\n'
-//               'when (call.method) {\n${element.methods.where((e) => e.isHostMethod).map((e) {
-//             final returnType = e.returnType.singleTypeArg;
-//
-//             final parameters =
-//                 e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
-//
-//             return '''
-//     "${e.name}" -> {
-//         val res = Result<${_encodeType(returnType, true)}>(result) {${returnType is VoidType ? 'null' : _encodeSerialization(returnType, 'it')}}
-//         ${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
-//     }''';
-//           }).join('\n')}\n}',
-//         ),
-//         KotlinMethod(
-//           modifiers: {KotlinMethodModifier.override},
-//           name: 'onAttachedToEngine',
-//           parameters: const [
-//             KotlinParameter(
-//               annotations: ['NonNull'],
-//               name: 'flutterPluginBinding',
-//               type: 'FlutterPlugin.FlutterPluginBinding',
-//             ),
-//           ],
-//           body:
-//               'channel = MethodChannel(flutterPluginBinding.binaryMessenger, "${element.name.snakeCase}")\n'
-//               'channel.setMethodCallHandler(this)',
-//         ),
-//         const KotlinMethod(
-//           modifiers: {KotlinMethodModifier.override},
-//           name: 'onDetachedFromEngine',
-//           parameters: [
-//             KotlinParameter(
-//               annotations: ['NonNull'],
-//               name: 'flutterPluginBinding',
-//               type: 'FlutterPlugin.FlutterPluginBinding',
-//             ),
-//           ],
-//           body: 'channel.setMethodCallHandler(null)',
-//         ),
-//       ],
+//         );
+//       }).toList(),
 //     ));
   }
 
@@ -207,7 +208,7 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
           }).join()}]',
         ),
         SwiftMethod(
-          static: true,
+          modifier: SwiftMethodModifier.static,
           name: 'deserialize',
           parameters: [
             const SwiftParameter(

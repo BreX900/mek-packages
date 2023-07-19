@@ -4,7 +4,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
-import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
+import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
@@ -67,8 +67,8 @@ class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ApiClassHandler handler) {
-    final ApiClassHandler(:element) = handler;
+  void writeHostApiClass(HostApiHandler handler) {
+    final HostApiHandler(:element) = handler;
     final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(SwiftProtocol(
@@ -187,12 +187,14 @@ channel.setMethodCallHandler { call, result in
   }
 
   @override
-  void writeFlutterApiClass(ClassElement element) {
+  void writeFlutterApiClass(FlutterApiHandler handler) {
+    final FlutterApiHandler(:element) = handler;
     // TODO: implement writeFlutterApiClass
   }
 
   @override
-  void writeDataClass(ClassElement element) {
+  void writeSerializable(SerializableHandler<ClassElement> handler) {
+    final SerializableHandler(:element, :flutterToHost, :hostToFlutter) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     _specs.add(SwiftStruct(
@@ -204,34 +206,38 @@ channel.setMethodCallHandler { call, result in
         );
       }).toList(),
       methods: [
-        SwiftMethod(
-          name: 'serialize',
-          returns: '[Any?]',
-          body: 'return [\n${fields.map((e) {
-            return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
-          }).join()}]',
-        ),
-        SwiftMethod(
-          modifier: SwiftMethodModifier.static,
-          name: 'deserialize',
-          parameters: [
-            const SwiftParameter(
-              label: '_',
-              name: 'serialized',
-              type: '[Any?]',
-            ),
-          ],
-          returns: _encodeType(element.thisType, true),
-          body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
-            return '    ${_encodeVarName(e.name)}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
-          }).join(',\n')}\n)',
-        ),
+        if (hostToFlutter)
+          SwiftMethod(
+            name: 'serialize',
+            returns: '[Any?]',
+            body: 'return [\n${fields.map((e) {
+              return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
+            }).join()}]',
+          ),
+        if (flutterToHost)
+          SwiftMethod(
+            modifier: SwiftMethodModifier.static,
+            name: 'deserialize',
+            parameters: [
+              const SwiftParameter(
+                label: '_',
+                name: 'serialized',
+                type: '[Any?]',
+              ),
+            ],
+            returns: _encodeType(element.thisType, true),
+            body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
+              return '    ${_encodeVarName(e.name)}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
+            }).join(',\n')}\n)',
+          ),
       ],
     ));
   }
 
   @override
-  void writeEnum(EnumElement element) {
+  void writeEnum(SerializableHandler<EnumElement> handler) {
+    final SerializableHandler(:element) = handler;
+
     _specs.add(SwiftEnum(
       name: _encodeType(element.thisType, false),
       implements: ['Int'],

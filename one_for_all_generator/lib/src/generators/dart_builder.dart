@@ -5,7 +5,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
-import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
+import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
 import 'package:recase/recase.dart';
@@ -25,8 +25,8 @@ class DartGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ApiClassHandler handler) {
-    final ApiClassHandler(:element, :hostExceptionHandler) = handler;
+  void writeHostApiClass(HostApiHandler handler) {
+    final HostApiHandler(:element, :hostExceptionHandler) = handler;
 
     final constructor = element.constructors.singleOrNull;
 
@@ -110,7 +110,8 @@ try {
   }
 
   @override
-  void writeFlutterApiClass(ClassElement element) {
+  void writeFlutterApiClass(FlutterApiHandler handler) {
+    final FlutterApiHandler(:element) = handler;
     final methods = element.methods.where((e) => e.isFlutterMethod);
 
     _library.body.add(Method((b) => b
@@ -135,37 +136,42 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  void writeDataClass(ClassElement element) {
+  void writeSerializable(SerializableHandler<ClassElement> handler) {
+    final SerializableHandler(:element, :flutterToHost, :hostToFlutter) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     final serializedRef = const Reference('List<Object?>');
     final deserializedRef = Reference(element.name);
 
-    _library.body.add(Method((b) => b
-      ..returns = serializedRef
-      ..name = '_\$serialize${element.name}'
-      ..requiredParameters.add(Parameter((b) => b
-        ..type = deserializedRef
-        ..name = 'deserialized'))
-      ..lambda = true
-      ..body = Code('[${fields.map((e) {
-        return _encodeSerialization(e.type, 'deserialized.${e.name}');
-      }).join(',')}]')));
+    if (flutterToHost) {
+      _library.body.add(Method((b) => b
+        ..returns = serializedRef
+        ..name = '_\$serialize${element.name}'
+        ..requiredParameters.add(Parameter((b) => b
+          ..type = deserializedRef
+          ..name = 'deserialized'))
+        ..lambda = true
+        ..body = Code('[${fields.map((e) {
+          return _encodeSerialization(e.type, 'deserialized.${e.name}');
+        }).join(',')}]')));
+    }
 
-    _library.body.add(Method((b) => b
-      ..returns = deserializedRef
-      ..name = '_\$deserialize${element.name}'
-      ..requiredParameters.add(Parameter((b) => b
-        ..type = serializedRef
-        ..name = 'serialized'))
-      ..lambda = true
-      ..body = Code('${element.name}(${fields.mapIndexed((i, e) {
-        return '${e.name}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
-      }).join(',')})')));
+    if (hostToFlutter) {
+      _library.body.add(Method((b) => b
+        ..returns = deserializedRef
+        ..name = '_\$deserialize${element.name}'
+        ..requiredParameters.add(Parameter((b) => b
+          ..type = serializedRef
+          ..name = 'serialized'))
+        ..lambda = true
+        ..body = Code('${element.name}(${fields.mapIndexed((i, e) {
+          return '${e.name}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
+        }).join(',')})')));
+    }
   }
 
   @override
-  void writeEnum(EnumElement element) {}
+  void writeEnum(SerializableHandler<EnumElement> handler) {}
 
   String _encodeDeserialization(DartType type, String varAccess) {
     if (type is VoidType) throw StateError('void type no supported');

@@ -7,7 +7,7 @@ import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/generators/dart_builder.dart';
 import 'package:one_for_all_generator/src/generators/kotlin_builder.dart';
 import 'package:one_for_all_generator/src/generators/swift_generator.dart';
-import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
+import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart' as path_;
 import 'package:source_gen/source_gen.dart';
@@ -17,7 +17,7 @@ export 'src/options.dart';
 class OneForAll {
   static const hostApiChecker = TypeChecker.fromRuntime(HostApiScheme);
   static const flutterApiChecker = TypeChecker.fromRuntime(FlutterApiScheme);
-  static const dataChecker = TypeChecker.fromRuntime(DataScheme);
+  static const serializableChecker = TypeChecker.fromRuntime(SerializableScheme);
 
   final OneForAllOptions options;
   final List<CodeGenerator> Function(OneForAllOptions options) generatorsBuilder;
@@ -51,31 +51,63 @@ class OneForAll {
       includedPaths: [apiAbsolutePath],
     );
 
-    final hostApiHandles = <ApiClassHandler>{};
-    final flutterApiElements = <ClassElement>{};
-    final dataElements = <InterfaceElement>{};
+    final hostApiHandles = <HostApiHandler>{};
+    final flutterApiHandlers = <FlutterApiHandler>{};
+    final serializableHandlers = <InterfaceElement, SerializableHandler>{};
 
-    void writeDataClasses(DartType type) {
+    void addDeepSerializables(
+      DartType type, {
+      bool flutterToHost = false,
+      bool hostToFlutter = false,
+    }) {
       if (type.isDartCoreList) {
         type as ParameterizedType;
-        writeDataClasses(type.typeArguments[0]);
+        addDeepSerializables(
+          type.typeArguments[0],
+          hostToFlutter: hostToFlutter,
+          flutterToHost: flutterToHost,
+        );
+        return;
       }
       if (type.isDartCoreMap) {
         type as ParameterizedType;
-        writeDataClasses(type.typeArguments[0]);
-        writeDataClasses(type.typeArguments[1]);
+        addDeepSerializables(
+          type.typeArguments[0],
+          hostToFlutter: hostToFlutter,
+          flutterToHost: flutterToHost,
+        );
+        addDeepSerializables(
+          type.typeArguments[1],
+          hostToFlutter: hostToFlutter,
+          flutterToHost: flutterToHost,
+        );
+        return;
       }
       if (type.isSupported) return;
+
       final element = type.element;
-
       if (element is! InterfaceElement) return;
+      SerializableHandler? handler;
+      if (element is EnumElement) {
+        handler = serializableHandlers[element] ?? SerializableHandler<EnumElement>.of(element);
+      } else if (element is ClassElement) {
+        handler = serializableHandlers[element] ?? SerializableHandler<ClassElement>.of(element);
+      }
+      if (handler == null) return;
 
-      if (dataElements.contains(element)) return;
-
-      dataElements.add(element);
+      final updateHandler = handler.apply(
+        flutterToHost: flutterToHost,
+        hostToFlutter: hostToFlutter,
+      );
+      if (handler == updateHandler) return;
+      serializableHandlers[element] = updateHandler;
 
       for (final field in element.fields) {
-        writeDataClasses(field.type);
+        addDeepSerializables(
+          field.type,
+          hostToFlutter: hostToFlutter,
+          flutterToHost: flutterToHost,
+        );
       }
     }
 
@@ -93,32 +125,35 @@ class OneForAll {
 
         print('$filePath: Encoding');
 
-        // final apiClassElement = libraryReader.classes.firstWhereOrNull((e) => e.name == apiClassName);
-        // if (apiClassElement != null) apiElements.add(apiClassElement);
+        hostApiHandles.addAll(libraryReader.annotatedWith(hostApiChecker).map(HostApiHandler.from));
 
-        hostApiHandles
-            .addAll(libraryReader.annotatedWith(hostApiChecker).map(ApiClassHandler.from));
+        flutterApiHandlers
+            .addAll(libraryReader.annotatedWith(flutterApiChecker).map(FlutterApiHandler.from));
 
-        flutterApiElements.addAll(
-            libraryReader.annotatedWith(flutterApiChecker).map((e) => e.element as ClassElement));
-
-        libraryReader
-            .annotatedWith(dataChecker)
-            .map((e) => (e.element as InterfaceElement).thisType)
-            .forEach(writeDataClasses);
+        final serializableElements = libraryReader.annotatedWith(serializableChecker);
+        for (final AnnotatedElement(:element) in serializableElements) {
+          addDeepSerializables(
+            (element as InterfaceElement).thisType,
+            flutterToHost: true,
+            hostToFlutter: true,
+          );
+        }
       }
     }
 
-    final apiElements = hostApiHandles.map((e) => e.element).followedBy(flutterApiElements);
+    final apiElements = [
+      ...hostApiHandles.map((e) => e.element),
+      ...flutterApiHandlers.map((e) => e.element),
+    ];
     for (final element in apiElements) {
       for (final method in element.methods) {
         if (!method.isHostMethod) continue;
 
         for (final parameter in method.parameters) {
-          writeDataClasses(parameter.type);
+          addDeepSerializables(parameter.type, flutterToHost: true);
         }
 
-        writeDataClasses(method.returnType.singleTypeArg);
+        addDeepSerializables(method.returnType.singleTypeArg, hostToFlutter: true);
       }
     }
 
@@ -129,15 +164,16 @@ class OneForAll {
         generator.writeHostApiClass(handler);
       }
 
-      for (final element in flutterApiElements) {
+      for (final element in flutterApiHandlers) {
         generator.writeFlutterApiClass(element);
       }
 
-      for (final element in dataElements) {
-        if (element is EnumElement) {
-          generator.writeEnum(element);
-        } else {
-          generator.writeDataClass(element as ClassElement);
+      for (final handler in serializableHandlers.values) {
+        print(handler);
+        if (handler is SerializableHandler<EnumElement>) {
+          generator.writeEnum(handler);
+        } else if (handler is SerializableHandler<ClassElement>) {
+          generator.writeSerializable(handler);
         }
       }
     }

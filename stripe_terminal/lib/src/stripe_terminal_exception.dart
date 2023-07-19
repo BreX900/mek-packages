@@ -1,6 +1,3 @@
-import 'package:one_for_all/one_for_all.dart';
-
-@HostExceptionScheme()
 enum StripeTerminalExceptionCode {
   cancelFailed,
   notConnectedToReader,

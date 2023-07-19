@@ -266,23 +266,6 @@ data class StripeReaderApi(
             label,
         )
     }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): StripeReaderApi {
-            return StripeReaderApi(
-                locationStatus = (serialized[0] as Int).let{LocationStatusApi.values()[it]},
-                batteryLevel = serialized[1] as Double,
-                deviceType = (serialized[2] as Int).let{DeviceTypeApi.values()[it]},
-                simulated = serialized[3] as Boolean,
-                availableUpdate = serialized[4] as Boolean,
-                locationId = serialized[5] as String?,
-                serialNumber = serialized[6] as String,
-                label = serialized[7] as String?,
-            )
-        }
-    }
 }
 
 enum class LocationStatusApi {
@@ -299,15 +282,6 @@ data class CartApi(
     val total: Long,
     val lineItems: List<CartLineItemApi>,
 ) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            currency,
-            tax,
-            total,
-            lineItems.map{it.serialize()},
-        )
-    }
-
     companion object {
         fun deserialize(
             serialized: List<Any?>,
@@ -327,14 +301,6 @@ data class CartLineItemApi(
     val quantity: Long,
     val amount: Long,
 ) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            description,
-            quantity,
-            amount,
-        )
-    }
-
     companion object {
         fun deserialize(
             serialized: List<Any?>,
@@ -368,20 +334,6 @@ data class StripePaymentMethodApi(
             metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
         )
     }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): StripePaymentMethodApi {
-            return StripePaymentMethodApi(
-                id = serialized[0] as String,
-                cardDetails = (serialized[1] as List<Any?>?)?.let{CardDetailsApi.deserialize(it)},
-                customer = serialized[2] as String?,
-                livemode = serialized[3] as Boolean,
-                metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-            )
-        }
-    }
 }
 
 data class CardDetailsApi(
@@ -403,22 +355,6 @@ data class CardDetailsApi(
             funding,
             last4,
         )
-    }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): CardDetailsApi {
-            return CardDetailsApi(
-                brand = serialized[0] as String?,
-                country = serialized[1] as String?,
-                expMonth = serialized[2] as Long,
-                expYear = serialized[3] as Long,
-                fingerprint = serialized[4] as String?,
-                funding = serialized[5] as String?,
-                last4 = serialized[6] as String?,
-            )
-        }
     }
 }
 
@@ -478,40 +414,6 @@ data class StripePaymentIntentApi(
             transferGroup,
         )
     }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): StripePaymentIntentApi {
-            return StripePaymentIntentApi(
-                id = serialized[0] as String,
-                amount = serialized[1] as Double,
-                amountCapturable = serialized[2] as Double,
-                amountReceived = serialized[3] as Double,
-                application = serialized[4] as String?,
-                applicationFeeAmount = serialized[5] as Double?,
-                captureMethod = serialized[6] as String?,
-                cancellationReason = serialized[7] as String?,
-                canceledAt = serialized[8] as Long?,
-                clientSecret = serialized[9] as String?,
-                confirmationMethod = serialized[10] as String?,
-                created = serialized[11] as Long,
-                currency = serialized[12] as String?,
-                customer = serialized[13] as String?,
-                description = serialized[14] as String?,
-                invoice = serialized[15] as String?,
-                livemode = serialized[16] as Boolean,
-                metadata = serialized[17]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-                onBehalfOf = serialized[18] as String?,
-                paymentMethodId = serialized[19] as String?,
-                status = (serialized[20] as Int?)?.let{PaymentIntentStatusApi.values()[it]},
-                review = serialized[21] as String?,
-                receiptEmail = serialized[22] as String?,
-                setupFutureUsage = serialized[23] as String?,
-                transferGroup = serialized[24] as String?,
-            )
-        }
-    }
 }
 
 enum class PaymentIntentStatusApi {
@@ -521,12 +423,6 @@ enum class PaymentIntentStatusApi {
 data class CollectConfigurationApi(
     val skipTipping: Boolean,
 ) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            skipTipping,
-        )
-    }
-
     companion object {
         fun deserialize(
             serialized: List<Any?>,
@@ -554,20 +450,6 @@ data class LocationApi(
             metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
         )
     }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): LocationApi {
-            return LocationApi(
-                address = (serialized[0] as List<Any?>?)?.let{AddressApi.deserialize(it)},
-                displayName = serialized[1] as String?,
-                id = serialized[2] as String?,
-                livemode = serialized[3] as Boolean?,
-                metadata = serialized[4]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())},
-            )
-        }
-    }
 }
 
 data class AddressApi(
@@ -588,21 +470,6 @@ data class AddressApi(
             state,
         )
     }
-
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): AddressApi {
-            return AddressApi(
-                city = serialized[0] as String?,
-                country = serialized[1] as String?,
-                line1 = serialized[2] as String?,
-                line2 = serialized[3] as String?,
-                postalCode = serialized[4] as String?,
-                state = serialized[5] as String?,
-            )
-        }
-    }
 }
 
 data class DiscoverConfigApi(
@@ -610,14 +477,6 @@ data class DiscoverConfigApi(
     val simulated: Boolean,
     val locationId: String?,
 ) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            discoveryMethod.ordinal,
-            simulated,
-            locationId,
-        )
-    }
-
     companion object {
         fun deserialize(
             serialized: List<Any?>,

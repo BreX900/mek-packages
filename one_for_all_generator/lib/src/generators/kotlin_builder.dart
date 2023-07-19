@@ -4,7 +4,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/code_generator.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
-import 'package:one_for_all_generator/src/handlers/api_class_handler.dart';
+import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
@@ -82,8 +82,8 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeHostApiClass(ApiClassHandler handler) {
-    final ApiClassHandler(:element) = handler;
+  void writeHostApiClass(HostApiHandler handler) {
+    final HostApiHandler(:element) = handler;
     final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(KotlinClass(
@@ -170,7 +170,8 @@ class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
   }
 
   @override
-  void writeFlutterApiClass(ClassElement element) {
+  void writeFlutterApiClass(FlutterApiHandler handler) {
+    final FlutterApiHandler(:element) = handler;
     final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(KotlinClass(
@@ -225,7 +226,8 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeDataClass(ClassElement element) {
+  void writeSerializable(SerializableHandler<ClassElement> handler) {
+    final SerializableHandler(:element, :flutterToHost, :hostToFlutter) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     _specs.add(KotlinClass(
@@ -238,38 +240,42 @@ return suspendCoroutine { continuation ->
         );
       }).toList(),
       body: [
-        KotlinMethod(
-          name: 'serialize',
-          returns: 'List<Any?>',
-          body: 'return listOf(\n${fields.map((e) {
-            return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
-          }).join()})',
-        ),
-        KotlinClass(
-          modifier: KotlinClassModifier.companion,
-          name: 'object',
-          body: [
-            KotlinMethod(
-              name: 'deserialize',
-              parameters: [
-                const KotlinParameter(
-                  name: 'serialized',
-                  type: 'List<Any?>',
-                ),
-              ],
-              returns: _encodeType(element.thisType, true),
-              body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
-                return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
-              }).join()})',
-            ),
-          ],
-        ),
+        if (hostToFlutter)
+          KotlinMethod(
+            name: 'serialize',
+            returns: 'List<Any?>',
+            body: 'return listOf(\n${fields.map((e) {
+              return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
+            }).join()})',
+          ),
+        if (flutterToHost)
+          KotlinClass(
+            modifier: KotlinClassModifier.companion,
+            name: 'object',
+            body: [
+              KotlinMethod(
+                name: 'deserialize',
+                parameters: [
+                  const KotlinParameter(
+                    name: 'serialized',
+                    type: 'List<Any?>',
+                  ),
+                ],
+                returns: _encodeType(element.thisType, true),
+                body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
+                  return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
+                }).join()})',
+              ),
+            ],
+          ),
       ],
     ));
   }
 
   @override
-  void writeEnum(EnumElement element) {
+  void writeEnum(SerializableHandler<EnumElement> handler) {
+    final SerializableHandler(:element) = handler;
+
     _specs.add(KotlinEnum(
       name: _encodeType(element.thisType, false),
       values: element.fields.where((element) => element.isEnumConstant).map((e) {

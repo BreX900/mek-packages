@@ -12,14 +12,14 @@ class FlutterApiScheme {
   const FlutterApiScheme();
 }
 
-class DataScheme {
-  const DataScheme();
+class SerializableScheme {
+  const SerializableScheme();
 }
 
-class HostExceptionScheme {
-  const HostExceptionScheme();
-}
-
-class FlutterExceptionScheme {
-  const FlutterExceptionScheme();
-}
+// class HostExceptionScheme {
+//   const HostExceptionScheme();
+// }
+//
+// class FlutterExceptionScheme {
+//   const FlutterExceptionScheme();
+// }

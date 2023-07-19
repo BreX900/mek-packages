@@ -226,16 +226,6 @@ void _$setupStripeTerminalHandlers(_StripeTerminalHandlers hostApi) {
   });
 }
 
-List<Object?> _$serializeStripeReader(StripeReader deserialized) => [
-      deserialized.locationStatus.index,
-      deserialized.batteryLevel,
-      deserialized.deviceType.index,
-      deserialized.simulated,
-      deserialized.availableUpdate,
-      deserialized.locationId,
-      deserialized.serialNumber,
-      deserialized.label
-    ];
 StripeReader _$deserializeStripeReader(List<Object?> serialized) =>
     StripeReader(
         locationStatus: LocationStatus.values[serialized[0] as int],
@@ -252,31 +242,8 @@ List<Object?> _$serializeCart(Cart deserialized) => [
       deserialized.total,
       deserialized.lineItems.map((e) => _$serializeCartLineItem(e)).toList()
     ];
-Cart _$deserializeCart(List<Object?> serialized) => Cart(
-    currency: serialized[0] as String,
-    tax: serialized[1] as int,
-    total: serialized[2] as int,
-    lineItems: (serialized[3] as List)
-        .map((e) => _$deserializeCartLineItem(e as List))
-        .toList());
 List<Object?> _$serializeCartLineItem(CartLineItem deserialized) =>
     [deserialized.description, deserialized.quantity, deserialized.amount];
-CartLineItem _$deserializeCartLineItem(List<Object?> serialized) =>
-    CartLineItem(
-        description: serialized[0] as String,
-        quantity: serialized[1] as int,
-        amount: serialized[2] as int);
-List<Object?> _$serializeStripePaymentMethod(
-        StripePaymentMethod deserialized) =>
-    [
-      deserialized.id,
-      deserialized.cardDetails != null
-          ? _$serializeCardDetails(deserialized.cardDetails!)
-          : null,
-      deserialized.customer,
-      deserialized.livemode,
-      deserialized.metadata?.map((k, v) => MapEntry(k, v))
-    ];
 StripePaymentMethod _$deserializeStripePaymentMethod(
         List<Object?> serialized) =>
     StripePaymentMethod(
@@ -288,15 +255,6 @@ StripePaymentMethod _$deserializeStripePaymentMethod(
         livemode: serialized[3] as bool,
         metadata: (serialized[4] as Map?)
             ?.map((k, v) => MapEntry(k as String, v as String)));
-List<Object?> _$serializeCardDetails(CardDetails deserialized) => [
-      deserialized.brand,
-      deserialized.country,
-      deserialized.expMonth,
-      deserialized.expYear,
-      deserialized.fingerprint,
-      deserialized.funding,
-      deserialized.last4
-    ];
 CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
     brand: serialized[0] as String?,
     country: serialized[1] as String?,
@@ -305,35 +263,6 @@ CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
     fingerprint: serialized[4] as String?,
     funding: serialized[5] as String?,
     last4: serialized[6] as String?);
-List<Object?> _$serializeStripePaymentIntent(
-        StripePaymentIntent deserialized) =>
-    [
-      deserialized.id,
-      deserialized.amount,
-      deserialized.amountCapturable,
-      deserialized.amountReceived,
-      deserialized.application,
-      deserialized.applicationFeeAmount,
-      deserialized.captureMethod,
-      deserialized.cancellationReason,
-      deserialized.canceledAt,
-      deserialized.clientSecret,
-      deserialized.confirmationMethod,
-      deserialized.created,
-      deserialized.currency,
-      deserialized.customer,
-      deserialized.description,
-      deserialized.invoice,
-      deserialized.livemode,
-      deserialized.metadata?.map((k, v) => MapEntry(k, v)),
-      deserialized.onBehalfOf,
-      deserialized.paymentMethodId,
-      deserialized.status?.index,
-      deserialized.review,
-      deserialized.receiptEmail,
-      deserialized.setupFutureUsage,
-      deserialized.transferGroup
-    ];
 StripePaymentIntent _$deserializeStripePaymentIntent(
         List<Object?> serialized) =>
     StripePaymentIntent(
@@ -368,18 +297,6 @@ StripePaymentIntent _$deserializeStripePaymentIntent(
 List<Object?> _$serializeCollectConfiguration(
         CollectConfiguration deserialized) =>
     [deserialized.skipTipping];
-CollectConfiguration _$deserializeCollectConfiguration(
-        List<Object?> serialized) =>
-    CollectConfiguration(skipTipping: serialized[0] as bool);
-List<Object?> _$serializeLocation(Location deserialized) => [
-      deserialized.address != null
-          ? _$serializeAddress(deserialized.address!)
-          : null,
-      deserialized.displayName,
-      deserialized.id,
-      deserialized.livemode,
-      deserialized.metadata?.map((k, v) => MapEntry(k, v))
-    ];
 Location _$deserializeLocation(List<Object?> serialized) => Location(
     address: serialized[0] != null
         ? _$deserializeAddress(serialized[0] as List)
@@ -389,14 +306,6 @@ Location _$deserializeLocation(List<Object?> serialized) => Location(
     livemode: serialized[3] as bool?,
     metadata: (serialized[4] as Map?)
         ?.map((k, v) => MapEntry(k as String, v as String)));
-List<Object?> _$serializeAddress(Address deserialized) => [
-      deserialized.city,
-      deserialized.country,
-      deserialized.line1,
-      deserialized.line2,
-      deserialized.postalCode,
-      deserialized.state
-    ];
 Address _$deserializeAddress(List<Object?> serialized) => Address(
     city: serialized[0] as String?,
     country: serialized[1] as String?,
@@ -409,8 +318,3 @@ List<Object?> _$serializeDiscoverConfig(DiscoverConfig deserialized) => [
       deserialized.simulated,
       deserialized.locationId
     ];
-DiscoverConfig _$deserializeDiscoverConfig(List<Object?> serialized) =>
-    DiscoverConfig(
-        discoveryMethod: DiscoveryMethod.values[serialized[0] as int],
-        simulated: serialized[1] as bool,
-        locationId: serialized[2] as String?);

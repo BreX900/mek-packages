@@ -2,20 +2,20 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
-import 'package:one_for_all_generator/src/code_generator.dart';
+import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
-class SwiftGenerator extends CodeGenerator with WriteToOutputFile {
+class SwiftApiBuilder extends ApiBuilder {
   final SwiftOptions options;
   final _specs = <SwiftSpec>[];
 
   @override
   String get outputFile => options.outputFile;
 
-  SwiftGenerator(super.pluginOptions, this.options) {
+  SwiftApiBuilder(super.pluginOptions, this.options) {
     _specs.add(SwiftStruct(
       name: 'PlatformError',
       implements: ['Error'],
@@ -326,7 +326,7 @@ channel.setMethodCallHandler { call, result in
       type.isNullable ? '$varAccess != nil ? $exsist : nil' : exsist;
 
   @override
-  String toString() => '${SwiftEmitter().encode(SwiftLibrary(
+  String build() => '${SwiftEmitter().encode(SwiftLibrary(
         imports: [
           'Flutter',
         ],

@@ -2,7 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
-import 'package:one_for_all_generator/src/code_generator.dart';
+import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
@@ -30,14 +30,14 @@ import 'package:recase/recase.dart';
 //     }
 // }
 
-class KotlinGenerator extends CodeGenerator with WriteToOutputFile {
+class KotlinApiBuilder extends ApiBuilder {
   final KotlinOptions options;
   final _specs = <KotlinSpec>[];
 
   @override
   String get outputFile => options.outputFile;
 
-  KotlinGenerator(super.pluginOptions, this.options) {
+  KotlinApiBuilder(super.pluginOptions, this.options) {
     _specs.add(KotlinClass(
       name: 'PlatformException',
       initializers: [
@@ -397,7 +397,7 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  String toString() => '${KotlinEmitter().encode(KotlinLibrary(
+  String build() => '${KotlinEmitter().encode(KotlinLibrary(
         package: options.package,
         imports: [
           'io.flutter.embedding.engine.plugins.FlutterPlugin',

@@ -1,15 +1,15 @@
-import 'dart:io';
-
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 
 /// https://docs.flutter.dev/platform-integration/platform-channels
-abstract class CodeGenerator {
+abstract class ApiBuilder {
   final OneForAllOptions pluginOptions;
 
-  const CodeGenerator(this.pluginOptions);
+  String get outputFile;
+
+  const ApiBuilder(this.pluginOptions);
 
   void writeHostApiClass(HostApiHandler handler);
 
@@ -21,15 +21,7 @@ abstract class CodeGenerator {
 
   void writeEnum(SerializableHandler<EnumElement> handler);
 
-  void writeToFile();
-}
-
-mixin WriteToOutputFile {
-  String get outputFile;
-
-  Future<void> writeToFile() async {
-    await File(outputFile).writeAsString(toString());
-  }
+  String build();
 }
 
 extension CleanNameInterface on InterfaceOrAugmentationElement {

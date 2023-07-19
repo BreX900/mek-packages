@@ -1,12 +1,14 @@
+import 'dart:io';
+
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all/one_for_all.dart';
-import 'package:one_for_all_generator/src/code_generator.dart';
-import 'package:one_for_all_generator/src/generators/dart_builder.dart';
-import 'package:one_for_all_generator/src/generators/kotlin_builder.dart';
-import 'package:one_for_all_generator/src/generators/swift_generator.dart';
+import 'package:one_for_all_generator/src/api_builder.dart';
+import 'package:one_for_all_generator/src/generators/dart_api_builder.dart';
+import 'package:one_for_all_generator/src/generators/kotlin_api_builder.dart';
+import 'package:one_for_all_generator/src/generators/swift_api_builder.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart' as path_;
@@ -14,17 +16,19 @@ import 'package:source_gen/source_gen.dart';
 
 export 'src/options.dart';
 
+typedef ApiBuildersCreator = List<ApiBuilder> Function(OneForAllOptions options);
+
 class OneForAll {
   static const hostApiChecker = TypeChecker.fromRuntime(HostApiScheme);
   static const flutterApiChecker = TypeChecker.fromRuntime(FlutterApiScheme);
   static const serializableChecker = TypeChecker.fromRuntime(SerializableScheme);
 
   final OneForAllOptions options;
-  final List<CodeGenerator> Function(OneForAllOptions options) generatorsBuilder;
+  final ApiBuildersCreator buildersCreator;
 
   const OneForAll({
     required this.options,
-    required this.generatorsBuilder,
+    required this.buildersCreator,
   });
 
   factory OneForAll.from({
@@ -32,14 +36,15 @@ class OneForAll {
     DartOptions? dartOptions,
     KotlinOptions? kotlinOptions,
     SwiftOptions? swiftOptions,
-    List<CodeGenerator> generators = const [],
+    ApiBuildersCreator? buildersCreator,
   }) {
     return OneForAll(
       options: options,
-      generatorsBuilder: (options) => [
-        if (dartOptions != null) DartGenerator(options, dartOptions),
-        if (kotlinOptions != null) KotlinGenerator(options, kotlinOptions),
-        if (swiftOptions != null) SwiftGenerator(options, swiftOptions),
+      buildersCreator: (options) => [
+        if (dartOptions != null) DartApiBuilder(options, dartOptions),
+        if (kotlinOptions != null) KotlinApiBuilder(options, kotlinOptions),
+        if (swiftOptions != null) SwiftApiBuilder(options, swiftOptions),
+        ...?buildersCreator?.call(options),
       ],
     );
   }
@@ -157,29 +162,29 @@ class OneForAll {
       }
     }
 
-    final generators = generatorsBuilder(options);
+    final builders = buildersCreator(options);
 
-    for (final generator in generators) {
+    for (final builder in builders) {
       for (final handler in hostApiHandles) {
-        generator.writeHostApiClass(handler);
+        builder.writeHostApiClass(handler);
       }
 
       for (final element in flutterApiHandlers) {
-        generator.writeFlutterApiClass(element);
+        builder.writeFlutterApiClass(element);
       }
 
       for (final handler in serializableHandlers.values) {
         print(handler);
         if (handler is SerializableHandler<EnumElement>) {
-          generator.writeEnum(handler);
+          builder.writeEnum(handler);
         } else if (handler is SerializableHandler<ClassElement>) {
-          generator.writeSerializable(handler);
+          builder.writeSerializable(handler);
         }
       }
     }
 
-    for (final generator in generators) {
-      generator.writeToFile();
+    for (final builder in builders) {
+      await File(builder.outputFile).writeAsString(builder.build());
     }
   }
 }

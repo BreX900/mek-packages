@@ -73,7 +73,7 @@ class SwiftApiBuilder extends ApiBuilder {
 
     _specs.add(SwiftProtocol(
       name: className,
-      methods: element.methods.where((e) => e.isHostMethod).map((e) {
+      methods: element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         return SwiftMethod(
@@ -108,7 +108,7 @@ channel.setMethodCallHandler { call, result in
         let args = call.arguments as! [Any?]
                     
         switch call.method {
-${element.methods.where((e) => e.isHostMethod).map((e) {
+${element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         final parameters =
@@ -155,7 +155,7 @@ channel = FlutterMethodChannel(
     name: "${element.cleanName.snakeCase}",
     binaryMessenger: binaryMessenger
 )'''),
-      methods: element.methods.where((e) => e.isFlutterMethod).map((e) {
+      methods: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');

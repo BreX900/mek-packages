@@ -100,15 +100,6 @@ protocol StripeTerminalApi {
     func onInit(
         _ result: Result<Unit>
     )
-
-    func onStartDiscoverReaders(
-        _ result: Result<Unit>,
-        _ config: DiscoverConfigApi
-    )
-
-    func onStopDiscoverReaders(
-        _ result: Result<Unit>
-    )
 }
 
 func setupStripeTerminalApi(
@@ -163,12 +154,6 @@ func setupStripeTerminalApi(
             case "_init":
               let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onInit(res)
-            case "_startDiscoverReaders":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onStartDiscoverReaders(res, DiscoverConfigApi.deserialize(args[0] as! [Any?]))
-            case "_stopDiscoverReaders":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onStopDiscoverReaders(res)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -202,24 +187,6 @@ class StripeTerminalHandlersApi {
                     ))
                 } else {
                     continuation.resume(returning: result as! String)
-                }
-            }
-        }
-    }
-
-    func readersFound(
-        readers: [StripeReaderApi]
-    ) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            channel.invokeMethod("_onReadersFound", arguments: [readers.map { $0.serialize() }]) { result in
-                if let result = result as? [AnyHashable?: Any?] {
-                    continuation.resume(throwing: PlatformError(
-                        code: result["code"] as! String,
-                        message: result["message"] as? String,
-                        details: result["details"] as? String
-                    ))
-                } else {
-                    continuation.resume(returning: ())
                 }
             }
         }
@@ -353,6 +320,31 @@ struct CardDetailsApi {
     }
 }
 
+struct DiscoverConfigApi {
+    let discoveryMethod: DiscoveryMethodApi
+    let simulated: Bool
+    let locationId: String?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> DiscoverConfigApi {
+        return DiscoverConfigApi(
+            discoveryMethod: DiscoveryMethodApi(rawValue: serialized[0] as! Int)!,
+            simulated: serialized[1] as! Bool,
+            locationId: serialized[2] as? String
+        )
+    }
+}
+
+enum DiscoveryMethodApi: Int {
+    case bluetoothScan
+    case internet
+    case localMobile
+    case handOff
+    case embedded
+    case usb
+}
+
 struct StripePaymentIntentApi {
     let id: String
     let amount: Double
@@ -420,6 +412,13 @@ enum PaymentIntentStatusApi: Int {
     case succeeded
 }
 
+enum PaymentStatusApi: Int {
+    case notReady
+    case ready
+    case waitingForInput
+    case processing
+}
+
 struct CollectConfigurationApi {
     let skipTipping: Bool
 
@@ -468,29 +467,4 @@ struct AddressApi {
             state,
         ]
     }
-}
-
-struct DiscoverConfigApi {
-    let discoveryMethod: DiscoveryMethodApi
-    let simulated: Bool
-    let locationId: String?
-
-    static func deserialize(
-        _ serialized: [Any?]
-    ) -> DiscoverConfigApi {
-        return DiscoverConfigApi(
-            discoveryMethod: DiscoveryMethodApi(rawValue: serialized[0] as! Int)!,
-            simulated: serialized[1] as! Bool,
-            locationId: serialized[2] as? String
-        )
-    }
-}
-
-enum DiscoveryMethodApi: Int {
-    case bluetoothScan
-    case internet
-    case localMobile
-    case handOff
-    case embedded
-    case usb
 }

@@ -98,13 +98,12 @@ class KotlinApiBuilder extends ApiBuilder {
         ),
       ],
       body: [
-        ...element.methods.where((e) => e.isHostMethod).map((e) {
+        ...element.methods.where((e) => e.isHostApiMethod).map((e) {
           final returnType = e.returnType.singleTypeArg;
 
           return KotlinMethod(
             name: _encodeMethodName(e.name),
             parameters: [
-              // if (returnType is! VoidType)
               KotlinParameter(
                 name: 'result',
                 type: 'Result<${_encodeType(returnType, true)}>',
@@ -126,7 +125,7 @@ class KotlinApiBuilder extends ApiBuilder {
             KotlinParameter(annotations: ['NonNull'], name: 'result', type: 'MethodChannel.Result'),
           ],
           body: 'val args = call.arguments<List<Any?>>()!!\n'
-              'when (call.method) {\n${element.methods.where((e) => e.isHostMethod).map((e) {
+              'when (call.method) {\n${element.methods.where((e) => e.isHostApiMethod).map((e) {
             final returnType = e.returnType.singleTypeArg;
 
             final parameters =
@@ -167,6 +166,98 @@ class KotlinApiBuilder extends ApiBuilder {
         ),
       ],
     ));
+
+    _specs.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+      final returnType = e.returnType.singleTypeArg;
+
+      final parameters = e.parameters.map((e) {
+        return '${e.name}: ${_encodeType(e.type, true)}';
+      }).join(',');
+
+      return KotlinClass(
+        name: '${e.name.pascalCase}Controller',
+        fields: [
+          KotlinField(
+            modifier: KotlinFieldModifier.lateInit,
+            name: 'channel',
+            type: 'EventChannel',
+          ),
+          KotlinField(
+            modifier: KotlinFieldModifier.var$,
+            name: 'sink',
+            type: 'EventChannel.EventSink?',
+            assignment: 'null',
+          ),
+          KotlinField(
+            modifier: KotlinFieldModifier.var$,
+            name: 'onListen',
+            type: '(($parameters) -> Unit)?',
+            assignment: 'null',
+          ),
+          KotlinField(
+            modifier: KotlinFieldModifier.var$,
+            name: 'onCancel',
+            type: '(() -> Unit)?',
+            assignment: 'null',
+          ),
+          KotlinField(
+            modifier: KotlinFieldModifier.val,
+            name: 'isClosed',
+            type: 'Boolean get()',
+            assignment: 'sink == null',
+          ),
+        ],
+        body: [
+          KotlinMethod(
+            name: 'setup',
+            parameters: [KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger')],
+            body: '''
+channel = EventChannel(binaryMessenger, "${element.name.snakeCase}#${e.name}")
+channel.setStreamHandler(object : EventChannel.StreamHandler {
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+        val args = arguments as List<Any?>
+        sink = events
+        onListen?.invoke(${e.parameters.mapIndexed((i, e) {
+              return _encodeDeserialization(e.type, 'args[$i]');
+            }).join(', ')})
+    }
+
+    override fun onCancel(arguments: Any?) {
+        sink = null
+        onCancel?.invoke()
+    }
+})
+''',
+          ),
+          KotlinMethod(
+            name: 'add',
+            parameters: [KotlinParameter(name: 'data', type: _encodeType(returnType, true))],
+            lambda: true,
+            body: 'sink!!.success(${_encodeSerialization(returnType, 'data')})',
+          ),
+          KotlinMethod(
+            name: 'addError',
+            parameters: [
+              KotlinParameter(name: 'code', type: 'String'),
+              KotlinParameter(name: 'message', type: 'String?'),
+              KotlinParameter(name: 'details', type: 'Any?'),
+            ],
+            lambda: true,
+            body: 'sink!!.error(code, message, details)',
+          ),
+          KotlinMethod(
+            name: 'close',
+            lambda: true,
+            body: 'sink!!.endOfStream()',
+          ),
+          KotlinMethod(
+            name: 'erase',
+            lambda: true,
+            body: 'channel.setStreamHandler(null)',
+          ),
+        ],
+      );
+    }));
   }
 
   @override
@@ -189,7 +280,7 @@ class KotlinApiBuilder extends ApiBuilder {
           assignment: 'MethodChannel(binaryMessenger, "${element.cleanName.snakeCase}")',
         ),
       ],
-      body: element.methods.where((e) => e.isFlutterMethod).map((e) {
+      body: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
@@ -402,6 +493,7 @@ return suspendCoroutine { continuation ->
         imports: [
           'io.flutter.embedding.engine.plugins.FlutterPlugin',
           'io.flutter.plugin.common.BinaryMessenger',
+          'io.flutter.plugin.common.EventChannel',
           'io.flutter.plugin.common.MethodCall',
           'io.flutter.plugin.common.MethodChannel',
           'kotlin.coroutines.resume',

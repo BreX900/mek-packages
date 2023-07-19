@@ -268,7 +268,11 @@ class KotlinEmitter {
     }
     if (spec.returns != null) buffer.write(': ${spec.returns}');
 
-    if (spec.body != null) {
+    if (spec.body == null) return buffer;
+    if (spec.lambda) {
+      buffer.write(' = ');
+      buffer.write(spec.body);
+    } else {
       buffer.write(' {\n');
       _indent += 1;
       buffer.write(spec.body!.split('\n').map((e) => '$_space$e').join('\n'));

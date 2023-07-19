@@ -148,3 +148,12 @@ fun Address.toApi(): AddressApi {
         state = state,
     )
 }
+
+fun PaymentStatus.toApi(): PaymentStatusApi {
+    return when (this) {
+        PaymentStatus.NOT_READY -> PaymentStatusApi.NOT_READY
+        PaymentStatus.READY -> PaymentStatusApi.READY
+        PaymentStatus.WAITING_FOR_INPUT -> PaymentStatusApi.WAITING_FOR_INPUT
+        PaymentStatus.PROCESSING -> PaymentStatusApi.PROCESSING
+    }
+}

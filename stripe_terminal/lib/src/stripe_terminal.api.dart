@@ -1,17 +1,43 @@
 part of 'stripe_terminal.dart';
 
-class _$StripeTerminal extends StripeTerminal {
-  _$StripeTerminal({required super.fetchToken}) : super._();
+class _$StripeTerminal {
+  static const _$channel = MethodChannel('stripe_terminal');
 
-  static const _channel = MethodChannel('stripe_terminal');
+  late final Stream<StripeReader> _$onUnexpectedReaderDisconnect =
+      const EventChannel('stripe_terminal#onUnexpectedReaderDisconnect')
+          .receiveBroadcastStream()
+          .map((e) => _$deserializeStripeReader(e as List));
 
-  @override
+  late final Stream<ConnectionStatus> _$onConnectionStatusChange =
+      const EventChannel('stripe_terminal#onConnectionStatusChange')
+          .receiveBroadcastStream()
+          .map((e) => ConnectionStatus.values[e as int]);
+
+  late final Stream<List<StripeReader>> _$discoverReaders =
+      const EventChannel('stripe_terminal#discoverReaders')
+          .receiveBroadcastStream()
+          .map((e) => (e as List)
+              .map((e) => _$deserializeStripeReader(e as List))
+              .toList());
+
+  late final Stream<PaymentStatus> _$onPaymentStatusChange =
+      const EventChannel('stripe_terminal#onPaymentStatusChange')
+          .receiveBroadcastStream()
+          .map((e) => PaymentStatus.values[e as int]);
+
+  Stream<StripeReader> onUnexpectedReaderDisconnect() =>
+      _$onUnexpectedReaderDisconnect;
+  Stream<ConnectionStatus> onConnectionStatusChange() =>
+      _$onConnectionStatusChange;
+  Stream<List<StripeReader>> discoverReaders(DiscoverConfig config) =>
+      _$discoverReaders;
+  Stream<PaymentStatus> onPaymentStatusChange() => _$onPaymentStatusChange;
   Future<StripeReader> connectBluetoothReader(
     String readerSerialNumber, {
     required String locationId,
   }) async {
     try {
-      final result = await _channel.invokeMethod('connectBluetoothReader', [
+      final result = await _$channel.invokeMethod('connectBluetoothReader', [
         readerSerialNumber,
         locationId,
       ]);
@@ -22,13 +48,12 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripeReader> connectInternetReader(
     String readerSerialNumber, {
     bool failIfInUse = false,
   }) async {
     try {
-      final result = await _channel.invokeMethod('connectInternetReader', [
+      final result = await _$channel.invokeMethod('connectInternetReader', [
         readerSerialNumber,
         failIfInUse,
       ]);
@@ -39,13 +64,12 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripeReader> connectMobileReader(
     String readerSerialNumber, {
     required String locationId,
   }) async {
     try {
-      final result = await _channel.invokeMethod('connectMobileReader', [
+      final result = await _$channel.invokeMethod('connectMobileReader', [
         readerSerialNumber,
         locationId,
       ]);
@@ -56,20 +80,18 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<void> disconnectReader() async {
     try {
-      await _channel.invokeMethod('disconnectReader', []);
+      await _$channel.invokeMethod('disconnectReader', []);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
 
-  @override
   Future<void> setReaderDisplay(Cart cart) async {
     try {
-      await _channel.invokeMethod('setReaderDisplay', [
+      await _$channel.invokeMethod('setReaderDisplay', [
         _$serializeCart(cart),
       ]);
     } on PlatformException catch (exception) {
@@ -78,20 +100,18 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<void> clearReaderDisplay() async {
     try {
-      await _channel.invokeMethod('clearReaderDisplay', []);
+      await _$channel.invokeMethod('clearReaderDisplay', []);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
 
-  @override
   Future<ConnectionStatus> connectionStatus() async {
     try {
-      final result = await _channel.invokeMethod('connectionStatus', []);
+      final result = await _$channel.invokeMethod('connectionStatus', []);
       return ConnectionStatus.values[result as int];
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -99,10 +119,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripeReader?> fetchConnectedReader() async {
     try {
-      final result = await _channel.invokeMethod('fetchConnectedReader', []);
+      final result = await _$channel.invokeMethod('fetchConnectedReader', []);
       return result != null ? _$deserializeStripeReader(result as List) : null;
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -110,10 +129,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripePaymentMethod> readReusableCardDetail() async {
     try {
-      final result = await _channel.invokeMethod('readReusableCardDetail', []);
+      final result = await _$channel.invokeMethod('readReusableCardDetail', []);
       return _$deserializeStripePaymentMethod(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -121,10 +139,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripePaymentIntent> retrievePaymentIntent(String clientSecret) async {
     try {
-      final result = await _channel.invokeMethod('retrievePaymentIntent', [
+      final result = await _$channel.invokeMethod('retrievePaymentIntent', [
         clientSecret,
       ]);
       return _$deserializeStripePaymentIntent(result as List);
@@ -134,14 +151,13 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripePaymentIntent> collectPaymentMethod(
     String clientSecret, {
     CollectConfiguration collectConfiguration =
         const CollectConfiguration(skipTipping: true),
   }) async {
     try {
-      final result = await _channel.invokeMethod('collectPaymentMethod', [
+      final result = await _$channel.invokeMethod('collectPaymentMethod', [
         clientSecret,
         _$serializeCollectConfiguration(collectConfiguration),
       ]);
@@ -152,10 +168,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<StripePaymentIntent> processPayment(String clientSecret) async {
     try {
-      final result = await _channel.invokeMethod('processPayment', [
+      final result = await _$channel.invokeMethod('processPayment', [
         clientSecret,
       ]);
       return _$deserializeStripePaymentIntent(result as List);
@@ -165,10 +180,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<List<Location>> listLocations() async {
     try {
-      final result = await _channel.invokeMethod('listLocations', []);
+      final result = await _$channel.invokeMethod('listLocations', []);
       return (result as List)
           .map((e) => _$deserializeLocation(e as List))
           .toList();
@@ -178,32 +192,9 @@ class _$StripeTerminal extends StripeTerminal {
     }
   }
 
-  @override
   Future<void> _init() async {
     try {
-      await _channel.invokeMethod('_init', []);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<void> _startDiscoverReaders(DiscoverConfig config) async {
-    try {
-      await _channel.invokeMethod('_startDiscoverReaders', [
-        _$serializeDiscoverConfig(config),
-      ]);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<void> _stopDiscoverReaders() async {
-    try {
-      await _channel.invokeMethod('_stopDiscoverReaders', []);
+      await _$channel.invokeMethod('_init', []);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
@@ -217,9 +208,6 @@ void _$setupStripeTerminalHandlers(_StripeTerminalHandlers hostApi) {
     final args = call.arguments as List<Object?>;
     return switch (call.method) {
       '_onRequestConnectionToken' => await hostApi._onRequestConnectionToken(),
-      '_onReadersFound' => await hostApi._onReadersFound((args[0] as List)
-          .map((e) => _$deserializeStripeReader(e as List))
-          .toList()),
       _ => throw UnsupportedError(
           '_StripeTerminalHandlers#Flutter.${call.method} method'),
     };
@@ -263,6 +251,11 @@ CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
     fingerprint: serialized[4] as String?,
     funding: serialized[5] as String?,
     last4: serialized[6] as String?);
+List<Object?> _$serializeDiscoverConfig(DiscoverConfig deserialized) => [
+      deserialized.discoveryMethod.index,
+      deserialized.simulated,
+      deserialized.locationId
+    ];
 StripePaymentIntent _$deserializeStripePaymentIntent(
         List<Object?> serialized) =>
     StripePaymentIntent(
@@ -313,8 +306,3 @@ Address _$deserializeAddress(List<Object?> serialized) => Address(
     line2: serialized[3] as String?,
     postalCode: serialized[4] as String?,
     state: serialized[5] as String?);
-List<Object?> _$serializeDiscoverConfig(DiscoverConfig deserialized) => [
-      deserialized.discoveryMethod.index,
-      deserialized.simulated,
-      deserialized.locationId
-    ];

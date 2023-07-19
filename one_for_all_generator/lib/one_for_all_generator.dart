@@ -152,7 +152,7 @@ class OneForAll {
     ];
     for (final element in apiElements) {
       for (final method in element.methods) {
-        if (!method.isHostMethod) continue;
+        if (!method.isSupported) continue;
 
         for (final parameter in method.parameters) {
           addDeepSerializables(parameter.type, flutterToHost: true);

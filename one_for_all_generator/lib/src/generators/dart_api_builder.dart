@@ -24,44 +24,78 @@ class DartApiBuilder extends ApiBuilder {
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 
+  void updateParameter(ParameterElement e, ParameterBuilder b) => b
+    ..type = Reference('${e.type}')
+    ..name = e.name;
+
+  void _updateHostApiMethod(MethodElement e, MethodBuilder b) {
+    b // ..annotations.add(const CodeExpression(Code('override')))
+      ..returns = Reference('${e.returnType}')
+      ..name = e.name
+      ..requiredParameters.addAll(e.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
+        return Parameter((b) => b..update((b) => updateParameter(e, b)));
+      }))
+      ..optionalParameters.addAll(e.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
+        return Parameter((b) => b
+          ..update((b) => updateParameter(e, b))
+          ..required = e.isRequired
+          ..named = e.isNamed
+          ..defaultTo = e.defaultValueCode != null ? Code(e.defaultValueCode!) : null);
+      }));
+  }
+
   @override
   void writeHostApiClass(HostApiHandler handler) {
     final HostApiHandler(:element, :hostExceptionHandler) = handler;
 
-    final constructor = element.constructors.singleOrNull;
-
-    void updateParameter(ParameterElement e, ParameterBuilder b) => b
-      ..type = Reference('${e.type}')
-      ..name = e.name;
+    // final constructor = element.constructors.singleOrNull;
 
     _library.body.add(Class((b) => b
       ..name = '_\$${element.cleanName}'
-      ..extend = Reference(element.name)
+      // ..extend = Reference(element.name)
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
-        ..name = '_channel'
+        ..name = '_\$channel'
         ..assignment = Code('MethodChannel(\'${element.name.snakeCase}\')')))
-      ..constructors.addAll([
-        if (constructor != null)
-          Constructor((b) => b
-            ..initializers.add(const Code('super._()'))
-            ..requiredParameters
-                .addAll(constructor.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
-              return Parameter((b) => b
-                ..toSuper = true
-                ..name = e.name);
-            }))
-            ..optionalParameters
-                .addAll(constructor.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
-              return Parameter((b) => b
-                ..required = e.isRequired
-                ..toSuper = true
-                ..name = e.name
-                ..named = e.isNamed);
-            })))
-      ])
-      ..methods.addAll(element.methods.where((e) => e.isHostMethod).map((e) {
+      // ..constructors.addAll([
+      //   if (constructor != null)
+      //     Constructor((b) => b
+      //       ..initializers.add(const Code('super._()'))
+      //       ..requiredParameters
+      //           .addAll(constructor.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
+      //         return Parameter((b) => b
+      //           ..toSuper = true
+      //           ..name = e.name);
+      //       }))
+      //       ..optionalParameters
+      //           .addAll(constructor.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
+      //         return Parameter((b) => b
+      //           ..required = e.isRequired
+      //           ..toSuper = true
+      //           ..name = e.name
+      //           ..named = e.isNamed);
+      //       })))
+      // ])
+
+      ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        return Field((b) => b
+          ..late = true
+          ..modifier = FieldModifier.final$
+          ..type = Reference(e.returnType.displayNameNullable)
+          ..name = '_\$${e.name}'
+          ..assignment = Code(
+              'const EventChannel(\'${element.name.snakeCase}#${e.name}\').receiveBroadcastStream().map((e) => ${_encodeDeserialization(returnType, 'e')})'));
+      }))
+      ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+        return Method((b) => b
+          ..update((b) => _updateHostApiMethod(e, b))
+          ..lambda = true
+          ..body = Code('_\$${e.name}'));
+      }))
+      ..methods.addAll(element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         final invocationParameters = '[${e.parameters.map((e) {
@@ -70,7 +104,7 @@ class DartApiBuilder extends ApiBuilder {
         }).join()}]';
 
         String parseResult() {
-          final code = 'await _channel.invokeMethod(\'${e.name}\', $invocationParameters);';
+          final code = 'await _\$channel.invokeMethod(\'${e.name}\', $invocationParameters);';
           if (returnType is VoidType) return code;
           if (returnType.isPrimitive) return 'return $code';
           return 'final result = $code'
@@ -89,7 +123,7 @@ try {
         }
 
         return Method((b) => b
-          ..annotations.add(const CodeExpression(Code('override')))
+          // ..annotations.add(const CodeExpression(Code('override')))
           ..returns = Reference('${e.returnType}')
           ..name = e.name
           ..requiredParameters
@@ -112,7 +146,7 @@ try {
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
     final FlutterApiHandler(:element) = handler;
-    final methods = element.methods.where((e) => e.isFlutterMethod);
+    final methods = element.methods.where((e) => e.isFlutterApiMethod);
 
     _library.body.add(Method((b) => b
       ..returns = Reference('void')
@@ -258,7 +292,9 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  String build() => DartFormatter().format('${_library.build().accept(DartEmitter())}');
+  String build() => DartFormatter().format('${_library.build().accept(DartEmitter(
+        useNullSafetySyntax: true,
+      ))}');
 }
 
 extension on DartType {

@@ -6,12 +6,17 @@ import com.stripe_terminal.api.Result
 
 abstract class TerminalErrorHandler(private val result: Result<*>) : ErrorCallback {
     override fun onFailure(e: TerminalException) {
-        var message = "${e.errorCode}: ${e.errorMessage}";
-        if (e.message != null) message += "\nMessage: ${e.message}"
-        if (e.paymentIntent != null) message += "\nPaymentIntent: ${e.paymentIntent}"
-        if (e.apiError != null) message += "\nApiError: ${e.apiError}"
-        if (e.cause != null) message += "\nCause: ${e.cause}"
+        handle(e, result::error)
+    }
 
-        result.error(e.errorCode.name, message, e.stackTraceToString())
+    companion object {
+        fun handle(e: TerminalException, handler: (c: String, m: String, d: String) -> Unit) {
+            var message = "${e.errorCode}: ${e.errorMessage}";
+            if (e.message != null) message += "\nMessage: ${e.message}"
+            if (e.paymentIntent != null) message += "\nPaymentIntent: ${e.paymentIntent}"
+            if (e.apiError != null) message += "\nApiError: ${e.apiError}"
+            if (e.cause != null) message += "\nCause: ${e.cause}"
+            handler(e.errorCode.name, message, e.stackTraceToString())
+        }
     }
 }

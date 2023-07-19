@@ -54,6 +54,10 @@ extension SupportedDartType on DartType {
 }
 
 extension SupportedMethodElement on MethodElement {
-  bool get isHostMethod => isAbstract && returnType.isDartAsyncFuture;
-  bool get isFlutterMethod => name.startsWith('on') || name.startsWith('_on');
+  bool get isHostApiMethod => isAbstract && returnType.isDartAsyncFuture;
+  bool get isHostApiEvent => isAbstract && returnType.isDartAsyncStream;
+  bool get isFlutterApiMethod => name.startsWith('on') || name.startsWith('_on');
+  bool get isSupported => isHostApiMethod || isHostApiEvent || isFlutterApiMethod;
+
+  String get flutterApiName => name.replaceFirst('_on', '').replaceFirst('on', '');
 }

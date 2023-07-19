@@ -8,6 +8,7 @@ import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/collect_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/discover_config.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
+import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
@@ -32,7 +33,7 @@ class StripeTerminalException {
 @HostApiScheme(
   hostExceptionHandler: StripeTerminal._throwIfIsHostException,
 )
-abstract class StripeTerminal {
+class StripeTerminal extends _$StripeTerminal {
   final _StripeTerminalHandlers _handlers;
 
   /// Creates an internal `StripeTerminal` instance
@@ -48,7 +49,7 @@ abstract class StripeTerminal {
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
   }) async {
-    final StripeTerminal stripeTerminal = _$StripeTerminal(fetchToken: fetchToken);
+    final stripeTerminal = StripeTerminal._(fetchToken: fetchToken);
     await stripeTerminal._init();
     return stripeTerminal;
   }
@@ -56,6 +57,7 @@ abstract class StripeTerminal {
   /// Connects to a bluetooth reader, only works if you have scanned devices within this session.
   ///
   /// Always run `discoverReaders` before calling this function
+  @override
   Future<StripeReader> connectBluetoothReader(
     /// Serial number of the bluetooth reader to connect with
     String readerSerialNumber, {
@@ -68,6 +70,7 @@ abstract class StripeTerminal {
   /// Connects to a internet reader, only works if you have scanned devices within this session.
   ///
   /// Always run `discoverReaders` before calling this function
+  @override
   Future<StripeReader> connectInternetReader(
     /// Serial number of the internet reader to connect with
     String readerSerialNumber, {
@@ -75,6 +78,7 @@ abstract class StripeTerminal {
     bool failIfInUse = false,
   });
 
+  @override
   Future<StripeReader> connectMobileReader(
     String readerSerialNumber, {
     /// The id of the location on which you want to conenct this bluetooth reader with.
@@ -86,9 +90,14 @@ abstract class StripeTerminal {
   /// Disconnects from a reader, only works if you are connected to a device
   ///
   /// Always run `connectToReader` before calling this function
+  @override
   Future<void> disconnectReader();
 
+  @override
+  Stream<StripeReader> onUnexpectedReaderDisconnect();
+
   /// Displays the content to the connected reader's display
+  @override
   Future<void> setReaderDisplay(
     /// Display information for the reader to be shown on the screen
     ///
@@ -97,17 +106,23 @@ abstract class StripeTerminal {
   );
 
   /// Clears connected reader's displays
+  @override
   Future<void> clearReaderDisplay();
 
   /// Checks the connection status of the SDK
+  @override
   Future<ConnectionStatus> connectionStatus();
 
+  Stream<ConnectionStatus> onConnectionStatusChange();
+
   /// Fetches the connected reader from the SDK. `null` if not connected
+  @override
   Future<StripeReader?> fetchConnectedReader();
 
   /// Extracts payment method from the reader
   ///
   /// Only support `insert` operation on the reader
+  @override
   Future<StripePaymentMethod> readReusableCardDetail();
 
   /// Starts scanning readers in the vicinity. This will return a list of readers.
@@ -115,35 +130,30 @@ abstract class StripeTerminal {
   /// Can contain an empty array if no readers are found.
   ///
   /// [simulated] se to `true` will simulate readers which can be connected and tested.
+  @override
   Stream<List<StripeReader>> discoverReaders(
     /// Configuration for the discovry process
     DiscoverConfig config,
-  ) {
-    _handlers._readersController ??= StreamController(
-      onListen: () async => await _startDiscoverReaders(config),
-      onCancel: () async {
-        await _stopDiscoverReaders();
-        _handlers._readersController = null;
-      },
-    );
-
-    return _handlers._readersController!.stream;
-  }
+  );
 
   /// Starts reading payment method based on payment intent.
   ///
   /// Payment intent is supposed to be generated on your backend and the `clientSecret` of the payment intent
   /// should be passed to this function.
+  @override
   Future<StripePaymentIntent> retrievePaymentIntent(
     // Client secret of the payment intent which you want to collect payment mwthod for
     String clientSecret,
   );
+
+  Stream<PaymentStatus> onPaymentStatusChange();
 
   ///
   /// With the payment intent retrieved capture the payment method. A sucessful function call
   /// should return an instance of `StripePaymentIntent` with status `requiresPaymentMethod`;
   ///
   /// Only supports `swipe`, `tap` and `insert` method
+  @override
   Future<StripePaymentIntent> collectPaymentMethod(
     // Client secret of the payment intent which you want to collect payment mwthod for
     String clientSecret, {
@@ -153,18 +163,17 @@ abstract class StripeTerminal {
     ),
   });
 
+  @override
   Future<StripePaymentIntent> processPayment(
     // Client secret of the payment intent which you want to collect payment mwthod for
     String clientSecret,
   );
 
+  @override
   Future<List<Location>> listLocations();
 
+  @override
   Future<void> _init();
-
-  Future<void> _startDiscoverReaders(DiscoverConfig config);
-
-  Future<void> _stopDiscoverReaders();
 
   static void _throwIfIsHostException(PlatformException exception) {
     final snakeCaseCode = exception.code.camelCase;
@@ -178,15 +187,10 @@ abstract class StripeTerminal {
 @FlutterApiScheme()
 class _StripeTerminalHandlers {
   final Future<String> Function() _fetchToken;
-  StreamController<List<StripeReader>>? _readersController;
 
   _StripeTerminalHandlers({
     required Future<String> Function() fetchToken,
   }) : _fetchToken = fetchToken;
 
   Future<String> _onRequestConnectionToken() async => await _fetchToken();
-
-  Future<void> _onReadersFound(List<StripeReader> readers) async {
-    _readersController!.add(readers);
-  }
 }

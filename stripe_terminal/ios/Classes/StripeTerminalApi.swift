@@ -121,53 +121,53 @@ func setupStripeTerminalApi(
             let args = call.arguments as! [Any?]
                         
             switch call.method {
-                    case "connectBluetoothReader":
-              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+            case "connectBluetoothReader":
+              let res = Result<StripeReaderApi>(result) { $0.serialize() }
               hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String)
             case "connectInternetReader":
-              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+              let res = Result<StripeReaderApi>(result) { $0.serialize() }
               hostApi.onConnectInternetReader(res, args[0] as! String, args[1] as! Bool)
             case "connectMobileReader":
-              let res = Result<StripeReaderApi>(result: result) { $0.serialize() }
+              let res = Result<StripeReaderApi>(result) { $0.serialize() }
               hostApi.onConnectMobileReader(res, args[0] as! String, args[1] as! String)
             case "disconnectReader":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onDisconnectReader(res)
             case "setReaderDisplay":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onSetReaderDisplay(res, CartApi.deserialize(args[0] as! [Any?]))
             case "clearReaderDisplay":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onClearReaderDisplay(res)
             case "connectionStatus":
-              let res = Result<ConnectionStatusApi>(result: result) { $0.serialize() }
+              let res = Result<ConnectionStatusApi>(result) { $0.serialize() }
               hostApi.onConnectionStatus(res)
             case "fetchConnectedReader":
-              let res = Result<StripeReaderApi?>(result: result) { $0.serialize() }
+              let res = Result<StripeReaderApi?>(result) { $0.serialize() }
               hostApi.onFetchConnectedReader(res)
             case "readReusableCardDetail":
-              let res = Result<StripePaymentMethodApi>(result: result) { $0.serialize() }
+              let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
               hostApi.onReadReusableCardDetail(res)
             case "retrievePaymentIntent":
-              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
               hostApi.onRetrievePaymentIntent(res, args[0] as! String)
             case "collectPaymentMethod":
-              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
               hostApi.onCollectPaymentMethod(res, args[0] as! String, CollectConfigurationApi.deserialize(args[1] as! [Any?]))
             case "processPayment":
-              let res = Result<StripePaymentIntentApi>(result: result) { $0.serialize() }
+              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
               hostApi.onProcessPayment(res, args[0] as! String)
             case "listLocations":
-              let res = Result<[LocationApi]>(result: result) { $0.serialize() }
+              let res = Result<[LocationApi]>(result) { $0.serialize() }
               hostApi.onListLocations(res)
             case "_init":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onInit(res)
             case "_startDiscoverReaders":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onStartDiscoverReaders(res, DiscoverConfigApi.deserialize(args[0] as! [Any?]))
             case "_stopDiscoverReaders":
-              let res = Result<Unit>(result: result) { $0.serialize() }
+              let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onStopDiscoverReaders(res)
             default:
                 result(FlutterMethodNotImplemented)
@@ -179,6 +179,53 @@ func setupStripeTerminalApi(
         }
     }
 }
+class StripeTerminalHandlersApi {
+    let channel: FlutterMethodChannel
+
+    init(
+        _ binaryMessenger: FlutterBinaryMessenger
+    ) {
+        channel = FlutterMethodChannel(
+            name: "stripe_terminal_handlers",
+            binaryMessenger: binaryMessenger
+        )
+    }
+
+    func requestConnectionToken() async throws -> String {
+        return try await withCheckedThrowingContinuation { continuation in
+            channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { result in
+                if let result = result as? [AnyHashable?: Any?] {
+                    continuation.resume(throwing: PlatformError(
+                        code: result["code"] as! String,
+                        message: result["message"] as? String,
+                        details: result["details"] as? String
+                    ))
+                } else {
+                    continuation.resume(returning: result as! String)
+                }
+            }
+        }
+    }
+
+    func readersFound(
+        readers: [StripeReaderApi]
+    ) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            channel.invokeMethod("_onReadersFound", arguments: [readers.map { $0.serialize() }]) { result in
+                if let result = result as? [AnyHashable?: Any?] {
+                    continuation.resume(throwing: PlatformError(
+                        code: result["code"] as! String,
+                        message: result["message"] as? String,
+                        details: result["details"] as? String
+                    ))
+                } else {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+}
+
 struct StripeReaderApi {
     let locationStatus: LocationStatusApi
     let batteryLevel: Double

@@ -108,7 +108,7 @@ channel.setMethodCallHandler { call, result in
         let args = call.arguments as! [Any?]
                     
         switch call.method {
-        ${element.methods.where((e) => e.isHostMethod).map((e) {
+${element.methods.where((e) => e.isHostMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
         final parameters =
@@ -116,7 +116,7 @@ channel.setMethodCallHandler { call, result in
 
         return '''
         case "${e.name}":
-          let res = Result<${_encodeType(returnType, true)}>(result: result) { \$0.serialize() }
+          let res = Result<${_encodeType(returnType, true)}>(result) { \$0.serialize() }
           hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''';
       }).join('\n')}
         default:
@@ -129,67 +129,65 @@ channel.setMethodCallHandler { call, result in
     }
 }''',
     ));
-
-//     _specs.add(SwiftClass(
-//       name: _encodeType(element.thisType, false),
-//       fields: const [
-//         SwiftField(
-//           name: 'channel',
-//           type: 'MethodChannel',
-//         ),
-//       ],
-//       init: SwiftInit(parameters: [
-//         SwiftParameter(
-//           label: '_',
-//           name: 'binaryMessenger',
-//           type: 'FlutterBinaryMessenger',
-//         ),
-//       ], body: '''
-// channel = FlutterMethodChannel(
-//     name: ${element.name.snakeCase},
-//     binaryMessenger: binaryMessenger
-// )'''),
-//       methods: element.methods.where((e) => e.isFlutterMethod).map((e) {
-//         final returnType = e.returnType.singleTypeArg;
-//
-//         final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
-//
-//         return SwiftMethod(
-//           name: _encodeMethodName(e.name),
-//           parameters: e.parameters.map((e) {
-//             return SwiftParameter(
-//               name: e.name,
-//               type: _encodeType(e.type, true),
-//             );
-//           }).toList(),
-//           async: true,
-//           throws: true,
-//           returnType: returnType is VoidType ? null : _encodeType(returnType, true),
-//           body: '''
-// return try await withCheckedThrowingContinuation { continuation in
-//     channel.invokeMethod(
-//         "${e.name}",
-//         [$parameters],
-//         object : MethodChannel.Result {
-//             override fun success(result: Any?) {
-//                 continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
-//             }
-//             override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
-//                 continuation.resumeWithException(PlatformException(errorCode, errorMessage, errorDetails))
-//             }
-//             override fun notImplemented() {}
-//         }
-//     )
-// }''',
-//         );
-//       }).toList(),
-//     ));
   }
 
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
     final FlutterApiHandler(:element) = handler;
-    // TODO: implement writeFlutterApiClass
+    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
+
+    _specs.add(SwiftClass(
+      name: className,
+      fields: const [
+        SwiftField(
+          name: 'channel',
+          type: 'FlutterMethodChannel',
+        ),
+      ],
+      init: SwiftInit(parameters: [
+        SwiftParameter(
+          label: '_',
+          name: 'binaryMessenger',
+          type: 'FlutterBinaryMessenger',
+        ),
+      ], body: '''
+channel = FlutterMethodChannel(
+    name: "${element.cleanName.snakeCase}",
+    binaryMessenger: binaryMessenger
+)'''),
+      methods: element.methods.where((e) => e.isFlutterMethod).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+
+        return SwiftMethod(
+          name: _encodeMethodName(e.name),
+          parameters: e.parameters.map((e) {
+            return SwiftParameter(
+              name: e.name,
+              type: _encodeType(e.type, true),
+            );
+          }).toList(),
+          async: true,
+          throws: true,
+          returns: returnType is VoidType ? null : _encodeType(returnType, true),
+          body: '''
+return try await withCheckedThrowingContinuation { continuation in
+    channel.invokeMethod("${e.name}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
+        if let result = result as? [AnyHashable?: Any?] {
+            continuation.resume(throwing: PlatformError(
+                code: result["code"] as! String,
+                message: result["message"] as? String,
+                details: result["details"] as? String
+            ))
+        } else {
+            continuation.resume(returning: ${returnType is VoidType ? '()' : _encodeDeserialization(returnType, 'result')})
+        }
+    }
+}''',
+        );
+      }).toList(),
+    ));
   }
 
   @override

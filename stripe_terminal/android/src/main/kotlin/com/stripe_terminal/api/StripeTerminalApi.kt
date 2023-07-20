@@ -1,6 +1,5 @@
 package com.stripe_terminal.api
 
-import androidx.annotation.UiThread
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
@@ -38,19 +37,16 @@ class ControllerSink<T>(
     private val sink: EventChannel.EventSink,
     private val serializer: (data: T) -> Any?,
 ) {
-    @UiThread
     fun success(
         data: T,
     ) = sink.success(serializer(data))
 
-    @UiThread
     fun error(
         code: String,
         message: String?,
         details: Any?,
     ) = sink.error(code, message, details)
 
-    @UiThread
     fun endOfStream() = sink.endOfStream()
 }
 
@@ -92,7 +88,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         result: Result<ConnectionStatusApi>,
     )
 
-    abstract fun onFetchConnectedReader(
+    abstract fun onConnectedReader(
         result: Result<StripeReaderApi?>,
     )
 
@@ -158,9 +154,9 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                 val res = Result<ConnectionStatusApi>(result) {it.ordinal}
                 onConnectionStatus(res)
             }
-            "fetchConnectedReader" -> {
+            "connectedReader" -> {
                 val res = Result<StripeReaderApi?>(result) {it?.serialize()}
-                onFetchConnectedReader(res)
+                onConnectedReader(res)
             }
             "readReusableCardDetail" -> {
                 val res = Result<StripePaymentMethodApi>(result) {it.serialize()}

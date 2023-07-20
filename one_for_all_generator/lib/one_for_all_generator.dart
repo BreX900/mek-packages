@@ -177,7 +177,6 @@ class OneForAll {
       }
 
       for (final handler in serializableHandlers.values) {
-        print(handler);
         if (handler is SerializableHandler<EnumElement>) {
           builder.writeEnum(handler);
         } else if (handler is SerializableHandler<ClassElement>) {

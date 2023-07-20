@@ -119,9 +119,9 @@ class _$StripeTerminalApi {
     }
   }
 
-  Future<StripeReader?> fetchConnectedReader() async {
+  Future<StripeReader?> connectedReader() async {
     try {
-      final result = await _$channel.invokeMethod('fetchConnectedReader', []);
+      final result = await _$channel.invokeMethod('connectedReader', []);
       return result != null ? _$deserializeStripeReader(result as List) : null;
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);

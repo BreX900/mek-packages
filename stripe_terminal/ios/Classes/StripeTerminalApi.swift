@@ -69,7 +69,7 @@ protocol StripeTerminalApi {
         _ result: Result<ConnectionStatusApi>
     )
 
-    func onFetchConnectedReader(
+    func onConnectedReader(
         _ result: Result<StripeReaderApi?>
     )
 
@@ -133,9 +133,9 @@ func setupStripeTerminalApi(
             case "connectionStatus":
               let res = Result<ConnectionStatusApi>(result) { $0.serialize() }
               hostApi.onConnectionStatus(res)
-            case "fetchConnectedReader":
+            case "connectedReader":
               let res = Result<StripeReaderApi?>(result) { $0.serialize() }
-              hostApi.onFetchConnectedReader(res)
+              hostApi.onConnectedReader(res)
             case "readReusableCardDetail":
               let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
               hostApi.onReadReusableCardDetail(res)

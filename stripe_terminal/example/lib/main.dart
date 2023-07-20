@@ -38,6 +38,9 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription? _onUnexpectedReaderDisconnectSub;
   StripeReader? _reader;
 
+  String? _paymentIntentClientSecret;
+  PaymentIntentStatus? _paymentIntentStatus;
+
   @override
   void dispose() {
     unawaited(_onConnectionStatusChangeSub?.cancel());
@@ -156,20 +159,32 @@ class _MyAppState extends State<MyApp> {
     setState(() => _discoverReaderSub = null);
   }
 
-  // Future<String> createPaymentIntent() async {
-  //   Response invoice = await _dio.post("/createPaymentIntent", data: {
-  //     "email": "awazgyawali@gmail.com",
-  //     "order": {"test": "1"},
-  //     "ticketCount": 3,
-  //     "price": 5,
-  //   });
-  //   return jsonDecode(invoice.data)["paymentIntent"]["client_secret"];
-  // }
+  void _createPaymentIntent() async {
+    final paymentIntent = await _api.createPaymentIntent();
+    setState(() {
+      _paymentIntentClientSecret = paymentIntent.clientSecret;
+      _paymentIntentStatus = PaymentIntentStatus.requiresPaymentMethod;
+    });
+    _showSnackBar('PaymentIntent status: ${paymentIntent.status}');
+  }
 
-  // void _collectPaymentMethod() async {
-  //   final paymentIntent = await _api.createPaymentIntent();
-  //   _terminal.
-  // }
+  void _collectPaymentMethod(StripeTerminal terminal, String paymentIntentClientSecret) async {
+    final paymentIntent = await terminal.collectPaymentMethod(paymentIntentClientSecret);
+    setState(() {
+      _paymentIntentClientSecret = paymentIntent.clientSecret;
+      _paymentIntentStatus = paymentIntent.status!;
+    });
+    _showSnackBar('PaymentIntent status: ${paymentIntent.status!.name}');
+  }
+
+  void _confirmPaymentIntent(StripeTerminal terminal, String paymentIntentClientSecret) async {
+    final paymentIntent = await terminal.processPayment(paymentIntentClientSecret);
+    setState(() {
+      _paymentIntentClientSecret = paymentIntent.clientSecret;
+      _paymentIntentStatus = paymentIntent.status!;
+    });
+    _showSnackBar('PaymentIntent status: ${paymentIntent.status!.name}');
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -181,143 +196,173 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final terminal = _terminal;
+    final paymentIntentClientSecret = _paymentIntentClientSecret;
+    final paymentIntentStatus = _paymentIntentStatus;
 
-    final body = Column(
-      children: [
-        TextButton(
-          onPressed: terminal == null ? () async => _initTerminal() : null,
-          child: const Text('Init Stripe'),
-        ),
-        const Divider(),
-        TextButton(
-          onPressed: terminal != null ? () => _fetchLocations(terminal) : null,
-          child: const Text('Fetch Locations'),
-        ),
-        ..._locations.map((e) {
-          return ListTile(
-            selected: _selectedLocation?.id == e.id,
-            onTap: () => _toggleLocation(e),
-            dense: true,
-            title: Text('${e.id}: ${e.displayName}'),
-            subtitle: Text('${e.address?.city},${e.address?.state},${e.address?.line1}'),
-          );
-        }),
-        const Divider(),
-        ListTile(
-          onTap: _changeMode,
-          title: const Text('Scanning mode'),
-          trailing: Text(_isSimulated ? 'Simulator' : 'Real'),
-        ),
-        DropdownButton<DiscoveryMethod>(
-          value: _discoveringMethod,
-          onChanged: _changeDiscoveryMethod,
-          items: DiscoveryMethod.values.map((e) {
-            return DropdownMenuItem(
-              value: e,
-              child: Text(e.name),
-            );
-          }).toList(),
-        ),
-        if (_discoverReaderSub == null)
-          TextButton(
-            onPressed: terminal != null ? () => _startDiscoverReaders(terminal) : null,
-            child: const Text('Scan Devices'),
-          )
-        else
-          TextButton(
-            onPressed: _stopDiscoverReaders,
-            child: const Text('Stop Scanning'),
-          ),
-
-        TextButton(
-          onPressed: terminal != null ? () => _checkStatus(terminal) : null,
-          child: Text('Check status (${_connectionStatus.name})'),
-        ),
-        ..._readers.map((e) {
-          return ListTile(
-            selected: e.serialNumber == _reader?.serialNumber,
-            enabled: terminal != null &&
-                _connectionStatus != ConnectionStatus.connecting &&
-                (_reader == null || _reader!.serialNumber == e.serialNumber),
-            onTap: terminal != null ? () => _toggleReader(terminal, e) : null,
-            title: Text(e.serialNumber),
-            subtitle: Text('${e.deviceType.name} ${e.locationId ?? 'NoLocation'}'),
-            trailing: Text('${(e.batteryLevel * 100).toInt()}'),
-          );
-        }),
-        const Divider(),
-        // TextButton(
-        //   child: const Text('Read Reusable Card Detail'),
-        //   onPressed: () async {
-        //     stripeTerminal.readReusableCardDetail().then((StripePaymentMethod paymentMethod) {
-        //       _showSnackbar(
-        //         'A card was read: ${paymentMethod.cardDetails}',
-        //       );
-        //     });
-        //   },
-        // ),
-        // TextButton(
-        //   child: const Text('Set reader display'),
-        //   onPressed: () async {
-        //     stripeTerminal.setReaderDisplay(const Cart(
-        //       currency: 'USD',
-        //       tax: 130,
-        //       total: 1000,
-        //       lineItems: [
-        //         CartLineItem(
-        //           description: 'hello 1',
-        //           quantity: 1,
-        //           amount: 500,
-        //         ),
-        //         CartLineItem(
-        //           description: 'hello 2',
-        //           quantity: 1,
-        //           amount: 500,
-        //         ),
-        //       ],
-        //     ));
-        //   },
-        // ),
-        // TextButton(
-        //   child: const Text("Collect Payment Method"),
-        //   onPressed: () async {
-        //     paymentIntentClientSecret = await createPaymentIntent();
-        //     stripeTerminal
-        //         .collectPaymentMethod()
-        //         .then((StripePaymentIntent paymentIntent) async {
-        //       _dio.post("/confirmPaymentIntent", data: {
-        //         "paymentIntentId": paymentIntent.id,
-        //       });
-        //       _showSnackbar(
-        //         "A payment method was captured",
-        //       );
-        //     });
-        //   },
-        // ),
-        // TextButton(
-        //   child: const Text("Misc Button"),
-        //   onPressed: () async {
-        //     StripeReader.fromJson(
-        //       {
-        //         "locationStatus": 2,
-        //         "deviceType": 3,
-        //         "serialNumber": "STRM26138003393",
-        //         "batteryStatus": 0,
-        //         "simulated": false,
-        //         "availableUpdate": false
-        //       },
-        //     );
-        //   },
-        // ),
-      ],
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plugin example app'),
+    final mainTab = [
+      TextButton(
+        onPressed: terminal == null ? () async => _initTerminal() : null,
+        child: const Text('Init Stripe'),
       ),
-      body: SingleChildScrollView(
-        child: body,
+    ];
+    final locationTab = [
+      TextButton(
+        onPressed: terminal != null ? () => _fetchLocations(terminal) : null,
+        child: const Text('Fetch Locations'),
+      ),
+      const Divider(),
+      ..._locations.map((e) {
+        return ListTile(
+          selected: _selectedLocation?.id == e.id,
+          onTap: () => _toggleLocation(e),
+          dense: true,
+          title: Text('${e.id}: ${e.displayName}'),
+          subtitle: Text('${e.address?.city},${e.address?.state},${e.address?.line1}'),
+        );
+      }),
+    ];
+    final readersTab = [
+      TextButton(
+        onPressed: terminal != null ? () => _checkStatus(terminal) : null,
+        child: Text('Check status (${_connectionStatus.name})'),
+      ),
+      ListTile(
+        onTap: _changeMode,
+        title: const Text('Scanning mode'),
+        trailing: Text(_isSimulated ? 'Simulator' : 'Real'),
+      ),
+      DropdownButton<DiscoveryMethod>(
+        value: _discoveringMethod,
+        onChanged: _changeDiscoveryMethod,
+        items: DiscoveryMethod.values.map((e) {
+          return DropdownMenuItem(
+            value: e,
+            child: Text(e.name),
+          );
+        }).toList(),
+      ),
+      if (_discoverReaderSub == null)
+        TextButton(
+          onPressed: terminal != null ? () => _startDiscoverReaders(terminal) : null,
+          child: const Text('Scan Devices'),
+        )
+      else
+        TextButton(
+          onPressed: _stopDiscoverReaders,
+          child: const Text('Stop Scanning'),
+        ),
+      const Divider(),
+      ..._readers.map((e) {
+        return ListTile(
+          selected: e.serialNumber == _reader?.serialNumber,
+          enabled: terminal != null &&
+              _connectionStatus != ConnectionStatus.connecting &&
+              (_reader == null || _reader!.serialNumber == e.serialNumber),
+          onTap: terminal != null ? () => _toggleReader(terminal, e) : null,
+          title: Text(e.serialNumber),
+          subtitle: Text('${e.deviceType.name} ${e.locationId ?? 'NoLocation'}'),
+          trailing: Text('${(e.batteryLevel * 100).toInt()}'),
+        );
+      }),
+    ];
+    final paymentTab = [
+      TextButton(
+        onPressed: _createPaymentIntent,
+        child: const Text('Create PaymentIntent'),
+      ),
+      TextButton(
+        onPressed: terminal != null &&
+                paymentIntentClientSecret != null &&
+                paymentIntentStatus == PaymentIntentStatus.requiresPaymentMethod
+            ? () => _collectPaymentMethod(terminal, paymentIntentClientSecret)
+            : null,
+        child: const Text('Collect Payment Method'),
+      ),
+      TextButton(
+        onPressed: terminal != null &&
+                paymentIntentClientSecret != null &&
+                paymentIntentStatus == PaymentIntentStatus.requiresCapture
+            ? () => _confirmPaymentIntent(terminal, paymentIntentClientSecret)
+            : null,
+        child: const Text('Process Payment'),
+      ),
+      const Divider(),
+      if (paymentIntentStatus != null)
+        ListTile(
+          title: Text('PaymentIntent status: $paymentIntentStatus'),
+        )
+    ];
+
+    final cardTab = <Widget>[
+      // TextButton(
+      //   child: const Text('Read Reusable Card Detail'),
+      //   onPressed: () async {
+      //     stripeTerminal.readReusableCardDetail().then((StripePaymentMethod paymentMethod) {
+      //       _showSnackbar(
+      //         'A card was read: ${paymentMethod.cardDetails}',
+      //       );
+      //     });
+      //   },
+      // ),
+      // TextButton(
+      //   child: const Text('Set reader display'),
+      //   onPressed: () async {
+      //     stripeTerminal.setReaderDisplay(const Cart(
+      //       currency: 'USD',
+      //       tax: 130,
+      //       total: 1000,
+      //       lineItems: [
+      //         CartLineItem(
+      //           description: 'hello 1',
+      //           quantity: 1,
+      //           amount: 500,
+      //         ),
+      //         CartLineItem(
+      //           description: 'hello 2',
+      //           quantity: 1,
+      //           amount: 500,
+      //         ),
+      //       ],
+      //     ));
+      //   },
+      // ),
+    ];
+
+    final tabs = {
+      const Tab(text: 'Home'): mainTab,
+      const Tab(text: 'Locations'): locationTab,
+      const Tab(text: 'Readers'): readersTab,
+      const Tab(text: 'Payment'): paymentTab,
+      const Tab(text: 'Card'): cardTab,
+    };
+
+    return DefaultTabController(
+      length: tabs.length,
+      child: Scaffold(
+        body: Column(
+          children: [
+            Material(
+              color: Theme.of(context).colorScheme.primary,
+              child: SafeArea(
+                child: TabBar(
+                  isScrollable: true,
+                  tabs: tabs.keys.toList(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: tabs.values.map((e) {
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: e,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

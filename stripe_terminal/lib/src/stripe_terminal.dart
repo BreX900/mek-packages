@@ -59,8 +59,9 @@ class StripeTerminal extends _$StripeTerminalApi {
     return stripeTerminal;
   }
 
-  /// Connects to a bluetooth reader, only works if you have scanned devices within this session.
+  /// Attempts to connect to the given bluetooth reader.
   ///
+  /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectBluetoothReader(
@@ -72,8 +73,9 @@ class StripeTerminal extends _$StripeTerminalApi {
     required String locationId,
   });
 
-  /// Connects to a internet reader, only works if you have scanned devices within this session.
+  /// Attempts to connect to the given internet reader.
   ///
+  /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectInternetReader(
@@ -83,6 +85,9 @@ class StripeTerminal extends _$StripeTerminalApi {
     bool failIfInUse = false,
   });
 
+  /// Setup: https://stripe.com/docs/terminal/payments/setup-reader/tap-to-pay
+  /// Only works if you have scanned devices within this session.
+  /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectMobileReader(
     String readerSerialNumber, {
@@ -92,29 +97,24 @@ class StripeTerminal extends _$StripeTerminalApi {
     required String locationId,
   });
 
-  /// Disconnects from a reader, only works if you are connected to a device
-  ///
-  /// Always run `connectToReader` before calling this function
+  /// Attempts to disconnect from the currently connected reader.
   @override
   Future<void> disconnectReader();
 
   Stream<StripeReader> get onUnexpectedReaderDisconnect =>
       _onUnexpectedReaderDisconnectStream ??= super._onUnexpectedReaderDisconnect();
 
-  /// Displays the content to the connected reader's display
+  /// Updates the reader display with transaction information. This method is for display purposes
+  /// only and has no correlation with what the customer is actually charged. Tax and total
+  /// are also not automatically calculated and must be set in [Cart].
   @override
-  Future<void> setReaderDisplay(
-    /// Display information for the reader to be shown on the screen
-    ///
-    /// Supports on the devices which has a display
-    Cart cart,
-  );
+  Future<void> setReaderDisplay(Cart cart);
 
-  /// Clears connected reader's displays
+  /// Clears the reader display and resets it to the splash screen
   @override
   Future<void> clearReaderDisplay();
 
-  /// Checks the connection status of the SDK
+  /// Get the current [ConnectionStatus]
   @override
   Future<ConnectionStatus> connectionStatus();
 
@@ -123,7 +123,7 @@ class StripeTerminal extends _$StripeTerminalApi {
 
   /// Fetches the connected reader from the SDK. `null` if not connected
   @override
-  Future<StripeReader?> fetchConnectedReader();
+  Future<StripeReader?> connectedReader();
 
   /// Extracts payment method from the reader
   ///
@@ -131,16 +131,11 @@ class StripeTerminal extends _$StripeTerminalApi {
   @override
   Future<StripePaymentMethod> readReusableCardDetail();
 
-  /// Starts scanning readers in the vicinity. This will return a list of readers.
+  /// Begins discovering readers matching the given DiscoveryConfiguration.
   ///
   /// Can contain an empty array if no readers are found.
-  ///
-  /// [simulated] se to `true` will simulate readers which can be connected and tested.
   @override
-  Stream<List<StripeReader>> discoverReaders(
-    /// Configuration for the discovry process
-    DiscoverConfig config,
-  );
+  Stream<List<StripeReader>> discoverReaders(DiscoverConfig config);
 
   /// Starts reading payment method based on payment intent.
   ///
@@ -176,6 +171,14 @@ class StripeTerminal extends _$StripeTerminalApi {
     String clientSecret,
   );
 
+  // /// Confirm that your customer intends to set up the current or provided payment method.
+  // Future<void> confirmSetupIntent(String clientSecret);
+  //
+  // /// Cancel an existing SetupIntent.
+  // Future<void> cancelSetupIntent();
+
+  /// Returns a list of Location objects.
+  // TODO: Add parameters
   @override
   Future<List<Location>> listLocations();
 

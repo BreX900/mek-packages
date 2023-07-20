@@ -156,14 +156,15 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
     override fun onListLocations(result: Result<List<LocationApi>>) {
         val params = ListLocationsParameters.Builder().build()
         _terminal
-            .listLocations(params, object : TerminalErrorHandler(result::error), LocationListCallback {
-                override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
-                    result.success(locations.map { it.toApi() })
-            })
+            .listLocations(
+                params,
+                object : TerminalErrorHandler(result::error), LocationListCallback {
+                    override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
+                        result.success(locations.map { it.toApi() })
+                })
     }
 
     override fun onDisconnectReader(result: Result<Unit>) {
-
         _terminal.disconnectReader(object : TerminalErrorHandler(result::error), Callback {
             override fun onSuccess() = result.success(Unit)
         })
@@ -171,9 +172,11 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
 
     override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
         _terminal
-            .setReaderDisplay(cart.toHost(), object : TerminalErrorHandler(result::error), Callback {
-                override fun onSuccess() = result.success(Unit)
-            })
+            .setReaderDisplay(
+                cart.toHost(),
+                object : TerminalErrorHandler(result::error), Callback {
+                    override fun onSuccess() = result.success(Unit)
+                })
     }
 
     override fun onClearReaderDisplay(result: Result<Unit>) {
@@ -186,17 +189,19 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
         result.success(_terminal.connectionStatus.toApi())
     }
 
-    override fun onFetchConnectedReader(result: Result<StripeReaderApi?>) {
+    override fun onConnectedReader(result: Result<StripeReaderApi?>) {
         result.success(_terminal.connectedReader?.toApi())
     }
 
     override fun onReadReusableCardDetail(result: Result<StripePaymentMethodApi>) {
         val params = ReadReusableCardParameters.Builder().build()
         _terminal
-            .readReusableCard(params, object : TerminalErrorHandler(result::error), PaymentMethodCallback {
-                override fun onSuccess(paymentMethod: PaymentMethod) =
-                    result.success(paymentMethod.toApi())
-            })
+            .readReusableCard(
+                params,
+                object : TerminalErrorHandler(result::error), PaymentMethodCallback {
+                    override fun onSuccess(paymentMethod: PaymentMethod) =
+                        result.success(paymentMethod.toApi())
+                })
     }
 
     override fun onRetrievePaymentIntent(
@@ -250,6 +255,24 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
                 }
             })
     }
+
+//    override fun onConfirmPayment(
+//        result: Result<StripePaymentIntentApi>,
+//        clientSecret: String,
+//    ) {
+//        _terminal.confirmSetupIntent(
+//            clientSecret,
+//            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+//                override fun onSuccess(paymentIntent: PaymentIntent) {
+//                    _terminal.processPayment(
+//                        paymentIntent,
+//                        object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+//                            override fun onSuccess(paymentIntent: PaymentIntent) =
+//                                result.success(paymentIntent.toApi())
+//                        })
+//                }
+//            })
+//    }
 
     private var _discoverReaderCancelable: Cancelable? = null
 
@@ -308,14 +331,15 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
     private fun setupOnConnectionStatusChangeController(binaryMessenger: BinaryMessenger) {
         _onConnectionStatusChangeController = OnConnectionStatusChangeControllerApi(binaryMessenger)
         _onConnectionStatusChangeController.setHandler({ sink ->
-           _onConnectionStatusChangeSink = sink
+            _onConnectionStatusChangeSink = sink
         }, {
             _onConnectionStatusChangeSink = null
         })
     }
 
     private fun setupOnUnexpectedReaderDisconnectController(binaryMessenger: BinaryMessenger) {
-        _onUnexpectedReaderDisconnectController = OnUnexpectedReaderDisconnectControllerApi(binaryMessenger)
+        _onUnexpectedReaderDisconnectController =
+            OnUnexpectedReaderDisconnectControllerApi(binaryMessenger)
         _onUnexpectedReaderDisconnectController.setHandler({ sink ->
             _onUnexpectedReaderDisconnectSink = sink
         }, {

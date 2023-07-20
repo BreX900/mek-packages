@@ -8,6 +8,6 @@ class CollectConfiguration with _$CollectConfiguration {
 
   const CollectConfiguration({
     /// Weather to skip tipping or not, default to false if config is not provided
-    required this.skipTipping,
+    this.skipTipping = false,
   });
 }

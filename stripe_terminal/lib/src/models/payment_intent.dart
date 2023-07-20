@@ -63,9 +63,7 @@ enum PaymentIntentStatus {
   canceled,
   processing,
   requiresCapture,
-  // requiresAction,
   requiresConfirmation,
   requiresPaymentMethod,
   succeeded,
-  // unknown
 }

@@ -56,6 +56,7 @@ class StripeTerminal extends _$StripeTerminalApi {
     if (_instance != null) return _instance!;
     final stripeTerminal = StripeTerminal._(fetchToken: fetchToken);
     await stripeTerminal._init();
+    _instance = stripeTerminal;
     return stripeTerminal;
   }
 
@@ -160,9 +161,7 @@ class StripeTerminal extends _$StripeTerminalApi {
     // Client secret of the payment intent which you want to collect payment mwthod for
     String clientSecret, {
     /// Configruation for the collection process
-    CollectConfiguration collectConfiguration = const CollectConfiguration(
-      skipTipping: true,
-    ),
+    CollectConfiguration collectConfiguration = const CollectConfiguration(),
   });
 
   @override

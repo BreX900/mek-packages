@@ -42,6 +42,7 @@ class StripeApi {
     final paymentIntent = await _stripe.paymentIntent.create(CreatePaymentIntentRequest(
       amount: 1000,
       currency: 'eur',
+      paymentMethodTypes: {PaymentMethodType.card},
     ));
     print(jsonEncode(paymentIntent.toJson()));
     return paymentIntent;

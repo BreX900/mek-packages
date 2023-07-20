@@ -34,6 +34,7 @@ class SwiftMethod extends SwiftSpec {
   final bool throws;
   final String name;
   final List<SwiftParameter> parameters;
+  final bool lambda;
   final String? returns;
   final String? body;
 
@@ -44,6 +45,7 @@ class SwiftMethod extends SwiftSpec {
     this.throws = false,
     required this.name,
     this.parameters = const [],
+    this.lambda = false,
     this.returns,
     this.body,
   });
@@ -103,7 +105,7 @@ class SwiftField {
     required this.type,
   });
 
-  SwiftParameter toParameter({
+  SwiftParameter toInitParameter({
     String? label,
     String? name,
     String? annotation,
@@ -112,6 +114,18 @@ class SwiftField {
         this,
         label: label,
         name: name,
+        annotation: annotation,
+      );
+
+  SwiftParameter toParameter({
+    String? label,
+    String? name,
+    String? annotation,
+  }) =>
+      SwiftParameter(
+        type: type,
+        label: label,
+        name: name ?? this.name,
         annotation: annotation,
       );
 }
@@ -302,7 +316,12 @@ class SwiftEmitter {
     if (spec.throws) buffer.write(' throws');
     if (spec.returns != null) buffer.write(' -> ${spec.returns}');
 
-    if (spec.body != null) {
+    if (spec.body == null) return buffer;
+    if (spec.lambda) {
+      buffer.write(' { ');
+      buffer.write(spec.body!);
+      buffer.write(' }');
+    } else {
       buffer.write(' {\n');
       _indent += 1;
       buffer.write(spec.body!.split('\n').map((e) => '$_space$e').join('\n'));

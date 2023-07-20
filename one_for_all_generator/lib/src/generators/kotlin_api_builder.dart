@@ -8,28 +8,6 @@ import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 
-// class FlutterApiException(
-//     val code: String,
-//     val info: String?,
-//     val details: Any?,
-// ) : RuntimeException(if (info != null) "$code: $info" else code) {
-//     companion object {
-//         fun locationNotProvided(message: String?, details: Any?) =
-//             FlutterApiException("locationNotProvided", message, details)
-//     }
-// }
-//
-// class HostApiException(
-//     val code: String,
-//     val info: String?,
-//     val details: Any?,
-// ) : RuntimeException(if (info != null) "$code: $info" else code) {
-//     companion object {
-//         fun locationNotProvided(message: String?, details: Any?) =
-//             HostApiException("locationNotProvided", message, details)
-//     }
-// }
-
 class KotlinApiBuilder extends ApiBuilder {
   final KotlinOptions options;
   final _specs = <KotlinSpec>[];

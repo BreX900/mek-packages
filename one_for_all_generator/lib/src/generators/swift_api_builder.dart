@@ -25,6 +25,7 @@ class SwiftApiBuilder extends ApiBuilder {
         SwiftField(name: 'details', type: 'String?'),
       ],
     ));
+
     final resultFields = [
       SwiftField(
         visibility: SwiftVisibility.private,
@@ -41,9 +42,8 @@ class SwiftApiBuilder extends ApiBuilder {
       name: 'Result<T>',
       fields: resultFields,
       init: SwiftInit(
-        parameters: resultFields.map((e) {
-          return e.toParameter(label: '_', annotation: 'escaping');
-        }).toList(),
+        parameters:
+            resultFields.map((e) => e.toInitParameter(label: '_', annotation: 'escaping')).toList(),
       ),
       methods: [
         SwiftMethod(
@@ -51,6 +51,7 @@ class SwiftApiBuilder extends ApiBuilder {
           parameters: [
             SwiftParameter(label: '_', name: 'data', type: 'T'),
           ],
+          lambda: true,
           body: 'result(serializer(data))',
         ),
         SwiftMethod(
@@ -61,6 +62,99 @@ class SwiftApiBuilder extends ApiBuilder {
             SwiftParameter(label: '_', name: 'details', type: 'Any?'),
           ],
           body: 'result(FlutterError(code: code, message: message, details: details))',
+        ),
+      ],
+    ));
+
+    final controllerSinkFields = [
+      SwiftField(
+        visibility: SwiftVisibility.private,
+        name: 'sink',
+        type: 'FlutterEventSink',
+      ),
+      SwiftField(
+        visibility: SwiftVisibility.private,
+        name: 'serializer',
+        type: '(T) -> Any?',
+      ),
+    ];
+    _specs.add(SwiftClass(
+      name: 'ControllerSink<T>',
+      fields: controllerSinkFields,
+      init: SwiftInit(
+        parameters: controllerSinkFields
+            .map((e) => e.toInitParameter(label: '_', annotation: 'escaping'))
+            .toList(),
+      ),
+      methods: [
+        SwiftMethod(
+          name: 'success',
+          parameters: [
+            SwiftParameter(label: '_', name: 'data', type: 'T'),
+          ],
+          lambda: true,
+          body: 'sink(serializer(data))',
+        ),
+        SwiftMethod(
+          name: 'error',
+          parameters: [
+            SwiftParameter(label: '_', name: 'code', type: 'String'),
+            SwiftParameter(label: '_', name: 'message', type: 'String'),
+            SwiftParameter(label: '_', name: 'details', type: 'Any?'),
+          ],
+          body: 'sink(FlutterError(code: code, message: message, details: details))',
+        ),
+        SwiftMethod(
+          name: 'endOfStream',
+          lambda: true,
+          body: 'sink(FlutterEndOfEventStream)',
+        ),
+      ],
+    ));
+
+    final controllerHandlerFields = [
+      SwiftField(
+        visibility: SwiftVisibility.private,
+        name: '_onListen',
+        type: '(_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?',
+      ),
+      SwiftField(
+        visibility: SwiftVisibility.private,
+        name: '_onCancel',
+        type: '(_ arguments: Any?) -> FlutterError?',
+      ),
+    ];
+    _specs.add(SwiftClass(
+      name: 'ControllerHandler',
+      implements: ['NSObject', 'FlutterStreamHandler'],
+      fields: controllerHandlerFields,
+      init: SwiftInit(
+        parameters: controllerHandlerFields
+            .map((e) => e.toInitParameter(label: '_', annotation: 'escaping'))
+            .toList(),
+      ),
+      methods: [
+        SwiftMethod(
+          name: 'onListen',
+          parameters: [
+            SwiftParameter(label: 'withArguments', name: 'arguments', type: 'Any?'),
+            SwiftParameter(
+              label: 'eventSink',
+              name: 'events',
+              annotation: 'escaping',
+              type: 'FlutterEventSink',
+            ),
+          ],
+          returns: 'FlutterError?',
+          lambda: true,
+          body: '_onListen(arguments, events)',
+        ),
+        SwiftMethod(
+          name: 'onCancel',
+          parameters: [SwiftParameter(label: 'withArguments', name: 'arguments', type: 'Any?')],
+          returns: 'FlutterError?',
+          lambda: true,
+          body: '_onCancel(arguments)',
         ),
       ],
     ));
@@ -91,9 +185,71 @@ class SwiftApiBuilder extends ApiBuilder {
               );
             }),
           ],
+          throws: true,
         );
       }).toList(),
     ));
+
+    _specs.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+      final returnType = e.returnType.singleTypeArg;
+
+      final parametersType = e.parameters.map((e) => '_ ${e.name}: ${_encodeType(e.type, true)}');
+      final parameters =
+          e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
+
+      return SwiftClass(
+        name: handler.controllerName(e),
+        init: SwiftInit(
+          parameters: [SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')],
+          body:
+              'channel = FlutterEventChannel(name: "${handler.controllerChannelName(e)}", binaryMessenger: binaryMessenger)',
+        ),
+        fields: [
+          SwiftField(
+            visibility: SwiftVisibility.private,
+            name: 'channel',
+            type: 'FlutterEventChannel',
+          ),
+        ],
+        methods: [
+          SwiftMethod(
+            name: 'setHandler',
+            parameters: [
+              SwiftParameter(
+                label: '_',
+                name: 'onListen',
+                annotation: 'escaping',
+                type: '(${[
+                  '_ sink: ControllerSink<${_encodeType(returnType, true)}>',
+                  ...parametersType
+                ].join(',')}) -> FlutterError?',
+              ),
+              SwiftParameter(
+                label: '_',
+                name: 'onCancel',
+                annotation: 'escaping',
+                type: '(${parametersType.join(',')}) -> FlutterError?',
+              ),
+            ],
+            body: '''
+channel.setStreamHandler(ControllerHandler({ arguments, events in
+    let args = arguments as! [Any?]
+    let sink = ControllerSink<${_encodeType(returnType, true)}>(events) {${returnType is VoidType ? 'nil' : _encodeSerialization(returnType, '\$0')}}
+    return onListen(${['sink', ...parameters].join(',')})
+}, { arguments in
+    let args = arguments as! [Any?]
+    return onCancel(${parameters.join(',')})
+}))''',
+          ),
+          SwiftMethod(
+            name: 'removeHandler',
+            lambda: true,
+            body: 'channel.setStreamHandler(nil)',
+          ),
+        ],
+      );
+    }));
+
     _specs.add(SwiftMethod(
       name: 'setup${_encodeType(element.thisType, false)}',
       parameters: [
@@ -115,8 +271,8 @@ ${element.methods.where((e) => e.isHostApiMethod).map((e) {
 
         return '''
         case "${e.name}":
-          let res = Result<${_encodeType(returnType, true)}>(result) { \$0.serialize() }
-          hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''';
+            let res = Result<${_encodeType(returnType, true)}>(result) { ${returnType is VoidType ? '()' : _encodeSerialization(returnType, '\$0')} }
+            try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''';
       }).join('\n')}
         default:
             result(FlutterMethodNotImplemented)
@@ -251,7 +407,7 @@ return try await withCheckedThrowingContinuation { continuation in
   String _encodeType(DartType type, bool withNullability) {
     final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
     if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
-    if (type is VoidType) return 'Unit$questionOrEmpty';
+    if (type is VoidType) return 'Void$questionOrEmpty';
     if (type.isDartCoreNull) return 'nil$questionOrEmpty';
     if (type.isDartCoreBool) return 'Bool$questionOrEmpty';
     if (type.isDartCoreInt) return 'Int$questionOrEmpty';

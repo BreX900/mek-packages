@@ -20,9 +20,7 @@ class Result<T> {
 
     func success(
         _ data: T
-    ) {
-        result(serializer(data))
-    }
+    ) { result(serializer(data)) }
 
     func error(
         _ code: String,
@@ -33,80 +31,233 @@ class Result<T> {
     }
 }
 
+class ControllerSink<T> {
+    private let sink: FlutterEventSink
+    private let serializer: (T) -> Any?
+
+    init(
+        _ sink: @escaping FlutterEventSink,
+        _ serializer: @escaping (T) -> Any?
+    ) {
+        self.sink = sink
+        self.serializer = serializer
+    }
+
+    func success(
+        _ data: T
+    ) { sink(serializer(data)) }
+
+    func error(
+        _ code: String,
+        _ message: String,
+        _ details: Any?
+    ) {
+        sink(FlutterError(code: code, message: message, details: details))
+    }
+
+    func endOfStream() { sink(FlutterEndOfEventStream) }
+}
+
+class ControllerHandler: NSObject, FlutterStreamHandler {
+    private let _onListen: (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?
+    private let _onCancel: (_ arguments: Any?) -> FlutterError?
+
+    init(
+        _ _onListen: @escaping (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?,
+        _ _onCancel: @escaping (_ arguments: Any?) -> FlutterError?
+    ) {
+        self._onListen = _onListen
+        self._onCancel = _onCancel
+    }
+
+    func onListen(
+        withArguments arguments: Any?,
+        eventSink events: @escaping FlutterEventSink
+    ) -> FlutterError? { _onListen(arguments, events) }
+
+    func onCancel(
+        withArguments arguments: Any?
+    ) -> FlutterError? { _onCancel(arguments) }
+}
+
 protocol StripeTerminalApi {
     func onListLocations(
         _ result: Result<[LocationApi]>,
         _ endingBefore: String?,
         _ limit: Int?,
         _ startingAfter: String?
-    )
+    ) throws
 
     func onConnectionStatus(
         _ result: Result<ConnectionStatusApi>
-    )
+    ) throws
 
     func onConnectBluetoothReader(
         _ result: Result<StripeReaderApi>,
         _ serialNumber: String,
         _ locationId: String,
         _ autoReconnectOnUnexpectedDisconnect: Bool
-    )
+    ) throws
 
     func onConnectInternetReader(
         _ result: Result<StripeReaderApi>,
         _ serialNumber: String,
         _ failIfInUse: Bool
-    )
+    ) throws
 
     func onConnectMobileReader(
         _ result: Result<StripeReaderApi>,
         _ serialNumber: String,
         _ locationId: String
-    )
+    ) throws
 
     func onConnectedReader(
         _ result: Result<StripeReaderApi?>
-    )
+    ) throws
 
     func onDisconnectReader(
-        _ result: Result<Unit>
-    )
+        _ result: Result<Void>
+    ) throws
 
     func onSetReaderDisplay(
-        _ result: Result<Unit>,
+        _ result: Result<Void>,
         _ cart: CartApi
-    )
+    ) throws
 
     func onClearReaderDisplay(
-        _ result: Result<Unit>
-    )
+        _ result: Result<Void>
+    ) throws
 
     func onReadReusableCard(
         _ result: Result<StripePaymentMethodApi>,
         _ customer: String?,
         _ metadata: [String: String]?
-    )
+    ) throws
 
     func onRetrievePaymentIntent(
         _ result: Result<StripePaymentIntentApi>,
         _ clientSecret: String
-    )
+    ) throws
 
     func onCollectPaymentMethod(
         _ result: Result<StripePaymentIntentApi>,
         _ clientSecret: String,
         _ moto: Bool,
         _ skipTipping: Bool
-    )
+    ) throws
 
     func onProcessPayment(
         _ result: Result<StripePaymentIntentApi>,
         _ clientSecret: String
-    )
+    ) throws
 
     func onInit(
-        _ result: Result<Unit>
-    )
+        _ result: Result<Void>
+    ) throws
+}
+
+class DiscoverReadersControllerApi {
+    private let channel: FlutterEventChannel
+
+    init(
+        binaryMessenger: FlutterBinaryMessenger
+    ) {
+        channel = FlutterEventChannel(name: "StripeTerminal#discoverReaders", binaryMessenger: binaryMessenger)
+    }
+
+    func setHandler(
+        _ onListen: @escaping (_ sink: ControllerSink<[StripeReaderApi]>,_ discoveryMethod: DiscoveryMethodApi,_ simulated: Bool,_ locationId: String?) -> FlutterError?,
+        _ onCancel: @escaping (_ discoveryMethod: DiscoveryMethodApi,_ simulated: Bool,_ locationId: String?) -> FlutterError?
+    ) {
+        channel.setStreamHandler(ControllerHandler({ arguments, events in
+            let args = arguments as! [Any?]
+            let sink = ControllerSink<[StripeReaderApi]>(events) {$0.map { $0.serialize() }}
+            return onListen(sink,DiscoveryMethodApi(rawValue: args[0] as! Int)!,args[1] as! Bool,args[2] as? String)
+        }, { arguments in
+            let args = arguments as! [Any?]
+            return onCancel(DiscoveryMethodApi(rawValue: args[0] as! Int)!,args[1] as! Bool,args[2] as? String)
+        }))
+    }
+
+    func removeHandler() { channel.setStreamHandler(nil) }
+}
+
+class OnConnectionStatusChangeControllerApi {
+    private let channel: FlutterEventChannel
+
+    init(
+        binaryMessenger: FlutterBinaryMessenger
+    ) {
+        channel = FlutterEventChannel(name: "StripeTerminal#_onConnectionStatusChange", binaryMessenger: binaryMessenger)
+    }
+
+    func setHandler(
+        _ onListen: @escaping (_ sink: ControllerSink<ConnectionStatusApi>) -> FlutterError?,
+        _ onCancel: @escaping () -> FlutterError?
+    ) {
+        channel.setStreamHandler(ControllerHandler({ arguments, events in
+            let args = arguments as! [Any?]
+            let sink = ControllerSink<ConnectionStatusApi>(events) {$0.rawValue}
+            return onListen(sink)
+        }, { arguments in
+            let args = arguments as! [Any?]
+            return onCancel()
+        }))
+    }
+
+    func removeHandler() { channel.setStreamHandler(nil) }
+}
+
+class OnUnexpectedReaderDisconnectControllerApi {
+    private let channel: FlutterEventChannel
+
+    init(
+        binaryMessenger: FlutterBinaryMessenger
+    ) {
+        channel = FlutterEventChannel(name: "StripeTerminal#_onUnexpectedReaderDisconnect", binaryMessenger: binaryMessenger)
+    }
+
+    func setHandler(
+        _ onListen: @escaping (_ sink: ControllerSink<StripeReaderApi>) -> FlutterError?,
+        _ onCancel: @escaping () -> FlutterError?
+    ) {
+        channel.setStreamHandler(ControllerHandler({ arguments, events in
+            let args = arguments as! [Any?]
+            let sink = ControllerSink<StripeReaderApi>(events) {$0.serialize()}
+            return onListen(sink)
+        }, { arguments in
+            let args = arguments as! [Any?]
+            return onCancel()
+        }))
+    }
+
+    func removeHandler() { channel.setStreamHandler(nil) }
+}
+
+class OnPaymentStatusChangeControllerApi {
+    private let channel: FlutterEventChannel
+
+    init(
+        binaryMessenger: FlutterBinaryMessenger
+    ) {
+        channel = FlutterEventChannel(name: "StripeTerminal#_onPaymentStatusChange", binaryMessenger: binaryMessenger)
+    }
+
+    func setHandler(
+        _ onListen: @escaping (_ sink: ControllerSink<PaymentStatusApi>) -> FlutterError?,
+        _ onCancel: @escaping () -> FlutterError?
+    ) {
+        channel.setStreamHandler(ControllerHandler({ arguments, events in
+            let args = arguments as! [Any?]
+            let sink = ControllerSink<PaymentStatusApi>(events) {$0.rawValue}
+            return onListen(sink)
+        }, { arguments in
+            let args = arguments as! [Any?]
+            return onCancel()
+        }))
+    }
+
+    func removeHandler() { channel.setStreamHandler(nil) }
 }
 
 func setupStripeTerminalApi(
@@ -120,47 +271,47 @@ func setupStripeTerminalApi(
                         
             switch call.method {
             case "listLocations":
-              let res = Result<[LocationApi]>(result) { $0.serialize() }
-              hostApi.onListLocations(res, args[0] as? String, args[1] as? Int, args[2] as? String)
+                let res = Result<[LocationApi]>(result) { $0.map { $0.serialize() } }
+                try hostApi.onListLocations(res, args[0] as? String, args[1] as? Int, args[2] as? String)
             case "connectionStatus":
-              let res = Result<ConnectionStatusApi>(result) { $0.serialize() }
-              hostApi.onConnectionStatus(res)
+                let res = Result<ConnectionStatusApi>(result) { $0.rawValue }
+                try hostApi.onConnectionStatus(res)
             case "connectBluetoothReader":
-              let res = Result<StripeReaderApi>(result) { $0.serialize() }
-              hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String, args[2] as! Bool)
+                let res = Result<StripeReaderApi>(result) { $0.serialize() }
+                try hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String, args[2] as! Bool)
             case "connectInternetReader":
-              let res = Result<StripeReaderApi>(result) { $0.serialize() }
-              hostApi.onConnectInternetReader(res, args[0] as! String, args[1] as! Bool)
+                let res = Result<StripeReaderApi>(result) { $0.serialize() }
+                try hostApi.onConnectInternetReader(res, args[0] as! String, args[1] as! Bool)
             case "connectMobileReader":
-              let res = Result<StripeReaderApi>(result) { $0.serialize() }
-              hostApi.onConnectMobileReader(res, args[0] as! String, args[1] as! String)
+                let res = Result<StripeReaderApi>(result) { $0.serialize() }
+                try hostApi.onConnectMobileReader(res, args[0] as! String, args[1] as! String)
             case "connectedReader":
-              let res = Result<StripeReaderApi?>(result) { $0.serialize() }
-              hostApi.onConnectedReader(res)
+                let res = Result<StripeReaderApi?>(result) { $0?.serialize() }
+                try hostApi.onConnectedReader(res)
             case "disconnectReader":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onDisconnectReader(res)
+                let res = Result<Void>(result) { () }
+                try hostApi.onDisconnectReader(res)
             case "setReaderDisplay":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onSetReaderDisplay(res, CartApi.deserialize(args[0] as! [Any?]))
+                let res = Result<Void>(result) { () }
+                try hostApi.onSetReaderDisplay(res, CartApi.deserialize(args[0] as! [Any?]))
             case "clearReaderDisplay":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onClearReaderDisplay(res)
+                let res = Result<Void>(result) { () }
+                try hostApi.onClearReaderDisplay(res)
             case "readReusableCard":
-              let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
-              hostApi.onReadReusableCard(res, args[0] as? String, args[1] != nil ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil)
+                let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
+                try hostApi.onReadReusableCard(res, args[0] as? String, args[1] != nil ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil)
             case "retrievePaymentIntent":
-              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
-              hostApi.onRetrievePaymentIntent(res, args[0] as! String)
+                let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onRetrievePaymentIntent(res, args[0] as! String)
             case "collectPaymentMethod":
-              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
-              hostApi.onCollectPaymentMethod(res, args[0] as! String, args[1] as! Bool, args[2] as! Bool)
+                let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onCollectPaymentMethod(res, args[0] as! String, args[1] as! Bool, args[2] as! Bool)
             case "processPayment":
-              let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
-              hostApi.onProcessPayment(res, args[0] as! String)
+                let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onProcessPayment(res, args[0] as! String)
             case "_init":
-              let res = Result<Unit>(result) { $0.serialize() }
-              hostApi.onInit(res)
+                let res = Result<Void>(result) { () }
+                try hostApi.onInit(res)
             default:
                 result(FlutterMethodNotImplemented)
             }

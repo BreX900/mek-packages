@@ -12,10 +12,10 @@ import com.stripe.stripeterminal.external.models.*
 import com.stripe.stripeterminal.external.callable.ConnectionTokenProvider
 import com.stripe.stripeterminal.log.LogLevel
 import com.stripe_terminal.api.CartApi
-import com.stripe_terminal.api.CollectConfigurationApi
 import com.stripe_terminal.api.ConnectionStatusApi
 import com.stripe_terminal.api.ControllerSink
 import com.stripe_terminal.api.DiscoverReadersControllerApi
+import com.stripe_terminal.api.DiscoveryMethodApi
 import com.stripe_terminal.api.LocationApi
 import com.stripe_terminal.api.OnConnectionStatusChangeControllerApi
 import com.stripe_terminal.api.OnPaymentStatusChangeControllerApi
@@ -96,19 +96,45 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
         result.success(Unit)
     }
 
+    //region LOCATIONS
+    override fun onListLocations(
+        result: Result<List<LocationApi>>,
+        endingBefore: String?,
+        limit: Long?,
+        startingAfter: String?,
+    ) {
+        val params = ListLocationsParameters.Builder()
+        params.endingBefore = endingBefore
+        params.startingAfter = startingAfter
+        params.limit = limit?.toInt()
+        _terminal.listLocations(params.build(),
+            object : TerminalErrorHandler(result::error), LocationListCallback {
+                override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
+                    result.success(locations.map { it.toApi() })
+            })
+    }
+    //endregion
+
+    //region Connection Status
+    override fun onConnectionStatus(result: Result<ConnectionStatusApi>) {
+        result.success(_terminal.connectionStatus.toApi())
+    }
+    //endregion
+
+    //region Readers
     override fun onConnectBluetoothReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
-        locationId: String
+        serialNumber: String,
+        locationId: String,
+        autoReconnectOnUnexpectedDisconnect: Boolean,
     ) {
-        val reader = findActiveReader(result, readerSerialNumber) ?: return
+        val reader = findActiveReader(result, serialNumber) ?: return
 
-        val config = ConnectionConfiguration.BluetoothConnectionConfiguration(
-            locationId = locationId,
-        )
-        _terminal.connectBluetoothReader(
-            reader,
-            config,
+        _terminal.connectBluetoothReader(reader,
+            ConnectionConfiguration.BluetoothConnectionConfiguration(
+                locationId = locationId,
+                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect
+            ),
             object : BluetoothReaderListener {},
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
@@ -118,18 +144,15 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
 
     override fun onConnectInternetReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
+        serialNumber: String,
         failIfInUse: Boolean
     ) {
-        val reader = findActiveReader(result, readerSerialNumber) ?: return
+        val reader = findActiveReader(result, serialNumber) ?: return
 
-        val connectionConfig =
+        _terminal.connectInternetReader(reader,
             ConnectionConfiguration.InternetConnectionConfiguration(
                 failIfInUse = failIfInUse
-            )
-        _terminal.connectInternetReader(
-            reader,
-            connectionConfig,
+            ),
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
             })
@@ -137,46 +160,38 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
 
     override fun onConnectMobileReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
+        serialNumber: String,
         locationId: String,
     ) {
-        val reader = findActiveReader(result, readerSerialNumber) ?: return
+        val reader = findActiveReader(result, serialNumber) ?: return
 
         val config = ConnectionConfiguration.LocalMobileConnectionConfiguration(
             locationId = locationId
         )
-        _terminal.connectLocalMobileReader(
-            reader,
-            config,
+        _terminal.connectLocalMobileReader(reader, config,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
             })
     }
 
-    override fun onListLocations(result: Result<List<LocationApi>>) {
-        val params = ListLocationsParameters.Builder().build()
-        _terminal
-            .listLocations(
-                params,
-                object : TerminalErrorHandler(result::error), LocationListCallback {
-                    override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
-                        result.success(locations.map { it.toApi() })
-                })
+    override fun onConnectedReader(result: Result<StripeReaderApi?>) {
+        result.success(_terminal.connectedReader?.toApi())
     }
+
 
     override fun onDisconnectReader(result: Result<Unit>) {
         _terminal.disconnectReader(object : TerminalErrorHandler(result::error), Callback {
             override fun onSuccess() = result.success(Unit)
         })
     }
+    //endregion
 
+    //region Reader Display
     override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
-        _terminal
-            .setReaderDisplay(
-                cart.toHost(),
-                object : TerminalErrorHandler(result::error), Callback {
-                    override fun onSuccess() = result.success(Unit)
-                })
+        _terminal.setReaderDisplay(cart.toHost(),
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
+            })
     }
 
     override fun onClearReaderDisplay(result: Result<Unit>) {
@@ -184,32 +199,29 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
             override fun onSuccess() = result.success(Unit)
         })
     }
+    //endregion
 
-    override fun onConnectionStatus(result: Result<ConnectionStatusApi>) {
-        result.success(_terminal.connectionStatus.toApi())
+    override fun onReadReusableCard(
+        result: Result<StripePaymentMethodApi>,
+        customer: String?,
+        metadata: HashMap<String, String>?
+    ) {
+        val params = ReadReusableCardParameters.Builder()
+        if (customer != null) params.setCustomer(customer)
+        if (metadata != null) params.putAllMetadata(metadata)
+        _terminal.readReusableCard(params.build(),
+            object : TerminalErrorHandler(result::error), PaymentMethodCallback {
+                override fun onSuccess(paymentMethod: PaymentMethod) =
+                    result.success(paymentMethod.toApi())
+            })
     }
 
-    override fun onConnectedReader(result: Result<StripeReaderApi?>) {
-        result.success(_terminal.connectedReader?.toApi())
-    }
-
-    override fun onReadReusableCardDetail(result: Result<StripePaymentMethodApi>) {
-        val params = ReadReusableCardParameters.Builder().build()
-        _terminal
-            .readReusableCard(
-                params,
-                object : TerminalErrorHandler(result::error), PaymentMethodCallback {
-                    override fun onSuccess(paymentMethod: PaymentMethod) =
-                        result.success(paymentMethod.toApi())
-                })
-    }
-
+    //region Payment
     override fun onRetrievePaymentIntent(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String
     ) {
-        _terminal.retrievePaymentIntent(
-            clientSecret,
+        _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) =
                     result.success(paymentIntent.toApi())
@@ -219,10 +231,10 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
     override fun onCollectPaymentMethod(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
-        collectConfiguration: CollectConfigurationApi
+        moto: Boolean,
+        skipTipping: Boolean,
     ) {
-        _terminal.retrievePaymentIntent(
-            clientSecret,
+        _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     _terminal.collectPaymentMethod(
@@ -231,7 +243,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
                             override fun onSuccess(paymentIntent: PaymentIntent) =
                                 result.success(paymentIntent.toApi())
                         },
-                        CollectConfiguration.Builder().skipTipping(collectConfiguration.skipTipping)
+                        CollectConfiguration.Builder()
+                            .setMoto(moto)
+                            .skipTipping(skipTipping)
                             .build(),
                     )
                 }
@@ -242,8 +256,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
     ) {
-        _terminal.retrievePaymentIntent(
-            clientSecret,
+        _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     _terminal.processPayment(
@@ -255,55 +268,20 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
                 }
             })
     }
-
-//    override fun onConfirmPayment(
-//        result: Result<StripePaymentIntentApi>,
-//        clientSecret: String,
-//    ) {
-//        _terminal.confirmSetupIntent(
-//            clientSecret,
-//            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-//                override fun onSuccess(paymentIntent: PaymentIntent) {
-//                    _terminal.processPayment(
-//                        paymentIntent,
-//                        object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-//                            override fun onSuccess(paymentIntent: PaymentIntent) =
-//                                result.success(paymentIntent.toApi())
-//                        })
-//                }
-//            })
-//    }
+    //endregion
 
     private var _discoverReaderCancelable: Cancelable? = null
 
-//    override fun onStartDiscoverReaders(result: Result<Unit>, config: DiscoverConfigApi) {
-//        discoverReaderCancelable =
-//            terminal.discoverReaders(config.toHost(), object : DiscoveryListener {
-//                override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
-//                    activeReaders = readers
-//                    runBlocking(Dispatchers.Main) {
-//                        handlers.readersFound(readers.map { it.toApi() })
-//                    }
-//                }
-//            }, object : TerminalErrorHandler(result), Callback {
-//                override fun onSuccess() = result.success(Unit)
-//            })
-//    }
-//
-//    override fun onStopDiscoverReaders(result: Result<Unit>) {
-//        discoverReaderCancelable?.cancel(object : TerminalErrorHandler(result), Callback {
-//            override fun onSuccess() {
-//                discoverReaderCancelable = null
-//                result.success(Unit)
-//            }
-//        }) ?: result.success(Unit)
-//    }
-
     private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
         _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
-        _discoverReadersController.setHandler({ sink, config ->
+        _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
+            val config = DiscoveryConfiguration(
+                isSimulated = simulated,
+                discoveryMethod = discoveryMethod.toHost(),
+                location = locationId
+            )
             _discoverReaderCancelable =
-                _terminal.discoverReaders(config.toHost(), object : DiscoveryListener {
+                _terminal.discoverReaders(config, object : DiscoveryListener {
                     override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
                         _discoveredReaders = readers
                         _activity!!.runOnUiThread {

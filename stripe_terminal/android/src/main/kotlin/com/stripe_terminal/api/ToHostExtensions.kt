@@ -2,14 +2,6 @@ package com.stripe_terminal.api
 
 import com.stripe.stripeterminal.external.models.*
 
-fun DiscoverConfigApi.toHost(): DiscoveryConfiguration {
-    return DiscoveryConfiguration(
-        isSimulated = simulated,
-        discoveryMethod = discoveryMethod.toHost(),
-        location = locationId
-    )
-}
-
 fun DiscoveryMethodApi.toHost(): DiscoveryMethod {
     return when (this) {
         DiscoveryMethodApi.BLUETOOTH_SCAN -> DiscoveryMethod.BLUETOOTH_SCAN

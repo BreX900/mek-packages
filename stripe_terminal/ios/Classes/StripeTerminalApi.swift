@@ -34,22 +34,38 @@ class Result<T> {
 }
 
 protocol StripeTerminalApi {
+    func onListLocations(
+        _ result: Result<[LocationApi]>,
+        _ endingBefore: String?,
+        _ limit: Int?,
+        _ startingAfter: String?
+    )
+
+    func onConnectionStatus(
+        _ result: Result<ConnectionStatusApi>
+    )
+
     func onConnectBluetoothReader(
         _ result: Result<StripeReaderApi>,
-        _ readerSerialNumber: String,
-        _ locationId: String
+        _ serialNumber: String,
+        _ locationId: String,
+        _ autoReconnectOnUnexpectedDisconnect: Bool
     )
 
     func onConnectInternetReader(
         _ result: Result<StripeReaderApi>,
-        _ readerSerialNumber: String,
+        _ serialNumber: String,
         _ failIfInUse: Bool
     )
 
     func onConnectMobileReader(
         _ result: Result<StripeReaderApi>,
-        _ readerSerialNumber: String,
+        _ serialNumber: String,
         _ locationId: String
+    )
+
+    func onConnectedReader(
+        _ result: Result<StripeReaderApi?>
     )
 
     func onDisconnectReader(
@@ -65,16 +81,10 @@ protocol StripeTerminalApi {
         _ result: Result<Unit>
     )
 
-    func onConnectionStatus(
-        _ result: Result<ConnectionStatusApi>
-    )
-
-    func onConnectedReader(
-        _ result: Result<StripeReaderApi?>
-    )
-
-    func onReadReusableCardDetail(
-        _ result: Result<StripePaymentMethodApi>
+    func onReadReusableCard(
+        _ result: Result<StripePaymentMethodApi>,
+        _ customer: String?,
+        _ metadata: [String: String]?
     )
 
     func onRetrievePaymentIntent(
@@ -85,16 +95,13 @@ protocol StripeTerminalApi {
     func onCollectPaymentMethod(
         _ result: Result<StripePaymentIntentApi>,
         _ clientSecret: String,
-        _ collectConfiguration: CollectConfigurationApi
+        _ moto: Bool,
+        _ skipTipping: Bool
     )
 
     func onProcessPayment(
         _ result: Result<StripePaymentIntentApi>,
         _ clientSecret: String
-    )
-
-    func onListLocations(
-        _ result: Result<[LocationApi]>
     )
 
     func onInit(
@@ -112,15 +119,24 @@ func setupStripeTerminalApi(
             let args = call.arguments as! [Any?]
                         
             switch call.method {
+            case "listLocations":
+              let res = Result<[LocationApi]>(result) { $0.serialize() }
+              hostApi.onListLocations(res, args[0] as? String, args[1] as? Int, args[2] as? String)
+            case "connectionStatus":
+              let res = Result<ConnectionStatusApi>(result) { $0.serialize() }
+              hostApi.onConnectionStatus(res)
             case "connectBluetoothReader":
               let res = Result<StripeReaderApi>(result) { $0.serialize() }
-              hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String)
+              hostApi.onConnectBluetoothReader(res, args[0] as! String, args[1] as! String, args[2] as! Bool)
             case "connectInternetReader":
               let res = Result<StripeReaderApi>(result) { $0.serialize() }
               hostApi.onConnectInternetReader(res, args[0] as! String, args[1] as! Bool)
             case "connectMobileReader":
               let res = Result<StripeReaderApi>(result) { $0.serialize() }
               hostApi.onConnectMobileReader(res, args[0] as! String, args[1] as! String)
+            case "connectedReader":
+              let res = Result<StripeReaderApi?>(result) { $0.serialize() }
+              hostApi.onConnectedReader(res)
             case "disconnectReader":
               let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onDisconnectReader(res)
@@ -130,27 +146,18 @@ func setupStripeTerminalApi(
             case "clearReaderDisplay":
               let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onClearReaderDisplay(res)
-            case "connectionStatus":
-              let res = Result<ConnectionStatusApi>(result) { $0.serialize() }
-              hostApi.onConnectionStatus(res)
-            case "connectedReader":
-              let res = Result<StripeReaderApi?>(result) { $0.serialize() }
-              hostApi.onConnectedReader(res)
-            case "readReusableCardDetail":
+            case "readReusableCard":
               let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
-              hostApi.onReadReusableCardDetail(res)
+              hostApi.onReadReusableCard(res, args[0] as? String, args[1] != nil ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil)
             case "retrievePaymentIntent":
               let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
               hostApi.onRetrievePaymentIntent(res, args[0] as! String)
             case "collectPaymentMethod":
               let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
-              hostApi.onCollectPaymentMethod(res, args[0] as! String, CollectConfigurationApi.deserialize(args[1] as! [Any?]))
+              hostApi.onCollectPaymentMethod(res, args[0] as! String, args[1] as! Bool, args[2] as! Bool)
             case "processPayment":
               let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
               hostApi.onProcessPayment(res, args[0] as! String)
-            case "listLocations":
-              let res = Result<[LocationApi]>(result) { $0.serialize() }
-              hostApi.onListLocations(res)
             case "_init":
               let res = Result<Unit>(result) { $0.serialize() }
               hostApi.onInit(res)
@@ -191,6 +198,59 @@ class StripeTerminalHandlersApi {
             }
         }
     }
+}
+
+struct LocationApi {
+    let address: AddressApi?
+    let displayName: String?
+    let id: String?
+    let livemode: Bool?
+    let metadata: [String: String]?
+
+    func serialize() -> [Any?] {
+        return [
+            address?.serialize(),
+            displayName,
+            id,
+            livemode,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
+        ]
+    }
+}
+
+struct AddressApi {
+    let city: String?
+    let country: String?
+    let line1: String?
+    let line2: String?
+    let postalCode: String?
+    let state: String?
+
+    func serialize() -> [Any?] {
+        return [
+            city,
+            country,
+            line1,
+            line2,
+            postalCode,
+            state,
+        ]
+    }
+}
+
+enum ConnectionStatusApi: Int {
+    case notConnected
+    case connected
+    case connecting
+}
+
+enum DiscoveryMethodApi: Int {
+    case bluetoothScan
+    case internet
+    case localMobile
+    case handOff
+    case embedded
+    case usb
 }
 
 struct StripeReaderApi {
@@ -274,12 +334,6 @@ struct CartLineItemApi {
     }
 }
 
-enum ConnectionStatusApi: Int {
-    case notConnected
-    case connected
-    case connecting
-}
-
 struct StripePaymentMethodApi {
     let id: String
     let cardDetails: CardDetailsApi?
@@ -318,31 +372,6 @@ struct CardDetailsApi {
             last4,
         ]
     }
-}
-
-struct DiscoverConfigApi {
-    let discoveryMethod: DiscoveryMethodApi
-    let simulated: Bool
-    let locationId: String?
-
-    static func deserialize(
-        _ serialized: [Any?]
-    ) -> DiscoverConfigApi {
-        return DiscoverConfigApi(
-            discoveryMethod: DiscoveryMethodApi(rawValue: serialized[0] as! Int)!,
-            simulated: serialized[1] as! Bool,
-            locationId: serialized[2] as? String
-        )
-    }
-}
-
-enum DiscoveryMethodApi: Int {
-    case bluetoothScan
-    case internet
-    case localMobile
-    case handOff
-    case embedded
-    case usb
 }
 
 struct StripePaymentIntentApi {
@@ -410,56 +439,6 @@ enum PaymentIntentStatusApi: Int {
     case requiresConfirmation
     case requiresPaymentMethod
     case succeeded
-}
-
-struct CollectConfigurationApi {
-    let skipTipping: Bool
-
-    static func deserialize(
-        _ serialized: [Any?]
-    ) -> CollectConfigurationApi {
-        return CollectConfigurationApi(
-            skipTipping: serialized[0] as! Bool
-        )
-    }
-}
-
-struct LocationApi {
-    let address: AddressApi?
-    let displayName: String?
-    let id: String?
-    let livemode: Bool?
-    let metadata: [String: String]?
-
-    func serialize() -> [Any?] {
-        return [
-            address?.serialize(),
-            displayName,
-            id,
-            livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
-        ]
-    }
-}
-
-struct AddressApi {
-    let city: String?
-    let country: String?
-    let line1: String?
-    let line2: String?
-    let postalCode: String?
-    let state: String?
-
-    func serialize() -> [Any?] {
-        return [
-            city,
-            country,
-            line1,
-            line2,
-            postalCode,
-            state,
-        ]
-    }
 }
 
 enum PaymentStatusApi: Int {

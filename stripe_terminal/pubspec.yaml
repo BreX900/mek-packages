@@ -26,7 +26,9 @@ dependencies:
 
   mek_data_class: ^1.4.0
   one_for_all:
-    path: ../one_for_all
+    git:
+      url: https://github.com/BreX900/mek-packages
+      path: one_for_all
 
 dev_dependencies:
   mek_lints: ^2.0.0
@@ -41,6 +43,10 @@ dev_dependencies:
 
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  one_for_all:
+    path: ../one_for_all
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -53,22 +53,38 @@ class ControllerSink<T>(
 abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
     lateinit var channel: MethodChannel
 
+    abstract fun onListLocations(
+        result: Result<List<LocationApi>>,
+        endingBefore: String?,
+        limit: Long?,
+        startingAfter: String?,
+    )
+
+    abstract fun onConnectionStatus(
+        result: Result<ConnectionStatusApi>,
+    )
+
     abstract fun onConnectBluetoothReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
+        serialNumber: String,
         locationId: String,
+        autoReconnectOnUnexpectedDisconnect: Boolean,
     )
 
     abstract fun onConnectInternetReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
+        serialNumber: String,
         failIfInUse: Boolean,
     )
 
     abstract fun onConnectMobileReader(
         result: Result<StripeReaderApi>,
-        readerSerialNumber: String,
+        serialNumber: String,
         locationId: String,
+    )
+
+    abstract fun onConnectedReader(
+        result: Result<StripeReaderApi?>,
     )
 
     abstract fun onDisconnectReader(
@@ -84,16 +100,10 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         result: Result<Unit>,
     )
 
-    abstract fun onConnectionStatus(
-        result: Result<ConnectionStatusApi>,
-    )
-
-    abstract fun onConnectedReader(
-        result: Result<StripeReaderApi?>,
-    )
-
-    abstract fun onReadReusableCardDetail(
+    abstract fun onReadReusableCard(
         result: Result<StripePaymentMethodApi>,
+        customer: String?,
+        metadata: HashMap<String, String>?,
     )
 
     abstract fun onRetrievePaymentIntent(
@@ -104,16 +114,13 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     abstract fun onCollectPaymentMethod(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
-        collectConfiguration: CollectConfigurationApi,
+        moto: Boolean,
+        skipTipping: Boolean,
     )
 
     abstract fun onProcessPayment(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
-    )
-
-    abstract fun onListLocations(
-        result: Result<List<LocationApi>>,
     )
 
     abstract fun onInit(
@@ -126,9 +133,17 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     ) {
         val args = call.arguments<List<Any?>>()!!
         when (call.method) {
+            "listLocations" -> {
+                val res = Result<List<LocationApi>>(result) {it.map{it.serialize()}}
+                onListLocations(res, args[0] as String?, args[1] as Long?, args[2] as String?)
+            }
+            "connectionStatus" -> {
+                val res = Result<ConnectionStatusApi>(result) {it.ordinal}
+                onConnectionStatus(res)
+            }
             "connectBluetoothReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectBluetoothReader(res, args[0] as String, args[1] as String)
+                onConnectBluetoothReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
             }
             "connectInternetReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
@@ -137,6 +152,10 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
             "connectMobileReader" -> {
                 val res = Result<StripeReaderApi>(result) {it.serialize()}
                 onConnectMobileReader(res, args[0] as String, args[1] as String)
+            }
+            "connectedReader" -> {
+                val res = Result<StripeReaderApi?>(result) {it?.serialize()}
+                onConnectedReader(res)
             }
             "disconnectReader" -> {
                 val res = Result<Unit>(result) {null}
@@ -150,17 +169,9 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
                 val res = Result<Unit>(result) {null}
                 onClearReaderDisplay(res)
             }
-            "connectionStatus" -> {
-                val res = Result<ConnectionStatusApi>(result) {it.ordinal}
-                onConnectionStatus(res)
-            }
-            "connectedReader" -> {
-                val res = Result<StripeReaderApi?>(result) {it?.serialize()}
-                onConnectedReader(res)
-            }
-            "readReusableCardDetail" -> {
+            "readReusableCard" -> {
                 val res = Result<StripePaymentMethodApi>(result) {it.serialize()}
-                onReadReusableCardDetail(res)
+                onReadReusableCard(res, args[0] as String?, args[1]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())})
             }
             "retrievePaymentIntent" -> {
                 val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
@@ -168,15 +179,11 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
             }
             "collectPaymentMethod" -> {
                 val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onCollectPaymentMethod(res, args[0] as String, (args[1] as List<Any?>).let{CollectConfigurationApi.deserialize(it)})
+                onCollectPaymentMethod(res, args[0] as String, args[1] as Boolean, args[2] as Boolean)
             }
             "processPayment" -> {
                 val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
                 onProcessPayment(res, args[0] as String)
-            }
-            "listLocations" -> {
-                val res = Result<List<LocationApi>>(result) {it.map{it.serialize()}}
-                onListLocations(res)
             }
             "_init" -> {
                 val res = Result<Unit>(result) {null}
@@ -205,14 +212,14 @@ class DiscoverReadersControllerApi(
     private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#discoverReaders")
 
     fun setHandler(
-        onListen: (sink: ControllerSink<List<StripeReaderApi>>, config: DiscoverConfigApi) -> Unit,
+        onListen: (sink: ControllerSink<List<StripeReaderApi>>, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String?) -> Unit,
         onCancel: () -> Unit,
     ) {
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
                 val sink = ControllerSink<List<StripeReaderApi>>(events) {it.map{it.serialize()}}
-                onListen(sink, (args[0] as List<Any?>).let{DiscoverConfigApi.deserialize(it)})
+                onListen(sink, (args[0] as Int).let{DiscoveryMethodApi.values()[it]}, args[1] as Boolean, args[2] as String?)
             }
             override fun onCancel(arguments: Any?) = onCancel()
         })
@@ -311,6 +318,52 @@ class StripeTerminalHandlersApi(
     }
 }
 
+data class LocationApi(
+    val address: AddressApi?,
+    val displayName: String?,
+    val id: String?,
+    val livemode: Boolean?,
+    val metadata: HashMap<String, String>?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            address?.serialize(),
+            displayName,
+            id,
+            livemode,
+            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
+        )
+    }
+}
+
+data class AddressApi(
+    val city: String?,
+    val country: String?,
+    val line1: String?,
+    val line2: String?,
+    val postalCode: String?,
+    val state: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            city,
+            country,
+            line1,
+            line2,
+            postalCode,
+            state,
+        )
+    }
+}
+
+enum class ConnectionStatusApi {
+    NOT_CONNECTED, CONNECTED, CONNECTING;
+}
+
+enum class DiscoveryMethodApi {
+    BLUETOOTH_SCAN, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
+}
+
 data class StripeReaderApi(
     val locationStatus: LocationStatusApi,
     val batteryLevel: Double,
@@ -381,10 +434,6 @@ data class CartLineItemApi(
     }
 }
 
-enum class ConnectionStatusApi {
-    NOT_CONNECTED, CONNECTED, CONNECTING;
-}
-
 data class StripePaymentMethodApi(
     val id: String,
     val cardDetails: CardDetailsApi?,
@@ -423,28 +472,6 @@ data class CardDetailsApi(
             last4,
         )
     }
-}
-
-data class DiscoverConfigApi(
-    val discoveryMethod: DiscoveryMethodApi,
-    val simulated: Boolean,
-    val locationId: String?,
-) {
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): DiscoverConfigApi {
-            return DiscoverConfigApi(
-                discoveryMethod = (serialized[0] as Int).let{DiscoveryMethodApi.values()[it]},
-                simulated = serialized[1] as Boolean,
-                locationId = serialized[2] as String?,
-            )
-        }
-    }
-}
-
-enum class DiscoveryMethodApi {
-    BLUETOOTH_SCAN, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
 }
 
 data class StripePaymentIntentApi(
@@ -507,58 +534,6 @@ data class StripePaymentIntentApi(
 
 enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
-}
-
-data class CollectConfigurationApi(
-    val skipTipping: Boolean,
-) {
-    companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): CollectConfigurationApi {
-            return CollectConfigurationApi(
-                skipTipping = serialized[0] as Boolean,
-            )
-        }
-    }
-}
-
-data class LocationApi(
-    val address: AddressApi?,
-    val displayName: String?,
-    val id: String?,
-    val livemode: Boolean?,
-    val metadata: HashMap<String, String>?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            address?.serialize(),
-            displayName,
-            id,
-            livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
-        )
-    }
-}
-
-data class AddressApi(
-    val city: String?,
-    val country: String?,
-    val line1: String?,
-    val line2: String?,
-    val postalCode: String?,
-    val state: String?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            city,
-            country,
-            line1,
-            line2,
-            postalCode,
-            state,
-        )
-    }
 }
 
 enum class PaymentStatusApi {

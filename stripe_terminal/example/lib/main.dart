@@ -142,12 +142,13 @@ class _MyAppState extends State<MyApp> {
 
   void _startDiscoverReaders(StripeTerminal terminal) {
     setState(() => _readers = const []);
-    final config = DiscoverConfig(
+
+    final discoverReaderStream = terminal.discoverReaders(
       locationId: _selectedLocation?.id,
       discoveryMethod: _discoveringMethod,
       simulated: _isSimulated,
     );
-    _discoverReaderSub = terminal.discoverReaders(config).listen((readers) {
+    _discoverReaderSub = discoverReaderStream.listen((readers) {
       setState(() {
         _readers = readers;
       });
@@ -171,7 +172,7 @@ class _MyAppState extends State<MyApp> {
   void _collectPaymentMethod(StripeTerminal terminal, String paymentIntentClientSecret) async {
     final paymentIntent = await terminal.collectPaymentMethod(
       paymentIntentClientSecret,
-      collectConfiguration: const CollectConfiguration(skipTipping: true),
+      skipTipping: true,
     );
     setState(() {
       _paymentIntentClientSecret = paymentIntent.clientSecret;

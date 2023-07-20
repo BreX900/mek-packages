@@ -1,7 +1,3 @@
-import 'package:mek_data_class/mek_data_class.dart';
-
-part 'discover_config.g.dart';
-
 /// The DiscoveryMethod enum represents the possible ways of discovery readers.
 ///
 /// https://stripe.com/docs/terminal/readers/connecting
@@ -23,27 +19,4 @@ enum DiscoveryMethod {
 
   /// The [usb] discovery method allows the user to use the device's usb input(s) to interact with Stripe Terminal's usb-capable readers.
   usb,
-}
-
-/// The DiscoveryConfiguration contains configuration information relevant to the reader discovery process.
-///
-/// Use of this SDK is subject to the Stripe Terminal Terms: https://stripe.com/terminal/legal
-@DataClass()
-class DiscoverConfig with _$DiscoverConfig {
-  /// The [DiscoveryMethod] to use to find connectible readers.
-  final DiscoveryMethod discoveryMethod;
-
-  /// Whether the devices returned by discovery should be simulated
-  final bool simulated;
-
-  /// Location used to scope IP connected readers
-  final String? locationId;
-
-  // TODO: Add timeout field
-
-  const DiscoverConfig({
-    this.discoveryMethod = DiscoveryMethod.bluetoothScan,
-    this.simulated = false,
-    this.locationId,
-  });
 }

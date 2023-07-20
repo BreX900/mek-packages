@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
-import 'package:mek_stripe_terminal/src/models/collect_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/discover_config.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
@@ -60,18 +59,39 @@ class StripeTerminal extends _$StripeTerminalApi {
     return stripeTerminal;
   }
 
+  /// Returns a list of Location objects.
+  // TODO: Add parameters
+  @override
+  Future<List<Location>> listLocations({
+    String? endingBefore,
+    int? limit,
+    String? startingAfter,
+  });
+
+  /// Get the current [ConnectionStatus]
+  @override
+  Future<ConnectionStatus> connectionStatus();
+
+  Stream<ConnectionStatus> get onConnectionStatusChange =>
+      _onConnectionStatusChangeStream ??= super._onConnectionStatusChange();
+
+  /// Begins discovering readers matching the given DiscoveryConfiguration.
+  @override
+  Stream<List<StripeReader>> discoverReaders({
+    DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
+    bool simulated = false,
+    String? locationId,
+  });
+
   /// Attempts to connect to the given bluetooth reader.
   ///
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectBluetoothReader(
-    /// Serial number of the bluetooth reader to connect with
-    String readerSerialNumber, {
-    /// The id of the location on which you want to conenct this bluetooth reader with.
-    ///
-    /// Either you have to provide a location here or the device should already be registered to a location
+    String serialNumber, {
     required String locationId,
+    bool autoReconnectOnUnexpectedDisconnect = false,
   });
 
   /// Attempts to connect to the given internet reader.
@@ -80,9 +100,7 @@ class StripeTerminal extends _$StripeTerminalApi {
   /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectInternetReader(
-    /// Serial number of the internet reader to connect with
-    String readerSerialNumber, {
-    /// Weather the connection process should fail if the device is already in use
+    String serialNumber, {
     bool failIfInUse = false,
   });
 
@@ -91,12 +109,13 @@ class StripeTerminal extends _$StripeTerminalApi {
   /// Always run `discoverReaders` before calling this function
   @override
   Future<StripeReader> connectMobileReader(
-    String readerSerialNumber, {
-    /// The id of the location on which you want to conenct this bluetooth reader with.
-    ///
-    /// Either you have to provide a location here or the device should already be registered to a location
+    String serialNumber, {
     required String locationId,
   });
+
+  /// Fetches the connected reader from the SDK. `null` if not connected
+  @override
+  Future<StripeReader?> connectedReader();
 
   /// Attempts to disconnect from the currently connected reader.
   @override
@@ -115,38 +134,21 @@ class StripeTerminal extends _$StripeTerminalApi {
   @override
   Future<void> clearReaderDisplay();
 
-  /// Get the current [ConnectionStatus]
-  @override
-  Future<ConnectionStatus> connectionStatus();
-
-  Stream<ConnectionStatus> get onConnectionStatusChange =>
-      _onConnectionStatusChangeStream ??= super._onConnectionStatusChange();
-
-  /// Fetches the connected reader from the SDK. `null` if not connected
-  @override
-  Future<StripeReader?> connectedReader();
-
   /// Extracts payment method from the reader
   ///
   /// Only support `insert` operation on the reader
   @override
-  Future<StripePaymentMethod> readReusableCardDetail();
-
-  /// Begins discovering readers matching the given DiscoveryConfiguration.
-  ///
-  /// Can contain an empty array if no readers are found.
-  @override
-  Stream<List<StripeReader>> discoverReaders(DiscoverConfig config);
+  Future<StripePaymentMethod> readReusableCard({
+    String? customer,
+    Map<String, String>? metadata,
+  });
 
   /// Starts reading payment method based on payment intent.
   ///
   /// Payment intent is supposed to be generated on your backend and the `clientSecret` of the payment intent
   /// should be passed to this function.
   @override
-  Future<StripePaymentIntent> retrievePaymentIntent(
-    // Client secret of the payment intent which you want to collect payment mwthod for
-    String clientSecret,
-  );
+  Future<StripePaymentIntent> retrievePaymentIntent(String clientSecret);
 
   Stream<PaymentStatus> get onPaymentStatusChange =>
       _onPaymentStatusChangeStream ??= super._onPaymentStatusChange();
@@ -158,28 +160,19 @@ class StripeTerminal extends _$StripeTerminalApi {
   /// Only supports `swipe`, `tap` and `insert` method
   @override
   Future<StripePaymentIntent> collectPaymentMethod(
-    // Client secret of the payment intent which you want to collect payment mwthod for
     String clientSecret, {
-    /// Configruation for the collection process
-    CollectConfiguration collectConfiguration = const CollectConfiguration(),
+    bool moto = false,
+    bool skipTipping = false,
   });
 
   @override
-  Future<StripePaymentIntent> processPayment(
-    // Client secret of the payment intent which you want to collect payment mwthod for
-    String clientSecret,
-  );
+  Future<StripePaymentIntent> processPayment(String clientSecret);
 
   // /// Confirm that your customer intends to set up the current or provided payment method.
   // Future<void> confirmSetupIntent(String clientSecret);
   //
   // /// Cancel an existing SetupIntent.
   // Future<void> cancelSetupIntent();
-
-  /// Returns a list of Location objects.
-  // TODO: Add parameters
-  @override
-  Future<List<Location>> listLocations();
 
   @override
   Future<void> _init();

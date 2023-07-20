@@ -17,12 +17,17 @@ class _$StripeTerminalApi {
   static const _$onPaymentStatusChange =
       EventChannel('StripeTerminal#_onPaymentStatusChange');
 
-  Stream<List<StripeReader>> discoverReaders(DiscoverConfig config) {
-    return _$discoverReaders
-        .receiveBroadcastStream([_$serializeDiscoverConfig(config)]).map((e) =>
-            (e as List)
-                .map((e) => _$deserializeStripeReader(e as List))
-                .toList());
+  Stream<List<StripeReader>> discoverReaders({
+    DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
+    bool simulated = false,
+    String? locationId,
+  }) {
+    return _$discoverReaders.receiveBroadcastStream([
+      discoveryMethod.index,
+      simulated,
+      locationId
+    ]).map((e) =>
+        (e as List).map((e) => _$deserializeStripeReader(e as List)).toList());
   }
 
   Stream<ConnectionStatus> _onConnectionStatusChange() {
@@ -40,13 +45,41 @@ class _$StripeTerminalApi {
         .receiveBroadcastStream([]).map((e) => PaymentStatus.values[e as int]);
   }
 
-  Future<StripeReader> connectBluetoothReader(
-    String readerSerialNumber, {
-    required String locationId,
+  Future<List<Location>> listLocations({
+    String? endingBefore,
+    int? limit,
+    String? startingAfter,
   }) async {
     try {
-      final result = await _$channel.invokeMethod(
-          'connectBluetoothReader', [readerSerialNumber, locationId]);
+      final result = await _$channel
+          .invokeMethod('listLocations', [endingBefore, limit, startingAfter]);
+      return (result as List)
+          .map((e) => _$deserializeLocation(e as List))
+          .toList();
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<ConnectionStatus> connectionStatus() async {
+    try {
+      final result = await _$channel.invokeMethod('connectionStatus', []);
+      return ConnectionStatus.values[result as int];
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<StripeReader> connectBluetoothReader(
+    String serialNumber, {
+    required String locationId,
+    bool autoReconnectOnUnexpectedDisconnect = false,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod('connectBluetoothReader',
+          [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
       return _$deserializeStripeReader(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -55,12 +88,12 @@ class _$StripeTerminalApi {
   }
 
   Future<StripeReader> connectInternetReader(
-    String readerSerialNumber, {
+    String serialNumber, {
     bool failIfInUse = false,
   }) async {
     try {
-      final result = await _$channel.invokeMethod(
-          'connectInternetReader', [readerSerialNumber, failIfInUse]);
+      final result = await _$channel
+          .invokeMethod('connectInternetReader', [serialNumber, failIfInUse]);
       return _$deserializeStripeReader(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -69,13 +102,23 @@ class _$StripeTerminalApi {
   }
 
   Future<StripeReader> connectMobileReader(
-    String readerSerialNumber, {
+    String serialNumber, {
     required String locationId,
   }) async {
     try {
-      final result = await _$channel.invokeMethod(
-          'connectMobileReader', [readerSerialNumber, locationId]);
+      final result = await _$channel
+          .invokeMethod('connectMobileReader', [serialNumber, locationId]);
       return _$deserializeStripeReader(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<StripeReader?> connectedReader() async {
+    try {
+      final result = await _$channel.invokeMethod('connectedReader', []);
+      return result != null ? _$deserializeStripeReader(result as List) : null;
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
@@ -109,29 +152,13 @@ class _$StripeTerminalApi {
     }
   }
 
-  Future<ConnectionStatus> connectionStatus() async {
+  Future<StripePaymentMethod> readReusableCard({
+    String? customer,
+    Map<String, String>? metadata,
+  }) async {
     try {
-      final result = await _$channel.invokeMethod('connectionStatus', []);
-      return ConnectionStatus.values[result as int];
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  Future<StripeReader?> connectedReader() async {
-    try {
-      final result = await _$channel.invokeMethod('connectedReader', []);
-      return result != null ? _$deserializeStripeReader(result as List) : null;
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  Future<StripePaymentMethod> readReusableCardDetail() async {
-    try {
-      final result = await _$channel.invokeMethod('readReusableCardDetail', []);
+      final result = await _$channel.invokeMethod('readReusableCard',
+          [customer, metadata?.map((k, v) => MapEntry(k, v))]);
       return _$deserializeStripePaymentMethod(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -152,14 +179,12 @@ class _$StripeTerminalApi {
 
   Future<StripePaymentIntent> collectPaymentMethod(
     String clientSecret, {
-    CollectConfiguration collectConfiguration =
-        const CollectConfiguration(skipTipping: true),
+    bool moto = false,
+    bool skipTipping = false,
   }) async {
     try {
-      final result = await _$channel.invokeMethod('collectPaymentMethod', [
-        clientSecret,
-        _$serializeCollectConfiguration(collectConfiguration)
-      ]);
+      final result = await _$channel.invokeMethod(
+          'collectPaymentMethod', [clientSecret, moto, skipTipping]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -172,18 +197,6 @@ class _$StripeTerminalApi {
       final result =
           await _$channel.invokeMethod('processPayment', [clientSecret]);
       return _$deserializeStripePaymentIntent(result as List);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  Future<List<Location>> listLocations() async {
-    try {
-      final result = await _$channel.invokeMethod('listLocations', []);
-      return (result as List)
-          .map((e) => _$deserializeLocation(e as List))
-          .toList();
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
@@ -212,6 +225,22 @@ void _$setupStripeTerminalHandlersApi(_StripeTerminalHandlers hostApi) {
   });
 }
 
+Location _$deserializeLocation(List<Object?> serialized) => Location(
+    address: serialized[0] != null
+        ? _$deserializeAddress(serialized[0] as List)
+        : null,
+    displayName: serialized[1] as String?,
+    id: serialized[2] as String?,
+    livemode: serialized[3] as bool?,
+    metadata: (serialized[4] as Map?)
+        ?.map((k, v) => MapEntry(k as String, v as String)));
+Address _$deserializeAddress(List<Object?> serialized) => Address(
+    city: serialized[0] as String?,
+    country: serialized[1] as String?,
+    line1: serialized[2] as String?,
+    line2: serialized[3] as String?,
+    postalCode: serialized[4] as String?,
+    state: serialized[5] as String?);
 StripeReader _$deserializeStripeReader(List<Object?> serialized) =>
     StripeReader(
         locationStatus: LocationStatus.values[serialized[0] as int],
@@ -249,11 +278,6 @@ CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
     fingerprint: serialized[4] as String?,
     funding: serialized[5] as String?,
     last4: serialized[6] as String?);
-List<Object?> _$serializeDiscoverConfig(DiscoverConfig deserialized) => [
-      deserialized.discoveryMethod.index,
-      deserialized.simulated,
-      deserialized.locationId
-    ];
 StripePaymentIntent _$deserializeStripePaymentIntent(
         List<Object?> serialized) =>
     StripePaymentIntent(
@@ -285,22 +309,3 @@ StripePaymentIntent _$deserializeStripePaymentIntent(
         receiptEmail: serialized[22] as String?,
         setupFutureUsage: serialized[23] as String?,
         transferGroup: serialized[24] as String?);
-List<Object?> _$serializeCollectConfiguration(
-        CollectConfiguration deserialized) =>
-    [deserialized.skipTipping];
-Location _$deserializeLocation(List<Object?> serialized) => Location(
-    address: serialized[0] != null
-        ? _$deserializeAddress(serialized[0] as List)
-        : null,
-    displayName: serialized[1] as String?,
-    id: serialized[2] as String?,
-    livemode: serialized[3] as bool?,
-    metadata: (serialized[4] as Map?)
-        ?.map((k, v) => MapEntry(k as String, v as String)));
-Address _$deserializeAddress(List<Object?> serialized) => Address(
-    city: serialized[0] as String?,
-    country: serialized[1] as String?,
-    line1: serialized[2] as String?,
-    line2: serialized[3] as String?,
-    postalCode: serialized[4] as String?,
-    state: serialized[5] as String?);

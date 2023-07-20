@@ -69,10 +69,9 @@ class SwiftApiBuilder extends ApiBuilder {
   @override
   void writeHostApiClass(HostApiHandler handler) {
     final HostApiHandler(:element) = handler;
-    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(SwiftProtocol(
-      name: className,
+      name: handler.className,
       methods: element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
@@ -99,10 +98,10 @@ class SwiftApiBuilder extends ApiBuilder {
       name: 'setup${_encodeType(element.thisType, false)}',
       parameters: [
         const SwiftParameter(label: '_', name: 'binaryMessenger', type: 'FlutterBinaryMessenger'),
-        SwiftParameter(label: '_', name: 'hostApi', type: className),
+        SwiftParameter(label: '_', name: 'hostApi', type: handler.className),
       ],
       body: '''
-let channel = FlutterMethodChannel(name: "${element.name.snakeCase}", binaryMessenger: binaryMessenger)
+let channel = FlutterMethodChannel(name: "${handler.channelName()}", binaryMessenger: binaryMessenger)
 channel.setMethodCallHandler { call, result in
     do {
         let args = call.arguments as! [Any?]
@@ -134,10 +133,9 @@ ${element.methods.where((e) => e.isHostApiMethod).map((e) {
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
     final FlutterApiHandler(:element) = handler;
-    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(SwiftClass(
-      name: className,
+      name: handler.className,
       fields: const [
         SwiftField(
           name: 'channel',
@@ -152,7 +150,7 @@ ${element.methods.where((e) => e.isHostApiMethod).map((e) {
         ),
       ], body: '''
 channel = FlutterMethodChannel(
-    name: "${element.cleanName.snakeCase}",
+    name: "${handler.channelName()}",
     binaryMessenger: binaryMessenger
 )'''),
       methods: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
@@ -173,7 +171,7 @@ channel = FlutterMethodChannel(
           returns: returnType is VoidType ? null : _encodeType(returnType, true),
           body: '''
 return try await withCheckedThrowingContinuation { continuation in
-    channel.invokeMethod("${e.name}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
+    channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
         if let result = result as? [AnyHashable?: Any?] {
             continuation.resume(throwing: PlatformError(
                 code: result["code"] as! String,

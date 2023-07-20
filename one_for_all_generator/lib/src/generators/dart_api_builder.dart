@@ -8,7 +8,6 @@ import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
-import 'package:recase/recase.dart';
 
 class DartApiBuilder extends ApiBuilder {
   final DartOptions options;
@@ -21,6 +20,7 @@ class DartApiBuilder extends ApiBuilder {
   }
 
   DartApiBuilder(super.pluginOptions, this.options) {
+    _library.ignoreForFile.add('unused_element');
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 
@@ -29,7 +29,7 @@ class DartApiBuilder extends ApiBuilder {
     ..name = e.name;
 
   void _updateHostApiMethod(MethodElement e, MethodBuilder b) {
-    b // ..annotations.add(const CodeExpression(Code('override')))
+    b
       ..returns = Reference('${e.returnType}')
       ..name = e.name
       ..requiredParameters.addAll(e.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
@@ -51,13 +51,13 @@ class DartApiBuilder extends ApiBuilder {
     // final constructor = element.constructors.singleOrNull;
 
     _library.body.add(Class((b) => b
-      ..name = '_\$${element.cleanName}'
+      ..name = '_\$${handler.className}'
       // ..extend = Reference(element.name)
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
         ..name = '_\$channel'
-        ..assignment = Code('MethodChannel(\'${element.name.snakeCase}\')')))
+        ..assignment = Code('MethodChannel(\'${handler.channelName()}\')')))
       // ..constructors.addAll([
       //   if (constructor != null)
       //     Constructor((b) => b
@@ -79,34 +79,32 @@ class DartApiBuilder extends ApiBuilder {
       // ])
 
       ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
-        final returnType = e.returnType.singleTypeArg;
-
         return Field((b) => b
-          ..late = true
-          ..modifier = FieldModifier.final$
-          ..type = Reference(e.returnType.displayNameNullable)
-          ..name = '_\$${e.name}'
-          ..assignment = Code(
-              'const EventChannel(\'${element.name.snakeCase}#${e.name}\').receiveBroadcastStream().map((e) => ${_encodeDeserialization(returnType, 'e')})'));
+          ..static = true
+          ..modifier = FieldModifier.constant
+          ..name = '_\$${e.name.no_}'
+          ..assignment = Code('EventChannel(\'${handler.controllerChannelName(e)}\')'));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+        final returnType = e.returnType.singleTypeArg;
+
+        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+
         return Method((b) => b
           ..update((b) => _updateHostApiMethod(e, b))
-          ..lambda = true
-          ..body = Code('_\$${e.name}'));
+          ..body = Code('return _\$${e.name.no_}'
+              '.receiveBroadcastStream([$parameters])'
+              '.map((e) => ${_encodeDeserialization(returnType, 'e')});'));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final invocationParameters = '[${e.parameters.map((e) {
-          if (e.type.isSupported) return '${e.name},\n';
-          return '_\$serialize${e.type.getDisplayString(withNullability: false)}(${e.name}),\n';
-        }).join()}]';
+        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
 
         String parseResult() {
-          final code = 'await _\$channel.invokeMethod(\'${e.name}\', $invocationParameters);';
+          final code =
+              'await _\$channel.invokeMethod(\'${handler.channelName(e)}\', [$parameters]);';
           if (returnType is VoidType) return code;
-          if (returnType.isPrimitive) return 'return $code';
           return 'final result = $code'
               'return ${_encodeDeserialization(returnType, 'result')};';
         }
@@ -123,21 +121,7 @@ try {
         }
 
         return Method((b) => b
-          // ..annotations.add(const CodeExpression(Code('override')))
-          ..returns = Reference('${e.returnType}')
-          ..name = e.name
-          ..requiredParameters
-              .addAll(e.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
-            return Parameter((b) => b..update((b) => updateParameter(e, b)));
-          }))
-          ..optionalParameters
-              .addAll(e.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
-            return Parameter((b) => b
-              ..update((b) => updateParameter(e, b))
-              ..required = e.isRequired
-              ..named = e.isNamed
-              ..defaultTo = e.defaultValueCode != null ? Code(e.defaultValueCode!) : null);
-          }))
+          ..update((b) => _updateHostApiMethod(e, b))
           ..modifier = MethodModifier.async
           ..body = Code(tryParseResult()));
       }))));
@@ -150,12 +134,12 @@ try {
 
     _library.body.add(Method((b) => b
       ..returns = Reference('void')
-      ..name = '_\$setup${element.cleanName}'
+      ..name = '_\$setup${handler.className}'
       ..requiredParameters.add(Parameter((b) => b
         ..type = Reference(element.name)
         ..name = 'hostApi'))
       ..body = Code('''
-const channel = MethodChannel('${element.cleanName.snakeCase}');
+const channel = MethodChannel('${handler.channelName()}');
 channel.setMethodCallHandler((call) async {
   final args = call.arguments as List<Object?>;
   return switch (call.method) {

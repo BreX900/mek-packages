@@ -24,10 +24,6 @@ abstract class ApiBuilder {
   String build();
 }
 
-extension CleanNameInterface on InterfaceOrAugmentationElement {
-  String get cleanName => name.replaceFirst('_', '');
-}
-
 extension TypeArgsDartType on DartType {
   DartType get singleTypeArg {
     final element = this as ParameterizedType;

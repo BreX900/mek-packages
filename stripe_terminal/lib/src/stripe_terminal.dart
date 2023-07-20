@@ -30,17 +30,21 @@ class StripeTerminalException {
       ['$runtimeType: ${code.name}', code.message, message, details].nonNulls.join('\n');
 }
 
-@HostApiScheme(
+@HostApi(
   hostExceptionHandler: StripeTerminal._throwIfIsHostException,
 )
-class StripeTerminal extends _$StripeTerminal {
+class StripeTerminal extends _$StripeTerminalApi {
+  static StripeTerminal? _instance;
   final _StripeTerminalHandlers _handlers;
+  Stream<StripeReader>? _onUnexpectedReaderDisconnectStream;
+  Stream<ConnectionStatus>? _onConnectionStatusChangeStream;
+  Stream<PaymentStatus>? _onPaymentStatusChangeStream;
 
   /// Creates an internal `StripeTerminal` instance
   StripeTerminal._({
     required Future<String> Function() fetchToken,
   }) : _handlers = _StripeTerminalHandlers(fetchToken: fetchToken) {
-    _$setupStripeTerminalHandlers(_handlers);
+    _$setupStripeTerminalHandlersApi(_handlers);
   }
 
   /// Initializes the terminal SDK
@@ -49,6 +53,7 @@ class StripeTerminal extends _$StripeTerminal {
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
   }) async {
+    if (_instance != null) return _instance!;
     final stripeTerminal = StripeTerminal._(fetchToken: fetchToken);
     await stripeTerminal._init();
     return stripeTerminal;
@@ -93,8 +98,8 @@ class StripeTerminal extends _$StripeTerminal {
   @override
   Future<void> disconnectReader();
 
-  @override
-  Stream<StripeReader> onUnexpectedReaderDisconnect();
+  Stream<StripeReader> get onUnexpectedReaderDisconnect =>
+      _onUnexpectedReaderDisconnectStream ??= super._onUnexpectedReaderDisconnect();
 
   /// Displays the content to the connected reader's display
   @override
@@ -113,7 +118,8 @@ class StripeTerminal extends _$StripeTerminal {
   @override
   Future<ConnectionStatus> connectionStatus();
 
-  Stream<ConnectionStatus> onConnectionStatusChange();
+  Stream<ConnectionStatus> get onConnectionStatusChange =>
+      _onConnectionStatusChangeStream ??= super._onConnectionStatusChange();
 
   /// Fetches the connected reader from the SDK. `null` if not connected
   @override
@@ -146,7 +152,8 @@ class StripeTerminal extends _$StripeTerminal {
     String clientSecret,
   );
 
-  Stream<PaymentStatus> onPaymentStatusChange();
+  Stream<PaymentStatus> get onPaymentStatusChange =>
+      _onPaymentStatusChangeStream ??= super._onPaymentStatusChange();
 
   ///
   /// With the payment intent retrieved capture the payment method. A sucessful function call
@@ -175,6 +182,15 @@ class StripeTerminal extends _$StripeTerminal {
   @override
   Future<void> _init();
 
+  @override
+  Stream<ConnectionStatus> _onConnectionStatusChange();
+
+  @override
+  Stream<StripeReader> _onUnexpectedReaderDisconnect();
+
+  @override
+  Stream<PaymentStatus> _onPaymentStatusChange();
+
   static void _throwIfIsHostException(PlatformException exception) {
     final snakeCaseCode = exception.code.camelCase;
     final code =
@@ -184,7 +200,7 @@ class StripeTerminal extends _$StripeTerminal {
   }
 }
 
-@FlutterApiScheme()
+@FlutterApi()
 class _StripeTerminalHandlers {
   final Future<String> Function() _fetchToken;
 

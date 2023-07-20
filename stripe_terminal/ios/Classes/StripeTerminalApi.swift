@@ -106,7 +106,7 @@ func setupStripeTerminalApi(
     _ binaryMessenger: FlutterBinaryMessenger,
     _ hostApi: StripeTerminalApi
 ) {
-    let channel = FlutterMethodChannel(name: "stripe_terminal", binaryMessenger: binaryMessenger)
+    let channel = FlutterMethodChannel(name: "StripeTerminal", binaryMessenger: binaryMessenger)
     channel.setMethodCallHandler { call, result in
         do {
             let args = call.arguments as! [Any?]
@@ -171,7 +171,7 @@ class StripeTerminalHandlersApi {
         _ binaryMessenger: FlutterBinaryMessenger
     ) {
         channel = FlutterMethodChannel(
-            name: "stripe_terminal_handlers",
+            name: "_StripeTerminalHandlers",
             binaryMessenger: binaryMessenger
         )
     }
@@ -412,13 +412,6 @@ enum PaymentIntentStatusApi: Int {
     case succeeded
 }
 
-enum PaymentStatusApi: Int {
-    case notReady
-    case ready
-    case waitingForInput
-    case processing
-}
-
 struct CollectConfigurationApi {
     let skipTipping: Bool
 
@@ -467,4 +460,11 @@ struct AddressApi {
             state,
         ]
     }
+}
+
+enum PaymentStatusApi: Int {
+    case notReady
+    case ready
+    case waitingForInput
+    case processing
 }

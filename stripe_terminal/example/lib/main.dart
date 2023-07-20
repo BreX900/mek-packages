@@ -29,11 +29,22 @@ class _MyAppState extends State<MyApp> {
   var _locations = <Location>[];
   Location? _selectedLocation;
 
+  StreamSubscription? _onConnectionStatusChangeSub;
+  var _connectionStatus = ConnectionStatus.notConnected;
   bool _isSimulated = true;
   var _discoveringMethod = DiscoveryMethod.bluetoothScan;
   StreamSubscription? _discoverReaderSub;
   var _readers = const <StripeReader>[];
-  String? paymentIntentClientSecret;
+  StreamSubscription? _onUnexpectedReaderDisconnectSub;
+  StripeReader? _reader;
+
+  @override
+  void dispose() {
+    unawaited(_onConnectionStatusChangeSub?.cancel());
+    unawaited(_discoverReaderSub?.cancel());
+    unawaited(_onUnexpectedReaderDisconnectSub?.cancel());
+    super.dispose();
+  }
 
   Future<String> _fetchConnectionToken() async => _api.createTerminalConnectionToken();
 
@@ -56,6 +67,14 @@ class _MyAppState extends State<MyApp> {
     );
     setState(() {
       _terminal = stripeTerminal;
+    });
+    _onConnectionStatusChangeSub = stripeTerminal.onConnectionStatusChange.listen((event) {
+      print('Connection Status Changed: ${event.name}');
+      setState(() => _connectionStatus = event);
+    });
+    _onUnexpectedReaderDisconnectSub = stripeTerminal.onUnexpectedReaderDisconnect.listen((event) {
+      print('Reader Unexpected Disconnected: ${event.label}');
+      setState(() => _reader = null);
     });
   }
 
@@ -89,7 +108,14 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Connection status: ${status.name}');
   }
 
-  void _connectReader(StripeTerminal terminal, StripeReader reader) async {
+  void _toggleReader(StripeTerminal terminal, StripeReader reader) async {
+    if (_reader != null) {
+      await terminal.disconnectReader();
+      _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
+      setState(() => _reader = null);
+      return;
+    }
+
     final connectedReader = switch (_discoveringMethod) {
       DiscoveryMethod.bluetoothScan => await terminal.connectBluetoothReader(
           reader.serialNumber,
@@ -106,8 +132,9 @@ class _MyAppState extends State<MyApp> {
         null,
     };
     _showSnackBar(connectedReader != null
-        ? 'Connected to a device: ${connectedReader.label}'
+        ? 'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}'
         : 'Missing connect method implementation');
+    setState(() => _reader = connectedReader);
   }
 
   void _startDiscoverReaders(StripeTerminal terminal) {
@@ -168,7 +195,7 @@ class _MyAppState extends State<MyApp> {
         ),
         ..._locations.map((e) {
           return ListTile(
-            selected: _selectedLocation == e,
+            selected: _selectedLocation?.id == e.id,
             onTap: () => _toggleLocation(e),
             dense: true,
             title: Text('${e.id}: ${e.displayName}'),
@@ -204,12 +231,15 @@ class _MyAppState extends State<MyApp> {
 
         TextButton(
           onPressed: terminal != null ? () => _checkStatus(terminal) : null,
-          child: const Text('Check status'),
+          child: Text('Check status (${_connectionStatus.name})'),
         ),
         ..._readers.map((e) {
           return ListTile(
-            enabled: terminal != null,
-            onTap: terminal != null ? () => _connectReader(terminal, e) : null,
+            selected: e.serialNumber == _reader?.serialNumber,
+            enabled: terminal != null &&
+                _connectionStatus != ConnectionStatus.connecting &&
+                (_reader == null || _reader!.serialNumber == e.serialNumber),
+            onTap: terminal != null ? () => _toggleReader(terminal, e) : null,
             title: Text(e.serialNumber),
             subtitle: Text('${e.deviceType.name} ${e.locationId ?? 'NoLocation'}'),
             trailing: Text('${(e.batteryLevel * 100).toInt()}'),

@@ -1,5 +1,6 @@
 package com.stripe_terminal.api
 
+import androidx.annotation.UiThread
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
@@ -31,6 +32,26 @@ class Result<T>(
     ) {
         result.error(code, message, details)
     }
+}
+
+class ControllerSink<T>(
+    private val sink: EventChannel.EventSink,
+    private val serializer: (data: T) -> Any?,
+) {
+    @UiThread
+    fun success(
+        data: T,
+    ) = sink.success(serializer(data))
+
+    @UiThread
+    fun error(
+        code: String,
+        message: String?,
+        details: Any?,
+    ) = sink.error(code, message, details)
+
+    @UiThread
+    fun endOfStream() = sink.endOfStream()
 }
 
 abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
@@ -171,7 +192,7 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     override fun onAttachedToEngine(
         flutterPluginBinding: FlutterPlugin.FlutterPluginBinding,
     ) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "stripe_terminal")
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "StripeTerminal")
         channel.setMethodCallHandler(this)
     }
 
@@ -182,174 +203,98 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
     }
 }
 
-class OnUnexpectedReaderDisconnectController {
-    lateinit var channel: EventChannel
-    var sink: EventChannel.EventSink? = null
-    var onListen: (() -> Unit)? = null
-    var onCancel: (() -> Unit)? = null
-    val isClosed: Boolean get() = sink == null
+class DiscoverReadersControllerApi(
+    binaryMessenger: BinaryMessenger,
+) {
+    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#discoverReaders")
 
-    fun setup(
-        binaryMessenger: BinaryMessenger,
+    fun setHandler(
+        onListen: (sink: ControllerSink<List<StripeReaderApi>>, config: DiscoverConfigApi) -> Unit,
+        onCancel: () -> Unit,
     ) {
-        channel = EventChannel(binaryMessenger, "stripe_terminal#onUnexpectedReaderDisconnect")
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                sink = events
-                onListen?.invoke()
+                val sink = ControllerSink<List<StripeReaderApi>>(events) {it.map{it.serialize()}}
+                onListen(sink, (args[0] as List<Any?>).let{DiscoverConfigApi.deserialize(it)})
             }
-        
-            override fun onCancel(arguments: Any?) {
-                sink = null
-                onCancel?.invoke()
-            }
+            override fun onCancel(arguments: Any?) = onCancel()
         })
-        
     }
 
-    fun add(
-        data: StripeReaderApi,
-    ) = sink!!.success(data.serialize())
-
-    fun addError(
-        code: String,
-        message: String?,
-        details: Any?,
-    ) = sink!!.error(code, message, details)
-
-    fun close() = sink!!.endOfStream()
-
-    fun erase() = channel.setStreamHandler(null)
+    fun removeHandler() = channel.setStreamHandler(null)
 }
 
-class OnConnectionStatusChangeController {
-    lateinit var channel: EventChannel
-    var sink: EventChannel.EventSink? = null
-    var onListen: (() -> Unit)? = null
-    var onCancel: (() -> Unit)? = null
-    val isClosed: Boolean get() = sink == null
+class OnConnectionStatusChangeControllerApi(
+    binaryMessenger: BinaryMessenger,
+) {
+    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onConnectionStatusChange")
 
-    fun setup(
-        binaryMessenger: BinaryMessenger,
+    fun setHandler(
+        onListen: (sink: ControllerSink<ConnectionStatusApi>) -> Unit,
+        onCancel: () -> Unit,
     ) {
-        channel = EventChannel(binaryMessenger, "stripe_terminal#onConnectionStatusChange")
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                sink = events
-                onListen?.invoke()
+                val sink = ControllerSink<ConnectionStatusApi>(events) {it.ordinal}
+                onListen(sink)
             }
-        
-            override fun onCancel(arguments: Any?) {
-                sink = null
-                onCancel?.invoke()
-            }
+            override fun onCancel(arguments: Any?) = onCancel()
         })
-        
     }
 
-    fun add(
-        data: ConnectionStatusApi,
-    ) = sink!!.success(data.ordinal)
-
-    fun addError(
-        code: String,
-        message: String?,
-        details: Any?,
-    ) = sink!!.error(code, message, details)
-
-    fun close() = sink!!.endOfStream()
-
-    fun erase() = channel.setStreamHandler(null)
+    fun removeHandler() = channel.setStreamHandler(null)
 }
 
-class DiscoverReadersController {
-    lateinit var channel: EventChannel
-    var sink: EventChannel.EventSink? = null
-    var onListen: ((config: DiscoverConfigApi) -> Unit)? = null
-    var onCancel: (() -> Unit)? = null
-    val isClosed: Boolean get() = sink == null
+class OnUnexpectedReaderDisconnectControllerApi(
+    binaryMessenger: BinaryMessenger,
+) {
+    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onUnexpectedReaderDisconnect")
 
-    fun setup(
-        binaryMessenger: BinaryMessenger,
+    fun setHandler(
+        onListen: (sink: ControllerSink<StripeReaderApi>) -> Unit,
+        onCancel: () -> Unit,
     ) {
-        channel = EventChannel(binaryMessenger, "stripe_terminal#discoverReaders")
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                sink = events
-                onListen?.invoke((args[0] as List<Any?>).let{DiscoverConfigApi.deserialize(it)})
+                val sink = ControllerSink<StripeReaderApi>(events) {it.serialize()}
+                onListen(sink)
             }
-        
-            override fun onCancel(arguments: Any?) {
-                sink = null
-                onCancel?.invoke()
-            }
+            override fun onCancel(arguments: Any?) = onCancel()
         })
-        
     }
 
-    fun add(
-        data: List<StripeReaderApi>,
-    ) = sink!!.success(data.map{it.serialize()})
-
-    fun addError(
-        code: String,
-        message: String?,
-        details: Any?,
-    ) = sink!!.error(code, message, details)
-
-    fun close() = sink!!.endOfStream()
-
-    fun erase() = channel.setStreamHandler(null)
+    fun removeHandler() = channel.setStreamHandler(null)
 }
 
-class OnPaymentStatusChangeController {
-    lateinit var channel: EventChannel
-    var sink: EventChannel.EventSink? = null
-    var onListen: (() -> Unit)? = null
-    var onCancel: (() -> Unit)? = null
-    val isClosed: Boolean get() = sink == null
+class OnPaymentStatusChangeControllerApi(
+    binaryMessenger: BinaryMessenger,
+) {
+    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onPaymentStatusChange")
 
-    fun setup(
-        binaryMessenger: BinaryMessenger,
+    fun setHandler(
+        onListen: (sink: ControllerSink<PaymentStatusApi>) -> Unit,
+        onCancel: () -> Unit,
     ) {
-        channel = EventChannel(binaryMessenger, "stripe_terminal#onPaymentStatusChange")
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                sink = events
-                onListen?.invoke()
+                val sink = ControllerSink<PaymentStatusApi>(events) {it.ordinal}
+                onListen(sink)
             }
-        
-            override fun onCancel(arguments: Any?) {
-                sink = null
-                onCancel?.invoke()
-            }
+            override fun onCancel(arguments: Any?) = onCancel()
         })
-        
     }
 
-    fun add(
-        data: PaymentStatusApi,
-    ) = sink!!.success(data.ordinal)
-
-    fun addError(
-        code: String,
-        message: String?,
-        details: Any?,
-    ) = sink!!.error(code, message, details)
-
-    fun close() = sink!!.endOfStream()
-
-    fun erase() = channel.setStreamHandler(null)
+    fun removeHandler() = channel.setStreamHandler(null)
 }
 
 class StripeTerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    val channel: MethodChannel = MethodChannel(binaryMessenger, "stripe_terminal_handlers")
+    val channel: MethodChannel = MethodChannel(binaryMessenger, "_StripeTerminalHandlers")
 
     suspend fun requestConnectionToken(): String {
         return suspendCoroutine { continuation ->
@@ -568,10 +513,6 @@ enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
 }
 
-enum class PaymentStatusApi {
-    NOT_READY, READY, WAITING_FOR_INPUT, PROCESSING;
-}
-
 data class CollectConfigurationApi(
     val skipTipping: Boolean,
 ) {
@@ -622,4 +563,8 @@ data class AddressApi(
             state,
         )
     }
+}
+
+enum class PaymentStatusApi {
+    NOT_READY, READY, WAITING_FOR_INPUT, PROCESSING;
 }

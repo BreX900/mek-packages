@@ -1,19 +1,27 @@
 library;
 
-class HostApiScheme {
+class HostApi {
   final Function? hostExceptionHandler;
 
-  const HostApiScheme({
+  const HostApi({
     this.hostExceptionHandler,
   });
 }
 
-class FlutterApiScheme {
-  const FlutterApiScheme();
+class FlutterApi {
+  const FlutterApi();
 }
 
-class SerializableScheme {
-  const SerializableScheme();
+// class ApiMethod {
+//   final bool ignore;
+//
+//   const ApiMethod({
+//     this.ignore = false,
+//   });
+// }
+
+class SerializableApi {
+  const SerializableApi();
 }
 
 // class HostExceptionScheme {

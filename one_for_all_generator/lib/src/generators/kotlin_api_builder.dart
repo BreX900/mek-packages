@@ -79,16 +79,53 @@ class KotlinApiBuilder extends ApiBuilder {
         ),
       ],
     ));
+    _specs.add(KotlinClass(
+      name: 'ControllerSink<T>',
+      initializers: [
+        KotlinField(
+          visibility: KotlinVisibility.private,
+          name: 'sink',
+          type: 'EventChannel.EventSink',
+        ),
+        KotlinField(
+          visibility: KotlinVisibility.private,
+          name: 'serializer',
+          type: '(data: T) -> Any?',
+        ),
+      ],
+      body: [
+        KotlinMethod(
+          name: 'success',
+          parameters: [KotlinParameter(name: 'data', type: 'T')],
+          lambda: true,
+          body: 'sink.success(serializer(data))',
+        ),
+        KotlinMethod(
+          name: 'error',
+          parameters: [
+            KotlinParameter(name: 'code', type: 'String'),
+            KotlinParameter(name: 'message', type: 'String?'),
+            KotlinParameter(name: 'details', type: 'Any?'),
+          ],
+          lambda: true,
+          body: 'sink.error(code, message, details)',
+        ),
+        KotlinMethod(
+          name: 'endOfStream',
+          lambda: true,
+          body: 'sink.endOfStream()',
+        ),
+      ],
+    ));
   }
 
   @override
   void writeHostApiClass(HostApiHandler handler) {
     final HostApiHandler(:element) = handler;
-    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(KotlinClass(
       modifier: KotlinClassModifier.abstract,
-      name: className,
+      name: handler.className,
       implements: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
       fields: const [
         KotlinField(
@@ -121,8 +158,16 @@ class KotlinApiBuilder extends ApiBuilder {
           modifiers: {KotlinMethodModifier.override},
           name: 'onMethodCall',
           parameters: const [
-            KotlinParameter(annotations: ['NonNull'], name: 'call', type: 'MethodCall'),
-            KotlinParameter(annotations: ['NonNull'], name: 'result', type: 'MethodChannel.Result'),
+            KotlinParameter(
+              annotations: ['NonNull'],
+              name: 'call',
+              type: 'MethodCall',
+            ),
+            KotlinParameter(
+              annotations: ['NonNull'],
+              name: 'result',
+              type: 'MethodChannel.Result',
+            ),
           ],
           body: 'val args = call.arguments<List<Any?>>()!!\n'
               'when (call.method) {\n${element.methods.where((e) => e.isHostApiMethod).map((e) {
@@ -149,7 +194,7 @@ class KotlinApiBuilder extends ApiBuilder {
             ),
           ],
           body:
-              'channel = MethodChannel(flutterPluginBinding.binaryMessenger, "${element.name.snakeCase}")\n'
+              'channel = MethodChannel(flutterPluginBinding.binaryMessenger, "${handler.channelName()}")\n'
               'channel.setMethodCallHandler(this)',
         ),
         const KotlinMethod(
@@ -170,88 +215,53 @@ class KotlinApiBuilder extends ApiBuilder {
     _specs.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
       final returnType = e.returnType.singleTypeArg;
 
-      final parameters = e.parameters.map((e) {
-        return '${e.name}: ${_encodeType(e.type, true)}';
-      }).join(',');
+      final parametersType = [
+        'sink: ControllerSink<${_encodeType(returnType, true)}>',
+        ...e.parameters.map((e) => '${e.name}: ${_encodeType(e.type, true)}')
+      ].join(', ');
+      final parameters = [
+        'sink',
+        ...e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')),
+      ].join(', ');
 
       return KotlinClass(
-        name: '${e.name.pascalCase}Controller',
+        name: handler.controllerName(e),
+        initializers: [
+          KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
+        ],
         fields: [
           KotlinField(
-            modifier: KotlinFieldModifier.lateInit,
+            visibility: KotlinVisibility.private,
             name: 'channel',
             type: 'EventChannel',
-          ),
-          KotlinField(
-            modifier: KotlinFieldModifier.var$,
-            name: 'sink',
-            type: 'EventChannel.EventSink?',
-            assignment: 'null',
-          ),
-          KotlinField(
-            modifier: KotlinFieldModifier.var$,
-            name: 'onListen',
-            type: '(($parameters) -> Unit)?',
-            assignment: 'null',
-          ),
-          KotlinField(
-            modifier: KotlinFieldModifier.var$,
-            name: 'onCancel',
-            type: '(() -> Unit)?',
-            assignment: 'null',
-          ),
-          KotlinField(
-            modifier: KotlinFieldModifier.val,
-            name: 'isClosed',
-            type: 'Boolean get()',
-            assignment: 'sink == null',
+            assignment: 'EventChannel(binaryMessenger, "${handler.controllerChannelName(e)}")',
           ),
         ],
         body: [
           KotlinMethod(
-            name: 'setup',
-            parameters: [KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger')],
+            name: 'setHandler',
+            parameters: [
+              KotlinParameter(
+                name: 'onListen',
+                type: '($parametersType) -> Unit',
+              ),
+              KotlinParameter(
+                name: 'onCancel',
+                type: '() -> Unit',
+              ),
+            ],
             body: '''
-channel = EventChannel(binaryMessenger, "${element.name.snakeCase}#${e.name}")
 channel.setStreamHandler(object : EventChannel.StreamHandler {
     override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
         val args = arguments as List<Any?>
-        sink = events
-        onListen?.invoke(${e.parameters.mapIndexed((i, e) {
-              return _encodeDeserialization(e.type, 'args[$i]');
-            }).join(', ')})
+        val sink = ControllerSink<${_encodeType(returnType, true)}>(events) {${returnType is VoidType ? 'null' : _encodeSerialization(returnType, 'it')}}
+        onListen($parameters)
     }
-
-    override fun onCancel(arguments: Any?) {
-        sink = null
-        onCancel?.invoke()
-    }
-})
-''',
+    override fun onCancel(arguments: Any?) = onCancel()
+})''',
           ),
           KotlinMethod(
-            name: 'add',
-            parameters: [KotlinParameter(name: 'data', type: _encodeType(returnType, true))],
-            lambda: true,
-            body: 'sink!!.success(${_encodeSerialization(returnType, 'data')})',
-          ),
-          KotlinMethod(
-            name: 'addError',
-            parameters: [
-              KotlinParameter(name: 'code', type: 'String'),
-              KotlinParameter(name: 'message', type: 'String?'),
-              KotlinParameter(name: 'details', type: 'Any?'),
-            ],
-            lambda: true,
-            body: 'sink!!.error(code, message, details)',
-          ),
-          KotlinMethod(
-            name: 'close',
-            lambda: true,
-            body: 'sink!!.endOfStream()',
-          ),
-          KotlinMethod(
-            name: 'erase',
+            name: 'removeHandler',
             lambda: true,
             body: 'channel.setStreamHandler(null)',
           ),
@@ -263,10 +273,9 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
     final FlutterApiHandler(:element) = handler;
-    final className = '${element.cleanName}${pluginOptions.hostClassSuffix}';
 
     _specs.add(KotlinClass(
-      name: className,
+      name: handler.className,
       initializers: [
         KotlinParameter(
           name: 'binaryMessenger',
@@ -277,7 +286,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
         KotlinField(
           name: 'channel',
           type: 'MethodChannel',
-          assignment: 'MethodChannel(binaryMessenger, "${element.cleanName.snakeCase}")',
+          assignment: 'MethodChannel(binaryMessenger, "${handler.channelName()}")',
         ),
       ],
       body: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
@@ -298,7 +307,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
           body: '''
 return suspendCoroutine { continuation ->
     channel.invokeMethod(
-        "${e.name}",
+        "${handler.channelName(e)}",
         listOf<Any?>($parameters),
         object : MethodChannel.Result {
             override fun success(result: Any?) {

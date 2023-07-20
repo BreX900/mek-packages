@@ -19,9 +19,9 @@ export 'src/options.dart';
 typedef ApiBuildersCreator = List<ApiBuilder> Function(OneForAllOptions options);
 
 class OneForAll {
-  static const hostApiChecker = TypeChecker.fromRuntime(HostApiScheme);
-  static const flutterApiChecker = TypeChecker.fromRuntime(FlutterApiScheme);
-  static const serializableChecker = TypeChecker.fromRuntime(SerializableScheme);
+  static const hostApiChecker = TypeChecker.fromRuntime(HostApi);
+  static const flutterApiChecker = TypeChecker.fromRuntime(FlutterApi);
+  static const serializableChecker = TypeChecker.fromRuntime(SerializableApi);
 
   final OneForAllOptions options;
   final ApiBuildersCreator buildersCreator;
@@ -130,10 +130,13 @@ class OneForAll {
 
         print('$filePath: Encoding');
 
-        hostApiHandles.addAll(libraryReader.annotatedWith(hostApiChecker).map(HostApiHandler.from));
+        hostApiHandles.addAll(libraryReader
+            .annotatedWith(hostApiChecker)
+            .map((e) => HostApiHandler.from(options, e)));
 
-        flutterApiHandlers
-            .addAll(libraryReader.annotatedWith(flutterApiChecker).map(FlutterApiHandler.from));
+        flutterApiHandlers.addAll(libraryReader
+            .annotatedWith(flutterApiChecker)
+            .map((e) => FlutterApiHandler.from(options, e)));
 
         final serializableElements = libraryReader.annotatedWith(serializableChecker);
         for (final AnnotatedElement(:element) in serializableElements) {

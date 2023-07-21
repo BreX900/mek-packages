@@ -31,6 +31,7 @@ class StripeTerminalException {
 
 @HostApi(
   hostExceptionHandler: StripeTerminal._throwIfIsHostException,
+  swiftMethodType: SwiftMethodType.async,
 )
 class StripeTerminal extends _$StripeTerminalApi {
   static StripeTerminal? _instance;
@@ -60,7 +61,6 @@ class StripeTerminal extends _$StripeTerminalApi {
   }
 
   /// Returns a list of Location objects.
-  // TODO: Add parameters
   @override
   Future<List<Location>> listLocations({
     String? endingBefore,
@@ -84,6 +84,7 @@ class StripeTerminal extends _$StripeTerminalApi {
   });
 
   /// Attempts to connect to the given bluetooth reader.
+  /// [autoReconnectOnUnexpectedDisconnect] (Not implemented in IOS)
   ///
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
@@ -137,11 +138,14 @@ class StripeTerminal extends _$StripeTerminalApi {
   /// Extracts payment method from the reader
   ///
   /// Only support `insert` operation on the reader
-  @override
-  Future<StripePaymentMethod> readReusableCard({
+  Cancelable<StripePaymentMethod> readReusableCard({
     String? customer,
     Map<String, String>? metadata,
-  });
+  }) {
+    return Cancelable(_stopReadReusableCard, (id) async {
+      return await _startReadReusableCard(id, customer: customer, metadata: metadata);
+    });
+  }
 
   /// Starts reading payment method based on payment intent.
   ///
@@ -158,12 +162,20 @@ class StripeTerminal extends _$StripeTerminalApi {
   /// should return an instance of `StripePaymentIntent` with status `requiresPaymentMethod`;
   ///
   /// Only supports `swipe`, `tap` and `insert` method
-  @override
-  Future<StripePaymentIntent> collectPaymentMethod(
+  Cancelable<StripePaymentIntent> collectPaymentMethod(
     String clientSecret, {
     bool moto = false,
     bool skipTipping = false,
-  });
+  }) {
+    return Cancelable(_stopCollectPaymentMethod, (id) async {
+      return await _startCollectPaymentMethod(
+        id,
+        clientSecret: clientSecret,
+        moto: moto,
+        skipTipping: skipTipping,
+      );
+    });
+  }
 
   @override
   Future<StripePaymentIntent> processPayment(String clientSecret);
@@ -176,6 +188,28 @@ class StripeTerminal extends _$StripeTerminalApi {
 
   @override
   Future<void> _init();
+
+  @MethodApi(swiftMethodType: SwiftMethodType.result)
+  @override
+  Future<StripePaymentMethod> _startReadReusableCard(
+    int id, {
+    required String? customer,
+    required Map<String, String>? metadata,
+  });
+
+  @override
+  Future<void> _stopReadReusableCard(int id);
+
+  @override
+  Future<StripePaymentIntent> _startCollectPaymentMethod(
+    int id, {
+    required String clientSecret,
+    required bool moto,
+    required bool skipTipping,
+  });
+
+  @override
+  Future<void> _stopCollectPaymentMethod(int id);
 
   @override
   Stream<ConnectionStatus> _onConnectionStatusChange();
@@ -204,4 +238,15 @@ class _StripeTerminalHandlers {
   }) : _fetchToken = fetchToken;
 
   Future<String> _onRequestConnectionToken() async => await _fetchToken();
+}
+
+class Cancelable<T> {
+  final Future<T> Function(int id) _onStart;
+  final Future<void> Function(int id) _onStop;
+
+  Cancelable(this._onStop, this._onStart);
+
+  late final Future<T> result = _onStart(hashCode);
+
+  Future<void> cancel() => _onStop(hashCode);
 }

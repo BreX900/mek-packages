@@ -12,14 +12,15 @@ class StripePaymentIntent with _$StripePaymentIntent {
   final double? applicationFeeAmount;
   final String? captureMethod;
   final String? cancellationReason;
-  final int? canceledAt;
+  final DateTime? canceledAt;
   final String? clientSecret;
   final String? confirmationMethod;
-  final int created;
+  final DateTime created;
   final String? currency;
   final String? customer;
   final String? description;
   final String? invoice;
+  // TODO: Remove livemode
   final bool livemode;
   final Map<String, String>? metadata;
   final String? onBehalfOf;

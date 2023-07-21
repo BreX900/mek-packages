@@ -170,10 +170,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _collectPaymentMethod(StripeTerminal terminal, String paymentIntentClientSecret) async {
-    final paymentIntent = await terminal.collectPaymentMethod(
+    final collectingPaymentIntent = terminal.collectPaymentMethod(
       paymentIntentClientSecret,
       skipTipping: true,
     );
+    final paymentIntent = await collectingPaymentIntent.result;
     setState(() {
       _paymentIntentClientSecret = paymentIntent.clientSecret;
       _paymentIntentStatus = paymentIntent.status!;

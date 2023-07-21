@@ -9,6 +9,7 @@ class StripePaymentMethod with _$StripePaymentMethod {
   // final BillingDetails billingDetails;
   final CardDetails? cardDetails;
   final String? customer;
+  // TODO: Delete this field
   final bool livemode;
   final Map<String, String>? metadata;
   // final String type;
@@ -41,11 +42,17 @@ class BillingDetails with _$BillingDetails {
 
 @DataClass()
 class CardDetails with _$CardDetails {
+  /// Card brand. Can be amex, diners, discover, jcb, mastercard, unionpay, visa, or unknown.
+  /// In ios there are also: interac, eftposau
+  // TODO: Create enum
   final String? brand;
   final String? country;
   final int expMonth;
   final int expYear;
   final String? fingerprint;
+
+  /// Card funding type. Can be credit, debit, prepaid, or unknown.
+  // TODO: Create enum
   final String? funding;
   final String? last4;
 

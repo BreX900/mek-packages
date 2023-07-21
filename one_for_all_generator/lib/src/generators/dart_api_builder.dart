@@ -1,16 +1,17 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
+import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:path/path.dart';
 
 class DartApiBuilder extends ApiBuilder {
   final DartOptions options;
+  final ApiCodecs codecs;
   final _library = LibraryBuilder();
 
   @override
@@ -19,7 +20,7 @@ class DartApiBuilder extends ApiBuilder {
     return '${dirname(path)}/${basenameWithoutExtension(basenameWithoutExtension(path))}.api.dart';
   }
 
-  DartApiBuilder(super.pluginOptions, this.options) {
+  DartApiBuilder(super.pluginOptions, this.options, this.codecs) {
     _library.ignoreForFile.add('unused_element');
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
@@ -88,25 +89,27 @@ class DartApiBuilder extends ApiBuilder {
       ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+        final parameters =
+            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
 
         return Method((b) => b
           ..update((b) => _updateHostApiMethod(e, b))
           ..body = Code('return _\$${e.name.no_}'
               '.receiveBroadcastStream([$parameters])'
-              '.map((e) => ${_encodeDeserialization(returnType, 'e')});'));
+              '.map((e) => ${codecs.encodeDeserialization(returnType, 'e')});'));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+        final parameters =
+            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
 
         String parseResult() {
           final code =
               'await _\$channel.invokeMethod(\'${handler.channelName(e)}\', [$parameters]);';
           if (returnType is VoidType) return code;
           return 'final result = $code'
-              'return ${_encodeDeserialization(returnType, 'result')};';
+              'return ${codecs.encodeDeserialization(returnType, 'result')};';
         }
 
         String tryParseResult() {
@@ -145,7 +148,7 @@ channel.setMethodCallHandler((call) async {
   return switch (call.method) {
   ${methods.map((e) {
         return '''
-    '${e.name}' => await hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
+    '${e.name}' => await hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
         ''';
       }).join('\n')}
     _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),
@@ -154,8 +157,10 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  void writeSerializable(SerializableHandler<ClassElement> handler) {
-    final SerializableHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+  void writeSerializableClass(SerializableClassHandler handler) {
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+    // final codec = findCodec(element.thisType);
+    // if (codec != null) return;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     final serializedRef = const Reference('List<Object?>');
@@ -170,7 +175,7 @@ channel.setMethodCallHandler((call) async {
           ..name = 'deserialized'))
         ..lambda = true
         ..body = Code('[${fields.map((e) {
-          return _encodeSerialization(e.type, 'deserialized.${e.name}');
+          return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
         }).join(',')}]')));
     }
 
@@ -183,57 +188,68 @@ channel.setMethodCallHandler((call) async {
           ..name = 'serialized'))
         ..lambda = true
         ..body = Code('${element.name}(${fields.mapIndexed((i, e) {
-          return '${e.name}: ${_encodeDeserialization(e.type, 'serialized[$i]')}';
+          return '${e.name}: ${codecs.encodeDeserialization(e.type, 'serialized[$i]')}';
         }).join(',')})')));
     }
   }
 
   @override
-  void writeEnum(SerializableHandler<EnumElement> handler) {}
+  void writeSerializableEnum(SerializableEnumHandler handler) {}
 
-  String _encodeDeserialization(DartType type, String varAccess) {
-    if (type is VoidType) throw StateError('void type no supported');
-    if (type.isPrimitive) return '$varAccess as ${type.displayNameNullable}';
-    if (type.isDartCoreList) {
-      final typeArg = type.singleTypeArg;
-      return '($varAccess as List${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.map((e) => ${_encodeDeserialization(typeArg, 'e')}).toList()';
-    }
-    if (type.isDartCoreMap) {
-      final typesArgs = type.doubleTypeArgs;
-      return '($varAccess as Map${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}))';
-    }
-    final String deserializer;
-    if (type.isDartCoreEnum || type.element is EnumElement) {
-      deserializer = '${type.displayName}.values[$varAccess as int]';
-    } else {
-      deserializer = '_\$deserialize${type.displayName}($varAccess as List)';
-    }
-    return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
-  }
-
-  String _encodeSerialization(DartType type, String varAccess) {
-    if (type is VoidType) throw StateError('void type no supported');
-    if (type.isPrimitive) return varAccess;
-    if (type.isDartCoreList) {
-      final typeArg = type.singleTypeArg;
-      return '$varAccess'
-          '${type.questionOrEmpty}.map((e) => ${_encodeSerialization(typeArg, 'e')}).toList()';
-    }
-    if (type.isDartCoreMap) {
-      final typesArgs = type.doubleTypeArgs;
-      return '$varAccess'
-          '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeSerialization(typesArgs.$1, 'k')}, ${_encodeSerialization(typesArgs.$2, 'v')}))';
-    }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
-      return '$varAccess${type.questionOrEmpty}.index';
-    }
-    final serializer = '_\$serialize${type.displayName}';
-    return type.isNullable
-        ? '$varAccess != null ? $serializer($varAccess!) : null'
-        : '$serializer($varAccess)';
-  }
+  // String _encodeDeserialization(DartType type, String varAccess) {
+  //   if (type is VoidType) throw StateError('void type no supported');
+  //   final codec = pluginOptions.findCodec(PlatformApi.dart, type);
+  //   if (codec != null) {
+  //     final deserializer = codec.encodeDeserialization(type, varAccess);
+  //     return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
+  //   }
+  //   if (type.isPrimitive) return '$varAccess as ${type.displayNameNullable}';
+  //   if (type.isDartCoreList) {
+  //     final typeArg = type.singleTypeArg;
+  //     return '($varAccess as List${type.questionOrEmpty})'
+  //         '${type.questionOrEmpty}.map((e) => ${_encodeDeserialization(typeArg, 'e')}).toList()';
+  //   }
+  //   if (type.isDartCoreMap) {
+  //     final typesArgs = type.doubleTypeArgs;
+  //     return '($varAccess as Map${type.questionOrEmpty})'
+  //         '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}))';
+  //   }
+  //   final String deserializer;
+  //   if (type.isDartCoreEnum || type.element is EnumElement) {
+  //     deserializer = '${type.displayName}.values[$varAccess as int]';
+  //   } else {
+  //     deserializer = '_\$deserialize${type.displayName}($varAccess as List)';
+  //   }
+  //   return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
+  // }
+  //
+  // String _encodeSerialization(DartType type, String varAccess) {
+  //   if (type is VoidType) throw StateError('void type no supported');
+  //   final codec = pluginOptions.findCodec(PlatformApi.dart, type);
+  //   if (codec != null) {
+  //     final serializer =
+  //         codec.encodeSerialization(type, type.isNullable ? '$varAccess!' : varAccess);
+  //     return type.isNullable ? '$varAccess != null ? $serializer : null' : serializer;
+  //   }
+  //   if (type.isPrimitive) return varAccess;
+  //   if (type.isDartCoreList) {
+  //     final typeArg = type.singleTypeArg;
+  //     return '$varAccess'
+  //         '${type.questionOrEmpty}.map((e) => ${_encodeSerialization(typeArg, 'e')}).toList()';
+  //   }
+  //   if (type.isDartCoreMap) {
+  //     final typesArgs = type.doubleTypeArgs;
+  //     return '$varAccess'
+  //         '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeSerialization(typesArgs.$1, 'k')}, ${_encodeSerialization(typesArgs.$2, 'v')}))';
+  //   }
+  //   if (type.isDartCoreEnum || type.element is EnumElement) {
+  //     return '$varAccess${type.questionOrEmpty}.index';
+  //   }
+  //   final serializer = '_\$serialize${type.displayName}';
+  //   return type.isNullable
+  //       ? '$varAccess != null ? $serializer($varAccess!) : null'
+  //       : '$serializer($varAccess)';
+  // }
 
   @override
   void writeException(EnumElement element) {
@@ -279,13 +295,4 @@ channel.setMethodCallHandler((call) async {
   String build() => DartFormatter().format('${_library.build().accept(DartEmitter(
         useNullSafetySyntax: true,
       ))}');
-}
-
-extension on DartType {
-  bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
-  String get questionOrEmpty => isNullable ? '?' : '';
-  // String get exclamationOrEmpty => isNullable ? '!' : '';
-
-  String get displayName => getDisplayString(withNullability: false);
-  String get displayNameNullable => getDisplayString(withNullability: true);
 }

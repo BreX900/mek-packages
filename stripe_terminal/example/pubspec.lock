@@ -160,9 +160,11 @@ packages:
   one_for_all:
     dependency: transitive
     description:
-      path: "../../one_for_all"
-      relative: true
-    source: path
+      path: one_for_all
+      ref: HEAD
+      resolved-ref: b5505fc3ae038445d79dcaf59c682f375f48f388
+      url: "https://github.com/BreX900/mek-packages"
+    source: git
     version: "1.0.0"
   path:
     dependency: transitive

@@ -1,3 +1,10 @@
+import 'package:one_for_all/one_for_all.dart';
+
+@SerializableEnum(
+  type: SerializableEnumType.string,
+  languages: {PlatformApi.swift},
+  hostToFlutter: true,
+)
 enum StripeTerminalExceptionCode {
   cancelFailed,
   notConnectedToReader,

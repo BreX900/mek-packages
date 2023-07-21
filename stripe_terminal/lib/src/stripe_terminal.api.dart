@@ -152,39 +152,10 @@ class _$StripeTerminalApi {
     }
   }
 
-  Future<StripePaymentMethod> readReusableCard({
-    String? customer,
-    Map<String, String>? metadata,
-  }) async {
-    try {
-      final result = await _$channel.invokeMethod('readReusableCard',
-          [customer, metadata?.map((k, v) => MapEntry(k, v))]);
-      return _$deserializeStripePaymentMethod(result as List);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
   Future<StripePaymentIntent> retrievePaymentIntent(String clientSecret) async {
     try {
       final result =
           await _$channel.invokeMethod('retrievePaymentIntent', [clientSecret]);
-      return _$deserializeStripePaymentIntent(result as List);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  Future<StripePaymentIntent> collectPaymentMethod(
-    String clientSecret, {
-    bool moto = false,
-    bool skipTipping = false,
-  }) async {
-    try {
-      final result = await _$channel.invokeMethod(
-          'collectPaymentMethod', [clientSecret, moto, skipTipping]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -206,6 +177,55 @@ class _$StripeTerminalApi {
   Future<void> _init() async {
     try {
       await _$channel.invokeMethod('_init', []);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<StripePaymentMethod> _startReadReusableCard(
+    int id, {
+    required String? customer,
+    required Map<String, String>? metadata,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod('_startReadReusableCard',
+          [id, customer, metadata?.map((k, v) => MapEntry(k, v))]);
+      return _$deserializeStripePaymentMethod(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> _stopReadReusableCard(int id) async {
+    try {
+      await _$channel.invokeMethod('_stopReadReusableCard', [id]);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<StripePaymentIntent> _startCollectPaymentMethod(
+    int id, {
+    required String clientSecret,
+    required bool moto,
+    required bool skipTipping,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod(
+          '_startCollectPaymentMethod', [id, clientSecret, moto, skipTipping]);
+      return _$deserializeStripePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> _stopCollectPaymentMethod(int id) async {
+    try {
+      await _$channel.invokeMethod('_stopCollectPaymentMethod', [id]);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
@@ -259,6 +279,39 @@ List<Object?> _$serializeCart(Cart deserialized) => [
     ];
 List<Object?> _$serializeCartLineItem(CartLineItem deserialized) =>
     [deserialized.description, deserialized.quantity, deserialized.amount];
+StripePaymentIntent _$deserializeStripePaymentIntent(
+        List<Object?> serialized) =>
+    StripePaymentIntent(
+        id: serialized[0] as String,
+        amount: serialized[1] as double,
+        amountCapturable: serialized[2] as double,
+        amountReceived: serialized[3] as double,
+        application: serialized[4] as String?,
+        applicationFeeAmount: serialized[5] as double?,
+        captureMethod: serialized[6] as String?,
+        cancellationReason: serialized[7] as String?,
+        canceledAt: serialized[8] != null
+            ? DateTime.fromMillisecondsSinceEpoch(serialized[8] as int)
+            : null,
+        clientSecret: serialized[9] as String?,
+        confirmationMethod: serialized[10] as String?,
+        created: DateTime.fromMillisecondsSinceEpoch(serialized[11] as int),
+        currency: serialized[12] as String?,
+        customer: serialized[13] as String?,
+        description: serialized[14] as String?,
+        invoice: serialized[15] as String?,
+        livemode: serialized[16] as bool,
+        metadata: (serialized[17] as Map?)
+            ?.map((k, v) => MapEntry(k as String, v as String)),
+        onBehalfOf: serialized[18] as String?,
+        paymentMethodId: serialized[19] as String?,
+        status: serialized[20] != null
+            ? PaymentIntentStatus.values[serialized[20] as int]
+            : null,
+        review: serialized[21] as String?,
+        receiptEmail: serialized[22] as String?,
+        setupFutureUsage: serialized[23] as String?,
+        transferGroup: serialized[24] as String?);
 StripePaymentMethod _$deserializeStripePaymentMethod(
         List<Object?> serialized) =>
     StripePaymentMethod(
@@ -278,34 +331,3 @@ CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
     fingerprint: serialized[4] as String?,
     funding: serialized[5] as String?,
     last4: serialized[6] as String?);
-StripePaymentIntent _$deserializeStripePaymentIntent(
-        List<Object?> serialized) =>
-    StripePaymentIntent(
-        id: serialized[0] as String,
-        amount: serialized[1] as double,
-        amountCapturable: serialized[2] as double,
-        amountReceived: serialized[3] as double,
-        application: serialized[4] as String?,
-        applicationFeeAmount: serialized[5] as double?,
-        captureMethod: serialized[6] as String?,
-        cancellationReason: serialized[7] as String?,
-        canceledAt: serialized[8] as int?,
-        clientSecret: serialized[9] as String?,
-        confirmationMethod: serialized[10] as String?,
-        created: serialized[11] as int,
-        currency: serialized[12] as String?,
-        customer: serialized[13] as String?,
-        description: serialized[14] as String?,
-        invoice: serialized[15] as String?,
-        livemode: serialized[16] as bool,
-        metadata: (serialized[17] as Map?)
-            ?.map((k, v) => MapEntry(k as String, v as String)),
-        onBehalfOf: serialized[18] as String?,
-        paymentMethodId: serialized[19] as String?,
-        status: serialized[20] != null
-            ? PaymentIntentStatus.values[serialized[20] as int]
-            : null,
-        review: serialized[21] as String?,
-        receiptEmail: serialized[22] as String?,
-        setupFutureUsage: serialized[23] as String?,
-        transferGroup: serialized[24] as String?);

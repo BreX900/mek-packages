@@ -201,18 +201,38 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
     }
     //endregion
 
-    override fun onReadReusableCard(
+    private val _cancelablesReadReusableCard = HashMap<Long, Cancelable>()
+
+    override fun onStartReadReusableCard(
         result: Result<StripePaymentMethodApi>,
+        id: Long,
         customer: String?,
-        metadata: HashMap<String, String>?
+        metadata: HashMap<String, String>?,
     ) {
         val params = ReadReusableCardParameters.Builder()
         if (customer != null) params.setCustomer(customer)
         if (metadata != null) params.putAllMetadata(metadata)
-        _terminal.readReusableCard(params.build(),
+        _cancelablesReadReusableCard[id] = _terminal.readReusableCard(params.build(),
             object : TerminalErrorHandler(result::error), PaymentMethodCallback {
-                override fun onSuccess(paymentMethod: PaymentMethod) =
+                override fun onFailure(e: TerminalException) {
+                    _cancelablesReadReusableCard.remove(id)
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess(paymentMethod: PaymentMethod) {
+                    _cancelablesReadReusableCard.remove(id)
                     result.success(paymentMethod.toApi())
+                }
+            })
+    }
+
+    override fun onStopReadReusableCard(
+        result: Result<Unit>,
+        id: Long,
+    ) {
+        _cancelablesReadReusableCard.remove(id)
+            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
             })
     }
 
@@ -228,8 +248,11 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
             })
     }
 
-    override fun onCollectPaymentMethod(
+    private val _cancelablesCollectPaymentMethod = HashMap<Long, Cancelable>()
+
+    override fun onStartCollectPaymentMethod(
         result: Result<StripePaymentIntentApi>,
+        id: Long,
         clientSecret: String,
         moto: Boolean,
         skipTipping: Boolean,
@@ -237,11 +260,18 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
         _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    _terminal.collectPaymentMethod(
+                    _cancelablesCollectPaymentMethod[id] = _terminal.collectPaymentMethod(
                         paymentIntent,
                         object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                            override fun onSuccess(paymentIntent: PaymentIntent) =
+                            override fun onFailure(e: TerminalException) {
+                                _cancelablesCollectPaymentMethod.remove(id)
+                                super.onFailure(e)
+                            }
+
+                            override fun onSuccess(paymentIntent: PaymentIntent) {
+                                _cancelablesCollectPaymentMethod.remove(id)
                                 result.success(paymentIntent.toApi())
+                            }
                         },
                         CollectConfiguration.Builder()
                             .setMoto(moto)
@@ -249,6 +279,13 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalApi(),
                             .build(),
                     )
                 }
+            })
+    }
+
+    override fun onStopCollectPaymentMethod(result: Result<Unit>, id: Long) {
+        _cancelablesCollectPaymentMethod.remove(id)
+            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
             })
     }
 

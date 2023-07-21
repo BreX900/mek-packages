@@ -1,8 +1,8 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
+import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
@@ -10,12 +10,13 @@ import 'package:recase/recase.dart';
 
 class KotlinApiBuilder extends ApiBuilder {
   final KotlinOptions options;
+  final ApiCodecs codecs;
   final _specs = <KotlinSpec>[];
 
   @override
   String get outputFile => options.outputFile;
 
-  KotlinApiBuilder(super.pluginOptions, this.options) {
+  KotlinApiBuilder(super.pluginOptions, this.options, this.codecs) {
     _specs.add(KotlinClass(
       name: 'PlatformException',
       initializers: [
@@ -121,12 +122,12 @@ class KotlinApiBuilder extends ApiBuilder {
             parameters: [
               KotlinParameter(
                 name: 'result',
-                type: 'Result<${_encodeType(returnType, true)}>',
+                type: 'Result<${codecs.encodeType(returnType)}>',
               ),
               ...e.parameters.map((e) {
                 return KotlinParameter(
                   name: e.name,
-                  type: _encodeType(e.type, true),
+                  type: codecs.encodeType(e.type),
                 );
               }),
             ],
@@ -152,11 +153,11 @@ class KotlinApiBuilder extends ApiBuilder {
             final returnType = e.returnType.singleTypeArg;
 
             final parameters =
-                e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
+                e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
             return '''
     "${e.name}" -> {
-        val res = Result<${_encodeType(returnType, true)}>(result) {${returnType is VoidType ? 'null' : _encodeSerialization(returnType, 'it')}}
+        val res = Result<${codecs.encodeType(returnType)}>(result) {${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'it')}}
         ${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
     }''';
           }).join('\n')}\n}',
@@ -194,12 +195,12 @@ class KotlinApiBuilder extends ApiBuilder {
       final returnType = e.returnType.singleTypeArg;
 
       final parametersType = [
-        'sink: ControllerSink<${_encodeType(returnType, true)}>',
-        ...e.parameters.map((e) => '${e.name}: ${_encodeType(e.type, true)}')
+        'sink: ControllerSink<${codecs.encodeType(returnType)}>',
+        ...e.parameters.map((e) => '${e.name}: ${codecs.encodeType(e.type)}')
       ].join(', ');
       final parameters = [
         'sink',
-        ...e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]')),
+        ...e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')),
       ].join(', ');
 
       return KotlinClass(
@@ -232,7 +233,7 @@ class KotlinApiBuilder extends ApiBuilder {
 channel.setStreamHandler(object : EventChannel.StreamHandler {
     override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
         val args = arguments as List<Any?>
-        val sink = ControllerSink<${_encodeType(returnType, true)}>(events) {${returnType is VoidType ? 'null' : _encodeSerialization(returnType, 'it')}}
+        val sink = ControllerSink<${codecs.encodeType(returnType)}>(events) {${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'it')}}
         onListen($parameters)
     }
     override fun onCancel(arguments: Any?) = onCancel()
@@ -270,7 +271,8 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
       body: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters = e.parameters.map((e) => _encodeSerialization(e.type, e.name)).join(', ');
+        final parameters =
+            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
 
         return KotlinMethod(
           modifiers: {KotlinMethodModifier.suspend},
@@ -278,10 +280,10 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
           parameters: e.parameters.map((e) {
             return KotlinParameter(
               name: e.name,
-              type: _encodeType(e.type, true),
+              type: codecs.encodeType(e.type),
             );
           }).toList(),
-          returns: returnType is VoidType ? null : _encodeType(returnType, true),
+          returns: returnType is VoidType ? null : codecs.encodeType(returnType),
           body: '''
 return suspendCoroutine { continuation ->
     channel.invokeMethod(
@@ -289,7 +291,7 @@ return suspendCoroutine { continuation ->
         listOf<Any?>($parameters),
         object : MethodChannel.Result {
             override fun success(result: Any?) {
-                continuation.resume(${returnType is VoidType ? 'Unit' : _encodeDeserialization(returnType, 'result')})
+                continuation.resume(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
             }
             override fun error(code: String, message: String?, details: Any?) {
                 continuation.resumeWithException(PlatformException(code, message, details))
@@ -304,17 +306,18 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeSerializable(SerializableHandler<ClassElement> handler) {
-    final SerializableHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+  void writeSerializableClass(SerializableClassHandler handler) {
+    if (!handler.kotlinGeneration) return;
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     _specs.add(KotlinClass(
       modifier: KotlinClassModifier.data,
-      name: _encodeType(element.thisType, false),
+      name: codecs.encodeName(element.name),
       initializers: fields.map((e) {
         return KotlinField(
           name: _encodeVarName(e.name),
-          type: _encodeType(e.type, true),
+          type: codecs.encodeType(e.type),
         );
       }).toList(),
       body: [
@@ -323,7 +326,7 @@ return suspendCoroutine { continuation ->
             name: 'serialize',
             returns: 'List<Any?>',
             body: 'return listOf(\n${fields.map((e) {
-              return '    ${_encodeSerialization(e.type, _encodeVarName(e.name))},\n';
+              return '    ${codecs.encodeSerialization(e.type, _encodeVarName(e.name))},\n';
             }).join()})',
           ),
         if (flutterToHost)
@@ -339,9 +342,9 @@ return suspendCoroutine { continuation ->
                     type: 'List<Any?>',
                   ),
                 ],
-                returns: _encodeType(element.thisType, true),
-                body: 'return ${_encodeType(element.thisType, false)}(\n${fields.mapIndexed((i, e) {
-                  return '    ${_encodeVarName(e.name)} = ${_encodeDeserialization(e.type, 'serialized[$i]')},\n';
+                returns: codecs.encodeType(element.thisType),
+                body: 'return ${codecs.encodeName(element.name)}(\n${fields.mapIndexed((i, e) {
+                  return '    ${_encodeVarName(e.name)} = ${codecs.encodeDeserialization(e.type, 'serialized[$i]')},\n';
                 }).join()})',
               ),
             ],
@@ -351,11 +354,11 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeEnum(SerializableHandler<EnumElement> handler) {
-    final SerializableHandler(:element) = handler;
+  void writeSerializableEnum(SerializableEnumHandler handler) {
+    final SerializableEnumHandler(:element) = handler;
 
     _specs.add(KotlinEnum(
-      name: _encodeType(element.thisType, false),
+      name: codecs.encodeName(element.name),
       values: element.fields.where((element) => element.isEnumConstant).map((e) {
         return _encodeVarName(e.name.constantCase);
       }).toList(),
@@ -372,71 +375,85 @@ return suspendCoroutine { continuation ->
     };
   }
 
-  String _encodeType(DartType type, bool withNullability) {
-    final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
-    if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
-    if (type is VoidType) return 'Unit$questionOrEmpty';
-    if (type.isDartCoreNull) return 'null$questionOrEmpty';
-    if (type.isDartCoreBool) return 'Boolean$questionOrEmpty';
-    if (type.isDartCoreInt) return 'Long$questionOrEmpty';
-    if (type.isDartCoreDouble) return 'Double$questionOrEmpty';
-    if (type.isDartCoreString) return 'String$questionOrEmpty';
-    if (type.isDartCoreList) {
-      final typeArg = type.singleTypeArg;
-      return 'List<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
-    }
-    if (type.isDartCoreMap) {
-      final typeArgs = type.doubleTypeArgs;
-      return 'HashMap<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
-    }
-    return type
-        .getDisplayString(withNullability: withNullability)
-        .replaceFirstMapped(RegExp(r'\w+'), (match) => '${match.group(0)}Api');
-  }
-
-  String _encodeSerialization(DartType type, String varAccess) {
-    if (type is VoidType) throw StateError('void type no supported');
-    if (type.isPrimitive) return varAccess;
-    if (type.isDartCoreList) {
-      final typeArg = type.singleTypeArg;
-      return '$varAccess${type.questionOrEmpty}.map{${_encodeSerialization(typeArg, 'it')}}';
-    }
-    if (type.isDartCoreMap) {
-      final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
-          '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeSerialization(typesArgs.$2, 'v')}}'
-          '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
-    }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
-      return '$varAccess${type.questionOrEmpty}.ordinal';
-    }
-    return '$varAccess${type.questionOrEmpty}.serialize()';
-  }
-
-  String _encodeDeserialization(DartType type, String varAccess) {
-    if (type is VoidType) throw StateError('void type no supported');
-    if (type.isPrimitive) return '$varAccess as ${_encodeType(type, true)}';
-    if (type.isDartCoreList) {
-      final typeArg = type.singleTypeArg;
-      return '($varAccess as List<*>${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, 'it')}}';
-    }
-    if (type.isDartCoreMap) {
-      final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
-          '.map{(k, v) -> ${_encodeDeserialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
-          '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
-    }
-
-    if (type.isDartCoreEnum || type.element is EnumElement) {
-      return '($varAccess as Int${type.questionOrEmpty})'
-          '${type.questionOrEmpty}.let{${_encodeType(type, false)}.values()[it]}';
-    }
-    return '($varAccess as List<Any?>${type.questionOrEmpty})'
-        '${type.questionOrEmpty}.let{${_encodeType(type, false)}.deserialize(it)}';
-  }
+  // String _encodeType(DartType type, bool withNullability) {
+  //   final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
+  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
+  //   if (codec != null) {
+  //     return '${codec.encodeType(type)}$questionOrEmpty';
+  //   }
+  //   if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
+  //   if (type is VoidType) return 'Unit$questionOrEmpty';
+  //   if (type.isDartCoreNull) return 'null$questionOrEmpty';
+  //   if (type.isDartCoreBool) return 'Boolean$questionOrEmpty';
+  //   if (type.isDartCoreInt) return 'Long$questionOrEmpty';
+  //   if (type.isDartCoreDouble) return 'Double$questionOrEmpty';
+  //   if (type.isDartCoreString) return 'String$questionOrEmpty';
+  //   if (type.isDartCoreList) {
+  //     final typeArg = type.singleTypeArg;
+  //     return 'List<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
+  //   }
+  //   if (type.isDartCoreMap) {
+  //     final typeArgs = type.doubleTypeArgs;
+  //     return 'HashMap<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
+  //   }
+  //   return type
+  //       .getDisplayString(withNullability: withNullability)
+  //       .replaceFirstMapped(RegExp(r'\w+'), (match) => '${match.group(0)}Api');
+  // }
+  //
+  // String _encodeSerialization(DartType type, String varAccess) {
+  //   if (type is VoidType) throw StateError('void type no supported');
+  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
+  //   if (codec != null) {
+  //     final serializer = codec.encodeSerialization(type, type.isNullable ? 'it' : varAccess);
+  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+  //   }
+  //   if (type.isPrimitive) return varAccess;
+  //   if (type.isDartCoreList) {
+  //     final typeArg = type.singleTypeArg;
+  //     return '$varAccess${type.questionOrEmpty}.map{${_encodeSerialization(typeArg, 'it')}}';
+  //   }
+  //   if (type.isDartCoreMap) {
+  //     final typesArgs = type.doubleTypeArgs;
+  //     final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
+  //         '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeSerialization(typesArgs.$2, 'v')}}'
+  //         '.toTypedArray())';
+  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+  //   }
+  //   if (type.isDartCoreEnum || type.element is EnumElement) {
+  //     return '$varAccess${type.questionOrEmpty}.ordinal';
+  //   }
+  //   return '$varAccess${type.questionOrEmpty}.serialize()';
+  // }
+  //
+  // String _encodeDeserialization(DartType type, String varAccess) {
+  //   if (type is VoidType) throw StateError('void type no supported');
+  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
+  //   if (codec != null) {
+  //     final deserializer = codec.encodeDeserialization(type, type.isNullable ? 'it' : varAccess);
+  //     return type.isNullable ? '$varAccess?.let{$deserializer}' : deserializer;
+  //   }
+  //   if (type.isPrimitive) return '$varAccess as ${_encodeType(type, true)}';
+  //   if (type.isDartCoreList) {
+  //     final typeArg = type.singleTypeArg;
+  //     return '($varAccess as List<*>${type.questionOrEmpty})'
+  //         '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, 'it')}}';
+  //   }
+  //   if (type.isDartCoreMap) {
+  //     final typesArgs = type.doubleTypeArgs;
+  //     final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
+  //         '.map{(k, v) -> ${_encodeDeserialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
+  //         '.toTypedArray())';
+  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+  //   }
+  //
+  //   if (type.isDartCoreEnum || type.element is EnumElement) {
+  //     return '($varAccess as Int${type.questionOrEmpty})'
+  //         '${type.questionOrEmpty}.let{${_encodeType(type, false)}.values()[it]}';
+  //   }
+  //   return '($varAccess as List<Any?>${type.questionOrEmpty})'
+  //       '${type.questionOrEmpty}.let{${_encodeType(type, false)}.deserialize(it)}';
+  // }
 
   @override
   void writeException(EnumElement element) {
@@ -489,10 +506,4 @@ return suspendCoroutine { continuation ->
         ],
         body: _specs,
       ))}';
-}
-
-extension on DartType {
-  bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
-  String get questionOrEmpty => isNullable ? '?' : '';
-  // String get exclamationOrEmpty => isNullable ? '!!' : '';
 }

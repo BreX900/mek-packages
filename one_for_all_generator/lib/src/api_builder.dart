@@ -17,9 +17,9 @@ abstract class ApiBuilder {
 
   void writeException(EnumElement element);
 
-  void writeSerializable(SerializableHandler<ClassElement> handler);
+  void writeSerializableClass(SerializableClassHandler handler);
 
-  void writeEnum(SerializableHandler<EnumElement> handler);
+  void writeSerializableEnum(SerializableEnumHandler handler);
 
   String build();
 }

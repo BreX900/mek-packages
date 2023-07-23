@@ -2,22 +2,13 @@
 
 part of 'stripe_terminal.dart';
 
-class _$StripeTerminalApi {
+class _$StripeTerminal {
   static const _$channel = MethodChannel('StripeTerminal');
 
   static const _$discoverReaders =
-      EventChannel('StripeTerminal#discoverReaders');
+      EventChannel('StripeTerminal#_discoverReaders');
 
-  static const _$onConnectionStatusChange =
-      EventChannel('StripeTerminal#_onConnectionStatusChange');
-
-  static const _$onUnexpectedReaderDisconnect =
-      EventChannel('StripeTerminal#_onUnexpectedReaderDisconnect');
-
-  static const _$onPaymentStatusChange =
-      EventChannel('StripeTerminal#_onPaymentStatusChange');
-
-  Stream<List<StripeReader>> discoverReaders({
+  Stream<List<StripeReader>> _discoverReaders({
     DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
     bool simulated = false,
     String? locationId,
@@ -28,21 +19,6 @@ class _$StripeTerminalApi {
       locationId
     ]).map((e) =>
         (e as List).map((e) => _$deserializeStripeReader(e as List)).toList());
-  }
-
-  Stream<ConnectionStatus> _onConnectionStatusChange() {
-    return _$onConnectionStatusChange.receiveBroadcastStream([]).map(
-        (e) => ConnectionStatus.values[e as int]);
-  }
-
-  Stream<StripeReader> _onUnexpectedReaderDisconnect() {
-    return _$onUnexpectedReaderDisconnect.receiveBroadcastStream([]).map(
-        (e) => _$deserializeStripeReader(e as List));
-  }
-
-  Stream<PaymentStatus> _onPaymentStatusChange() {
-    return _$onPaymentStatusChange
-        .receiveBroadcastStream([]).map((e) => PaymentStatus.values[e as int]);
   }
 
   Future<List<Location>> listLocations({
@@ -128,6 +104,15 @@ class _$StripeTerminalApi {
   Future<void> disconnectReader() async {
     try {
       await _$channel.invokeMethod('disconnectReader', []);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> installAvailableUpdate(String serialNumber) async {
+    try {
+      await _$channel.invokeMethod('installAvailableUpdate', [serialNumber]);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
@@ -233,14 +218,24 @@ class _$StripeTerminalApi {
   }
 }
 
-void _$setupStripeTerminalHandlersApi(_StripeTerminalHandlers hostApi) {
-  const channel = MethodChannel('_StripeTerminalHandlers');
+void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
+  const channel = MethodChannel('StripeTerminalHandlers');
   channel.setMethodCallHandler((call) async {
     final args = call.arguments as List<Object?>;
     return switch (call.method) {
       '_onRequestConnectionToken' => await hostApi._onRequestConnectionToken(),
+      '_onUnexpectedReaderDisconnect' =>
+        await hostApi._onUnexpectedReaderDisconnect(
+            _$deserializeStripeReader(args[0] as List)),
+      '_onConnectionStatusChange' => await hostApi
+          ._onConnectionStatusChange(ConnectionStatus.values[args[0] as int]),
+      '_onPaymentStatusChange' => await hostApi
+          ._onPaymentStatusChange(PaymentStatus.values[args[0] as int]),
+      '_onAvailableUpdate' => await hostApi._onAvailableUpdate(args[0] as bool),
+      '_onReportReaderSoftwareUpdateProgress' =>
+        await hostApi._onReportReaderSoftwareUpdateProgress(args[0] as double),
       _ => throw UnsupportedError(
-          '_StripeTerminalHandlers#Flutter.${call.method} method'),
+          'StripeTerminalHandlers#Flutter.${call.method} method'),
     };
   });
 }

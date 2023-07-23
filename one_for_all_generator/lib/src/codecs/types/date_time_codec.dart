@@ -41,11 +41,11 @@ class DateTimeSwiftApiCodec extends ApiCodec<DateTime> {
   const DateTimeSwiftApiCodec();
 
   @override
-  String encodeType(ApiCodecs codecs, DartType type) => 'NSDate${type.isNullable ? '?' : ''}';
+  String encodeType(ApiCodecs codecs, DartType type) => 'Date${type.isNullable ? '?' : ''}';
 
   @override
   String encodeDeserialization(ApiCodecs codecs, DartType type, String varAccess) =>
-      'NSDate(timeIntervalSince1970: (($varAccess as Int) / 1000).toInt())';
+      'Date(timeIntervalSince1970: (($varAccess as Int) / 1000).toInt())';
 
   @override
   String encodeSerialization(ApiCodecs codecs, DartType type, String varAccess) =>

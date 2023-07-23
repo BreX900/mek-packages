@@ -18,7 +18,7 @@ class KotlinParameter implements KotlinClassInitializer {
 
 enum KotlinMethodModifier { override, suspend }
 
-class KotlinMethod extends KotlinSpec {
+class KotlinMethod extends KotlinTopLevelSpec {
   final KotlinVisibility? visibility;
   final Set<KotlinMethodModifier> modifiers;
   final String name;
@@ -38,12 +38,12 @@ class KotlinMethod extends KotlinSpec {
   });
 }
 
-class KotlinInterface extends KotlinSpec {
+class KotlinInterface extends KotlinTopLevelSpec {
   final KotlinVisibility? visibility;
   final String name;
   final List<String> implements;
   final List<KotlinField> fields;
-  final List<KotlinSpec> body;
+  final List<KotlinTopLevelSpec> body;
 
   const KotlinInterface({
     this.visibility,
@@ -52,6 +52,8 @@ class KotlinInterface extends KotlinSpec {
     this.fields = const [],
     this.body = const [],
   });
+
+  bool get isInterface => true;
 
   bool get hasBody => fields.isNotEmpty || body.isNotEmpty;
 }
@@ -67,6 +69,9 @@ class KotlinEnum extends KotlinInterface {
     super.fields = const [],
     super.body = const [],
   });
+
+  @override
+  bool get isInterface => false;
 
   @override
   bool get hasBody => super.hasBody || values.isNotEmpty;
@@ -111,12 +116,15 @@ class KotlinClass extends KotlinInterface {
     super.fields = const [],
     super.body = const [],
   });
+
+  @override
+  bool get isInterface => false;
 }
 
-class KotlinLibrary extends KotlinLanguage {
+class KotlinLibrary extends KotlinSpec {
   final String package;
   final List<String> imports;
-  final List<KotlinSpec> body;
+  final List<KotlinTopLevelSpec> body;
 
   const KotlinLibrary({
     required this.package,
@@ -125,12 +133,12 @@ class KotlinLibrary extends KotlinLanguage {
   });
 }
 
-sealed class KotlinSpec extends KotlinLanguage {
-  const KotlinSpec();
+sealed class KotlinTopLevelSpec extends KotlinSpec {
+  const KotlinTopLevelSpec();
 }
 
-sealed class KotlinLanguage {
-  const KotlinLanguage();
+sealed class KotlinSpec {
+  const KotlinSpec();
 }
 
 class KotlinEmitter {
@@ -138,20 +146,20 @@ class KotlinEmitter {
 
   String get _space => '    ' * _indent;
 
-  Object encode(KotlinLanguage spec) {
+  Object encode(KotlinSpec spec) {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       KotlinLibrary() => _encodeLibrary(spec),
-      KotlinSpec() => _encodeSpec(spec),
+      KotlinTopLevelSpec() => _encodeTopLevelSpec(spec, isInInterface: false),
     });
     return buffer;
   }
 
-  Object _encodeSpec(KotlinSpec spec) {
+  Object _encodeTopLevelSpec(KotlinTopLevelSpec spec, {required bool isInInterface}) {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       KotlinInterface() => _encodeInterface(spec),
-      KotlinMethod() => _encodeMethod(spec),
+      KotlinMethod() => _encodeMethod(spec, isInInterface: isInInterface),
     });
     return buffer;
   }
@@ -230,7 +238,9 @@ class KotlinEmitter {
     if (spec.body.isNotEmpty) {
       buffer.write('\n');
       _indent += 1;
-      buffer.writeAll(spec.body.map(_encodeSpec), '\n\n');
+      buffer.writeAll(spec.body.map((e) {
+        return _encodeTopLevelSpec(e, isInInterface: spec.isInterface);
+      }), '\n\n');
       _indent -= 1;
       buffer.write('\n');
     }
@@ -249,11 +259,11 @@ class KotlinEmitter {
     return '$_space$visibility$modifier ${spec.name}: ${spec.type}$assignment';
   }
 
-  Object _encodeMethod(KotlinMethod spec) {
+  Object _encodeMethod(KotlinMethod spec, {required bool isInInterface}) {
     final buffer = StringBuffer();
     buffer.write(_space);
     buffer.write(_encodeVisibility(spec.visibility));
-    if (spec.body == null) buffer.write('abstract ');
+    if (spec.body == null && !isInInterface) buffer.write('abstract ');
     buffer.writeAll(spec.modifiers.sortedBy<num>((e) => e.index).map((e) => '${e.name} '));
     buffer.write('fun ${spec.name}(');
     if (spec.parameters.isNotEmpty) {
@@ -283,6 +293,7 @@ class KotlinEmitter {
   }
 
   Object _encodeParameter(KotlinParameter spec) {
-    return '$_space${spec.name}: ${spec.type}';
+    final defaultTo = spec.defaultTo != null ? ' = ${spec.defaultTo}' : '';
+    return '$_space${spec.name}: ${spec.type}$defaultTo';
   }
 }

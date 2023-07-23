@@ -2,48 +2,29 @@ import Flutter
 import StripeTerminal
 import UIKit
 
-public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, ConnectionTokenProvider {
-
-    
+public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, ConnectionTokenProvider, TerminalDelegate {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let api = StripeTerminalHandlersApi(registrar.messenger())
         let instance = StripeTerminalPlugin(api)
         setupStripeTerminalApi(registrar.messenger(), instance)
     }
-    
-    private let api: StripeTerminalHandlersApi
+
+    private let handlers: StripeTerminalHandlersApi
     var readers: [Reader] = []
 
-    init(_ api: StripeTerminalHandlersApi) {
-        self.api = api
+    init(_ handlers: StripeTerminalHandlersApi) {
+        self.handlers = handlers
     }
-    
-    func onInit(_: Result<Void>) throws {
+
+    func onInit() async throws {
         Terminal.setTokenProvider(self)
+        Terminal.shared.delegate = self
     }
-    
+
     public func fetchConnectionToken() async throws -> String {
-        return try await self.api.requestConnectionToken()
+        return try await handlers.requestConnectionToken()
     }
-    
-    private func throwPlataformError(_ error: NSError) throws {
-//        let terminalError = ErrorCode(_nsError: error)
-        throw PlatformError(code: error.toApi(), message: error.localizedDescription, details: nil)
-    }
-    private func findReader(_ serialNumber: String) throws -> Reader {
-        let reader = readers.first { reader in
-            return reader.serialNumber == serialNumber
-        }
-        if reader == nil {
-            throw PlatformError(
-                code: StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
-                message: "Reader with provided serial number no longer exists",
-                details: nil
-            )
-        }
-        return reader!
-    }
-    
+
     func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
         do {
             let locations = try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
@@ -53,32 +34,34 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             ))
             return locations.0.map { $0.toApi() }
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
+            throw error
         }
     }
 
-    func onConnectionStatus(_ result: Result<ConnectionStatusApi>) async throws -> ConnectionStatusApi {
+    func onConnectionStatus() async throws -> ConnectionStatusApi {
         return Terminal.shared.connectionStatus.toApi()
     }
 
     func onConnectBluetoothReader(
         _ serialNumber: String,
         _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
+        _: Bool
     ) async throws -> StripeReaderApi {
         let reader = try findReader(serialNumber)
 
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
                 reader,
-                delegate: self,
+                delegate: ReaderDelegate(handlersApi: handlers),
                 connectionConfig: BluetoothConnectionConfiguration(
                     locationId: locationId
                 )
-            );
+            )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
+            throw error
         }
     }
 
@@ -89,14 +72,16 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         let reader = try findReader(serialNumber)
 
         do {
-            let reader = try await Terminal.shared.connectInternetReader(reader,
+            let reader = try await Terminal.shared.connectInternetReader(
+                reader,
                 connectionConfig: InternetConnectionConfiguration(
                     failIfInUse: failIfInUse
                 )
             )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
+            throw error
         }
     }
 
@@ -107,14 +92,17 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         let reader = try findReader(serialNumber)
 
         do {
-            let reader = try await Terminal.shared.connectLocalMobileReader(reader, delegate: self,
+            let reader = try await Terminal.shared.connectLocalMobileReader(
+                reader,
+                delegate: ReaderDelegate(handlersApi: handlers),
                 connectionConfig: LocalMobileConnectionConfiguration(
                     locationId: locationId
                 )
             )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
+            throw error
         }
     }
 
@@ -122,39 +110,43 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         return Terminal.shared.connectedReader?.toApi()
     }
 
-    func onDisconnectReader() async throws -> Void {
+    func onInstallAvailableUpdate(_: String) async throws {
+        Terminal.shared.installAvailableUpdate()
+    }
+
+    func onDisconnectReader() async throws {
         do {
             try await Terminal.shared.disconnectReader()
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
         }
     }
 
     func onSetReaderDisplay(
         _ cart: CartApi
-    ) async throws -> Void {
+    ) async throws {
         do {
             try await Terminal.shared.setReaderDisplay(cart.toHost())
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
         }
     }
 
-    func onClearReaderDisplay() async throws -> Void {
+    func onClearReaderDisplay() async throws {
         do {
             try await Terminal.shared.clearReaderDisplay()
         } catch let error as NSError {
-            try throwPlataformError(error)
+            try throwPlatformError(error)
         }
     }
-    
+
     private var cancelablesReadReusableCard: [Int: Cancelable] = [:]
 
     func onStartReadReusableCard(
         _ result: Result<StripePaymentMethodApi>,
         _ id: Int,
-        _ customer: String?,
-        _ metadata: [String: String]?
+        _: String?,
+        _: [String: String]?
     ) throws {
         cancelablesReadReusableCard[id] = Terminal.shared.readReusableCard(
             ReadReusableCardParameters(),
@@ -167,89 +159,110 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             }
         )
     }
-    
+
     func onStopReadReusableCard(
         _ id: Int
-    ) async throws -> Void {
+    ) async throws {
         try await cancelablesReadReusableCard.removeValue(forKey: id)?.cancel()
     }
 
-    func onRetrievePaymentIntent(_ result: Result<StripePaymentIntentApi>, _ clientSecret: String) throws {
-        Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret) { intent, error in
-            if let error {
-                result.error("", error.localizedDescription, nil)
-            } else if let intent {
-                // TODO: MEGA TODO!!
-                let stripePaymentIntent = StripePaymentIntentApi(id: intent.stripeId,
-                                                                 amount: Double(intent.amount),
-                                                                 amountCapturable: 0, amountReceived: 0, application: nil,
-                                                                 applicationFeeAmount: nil, captureMethod: intent.captureMethod.rawValue.description,
-                                                                 cancellationReason: nil, canceledAt: nil, clientSecret: clientSecret,
-                                                                 confirmationMethod: nil, created: intent.created.hashValue, currency: intent.currency,
-                                                                 customer: nil,
-                                                                 description: intent.description,
-                                                                 invoice: nil, livemode: false, metadata: intent.metadata,
-                                                                 onBehalfOf: nil,
-                                                                 paymentMethodId: nil,
-                                                                 status: PaymentIntentStatusApi.startingFrom(intent.status),
-                                                                 review: nil, receiptEmail: nil, setupFutureUsage: nil, transferGroup: nil)
+    func onRetrievePaymentIntent(
+        _ clientSecret: String
+    ) async throws -> StripePaymentIntentApi {
+        do {
+            let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
+            return paymentIntent.toApi()
+        } catch let error as NSError {
+            try throwPlatformError(error)
+            throw error
+        }
+    }
 
-                result.success(stripePaymentIntent)
+    private var cancelablesCollectPaymentMethod: [Int: Cancelable?] = [:]
+
+    func onStartCollectPaymentMethod(
+        _ result: Result<StripePaymentIntentApi>,
+        _ id: Int,
+        _ clientSecret: String,
+        _: Bool,
+        _: Bool
+    ) throws {
+        cancelablesCollectPaymentMethod[id] = nil
+        Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret) { paymentIntent, error in
+            if let error = error as? NSError {
+                result.error(error.toApi(), error.localizedDescription, nil)
+                return
+            }
+            if !self.cancelablesCollectPaymentMethod.containsKey(id) {
+                return
+            }
+
+            self.cancelablesCollectPaymentMethod[id] = Terminal.shared.collectPaymentMethod(paymentIntent!) { paymentIntent, error in
+                if let error = error as? NSError {
+                    result.error(error.toApi(), error.localizedDescription, nil)
+                    return
+                }
+                result.success(paymentIntent!.toApi())
             }
         }
     }
 
-    func onCollectPaymentMethod(_ result: Result<StripePaymentIntentApi>, _ clientSecret: String, _: Bool, _: Bool) throws {
-        // TODO: MISSING
-        Terminal.shared.collectPaymentMethod(PaymentIntent()) { intent, error in
-            if let error {
-                result.error("", error.localizedDescription, nil)
-            } else if let intent {
-                // TODO: MEGA TODO
-                let stripePaymentIntent = StripePaymentIntentApi(id: intent.stripeId,
-                                                                 amount: Double(intent.amount),
-                                                                 amountCapturable: 0, amountReceived: 0, application: nil,
-                                                                 applicationFeeAmount: nil, captureMethod: intent.captureMethod.rawValue.description,
-                                                                 cancellationReason: nil, canceledAt: nil, clientSecret: clientSecret,
-                                                                 confirmationMethod: nil, created: intent.created.hashValue, currency: intent.currency,
-                                                                 customer: nil,
-                                                                 description: intent.description,
-                                                                 invoice: nil, livemode: false, metadata: intent.metadata,
-                                                                 onBehalfOf: nil,
-                                                                 paymentMethodId: nil,
-                                                                 status: PaymentIntentStatusApi.startingFrom(intent.status),
-                                                                 review: nil, receiptEmail: nil, setupFutureUsage: nil, transferGroup: nil)
+    func onStopCollectPaymentMethod(
+        _ id: Int
+    ) async throws {
+        try await cancelablesCollectPaymentMethod.removeValue(forKey: id)??.cancel()
+    }
 
-                result.success(stripePaymentIntent)
+    func onProcessPayment(
+        _ clientSecret: String
+    ) async throws -> StripePaymentIntentApi {
+        do {
+            let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
+            let (intent, error) = await Terminal.shared.processPayment(paymentIntent)
+            if let error = error {
+                throw PlatformError(code: error.declineCode!, message: error.localizedDescription, details: nil)
             }
+
+            return intent!.toApi()
+        } catch let error as NSError {
+            try throwPlatformError(error)
+            throw error
         }
     }
 
-    func onProcessPayment(_ result: Result<StripePaymentIntentApi>, _ clientSecret: String) throws {
-        // TODO: MISSING INTENT
-        Terminal.shared.processPayment(PaymentIntent()) { intent, error in
-            if let error {
-                result.error("", error.localizedDescription, nil)
-            } else if let intent {
-                // TODO: MEGA TODO
-                let stripePaymentIntent = StripePaymentIntentApi(id: intent.stripeId,
-                                                                 amount: Double(intent.amount),
-                                                                 amountCapturable: 0, amountReceived: 0, application: nil,
-                                                                 applicationFeeAmount: nil, captureMethod: intent.captureMethod.rawValue.description,
-                                                                 cancellationReason: nil, canceledAt: nil, clientSecret: clientSecret,
-                                                                 confirmationMethod: nil, created: intent.created.hashValue, currency: intent.currency,
-                                                                 customer: nil,
-                                                                 description: intent.description,
-                                                                 invoice: nil, livemode: false, metadata: intent.metadata,
-                                                                 onBehalfOf: nil,
-                                                                 paymentMethodId: nil,
-                                                                 status: PaymentIntentStatusApi.startingFrom(intent.status),
-                                                                 review: nil, receiptEmail: nil, setupFutureUsage: nil, transferGroup: nil)
-
-                result.success(stripePaymentIntent)
-            }
-        }
+    public func terminal(_: Terminal, didReportUnexpectedReaderDisconnect reader: Reader) {
+        handlers.unexpectedReaderDisconnect(reader: reader.toApi())
     }
 
+    public func terminal(_: Terminal, didChangePaymentStatus status: PaymentStatus) {
+        handlers.paymentStatusChange(paymentStatus: status.toApi())
+    }
 
+    public func terminal(_: Terminal, didChangeConnectionStatus status: ConnectionStatus) {
+        handlers.connectionStatusChange(connectionStatus: status.toApi())
+    }
+
+    private func throwPlatformError(_ error: NSError) throws {
+        throw PlatformError(code: error.toApi(), message: error.localizedDescription, details: nil)
+    }
+
+    private func findReader(_ serialNumber: String) throws -> Reader {
+        let reader = readers.first { reader in
+            reader.serialNumber == serialNumber
+        }
+        guard let reader = reader else {
+            throw PlatformError(
+                code: StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
+                message: "Reader with provided serial number no longer exists",
+                details: nil
+            )
+        }
+        return reader
+    }
+}
+
+extension Dictionary {
+    func containsKey(_ key: Key) -> Bool {
+        return contains(where: { entry in entry.key == key })
+    }
 }

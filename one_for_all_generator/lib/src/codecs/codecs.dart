@@ -42,11 +42,11 @@ class ApiPlatformCodec<T> {
     required this.swift,
   });
 
-  ApiCodec<T> read(PlatformApi platform) {
+  ApiCodec<T> read(LanguageApi platform) {
     return switch (platform) {
-      PlatformApi.dart => dart,
-      PlatformApi.kotlin => kotlin,
-      PlatformApi.swift => swift,
+      LanguageApi.dart => dart,
+      LanguageApi.kotlin => kotlin,
+      LanguageApi.swift => swift,
     };
   }
 
@@ -65,12 +65,9 @@ abstract class ApiCodecs {
 
   ApiCodecs(this.pluginOptions, this.codecs);
 
-  // late final _codecs = codecs.map((e) => (TypeChecker.fromRuntime(e.type), e)).toList();
-
   ApiCodec? findCodec(DartType type) =>
       codecs.firstWhereOrNull((e) => e.$1.isExactlyType(type))?.$2;
 
-  // String encodeNullableType(DartType type) => type.isNullable ? '$type?' : encodeType(type);
   String encodeName(String name);
 
   String encodeType(DartType type);

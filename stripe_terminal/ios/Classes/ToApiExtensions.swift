@@ -233,7 +233,6 @@ extension CardFundingType {
 
 extension PaymentIntent {
     func toApi() -> StripePaymentIntentApi {
-        PaymentIntent
         return StripePaymentIntentApi(
             id: stripeId,
             amount: Double(amount),
@@ -241,12 +240,12 @@ extension PaymentIntent {
             amountReceived: 0,
             application: nil,
             applicationFeeAmount: nil,
-            captureMethod: captureMethod.rawValue.description,
+            captureMethod: captureMethod.toApi(),
             cancellationReason: nil,
             canceledAt: nil,
-            clientSecret: clientSecret,
+            clientSecret: nil,
             confirmationMethod: nil,
-            created: created.timeIntervalSince1970,
+            created: created,
             currency: currency,
             customer: nil,
             description: description,
@@ -264,10 +263,23 @@ extension PaymentIntent {
     }
 }
 
+extension CaptureMethod {
+    func toApi() -> String {
+        switch self {
+        case .manual:
+            return "manual"
+        case .automatic:
+            return "automatic"
+        @unknown default:
+            fatalError("WTF")
+        }
+    }
+}
+
 extension NSError {
     func toApi() -> String {
         let code = AppleBuiltInReaderErrorCode(rawValue: self.code)
-        switch (code!) {
+        switch code! {
         case .unknown:
             return "unknown"
         case .unexpectedNil:
@@ -341,7 +353,7 @@ extension NSError {
         case .readerSessionAuthenticationError:
             return "readerSessionAuthenticationError"
         case .readerSessionBusy:
-            return .readerBusy.rawValue
+            return StripeTerminalExceptionCodeApi.readerBusy.rawValue
         case .readCancelled:
             return "readCancelled"
         case .invalidAmount:
@@ -373,4 +385,3 @@ extension NSError {
         }
     }
 }
-

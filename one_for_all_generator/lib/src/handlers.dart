@@ -3,32 +3,41 @@ import 'package:equatable/equatable.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/one_for_all_generator.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
-import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
-const _methodApiChecker = TypeChecker.fromRuntime(MethodApi);
-
 class MethodHandler {
-  final MethodElement element;
-  final SwiftMethodType swiftMethodType;
+  static const _checker = TypeChecker.fromRuntime(MethodApi);
 
-  const MethodHandler({
-    required this.element,
-    required this.swiftMethodType,
-  });
+  final MethodElement element;
+  final MethodApiType swift;
+  final MethodApiType kotlin;
+
+  const MethodHandler({required this.element, required this.swift, required this.kotlin});
+
+  factory MethodHandler.from(MethodElement element, MethodApiType defaultMethod) {
+    final annotation = ConstantReader(_checker.firstAnnotationOf(element));
+
+    return MethodHandler(
+      element: element,
+      kotlin: annotation.peek('kotlin')?.reviveEnum(MethodApiType.values) ?? defaultMethod,
+      swift: annotation.peek('swift')?.reviveEnum(MethodApiType.values) ?? defaultMethod,
+    );
+  }
 }
 
 class HostApiHandler {
   final OneForAllOptions options;
   final ClassElement element;
   final Revivable? hostExceptionHandler;
-  final SwiftMethodType swiftMethodType;
+  final MethodApiType kotlinMethod;
+  final MethodApiType swiftMethod;
 
   HostApiHandler({
     required this.options,
     required this.element,
     required this.hostExceptionHandler,
-    required this.swiftMethodType,
+    required this.kotlinMethod,
+    required this.swiftMethod,
   });
 
   factory HostApiHandler.of(OneForAllOptions options, AnnotatedElement _) {
@@ -38,27 +47,21 @@ class HostApiHandler {
       options: options,
       element: element as ClassElement,
       hostExceptionHandler: annotation.peek('hostExceptionHandler')?.revive(),
-      swiftMethodType: annotation.read('swiftMethodType').reviveEnum(SwiftMethodType.values),
+      kotlinMethod: annotation.read('kotlinMethod').reviveEnum(MethodApiType.values),
+      swiftMethod: annotation.read('swiftMethod').reviveEnum(MethodApiType.values),
     );
   }
 
-  late final List<MethodHandler> methods = element.methods.where((e) => e.isHostApiMethod).map((e) {
-    final annotation = ConstantReader(_methodApiChecker.firstAnnotationOf(e));
-
-    return MethodHandler(
-      element: e,
-      swiftMethodType:
-          annotation.peek('swiftMethodType')?.reviveEnum(SwiftMethodType.values) ?? swiftMethodType,
-    );
-  }).toList();
+  late final List<MethodHandler> kotlinMethods = element.methods
+      .where((e) => e.isHostApiMethod)
+      .map((e) => MethodHandler.from(e, kotlinMethod))
+      .toList();
+  late final List<MethodHandler> swiftMethods = element.methods
+      .where((e) => e.isHostApiMethod)
+      .map((e) => MethodHandler.from(e, swiftMethod))
+      .toList();
 
   String channelName([MethodElement? e]) => e?.name ?? element.name;
-  @Deprecated('In favour of ApiBuilder.encodeName')
-  String get className => '${element.name.pascalCase}${options.hostClassSuffix}';
-
-  @Deprecated('In favour of ApiBuilder.encodeName')
-  String controllerName(MethodElement e) =>
-      '${e.name.pascalCase}Controller${options.hostClassSuffix}';
   String controllerChannelName(MethodElement? e) =>
       '${element.name}${e != null ? '#${e.name}' : ''}';
 }
@@ -66,26 +69,37 @@ class HostApiHandler {
 class FlutterApiHandler {
   final OneForAllOptions options;
   final ClassElement element;
+  final MethodApiType kotlinMethod;
+  final MethodApiType swiftMethod;
 
   FlutterApiHandler({
     required this.options,
     required this.element,
+    required this.kotlinMethod,
+    required this.swiftMethod,
   });
 
   factory FlutterApiHandler.of(OneForAllOptions options, AnnotatedElement _) {
-    final AnnotatedElement(:element) = _;
+    final AnnotatedElement(:element, :annotation) = _;
 
     return FlutterApiHandler(
       options: options,
       element: element as ClassElement,
+      kotlinMethod: annotation.read('kotlinMethod').reviveEnum(MethodApiType.values),
+      swiftMethod: annotation.read('swiftMethod').reviveEnum(MethodApiType.values),
     );
   }
 
+  late final List<MethodHandler> kotlinMethods = element.methods
+      .where((e) => e.isFlutterApiMethod)
+      .map((e) => MethodHandler.from(e, kotlinMethod))
+      .toList();
+  late final List<MethodHandler> swiftMethods = element.methods
+      .where((e) => e.isFlutterApiMethod)
+      .map((e) => MethodHandler.from(e, swiftMethod))
+      .toList();
+
   String channelName([MethodElement? e]) => e?.name ?? element.name;
-  @Deprecated('In favour of ApiBuilder.encodeName')
-  String name(String name) => '${element.name.pascalCase}${options.hostClassSuffix}';
-  @Deprecated('In favour of ApiBuilder.encodeName')
-  String get className => '${element.name.pascalCase}${options.hostClassSuffix}';
 }
 
 class SerializableClassHandler extends Equatable {

@@ -12,7 +12,7 @@ import 'package:recase/recase.dart';
 class SwiftApiBuilder extends ApiBuilder {
   final SwiftOptions options;
   final ApiCodecs codecs;
-  final _specs = <SwiftSpec>[];
+  final _specs = <SwiftTopLevelSpec>[];
 
   @override
   String get outputFile => options.outputFile;
@@ -164,18 +164,18 @@ class SwiftApiBuilder extends ApiBuilder {
 
   @override
   void writeHostApiClass(HostApiHandler handler) {
-    final HostApiHandler(:element, :methods) = handler;
+    final HostApiHandler(:element, swiftMethods: methods) = handler;
 
     _specs.add(SwiftProtocol(
-      name: handler.className,
+      name: codecs.encodeName(element.name),
       methods: methods.map((_) {
-        final MethodHandler(element: e, :swiftMethodType) = _;
+        final MethodHandler(element: e, swift: methodType) = _;
         final returnType = codecs.encodeType(e.returnType.singleTypeArg);
 
         return SwiftMethod(
           name: _encodeMethodName(e.name),
           parameters: [
-            if (swiftMethodType == SwiftMethodType.result)
+            if (methodType == MethodApiType.callbacks)
               SwiftParameter(
                 label: '_',
                 name: 'result',
@@ -190,8 +190,8 @@ class SwiftApiBuilder extends ApiBuilder {
             }),
           ],
           throws: true,
-          async: swiftMethodType == SwiftMethodType.async,
-          returns: swiftMethodType == SwiftMethodType.async ? returnType : null,
+          async: methodType == MethodApiType.async,
+          returns: methodType == MethodApiType.callbacks ? null : returnType,
         );
       }).toList(),
     ));
@@ -204,7 +204,7 @@ class SwiftApiBuilder extends ApiBuilder {
           e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
       return SwiftClass(
-        name: handler.controllerName(e),
+        name: codecs.encodeName('${e.name}Controller'),
         init: SwiftInit(
           parameters: [SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')],
           body:
@@ -256,79 +256,15 @@ channel.setStreamHandler(ControllerHandler({ arguments, events in
       );
     }));
 
-//     final hostMethods = element.methods.where((e) => e.isHostApiMethod);
-//     final hostResultMethods =
-//         hostMethods.where((e) => swiftMethodType == SwiftMethodType.result).toList();
-//     final hostAsyncMethods =
-//         hostMethods.where((e) => swiftMethodType == SwiftMethodType.async).toList();
-//
-//     String encodeAsyncMethods() {
-//       return '''
-//     Task {
-//         do {
-//             let args = call.arguments as! [Any?]
-//
-//             switch call.method {
-//     ${hostAsyncMethods.where((e) => e.isHostApiMethod).map((e) {
-//         final returnType = e.returnType.singleTypeArg;
-//
-//         final parameters =
-//             e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
-//
-//         return '''
-//             case "${e.name}":
-//                     ${returnType is VoidType ? '' : 'let res = '}try await hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
-//                     DispatchQueue.main.async { result(${returnType is VoidType ? 'nil' : _encodeSerialization(returnType, 'res')}) }
-//                 ''';
-//       }).join('\n')}
-//             default:
-//                 result(FlutterMethodNotImplemented)
-//             }
-//         } catch let error as PlatformError {
-//             result(FlutterError(code: error.code, message: error.message, details: error.details))
-//         } catch {
-//             result(FlutterError(code: "", message: error.localizedDescription, details: nil))
-//         }
-//     }''';
-//     }
-//
-//     String encodeResultMethods() {
-//       return '''
-//     do {
-//         let args = call.arguments as! [Any?]
-//
-//         switch call.method {
-// ${hostResultMethods.map((e) {
-//         final returnType = e.returnType.singleTypeArg;
-//
-//         final parameters =
-//             e.parameters.mapIndexed((i, e) => _encodeDeserialization(e.type, 'args[$i]'));
-//
-//         return '''
-//         case "${e.name}":
-//             let res = Result<${_encodeType(returnType, true)}>(result) { ${returnType is VoidType ? 'nil' : _encodeSerialization(returnType, '\$0')} }
-//             try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''';
-//       }).join('\n')}
-//         default:
-//             result(FlutterMethodNotImplemented)
-//         }
-//     } catch let error as PlatformError {
-//         result(FlutterError(code: error.code, message: error.message, details: error.details))
-//     } catch {
-//         result(FlutterError(code: "", message: error.localizedDescription, details: nil))
-//     }''';
-//     }
-
     _specs.add(SwiftMethod(
       name: 'setup${codecs.encodeName(element.name)}',
       parameters: [
         const SwiftParameter(label: '_', name: 'binaryMessenger', type: 'FlutterBinaryMessenger'),
-        SwiftParameter(label: '_', name: 'hostApi', type: handler.className),
+        SwiftParameter(label: '_', name: 'hostApi', type: codecs.encodeName(element.name)),
       ],
       body: '''
 let channel = FlutterMethodChannel(name: "${handler.channelName()}", binaryMessenger: binaryMessenger)
 channel.setMethodCallHandler { call, result in
-
     let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
         Task {
             do {
@@ -347,7 +283,7 @@ channel.setMethodCallHandler { call, result in
                     
         switch call.method {
 ${methods.map((_) {
-        final MethodHandler(element: e, :swiftMethodType) = _;
+        final MethodHandler(element: e, swift: methodType) = _;
         final returnType = e.returnType.singleTypeArg;
 
         final parameters =
@@ -355,13 +291,16 @@ ${methods.map((_) {
 
         return '''
         case "${e.name}":
-${switch (swiftMethodType) {
-          SwiftMethodType.result => '''
+${switch (methodType) {
+          MethodApiType.callbacks => '''
             let res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, '\$0')} }
             try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''',
-          SwiftMethodType.async => '''
+          MethodApiType.sync => '''
+            let res = try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
+            result(${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, 'res')})''',
+          MethodApiType.async => '''
             runAsync {
-                ${returnType is VoidType ? '' : 'let res = '}try await hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')}) 
+                ${returnType is VoidType ? '' : 'let res = '}try await hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
                 return ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, 'res')}
             }''',
         }}''';
@@ -380,10 +319,10 @@ ${switch (swiftMethodType) {
 
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
-    final FlutterApiHandler(:element) = handler;
+    final FlutterApiHandler(:element, swiftMethods: methods) = handler;
 
     _specs.add(SwiftClass(
-      name: handler.className,
+      name: codecs.encodeName(element.name),
       fields: const [
         SwiftField(
           name: 'channel',
@@ -401,7 +340,8 @@ channel = FlutterMethodChannel(
     name: "${handler.channelName()}",
     binaryMessenger: binaryMessenger
 )'''),
-      methods: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
+      methods: methods.map((_) {
+        final MethodHandler(element: e, swift: methodType) = _;
         final returnType = e.returnType.singleTypeArg;
 
         final parameters =
@@ -415,10 +355,17 @@ channel = FlutterMethodChannel(
               type: codecs.encodeType(e.type),
             );
           }).toList(),
-          async: true,
-          throws: true,
-          returns: returnType is VoidType ? null : codecs.encodeType(returnType),
-          body: '''
+          async: methodType == MethodApiType.async,
+          throws: methodType == MethodApiType.async,
+          returns: methodType == MethodApiType.async
+              ? (returnType is VoidType ? null : codecs.encodeType(returnType))
+              : null,
+          body: switch (methodType) {
+            MethodApiType.callbacks => throw UnsupportedError(
+                'Not supported method ${MethodApiType.callbacks} on ${element.name}.${e.name}'),
+            MethodApiType.sync => '''
+channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'})''',
+            MethodApiType.async => '''
 return try await withCheckedThrowingContinuation { continuation in
     channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
         if let result = result as? [AnyHashable?: Any?] {
@@ -432,6 +379,7 @@ return try await withCheckedThrowingContinuation { continuation in
         }
     }
 }''',
+          },
         );
       }).toList(),
     ));
@@ -498,97 +446,12 @@ return try await withCheckedThrowingContinuation { continuation in
     ));
   }
 
-  String _encodeMethodName(String name) =>
-      name.startsWith('_on') ? name.replaceFirst('_on', '').camelCase : 'on${name.pascalCase}';
+  String _encodeMethodName(String name) {
+    name = name.replaceFirst('_', '');
+    return name.startsWith('on') ? name.replaceFirst('on', '').camelCase : 'on${name.pascalCase}';
+  }
 
   String _encodeVarName(String name) => name;
-
-  // String _encodeType(DartType type, bool withNullability) {
-  //   final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     return codec.encodeType(type);
-  //   }
-  //   if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
-  //   if (type is VoidType) return 'Void$questionOrEmpty';
-  //   if (type.isDartCoreNull) return 'nil$questionOrEmpty';
-  //   if (type.isDartCoreBool) return 'Bool$questionOrEmpty';
-  //   if (type.isDartCoreInt) return 'Int$questionOrEmpty';
-  //   if (type.isDartCoreDouble) return 'Double$questionOrEmpty';
-  //   if (type.isDartCoreString) return 'String$questionOrEmpty';
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '[${_encodeType(typeArg, withNullability)}]$questionOrEmpty';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typeArgs = type.doubleTypeArgs;
-  //     return '[${_encodeType(typeArgs.$1, withNullability)}: ${_encodeType(typeArgs.$2, withNullability)}]$questionOrEmpty';
-  //   }
-  //   return type
-  //       .getDisplayString(withNullability: withNullability)
-  //       .replaceFirstMapped(RegExp(r'\w+'), (match) => '${match.group(0)}Api');
-  // }
-  //
-  // String _encodeSerialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     final deserializer = codec.encodeSerialization(type, varAccess);
-  //     return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
-  //   }
-  //   if (type.isPrimitive) return varAccess;
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '$varAccess${type.questionOrEmpty}.map { ${_encodeSerialization(typeArg, '\$0')} }';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typesArgs = type.doubleTypeArgs;
-  //     return _encodeTernaryOperator(
-  //       type,
-  //       varAccess,
-  //       'Dictionary(uniqueKeysWithValues: $varAccess${type.exclamationOrEmpty}.map { k, v in '
-  //       '(${_encodeSerialization(typesArgs.$1, 'k')}, ${_encodeSerialization(typesArgs.$2, 'v')}) })',
-  //     );
-  //   }
-  //   if (type.isDartCoreEnum || type.element is EnumElement) {
-  //     return '$varAccess${type.questionOrEmpty}.rawValue';
-  //   }
-  //   return '$varAccess${type.questionOrEmpty}.serialize()';
-  // }
-  //
-  // String _encodeDeserialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     final deserializer = codec.encodeDeserialization(type, varAccess);
-  //     return type.isNullable ? '$varAccess != null ? $deserializer : nil' : deserializer;
-  //   }
-  //   if (type.isPrimitive) {
-  //     return '$varAccess as${type.questionOrExclamation} ${_encodeType(type, false)}';
-  //   }
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '($varAccess as${type.questionOrExclamation} [Any?])'
-  //         '${type.questionOrEmpty}.map { ${_encodeDeserialization(typeArg, '\$0')} }';
-  //   }
-  //
-  //   String encodeDeserializer() {
-  //     if (type.isDartCoreMap) {
-  //       final typesArgs = type.doubleTypeArgs;
-  //       return 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable: Any])'
-  //           '.map { k, v in (${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}) })';
-  //     }
-  //     if (type.isDartCoreEnum || type.element is EnumElement) {
-  //       return '${_encodeType(type, false)}(rawValue: $varAccess as! Int)!';
-  //     }
-  //     return '${_encodeType(type, false)}.deserialize($varAccess as! [Any?])';
-  //   }
-  //
-  //   return _encodeTernaryOperator(type, varAccess, encodeDeserializer());
-  // }
-  //
-  // String _encodeTernaryOperator(DartType type, String varAccess, String exsist) =>
-  //     type.isNullable ? '$varAccess != nil ? $exsist : nil' : exsist;
 
   @override
   String build() => '${SwiftEmitter().encode(SwiftLibrary(

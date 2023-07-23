@@ -46,7 +46,7 @@ class OneForAll {
     SwiftOptions? swiftOptions,
     ApiBuildersCreator? buildersCreator,
   }) {
-    final platformsCodecs = Map.fromEntries(PlatformApi.values.map((platform) {
+    final platformsCodecs = Map.fromEntries(LanguageApi.values.map((platform) {
       final entries = codecs.map((e) => (TypeChecker.fromRuntime(e.type), e));
       return MapEntry(platform, entries.map((e) => (e.$1, e.$2.read(platform))).toList());
     }));
@@ -57,19 +57,19 @@ class OneForAll {
           DartApiBuilder(
             options,
             dartOptions,
-            DartApiCodes(options, platformsCodecs[PlatformApi.dart]!),
+            DartApiCodes(options, platformsCodecs[LanguageApi.dart]!),
           ),
         if (kotlinOptions != null)
           KotlinApiBuilder(
             options,
             kotlinOptions,
-            KotlinApiCodes(options, platformsCodecs[PlatformApi.kotlin]!),
+            KotlinApiCodes(options, platformsCodecs[LanguageApi.kotlin]!),
           ),
         if (swiftOptions != null)
           SwiftApiBuilder(
             options,
             swiftOptions,
-            SwiftApiCodes(options, platformsCodecs[PlatformApi.swift]!),
+            SwiftApiCodes(options, platformsCodecs[LanguageApi.swift]!),
           ),
         ...?buildersCreator?.call(options),
       ],
@@ -77,6 +77,9 @@ class OneForAll {
   }
 
   Future<void> build() async {
+    final codecs = options.codecs.map((e) => (TypeChecker.fromRuntime(e.type), e)).toList();
+    bool hasCodec(DartType type) => codecs.any((e) => e.$1.isExactlyType(type));
+
     final apiAbsolutePaths = [options.apiFile, ...options.extraApiFiles]
         .map((e) => path_.absolute(path_.normalize(e)))
         .toList();
@@ -95,28 +98,15 @@ class OneForAll {
       bool flutterToHost = false,
       bool hostToFlutter = false,
     }) {
-      if (options.hasCodec(type)) return;
-      if (type.isDartCoreList) {
-        type as ParameterizedType;
-        addDeepSerializables(
-          type.typeArguments[0],
-          hostToFlutter: hostToFlutter,
-          flutterToHost: flutterToHost,
-        );
-        return;
-      }
-      if (type.isDartCoreMap) {
-        type as ParameterizedType;
-        addDeepSerializables(
-          type.typeArguments[0],
-          hostToFlutter: hostToFlutter,
-          flutterToHost: flutterToHost,
-        );
-        addDeepSerializables(
-          type.typeArguments[1],
-          hostToFlutter: hostToFlutter,
-          flutterToHost: flutterToHost,
-        );
+      if (hasCodec(type)) return;
+      if (type.isDartCoreList || type.isDartCoreMap) {
+        for (final typeArg in (type as ParameterizedType).typeArguments) {
+          addDeepSerializables(
+            typeArg,
+            hostToFlutter: hostToFlutter,
+            flutterToHost: flutterToHost,
+          );
+        }
         return;
       }
       if (type.isSupported) return;
@@ -125,26 +115,28 @@ class OneForAll {
       if (element is! InterfaceElement) return;
 
       if (element is EnumElement) {
-        final handler = serializableEnumHandlers.putIfAbsent(
-            element, () => SerializableEnumHandler.from(element));
-        final updateHandler = handler.apply(
+        final handler = serializableEnumHandlers.putIfAbsent(element, () {
+          return SerializableEnumHandler.from(element);
+        });
+        final updatedHandler = handler.apply(
           flutterToHost: flutterToHost,
           hostToFlutter: hostToFlutter,
         );
-        if (handler == updateHandler) return;
+        if (handler == updatedHandler) return;
 
-        serializableEnumHandlers[element] = updateHandler;
+        serializableEnumHandlers[element] = updatedHandler;
       } else if (element is ClassElement) {
-        final handler = serializableClassHandlers.putIfAbsent(
-            element, () => SerializableClassHandler.from(element));
+        final handler = serializableClassHandlers.putIfAbsent(element, () {
+          return SerializableClassHandler.from(element);
+        });
 
-        final updateHandler = handler.apply(
+        final updatedHandler = handler.apply(
           flutterToHost: flutterToHost,
           hostToFlutter: hostToFlutter,
         );
-        if (handler == updateHandler) return;
+        if (handler == updatedHandler) return;
 
-        serializableClassHandlers[element] = updateHandler;
+        serializableClassHandlers[element] = updatedHandler;
 
         for (final field in element.fields) {
           addDeepSerializables(
@@ -153,6 +145,30 @@ class OneForAll {
             flutterToHost: flutterToHost,
           );
         }
+      }
+    }
+
+    void addApiSerializables(
+      InterfaceElement element, {
+      bool flutterToHost = false,
+      bool hostToFlutter = false,
+    }) {
+      for (final method in element.methods) {
+        if (!method.isSupported) continue;
+
+        for (final parameter in method.parameters) {
+          addDeepSerializables(
+            parameter.type,
+            flutterToHost: flutterToHost,
+            hostToFlutter: hostToFlutter,
+          );
+        }
+
+        addDeepSerializables(
+          method.returnType.singleTypeArg,
+          flutterToHost: hostToFlutter,
+          hostToFlutter: flutterToHost,
+        );
       }
     }
 
@@ -190,20 +206,12 @@ class OneForAll {
       }
     }
 
-    final apiElements = [
-      ...hostApiHandles.map((e) => e.element),
-      ...flutterApiHandlers.map((e) => e.element),
-    ];
-    for (final element in apiElements) {
-      for (final method in element.methods) {
-        if (!method.isSupported) continue;
+    for (final HostApiHandler(:element) in hostApiHandles) {
+      addApiSerializables(element, flutterToHost: true);
+    }
 
-        for (final parameter in method.parameters) {
-          addDeepSerializables(parameter.type, flutterToHost: true);
-        }
-
-        addDeepSerializables(method.returnType.singleTypeArg, hostToFlutter: true);
-      }
+    for (final FlutterApiHandler(:element) in flutterApiHandlers) {
+      addApiSerializables(element, hostToFlutter: true);
     }
 
     final builders = buildersCreator(options);

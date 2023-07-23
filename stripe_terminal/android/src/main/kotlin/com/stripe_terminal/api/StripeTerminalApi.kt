@@ -1,13 +1,18 @@
 package com.stripe_terminal.api
 
-import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PlatformException(
     val code: String,
@@ -27,7 +32,7 @@ class Result<T>(
     fun error(
         code: String,
         message: String?,
-        details: Any?,
+        details: Any? = null,
     ) {
         result.error(code, message, details)
     }
@@ -50,83 +55,79 @@ class ControllerSink<T>(
     fun endOfStream() = sink.endOfStream()
 }
 
-abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler {
-    lateinit var channel: MethodChannel
-
-    abstract fun onListLocations(
+interface StripeTerminalApi {
+    fun onListLocations(
         result: Result<List<LocationApi>>,
         endingBefore: String?,
         limit: Long?,
         startingAfter: String?,
     )
 
-    abstract fun onConnectionStatus(
-        result: Result<ConnectionStatusApi>,
-    )
+    fun onConnectionStatus(): ConnectionStatusApi
 
-    abstract fun onConnectBluetoothReader(
+    fun onConnectBluetoothReader(
         result: Result<StripeReaderApi>,
         serialNumber: String,
         locationId: String,
         autoReconnectOnUnexpectedDisconnect: Boolean,
     )
 
-    abstract fun onConnectInternetReader(
+    fun onConnectInternetReader(
         result: Result<StripeReaderApi>,
         serialNumber: String,
         failIfInUse: Boolean,
     )
 
-    abstract fun onConnectMobileReader(
+    fun onConnectMobileReader(
         result: Result<StripeReaderApi>,
         serialNumber: String,
         locationId: String,
     )
 
-    abstract fun onConnectedReader(
-        result: Result<StripeReaderApi?>,
-    )
+    fun onConnectedReader(): StripeReaderApi?
 
-    abstract fun onDisconnectReader(
+    fun onDisconnectReader(
         result: Result<Unit>,
     )
 
-    abstract fun onSetReaderDisplay(
+    fun onInstallAvailableUpdate(
+        serialNumber: String,
+    )
+
+    fun onSetReaderDisplay(
         result: Result<Unit>,
         cart: CartApi,
     )
 
-    abstract fun onClearReaderDisplay(
+    fun onClearReaderDisplay(
         result: Result<Unit>,
     )
 
-    abstract fun onRetrievePaymentIntent(
+    fun onRetrievePaymentIntent(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
     )
 
-    abstract fun onProcessPayment(
+    fun onProcessPayment(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String,
     )
 
-    abstract fun onInit(
-        result: Result<Unit>,
-    )
+    fun onInit()
 
-    abstract fun onStartReadReusableCard(
+    fun onStartReadReusableCard(
         result: Result<StripePaymentMethodApi>,
         id: Long,
         customer: String?,
         metadata: HashMap<String, String>?,
     )
 
-    abstract fun onStopReadReusableCard(
+    fun onStopReadReusableCard(
         result: Result<Unit>,
         id: Long,
     )
 
-    abstract fun onStartCollectPaymentMethod(
+    fun onStartCollectPaymentMethod(
         result: Result<StripePaymentIntentApi>,
         id: Long,
         clientSecret: String,
@@ -134,102 +135,123 @@ abstract class StripeTerminalApi: FlutterPlugin, MethodChannel.MethodCallHandler
         skipTipping: Boolean,
     )
 
-    abstract fun onStopCollectPaymentMethod(
+    fun onStopCollectPaymentMethod(
         result: Result<Unit>,
         id: Long,
     )
 
-    override fun onMethodCall(
+    private fun onMethodCall(
         call: MethodCall,
         result: MethodChannel.Result,
     ) {
-        val args = call.arguments<List<Any?>>()!!
-        when (call.method) {
-            "listLocations" -> {
-                val res = Result<List<LocationApi>>(result) {it.map{it.serialize()}}
-                onListLocations(res, args[0] as String?, args[1] as Long?, args[2] as String?)
+        try {
+            val args = call.arguments<List<Any?>>()!!
+            fun runAsync(callback: suspend () -> Any?) {
+                coroutineScope.launch {
+                    val res = callback()
+                    withContext(Dispatchers.Main) { result.success(res) }
+                }
             }
-            "connectionStatus" -> {
-                val res = Result<ConnectionStatusApi>(result) {it.ordinal}
-                onConnectionStatus(res)
+            when (call.method) {
+                "listLocations" -> {
+                    val res = Result<List<LocationApi>>(result) { it.map { it.serialize()}  }
+                    onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
+                }
+                "connectionStatus" -> {
+                    val res = onConnectionStatus()
+                    result.success(res.ordinal)
+                }
+                "connectBluetoothReader" -> {
+                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    onConnectBluetoothReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
+                }
+                "connectInternetReader" -> {
+                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    onConnectInternetReader(res, args[0] as String, args[1] as Boolean)
+                }
+                "connectMobileReader" -> {
+                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    onConnectMobileReader(res, args[0] as String, args[1] as String)
+                }
+                "connectedReader" -> {
+                    val res = onConnectedReader()
+                    result.success(res?.serialize())
+                }
+                "disconnectReader" -> {
+                    val res = Result<Unit>(result) { null }
+                    onDisconnectReader(res)
+                }
+                "installAvailableUpdate" -> {
+                    onInstallAvailableUpdate(args[0] as String)
+                    result.success(null)
+                }
+                "setReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onSetReaderDisplay(res, (args[0] as List<Any?>).let { CartApi.deserialize(it) })
+                }
+                "clearReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onClearReaderDisplay(res)
+                }
+                "retrievePaymentIntent" -> {
+                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    onRetrievePaymentIntent(res, args[0] as String)
+                }
+                "processPayment" -> {
+                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    onProcessPayment(res, args[0] as String)
+                }
+                "_init" -> {
+                    onInit()
+                    result.success(null)
+                }
+                "_startReadReusableCard" -> {
+                    val res = Result<StripePaymentMethodApi>(result) { it.serialize() }
+                    onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
+                }
+                "_stopReadReusableCard" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopReadReusableCard(res, (args[0] as Number).toLong())
+                }
+                "_startCollectPaymentMethod" -> {
+                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
+                }
+                "_stopCollectPaymentMethod" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
+                }
             }
-            "connectBluetoothReader" -> {
-                val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectBluetoothReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
-            }
-            "connectInternetReader" -> {
-                val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectInternetReader(res, args[0] as String, args[1] as Boolean)
-            }
-            "connectMobileReader" -> {
-                val res = Result<StripeReaderApi>(result) {it.serialize()}
-                onConnectMobileReader(res, args[0] as String, args[1] as String)
-            }
-            "connectedReader" -> {
-                val res = Result<StripeReaderApi?>(result) {it?.serialize()}
-                onConnectedReader(res)
-            }
-            "disconnectReader" -> {
-                val res = Result<Unit>(result) {null}
-                onDisconnectReader(res)
-            }
-            "setReaderDisplay" -> {
-                val res = Result<Unit>(result) {null}
-                onSetReaderDisplay(res, (args[0] as List<Any?>).let{CartApi.deserialize(it)})
-            }
-            "clearReaderDisplay" -> {
-                val res = Result<Unit>(result) {null}
-                onClearReaderDisplay(res)
-            }
-            "retrievePaymentIntent" -> {
-                val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onRetrievePaymentIntent(res, args[0] as String)
-            }
-            "processPayment" -> {
-                val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onProcessPayment(res, args[0] as String)
-            }
-            "_init" -> {
-                val res = Result<Unit>(result) {null}
-                onInit(res)
-            }
-            "_startReadReusableCard" -> {
-                val res = Result<StripePaymentMethodApi>(result) {it.serialize()}
-                onStartReadReusableCard(res, args[0] as Long, args[1] as String?, args[2]?.let{hashMapOf(*(it as HashMap<*, *>).map{(k, v) -> k as String to v as String}.toTypedArray())})
-            }
-            "_stopReadReusableCard" -> {
-                val res = Result<Unit>(result) {null}
-                onStopReadReusableCard(res, args[0] as Long)
-            }
-            "_startCollectPaymentMethod" -> {
-                val res = Result<StripePaymentIntentApi>(result) {it.serialize()}
-                onStartCollectPaymentMethod(res, args[0] as Long, args[1] as String, args[2] as Boolean, args[3] as Boolean)
-            }
-            "_stopCollectPaymentMethod" -> {
-                val res = Result<Unit>(result) {null}
-                onStopCollectPaymentMethod(res, args[0] as Long)
-            }
+        } catch (e: PlatformException) {
+            result.error(e.code, e.message, e.details)
         }
     }
 
-    override fun onAttachedToEngine(
-        flutterPluginBinding: FlutterPlugin.FlutterPluginBinding,
-    ) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "StripeTerminal")
-        channel.setMethodCallHandler(this)
-    }
+    companion object {
+        private lateinit var channel: MethodChannel
+        private lateinit var coroutineScope: CoroutineScope
 
-    override fun onDetachedFromEngine(
-        flutterPluginBinding: FlutterPlugin.FlutterPluginBinding,
-    ) {
-        channel.setMethodCallHandler(null)
+        fun setHandler(
+            binaryMessenger: BinaryMessenger,
+            api: StripeTerminalApi,
+            coroutineScope: CoroutineScope? = null,
+        ) {
+            channel = MethodChannel(binaryMessenger, "StripeTerminal")
+            this.coroutineScope = coroutineScope ?: MainScope()
+            channel.setMethodCallHandler(api::onMethodCall)
+        }
+
+        fun removeHandler() {
+            channel.setMethodCallHandler(null)
+            coroutineScope.cancel()
+        }
     }
 }
 
 class DiscoverReadersControllerApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#discoverReaders")
+    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_discoverReaders")
 
     fun setHandler(
         onListen: (sink: ControllerSink<List<StripeReaderApi>>, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String?) -> Unit,
@@ -238,74 +260,8 @@ class DiscoverReadersControllerApi(
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                val sink = ControllerSink<List<StripeReaderApi>>(events) {it.map{it.serialize()}}
-                onListen(sink, (args[0] as Int).let{DiscoveryMethodApi.values()[it]}, args[1] as Boolean, args[2] as String?)
-            }
-            override fun onCancel(arguments: Any?) = onCancel()
-        })
-    }
-
-    fun removeHandler() = channel.setStreamHandler(null)
-}
-
-class OnConnectionStatusChangeControllerApi(
-    binaryMessenger: BinaryMessenger,
-) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onConnectionStatusChange")
-
-    fun setHandler(
-        onListen: (sink: ControllerSink<ConnectionStatusApi>) -> Unit,
-        onCancel: () -> Unit,
-    ) {
-        channel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-                val args = arguments as List<Any?>
-                val sink = ControllerSink<ConnectionStatusApi>(events) {it.ordinal}
-                onListen(sink)
-            }
-            override fun onCancel(arguments: Any?) = onCancel()
-        })
-    }
-
-    fun removeHandler() = channel.setStreamHandler(null)
-}
-
-class OnUnexpectedReaderDisconnectControllerApi(
-    binaryMessenger: BinaryMessenger,
-) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onUnexpectedReaderDisconnect")
-
-    fun setHandler(
-        onListen: (sink: ControllerSink<StripeReaderApi>) -> Unit,
-        onCancel: () -> Unit,
-    ) {
-        channel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-                val args = arguments as List<Any?>
-                val sink = ControllerSink<StripeReaderApi>(events) {it.serialize()}
-                onListen(sink)
-            }
-            override fun onCancel(arguments: Any?) = onCancel()
-        })
-    }
-
-    fun removeHandler() = channel.setStreamHandler(null)
-}
-
-class OnPaymentStatusChangeControllerApi(
-    binaryMessenger: BinaryMessenger,
-) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_onPaymentStatusChange")
-
-    fun setHandler(
-        onListen: (sink: ControllerSink<PaymentStatusApi>) -> Unit,
-        onCancel: () -> Unit,
-    ) {
-        channel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-                val args = arguments as List<Any?>
-                val sink = ControllerSink<PaymentStatusApi>(events) {it.ordinal}
-                onListen(sink)
+                val sink = ControllerSink<List<StripeReaderApi>>(events) {it.map { it.serialize()} }
+                onListen(sink, (args[0] as Int).let { DiscoveryMethodApi.values()[it] }, args[1] as Boolean, args[2] as String?)
             }
             override fun onCancel(arguments: Any?) = onCancel()
         })
@@ -317,24 +273,53 @@ class OnPaymentStatusChangeControllerApi(
 class StripeTerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    val channel: MethodChannel = MethodChannel(binaryMessenger, "_StripeTerminalHandlers")
+    private val channel: MethodChannel = MethodChannel(binaryMessenger, "StripeTerminalHandlers")
 
-    suspend fun requestConnectionToken(): String {
-        return suspendCoroutine { continuation ->
-            channel.invokeMethod(
-                "_onRequestConnectionToken",
-                listOf<Any?>(),
-                object : MethodChannel.Result {
-                    override fun success(result: Any?) {
-                        continuation.resume(result as String)
-                    }
-                    override fun error(code: String, message: String?, details: Any?) {
-                        continuation.resumeWithException(PlatformException(code, message, details))
-                    }
-                    override fun notImplemented() {}
-                }
-            )
-        }
+    fun requestConnectionToken(
+        onError: (code: String, message: String?, details: Any?) -> Unit,
+        onSuccess: (data: String) -> Unit,
+    ) {
+        channel.invokeMethod(
+            "_onRequestConnectionToken",
+            listOf<Any?>(),
+            object : MethodChannel.Result {
+                override fun notImplemented() {}
+                override fun error(code: String, message: String?, details: Any?) = 
+                    onError(code, message, details)
+                override fun success(result: Any?) =
+                    onSuccess(result as String)
+            }
+        )
+    }
+
+    fun unexpectedReaderDisconnect(
+        reader: StripeReaderApi,
+    ) {
+        channel.invokeMethod("_onUnexpectedReaderDisconnect", listOf<Any?>(reader.serialize()))
+    }
+
+    fun connectionStatusChange(
+        connectionStatus: ConnectionStatusApi,
+    ) {
+        channel.invokeMethod("_onConnectionStatusChange", listOf<Any?>(connectionStatus.ordinal))
+    }
+
+    fun paymentStatusChange(
+        paymentStatus: PaymentStatusApi,
+    ) {
+        channel.invokeMethod("_onPaymentStatusChange", listOf<Any?>(paymentStatus.ordinal))
+    }
+
+    fun availableUpdate(
+        availableUpdate: Boolean,
+    ) {
+        channel.invokeMethod("_onAvailableUpdate", listOf<Any?>(availableUpdate))
+    }
+
+    fun reportReaderSoftwareUpdateProgress(
+        progress: Double,
+    ) {
+        channel.invokeMethod("_onReportReaderSoftwareUpdateProgress", listOf<Any?>(progress))
     }
 }
 
@@ -351,7 +336,7 @@ data class LocationApi(
             displayName,
             id,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
         )
     }
 }
@@ -412,9 +397,9 @@ data class CartApi(
         ): CartApi {
             return CartApi(
                 currency = serialized[0] as String,
-                tax = serialized[1] as Long,
-                total = serialized[2] as Long,
-                lineItems = (serialized[3] as List<*>).map{(it as List<Any?>).let{CartLineItemApi.deserialize(it)}},
+                tax = (serialized[1] as Number).toLong(),
+                total = (serialized[2] as Number).toLong(),
+                lineItems = (serialized[3] as List<*>).map { (it as List<Any?>).let { CartLineItemApi.deserialize(it) } },
             )
         }
     }
@@ -431,8 +416,8 @@ data class CartLineItemApi(
         ): CartLineItemApi {
             return CartLineItemApi(
                 description = serialized[0] as String,
-                quantity = serialized[1] as Long,
-                amount = serialized[2] as Long,
+                quantity = (serialized[1] as Number).toLong(),
+                amount = (serialized[2] as Number).toLong(),
             )
         }
     }
@@ -484,7 +469,7 @@ data class StripePaymentIntentApi(
             description,
             invoice,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
             onBehalfOf,
             paymentMethodId,
             status?.ordinal,
@@ -509,7 +494,7 @@ data class StripePaymentMethodApi(
             cardDetails?.serialize(),
             customer,
             livemode,
-            metadata?.let{hashMapOf(*it.map{(k, v) -> k to v}.toTypedArray())},
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
         )
     }
 }
@@ -544,10 +529,6 @@ enum class ConnectionStatusApi {
     NOT_CONNECTED, CONNECTED, CONNECTING;
 }
 
-enum class DiscoveryMethodApi {
-    BLUETOOTH_SCAN, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
-}
-
 enum class LocationStatusApi {
     UNKNOWN, SET, NOT_SET;
 }
@@ -558,6 +539,10 @@ enum class DeviceTypeApi {
 
 enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
+}
+
+enum class DiscoveryMethodApi {
+    BLUETOOTH_SCAN, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
 }
 
 enum class PaymentStatusApi {

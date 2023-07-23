@@ -49,36 +49,13 @@ class DartApiBuilder extends ApiBuilder {
   void writeHostApiClass(HostApiHandler handler) {
     final HostApiHandler(:element, :hostExceptionHandler) = handler;
 
-    // final constructor = element.constructors.singleOrNull;
-
     _library.body.add(Class((b) => b
-      ..name = '_\$${handler.className}'
-      // ..extend = Reference(element.name)
+      ..name = '_\$${codecs.encodeName(element.name)}'
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
         ..name = '_\$channel'
         ..assignment = Code('MethodChannel(\'${handler.channelName()}\')')))
-      // ..constructors.addAll([
-      //   if (constructor != null)
-      //     Constructor((b) => b
-      //       ..initializers.add(const Code('super._()'))
-      //       ..requiredParameters
-      //           .addAll(constructor.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
-      //         return Parameter((b) => b
-      //           ..toSuper = true
-      //           ..name = e.name);
-      //       }))
-      //       ..optionalParameters
-      //           .addAll(constructor.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
-      //         return Parameter((b) => b
-      //           ..required = e.isRequired
-      //           ..toSuper = true
-      //           ..name = e.name
-      //           ..named = e.isNamed);
-      //       })))
-      // ])
-
       ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         return Field((b) => b
           ..static = true
@@ -137,7 +114,7 @@ try {
 
     _library.body.add(Method((b) => b
       ..returns = Reference('void')
-      ..name = '_\$setup${handler.className}'
+      ..name = '_\$setup${codecs.encodeName(element.name)}'
       ..requiredParameters.add(Parameter((b) => b
         ..type = Reference(element.name)
         ..name = 'hostApi'))
@@ -159,8 +136,6 @@ channel.setMethodCallHandler((call) async {
   @override
   void writeSerializableClass(SerializableClassHandler handler) {
     final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
-    // final codec = findCodec(element.thisType);
-    // if (codec != null) return;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     final serializedRef = const Reference('List<Object?>');
@@ -195,61 +170,6 @@ channel.setMethodCallHandler((call) async {
 
   @override
   void writeSerializableEnum(SerializableEnumHandler handler) {}
-
-  // String _encodeDeserialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.dart, type);
-  //   if (codec != null) {
-  //     final deserializer = codec.encodeDeserialization(type, varAccess);
-  //     return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
-  //   }
-  //   if (type.isPrimitive) return '$varAccess as ${type.displayNameNullable}';
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '($varAccess as List${type.questionOrEmpty})'
-  //         '${type.questionOrEmpty}.map((e) => ${_encodeDeserialization(typeArg, 'e')}).toList()';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typesArgs = type.doubleTypeArgs;
-  //     return '($varAccess as Map${type.questionOrEmpty})'
-  //         '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeDeserialization(typesArgs.$1, 'k')}, ${_encodeDeserialization(typesArgs.$2, 'v')}))';
-  //   }
-  //   final String deserializer;
-  //   if (type.isDartCoreEnum || type.element is EnumElement) {
-  //     deserializer = '${type.displayName}.values[$varAccess as int]';
-  //   } else {
-  //     deserializer = '_\$deserialize${type.displayName}($varAccess as List)';
-  //   }
-  //   return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
-  // }
-  //
-  // String _encodeSerialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.dart, type);
-  //   if (codec != null) {
-  //     final serializer =
-  //         codec.encodeSerialization(type, type.isNullable ? '$varAccess!' : varAccess);
-  //     return type.isNullable ? '$varAccess != null ? $serializer : null' : serializer;
-  //   }
-  //   if (type.isPrimitive) return varAccess;
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '$varAccess'
-  //         '${type.questionOrEmpty}.map((e) => ${_encodeSerialization(typeArg, 'e')}).toList()';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typesArgs = type.doubleTypeArgs;
-  //     return '$varAccess'
-  //         '${type.questionOrEmpty}.map((k, v) => MapEntry(${_encodeSerialization(typesArgs.$1, 'k')}, ${_encodeSerialization(typesArgs.$2, 'v')}))';
-  //   }
-  //   if (type.isDartCoreEnum || type.element is EnumElement) {
-  //     return '$varAccess${type.questionOrEmpty}.index';
-  //   }
-  //   final serializer = '_\$serialize${type.displayName}';
-  //   return type.isNullable
-  //       ? '$varAccess != null ? $serializer($varAccess!) : null'
-  //       : '$serializer($varAccess)';
-  // }
 
   @override
   void writeException(EnumElement element) {

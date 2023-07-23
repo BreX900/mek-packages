@@ -119,14 +119,20 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
+    final locationId = _selectedLocation?.id ?? reader.locationId;
+    if (locationId == null) {
+      _showSnackBar('Missing location');
+      return;
+    }
+
     final connectedReader = switch (_discoveringMethod) {
       DiscoveryMethod.bluetoothScan => await terminal.connectBluetoothReader(
           reader.serialNumber,
-          locationId: (_selectedLocation?.id ?? reader.locationId)!,
+          locationId: locationId,
         ),
       DiscoveryMethod.localMobile => await terminal.connectMobileReader(
           reader.serialNumber,
-          locationId: (_selectedLocation?.id ?? reader.locationId)!,
+          locationId: locationId,
         ),
       DiscoveryMethod.internet ||
       DiscoveryMethod.handOff ||
@@ -148,10 +154,12 @@ class _MyAppState extends State<MyApp> {
       discoveryMethod: _discoveringMethod,
       simulated: _isSimulated,
     );
+
     _discoverReaderSub = discoverReaderStream.listen((readers) {
-      setState(() {
-        _readers = readers;
-      });
+      setState(() => _readers = readers);
+      print('Tick!');
+    }, onDone: () {
+      setState(() => _discoverReaderSub = null);
     });
   }
 
@@ -161,20 +169,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _createPaymentIntent() async {
-    final paymentIntent = await _api.createPaymentIntent();
+    final paymentIntentClientSecret = await _api.createPaymentIntent();
     setState(() {
-      _paymentIntentClientSecret = paymentIntent.clientSecret;
+      _paymentIntentClientSecret = paymentIntentClientSecret;
       _paymentIntentStatus = PaymentIntentStatus.requiresPaymentMethod;
     });
-    _showSnackBar('PaymentIntent status: ${paymentIntent.status}');
+    _showSnackBar('PaymentIntent created!');
   }
 
   void _collectPaymentMethod(StripeTerminal terminal, String paymentIntentClientSecret) async {
-    final collectingPaymentIntent = terminal.collectPaymentMethod(
+    final paymentIntent = await terminal.collectPaymentMethod(
       paymentIntentClientSecret,
       skipTipping: true,
     );
-    final paymentIntent = await collectingPaymentIntent.result;
     setState(() {
       _paymentIntentClientSecret = paymentIntent.clientSecret;
       _paymentIntentStatus = paymentIntent.status!;
@@ -284,9 +291,8 @@ class _MyAppState extends State<MyApp> {
         child: const Text('Collect Payment Method'),
       ),
       TextButton(
-        onPressed: terminal != null &&
-                paymentIntentClientSecret != null &&
-                paymentIntentStatus == PaymentIntentStatus.requiresCapture
+        onPressed: terminal != null && paymentIntentClientSecret != null
+            // && paymentIntentStatus == PaymentIntentStatus.requiresCapture
             ? () => _confirmPaymentIntent(terminal, paymentIntentClientSecret)
             : null,
         child: const Text('Process Payment'),
@@ -297,7 +303,6 @@ class _MyAppState extends State<MyApp> {
           title: Text('PaymentIntent status: $paymentIntentStatus'),
         )
     ];
-
     final cardTab = <Widget>[
       // TextButton(
       //   child: const Text('Read Reusable Card Detail'),
@@ -309,28 +314,28 @@ class _MyAppState extends State<MyApp> {
       //     });
       //   },
       // ),
-      // TextButton(
-      //   child: const Text('Set reader display'),
-      //   onPressed: () async {
-      //     stripeTerminal.setReaderDisplay(const Cart(
-      //       currency: 'USD',
-      //       tax: 130,
-      //       total: 1000,
-      //       lineItems: [
-      //         CartLineItem(
-      //           description: 'hello 1',
-      //           quantity: 1,
-      //           amount: 500,
-      //         ),
-      //         CartLineItem(
-      //           description: 'hello 2',
-      //           quantity: 1,
-      //           amount: 500,
-      //         ),
-      //       ],
-      //     ));
-      //   },
-      // ),
+      TextButton(
+        onPressed: terminal != null
+            ? () async => await terminal.setReaderDisplay(const Cart(
+                  currency: 'USD',
+                  tax: 130,
+                  total: 1000,
+                  lineItems: [
+                    CartLineItem(
+                      description: 'hello 1',
+                      quantity: 1,
+                      amount: 500,
+                    ),
+                    CartLineItem(
+                      description: 'hello 2',
+                      quantity: 1,
+                      amount: 500,
+                    ),
+                  ],
+                ))
+            : null,
+        child: const Text('Set reader display'),
+      ),
     ];
 
     final tabs = {

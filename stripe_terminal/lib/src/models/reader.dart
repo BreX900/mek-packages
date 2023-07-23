@@ -7,7 +7,8 @@ class StripeReader with _$StripeReader {
   final LocationStatus locationStatus;
   final double batteryLevel;
   final DeviceType deviceType;
-  final bool simulated, availableUpdate;
+  final bool simulated;
+  final bool availableUpdate;
   final String? locationId;
   final String serialNumber;
   final String? label;

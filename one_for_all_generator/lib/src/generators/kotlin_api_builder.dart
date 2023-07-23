@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
+import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
@@ -11,7 +12,10 @@ import 'package:recase/recase.dart';
 class KotlinApiBuilder extends ApiBuilder {
   final KotlinOptions options;
   final ApiCodecs codecs;
-  final _specs = <KotlinSpec>[];
+  final _specs = <KotlinTopLevelSpec>[];
+  // var _needResultClass = false;
+  // var _needControllerSink = false;
+  // var _needRunAsync = true;
 
   @override
   String get outputFile => options.outputFile;
@@ -52,7 +56,7 @@ class KotlinApiBuilder extends ApiBuilder {
           parameters: [
             KotlinParameter(name: 'code', type: 'String'),
             KotlinParameter(name: 'message', type: 'String?'),
-            KotlinParameter(name: 'details', type: 'Any?'),
+            KotlinParameter(name: 'details', type: 'Any?', defaultTo: 'null'),
           ],
           body: 'result.error(code, message, details)',
         ),
@@ -100,30 +104,24 @@ class KotlinApiBuilder extends ApiBuilder {
 
   @override
   void writeHostApiClass(HostApiHandler handler) {
-    final HostApiHandler(:element) = handler;
+    final HostApiHandler(:element, kotlinMethods: methods) = handler;
 
-    _specs.add(KotlinClass(
-      modifier: KotlinClassModifier.abstract,
-      name: handler.className,
-      implements: ['FlutterPlugin', 'MethodChannel.MethodCallHandler'],
-      fields: const [
-        KotlinField(
-          modifier: KotlinFieldModifier.lateInit,
-          name: 'channel',
-          type: 'MethodChannel',
-        ),
-      ],
+    _specs.add(KotlinInterface(
+      name: codecs.encodeName(element.name),
       body: [
-        ...element.methods.where((e) => e.isHostApiMethod).map((e) {
+        ...methods.map((_) {
+          final MethodHandler(element: e, kotlin: methodType) = _;
           final returnType = e.returnType.singleTypeArg;
 
           return KotlinMethod(
+            modifiers: {if (methodType == MethodApiType.async) KotlinMethodModifier.suspend},
             name: _encodeMethodName(e.name),
             parameters: [
-              KotlinParameter(
-                name: 'result',
-                type: 'Result<${codecs.encodeType(returnType)}>',
-              ),
+              if (methodType == MethodApiType.callbacks)
+                KotlinParameter(
+                  name: 'result',
+                  type: 'Result<${codecs.encodeType(returnType)}>',
+                ),
               ...e.parameters.map((e) {
                 return KotlinParameter(
                   name: e.name,
@@ -131,63 +129,100 @@ class KotlinApiBuilder extends ApiBuilder {
                 );
               }),
             ],
+            returns: methodType == MethodApiType.callbacks
+                ? null
+                : (returnType is VoidType ? null : codecs.encodeType(returnType)),
           );
         }),
         KotlinMethod(
-          modifiers: {KotlinMethodModifier.override},
+          visibility: KotlinVisibility.private,
           name: 'onMethodCall',
           parameters: const [
             KotlinParameter(
-              annotations: ['NonNull'],
               name: 'call',
               type: 'MethodCall',
             ),
             KotlinParameter(
-              annotations: ['NonNull'],
               name: 'result',
               type: 'MethodChannel.Result',
             ),
           ],
-          body: 'val args = call.arguments<List<Any?>>()!!\n'
-              'when (call.method) {\n${element.methods.where((e) => e.isHostApiMethod).map((e) {
+          body: '''
+try {
+    val args = call.arguments<List<Any?>>()!!
+    fun runAsync(callback: suspend () -> Any?) {
+        coroutineScope.launch {
+            val res = callback()
+            withContext(Dispatchers.Main) { result.success(res) }
+        }
+    }
+    when (call.method) {
+${methods.map((_) {
+            final MethodHandler(element: e, kotlin: methodType) = _;
             final returnType = e.returnType.singleTypeArg;
 
             final parameters =
                 e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
             return '''
-    "${e.name}" -> {
-        val res = Result<${codecs.encodeType(returnType)}>(result) {${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'it')}}
-        ${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
-    }''';
-          }).join('\n')}\n}',
+        "${e.name}" -> ${switch (methodType) {
+              MethodApiType.sync => '''{
+            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.name)}(${parameters.join(', ')})
+            result.success(${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'res')})
+        }''',
+              MethodApiType.callbacks => '''{
+            val res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'it')} }
+            ${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
+        }''',
+              MethodApiType.async => '''runAsync {
+            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.name)}(${parameters.join(', ')})
+            return@runAsync ${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'res')}
+        }''',
+            }}''';
+          }).join('\n')}
+    }
+} catch (e: PlatformException) {
+    result.error(e.code, e.message, e.details)
+}''',
         ),
-        KotlinMethod(
-          modifiers: {KotlinMethodModifier.override},
-          name: 'onAttachedToEngine',
-          parameters: const [
-            KotlinParameter(
-              annotations: ['NonNull'],
-              name: 'flutterPluginBinding',
-              type: 'FlutterPlugin.FlutterPluginBinding',
+        KotlinClass(
+          modifier: KotlinClassModifier.companion,
+          name: 'object',
+          fields: [
+            KotlinField(
+              visibility: KotlinVisibility.private,
+              modifier: KotlinFieldModifier.lateInit,
+              name: 'channel',
+              type: 'MethodChannel',
+            ),
+            KotlinField(
+              visibility: KotlinVisibility.private,
+              modifier: KotlinFieldModifier.lateInit,
+              name: 'coroutineScope',
+              type: 'CoroutineScope',
             ),
           ],
-          body:
-              'channel = MethodChannel(flutterPluginBinding.binaryMessenger, "${handler.channelName()}")\n'
-              'channel.setMethodCallHandler(this)',
-        ),
-        const KotlinMethod(
-          modifiers: {KotlinMethodModifier.override},
-          name: 'onDetachedFromEngine',
-          parameters: [
-            KotlinParameter(
-              annotations: ['NonNull'],
-              name: 'flutterPluginBinding',
-              type: 'FlutterPlugin.FlutterPluginBinding',
+          body: [
+            KotlinMethod(
+              name: 'setHandler',
+              parameters: const [
+                KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
+                KotlinParameter(name: 'api', type: 'StripeTerminalApi'),
+                KotlinParameter(name: 'coroutineScope', type: 'CoroutineScope?', defaultTo: 'null'),
+              ],
+              body: '''
+channel = MethodChannel(binaryMessenger, "${handler.channelName()}")
+this.coroutineScope = coroutineScope ?: MainScope()
+channel.setMethodCallHandler(api::onMethodCall)''',
+            ),
+            const KotlinMethod(
+              name: 'removeHandler',
+              body: '''
+channel.setMethodCallHandler(null)
+coroutineScope.cancel()''',
             ),
           ],
-          body: 'channel.setMethodCallHandler(null)',
-        ),
+        )
       ],
     ));
 
@@ -204,7 +239,7 @@ class KotlinApiBuilder extends ApiBuilder {
       ].join(', ');
 
       return KotlinClass(
-        name: handler.controllerName(e),
+        name: codecs.encodeName('${e.name}Controller'),
         initializers: [
           KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
         ],
@@ -251,10 +286,10 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
 
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
-    final FlutterApiHandler(:element) = handler;
+    final FlutterApiHandler(:element, kotlinMethods: methods) = handler;
 
     _specs.add(KotlinClass(
-      name: handler.className,
+      name: codecs.encodeName(element.name),
       initializers: [
         KotlinParameter(
           name: 'binaryMessenger',
@@ -263,43 +298,73 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
       ],
       fields: [
         KotlinField(
+          visibility: KotlinVisibility.private,
           name: 'channel',
           type: 'MethodChannel',
           assignment: 'MethodChannel(binaryMessenger, "${handler.channelName()}")',
         ),
       ],
-      body: element.methods.where((e) => e.isFlutterApiMethod).map((e) {
+      body: methods.map((_) {
+        final MethodHandler(element: e, kotlin: methodType) = _;
         final returnType = e.returnType.singleTypeArg;
 
         final parameters =
             e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
 
         return KotlinMethod(
-          modifiers: {KotlinMethodModifier.suspend},
+          modifiers: {if (methodType == MethodApiType.async) KotlinMethodModifier.suspend},
           name: _encodeMethodName(e.name),
-          parameters: e.parameters.map((e) {
-            return KotlinParameter(
-              name: e.name,
-              type: codecs.encodeType(e.type),
-            );
-          }).toList(),
-          returns: returnType is VoidType ? null : codecs.encodeType(returnType),
-          body: '''
+          parameters: [
+            ...e.parameters.map((e) {
+              return KotlinParameter(
+                name: e.name,
+                type: codecs.encodeType(e.type),
+              );
+            }).toList(),
+            if (methodType == MethodApiType.callbacks) ...[
+              KotlinParameter(
+                name: 'onError',
+                type: '(code: String, message: String?, details: Any?) -> Unit',
+              ),
+              KotlinParameter(
+                name: 'onSuccess',
+                type: '(data: ${codecs.encodeType(returnType)}) -> Unit',
+              ),
+            ],
+          ],
+          returns: methodType == MethodApiType.async
+              ? (returnType is VoidType ? null : codecs.encodeType(returnType))
+              : null,
+          body: switch (methodType) {
+            MethodApiType.callbacks => '''
+channel.invokeMethod(
+    "${handler.channelName(e)}",
+    listOf<Any?>($parameters),
+    object : MethodChannel.Result {
+        override fun notImplemented() {}
+        override fun error(code: String, message: String?, details: Any?) = 
+            onError(code, message, details)
+        override fun success(result: Any?) =
+            onSuccess(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
+    }
+)''',
+            MethodApiType.sync => '''
+channel.invokeMethod("${handler.channelName(e)}", listOf<Any?>($parameters))''',
+            MethodApiType.async => '''
 return suspendCoroutine { continuation ->
     channel.invokeMethod(
         "${handler.channelName(e)}",
         listOf<Any?>($parameters),
         object : MethodChannel.Result {
-            override fun success(result: Any?) {
-                continuation.resume(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
-            }
-            override fun error(code: String, message: String?, details: Any?) {
-                continuation.resumeWithException(PlatformException(code, message, details))
-            }
             override fun notImplemented() {}
+            override fun error(code: String, message: String?, details: Any?) =
+                continuation.resumeWithException(PlatformException(code, message, details))
+            override fun success(result: Any?) =
+                continuation.resume(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
         }
     )
 }''',
+          },
         );
       }).toList(),
     ));
@@ -365,8 +430,10 @@ return suspendCoroutine { continuation ->
     ));
   }
 
-  String _encodeMethodName(String name) =>
-      name.startsWith('_on') ? name.replaceFirst('_on', '').camelCase : 'on${name.pascalCase}';
+  String _encodeMethodName(String name) {
+    name = name.replaceFirst('_', '');
+    return name.startsWith('on') ? name.replaceFirst('on', '').camelCase : 'on${name.pascalCase}';
+  }
 
   String _encodeVarName(String name) {
     return switch (name) {
@@ -374,86 +441,6 @@ return suspendCoroutine { continuation ->
       _ => name,
     };
   }
-
-  // String _encodeType(DartType type, bool withNullability) {
-  //   final questionOrEmpty = withNullability ? type.questionOrEmpty : '';
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     return '${codec.encodeType(type)}$questionOrEmpty';
-  //   }
-  //   if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
-  //   if (type is VoidType) return 'Unit$questionOrEmpty';
-  //   if (type.isDartCoreNull) return 'null$questionOrEmpty';
-  //   if (type.isDartCoreBool) return 'Boolean$questionOrEmpty';
-  //   if (type.isDartCoreInt) return 'Long$questionOrEmpty';
-  //   if (type.isDartCoreDouble) return 'Double$questionOrEmpty';
-  //   if (type.isDartCoreString) return 'String$questionOrEmpty';
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return 'List<${_encodeType(typeArg, withNullability)}>$questionOrEmpty';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typeArgs = type.doubleTypeArgs;
-  //     return 'HashMap<${_encodeType(typeArgs.$1, withNullability)}, ${_encodeType(typeArgs.$2, withNullability)}>$questionOrEmpty';
-  //   }
-  //   return type
-  //       .getDisplayString(withNullability: withNullability)
-  //       .replaceFirstMapped(RegExp(r'\w+'), (match) => '${match.group(0)}Api');
-  // }
-  //
-  // String _encodeSerialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     final serializer = codec.encodeSerialization(type, type.isNullable ? 'it' : varAccess);
-  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
-  //   }
-  //   if (type.isPrimitive) return varAccess;
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '$varAccess${type.questionOrEmpty}.map{${_encodeSerialization(typeArg, 'it')}}';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typesArgs = type.doubleTypeArgs;
-  //     final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
-  //         '.map{(k, v) -> ${_encodeSerialization(typesArgs.$1, 'k')} to ${_encodeSerialization(typesArgs.$2, 'v')}}'
-  //         '.toTypedArray())';
-  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
-  //   }
-  //   if (type.isDartCoreEnum || type.element is EnumElement) {
-  //     return '$varAccess${type.questionOrEmpty}.ordinal';
-  //   }
-  //   return '$varAccess${type.questionOrEmpty}.serialize()';
-  // }
-  //
-  // String _encodeDeserialization(DartType type, String varAccess) {
-  //   if (type is VoidType) throw StateError('void type no supported');
-  //   final codec = pluginOptions.findCodec(PlatformApi.kotlin, type);
-  //   if (codec != null) {
-  //     final deserializer = codec.encodeDeserialization(type, type.isNullable ? 'it' : varAccess);
-  //     return type.isNullable ? '$varAccess?.let{$deserializer}' : deserializer;
-  //   }
-  //   if (type.isPrimitive) return '$varAccess as ${_encodeType(type, true)}';
-  //   if (type.isDartCoreList) {
-  //     final typeArg = type.singleTypeArg;
-  //     return '($varAccess as List<*>${type.questionOrEmpty})'
-  //         '${type.questionOrEmpty}.map{${_encodeDeserialization(typeArg, 'it')}}';
-  //   }
-  //   if (type.isDartCoreMap) {
-  //     final typesArgs = type.doubleTypeArgs;
-  //     final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
-  //         '.map{(k, v) -> ${_encodeDeserialization(typesArgs.$1, 'k')} to ${_encodeDeserialization(typesArgs.$2, 'v')}}'
-  //         '.toTypedArray())';
-  //     return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
-  //   }
-  //
-  //   if (type.isDartCoreEnum || type.element is EnumElement) {
-  //     return '($varAccess as Int${type.questionOrEmpty})'
-  //         '${type.questionOrEmpty}.let{${_encodeType(type, false)}.values()[it]}';
-  //   }
-  //   return '($varAccess as List<Any?>${type.questionOrEmpty})'
-  //       '${type.questionOrEmpty}.let{${_encodeType(type, false)}.deserialize(it)}';
-  // }
 
   @override
   void writeException(EnumElement element) {
@@ -495,14 +482,19 @@ return suspendCoroutine { continuation ->
   String build() => '${KotlinEmitter().encode(KotlinLibrary(
         package: options.package,
         imports: [
-          'io.flutter.embedding.engine.plugins.FlutterPlugin',
           'io.flutter.plugin.common.BinaryMessenger',
           'io.flutter.plugin.common.EventChannel',
           'io.flutter.plugin.common.MethodCall',
           'io.flutter.plugin.common.MethodChannel',
+          'kotlinx.coroutines.CoroutineScope',
           'kotlin.coroutines.resume',
           'kotlin.coroutines.resumeWithException',
           'kotlin.coroutines.suspendCoroutine',
+          'kotlinx.coroutines.Dispatchers',
+          'kotlinx.coroutines.MainScope',
+          'kotlinx.coroutines.cancel',
+          'kotlinx.coroutines.launch',
+          'kotlinx.coroutines.withContext',
         ],
         body: _specs,
       ))}';

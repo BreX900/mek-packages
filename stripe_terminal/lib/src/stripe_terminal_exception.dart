@@ -2,7 +2,7 @@ import 'package:one_for_all/one_for_all.dart';
 
 @SerializableEnum(
   type: SerializableEnumType.string,
-  languages: {PlatformApi.swift},
+  languages: {LanguageApi.swift},
   hostToFlutter: true,
 )
 enum StripeTerminalExceptionCode {
@@ -83,7 +83,16 @@ enum StripeTerminalExceptionCode {
   forceOfflineWithFeatureDisabled,
   notConnectedToInternetAndRequireOnlineSet;
 
-  final String? message;
+  const StripeTerminalExceptionCode();
+}
 
-  const StripeTerminalExceptionCode([this.message]);
+class StripeTerminalException {
+  final StripeTerminalExceptionCode code;
+  final String? message;
+  final String? details;
+
+  const StripeTerminalException(this.code, this.message, this.details);
+
+  @override
+  String toString() => ['$runtimeType: ${code.name}', message, details].nonNulls.join('\n');
 }

@@ -109,6 +109,10 @@ protocol StripeTerminalApi {
 
     func onDisconnectReader() async throws -> Void
 
+    func onInstallAvailableUpdate(
+        _ serialNumber: String
+    ) async throws -> Void
+
     func onSetReaderDisplay(
         _ cart: CartApi
     ) async throws -> Void
@@ -137,11 +141,12 @@ protocol StripeTerminalApi {
     ) async throws -> Void
 
     func onStartCollectPaymentMethod(
+        _ result: Result<StripePaymentIntentApi>,
         _ id: Int,
         _ clientSecret: String,
         _ moto: Bool,
         _ skipTipping: Bool
-    ) async throws -> StripePaymentIntentApi
+    ) throws
 
     func onStopCollectPaymentMethod(
         _ id: Int
@@ -154,7 +159,7 @@ class DiscoverReadersControllerApi {
     init(
         binaryMessenger: FlutterBinaryMessenger
     ) {
-        channel = FlutterEventChannel(name: "StripeTerminal#discoverReaders", binaryMessenger: binaryMessenger)
+        channel = FlutterEventChannel(name: "StripeTerminal#_discoverReaders", binaryMessenger: binaryMessenger)
     }
 
     func setHandler(
@@ -174,91 +179,12 @@ class DiscoverReadersControllerApi {
     func removeHandler() { channel.setStreamHandler(nil) }
 }
 
-class OnConnectionStatusChangeControllerApi {
-    private let channel: FlutterEventChannel
-
-    init(
-        binaryMessenger: FlutterBinaryMessenger
-    ) {
-        channel = FlutterEventChannel(name: "StripeTerminal#_onConnectionStatusChange", binaryMessenger: binaryMessenger)
-    }
-
-    func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<ConnectionStatusApi>) -> FlutterError?,
-        _ onCancel: @escaping () -> FlutterError?
-    ) {
-        channel.setStreamHandler(ControllerHandler({ arguments, events in
-            let args = arguments as! [Any?]
-            let sink = ControllerSink<ConnectionStatusApi>(events) { $0.rawValue }
-            return onListen(sink)
-        }, { arguments in
-            let args = arguments as! [Any?]
-            return onCancel()
-        }))
-    }
-
-    func removeHandler() { channel.setStreamHandler(nil) }
-}
-
-class OnUnexpectedReaderDisconnectControllerApi {
-    private let channel: FlutterEventChannel
-
-    init(
-        binaryMessenger: FlutterBinaryMessenger
-    ) {
-        channel = FlutterEventChannel(name: "StripeTerminal#_onUnexpectedReaderDisconnect", binaryMessenger: binaryMessenger)
-    }
-
-    func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<StripeReaderApi>) -> FlutterError?,
-        _ onCancel: @escaping () -> FlutterError?
-    ) {
-        channel.setStreamHandler(ControllerHandler({ arguments, events in
-            let args = arguments as! [Any?]
-            let sink = ControllerSink<StripeReaderApi>(events) { $0.serialize() }
-            return onListen(sink)
-        }, { arguments in
-            let args = arguments as! [Any?]
-            return onCancel()
-        }))
-    }
-
-    func removeHandler() { channel.setStreamHandler(nil) }
-}
-
-class OnPaymentStatusChangeControllerApi {
-    private let channel: FlutterEventChannel
-
-    init(
-        binaryMessenger: FlutterBinaryMessenger
-    ) {
-        channel = FlutterEventChannel(name: "StripeTerminal#_onPaymentStatusChange", binaryMessenger: binaryMessenger)
-    }
-
-    func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<PaymentStatusApi>) -> FlutterError?,
-        _ onCancel: @escaping () -> FlutterError?
-    ) {
-        channel.setStreamHandler(ControllerHandler({ arguments, events in
-            let args = arguments as! [Any?]
-            let sink = ControllerSink<PaymentStatusApi>(events) { $0.rawValue }
-            return onListen(sink)
-        }, { arguments in
-            let args = arguments as! [Any?]
-            return onCancel()
-        }))
-    }
-
-    func removeHandler() { channel.setStreamHandler(nil) }
-}
-
 func setupStripeTerminalApi(
     _ binaryMessenger: FlutterBinaryMessenger,
     _ hostApi: StripeTerminalApi
 ) {
     let channel = FlutterMethodChannel(name: "StripeTerminal", binaryMessenger: binaryMessenger)
     channel.setMethodCallHandler { call, result in
-    
         let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
             Task {
                 do {
@@ -278,62 +204,67 @@ func setupStripeTerminalApi(
             switch call.method {
             case "listLocations":
                 runAsync {
-                    let res = try await hostApi.onListLocations(args[0] as! String?, args[1] as! Int?, args[2] as! String?) 
+                    let res = try await hostApi.onListLocations(args[0] as! String?, args[1] as! Int?, args[2] as! String?)
                     return res.map { $0.serialize() }
                 }
             case "connectionStatus":
                 runAsync {
-                    let res = try await hostApi.onConnectionStatus() 
+                    let res = try await hostApi.onConnectionStatus()
                     return res.rawValue
                 }
             case "connectBluetoothReader":
                 runAsync {
-                    let res = try await hostApi.onConnectBluetoothReader(args[0] as! String, args[1] as! String, args[2] as! Bool) 
+                    let res = try await hostApi.onConnectBluetoothReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
                     return res.serialize()
                 }
             case "connectInternetReader":
                 runAsync {
-                    let res = try await hostApi.onConnectInternetReader(args[0] as! String, args[1] as! Bool) 
+                    let res = try await hostApi.onConnectInternetReader(args[0] as! String, args[1] as! Bool)
                     return res.serialize()
                 }
             case "connectMobileReader":
                 runAsync {
-                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String) 
+                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String)
                     return res.serialize()
                 }
             case "connectedReader":
                 runAsync {
-                    let res = try await hostApi.onConnectedReader() 
+                    let res = try await hostApi.onConnectedReader()
                     return res?.serialize()
                 }
             case "disconnectReader":
                 runAsync {
-                    try await hostApi.onDisconnectReader() 
+                    try await hostApi.onDisconnectReader()
+                    return nil
+                }
+            case "installAvailableUpdate":
+                runAsync {
+                    try await hostApi.onInstallAvailableUpdate(args[0] as! String)
                     return nil
                 }
             case "setReaderDisplay":
                 runAsync {
-                    try await hostApi.onSetReaderDisplay(CartApi.deserialize(args[0] as! [Any?])) 
+                    try await hostApi.onSetReaderDisplay(CartApi.deserialize(args[0] as! [Any?]))
                     return nil
                 }
             case "clearReaderDisplay":
                 runAsync {
-                    try await hostApi.onClearReaderDisplay() 
+                    try await hostApi.onClearReaderDisplay()
                     return nil
                 }
             case "retrievePaymentIntent":
                 runAsync {
-                    let res = try await hostApi.onRetrievePaymentIntent(args[0] as! String) 
+                    let res = try await hostApi.onRetrievePaymentIntent(args[0] as! String)
                     return res.serialize()
                 }
             case "processPayment":
                 runAsync {
-                    let res = try await hostApi.onProcessPayment(args[0] as! String) 
+                    let res = try await hostApi.onProcessPayment(args[0] as! String)
                     return res.serialize()
                 }
             case "_init":
                 runAsync {
-                    try await hostApi.onInit() 
+                    try await hostApi.onInit()
                     return nil
                 }
             case "_startReadReusableCard":
@@ -341,17 +272,15 @@ func setupStripeTerminalApi(
                 try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as! String?, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil)
             case "_stopReadReusableCard":
                 runAsync {
-                    try await hostApi.onStopReadReusableCard(args[0] as! Int) 
+                    try await hostApi.onStopReadReusableCard(args[0] as! Int)
                     return nil
                 }
             case "_startCollectPaymentMethod":
-                runAsync {
-                    let res = try await hostApi.onStartCollectPaymentMethod(args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool) 
-                    return res.serialize()
-                }
+                let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
             case "_stopCollectPaymentMethod":
                 runAsync {
-                    try await hostApi.onStopCollectPaymentMethod(args[0] as! Int) 
+                    try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
                     return nil
                 }
             default:
@@ -364,6 +293,7 @@ func setupStripeTerminalApi(
         }
     }
 }
+
 class StripeTerminalHandlersApi {
     let channel: FlutterMethodChannel
 
@@ -371,7 +301,7 @@ class StripeTerminalHandlersApi {
         _ binaryMessenger: FlutterBinaryMessenger
     ) {
         channel = FlutterMethodChannel(
-            name: "_StripeTerminalHandlers",
+            name: "StripeTerminalHandlers",
             binaryMessenger: binaryMessenger
         )
     }
@@ -390,6 +320,36 @@ class StripeTerminalHandlersApi {
                 }
             }
         }
+    }
+
+    func unexpectedReaderDisconnect(
+        reader: StripeReaderApi
+    ) {
+        channel.invokeMethod("_onUnexpectedReaderDisconnect", arguments: [reader.serialize()])
+    }
+
+    func connectionStatusChange(
+        connectionStatus: ConnectionStatusApi
+    ) {
+        channel.invokeMethod("_onConnectionStatusChange", arguments: [connectionStatus.rawValue])
+    }
+
+    func paymentStatusChange(
+        paymentStatus: PaymentStatusApi
+    ) {
+        channel.invokeMethod("_onPaymentStatusChange", arguments: [paymentStatus.rawValue])
+    }
+
+    func availableUpdate(
+        availableUpdate: Bool
+    ) {
+        channel.invokeMethod("_onAvailableUpdate", arguments: [availableUpdate])
+    }
+
+    func reportReaderSoftwareUpdateProgress(
+        progress: Double
+    ) {
+        channel.invokeMethod("_onReportReaderSoftwareUpdateProgress", arguments: [progress])
     }
 }
 
@@ -498,10 +458,10 @@ struct StripePaymentIntentApi {
     let applicationFeeAmount: Double?
     let captureMethod: String?
     let cancellationReason: String?
-    let canceledAt: NSDate?
+    let canceledAt: Date?
     let clientSecret: String?
     let confirmationMethod: String?
-    let created: NSDate
+    let created: Date
     let currency: String?
     let customer: String?
     let description: String?
@@ -672,15 +632,6 @@ enum ConnectionStatusApi: Int {
     case connecting
 }
 
-enum DiscoveryMethodApi: Int {
-    case bluetoothScan
-    case internet
-    case localMobile
-    case handOff
-    case embedded
-    case usb
-}
-
 enum LocationStatusApi: Int {
     case unknown
     case set
@@ -711,6 +662,15 @@ enum PaymentIntentStatusApi: Int {
     case requiresConfirmation
     case requiresPaymentMethod
     case succeeded
+}
+
+enum DiscoveryMethodApi: Int {
+    case bluetoothScan
+    case internet
+    case localMobile
+    case handOff
+    case embedded
+    case usb
 }
 
 enum PaymentStatusApi: Int {

@@ -158,13 +158,11 @@ packages:
     source: hosted
     version: "1.9.1"
   one_for_all:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      path: one_for_all
-      ref: HEAD
-      resolved-ref: b5505fc3ae038445d79dcaf59c682f375f48f388
-      url: "https://github.com/BreX900/mek-packages"
-    source: git
+      path: "../../one_for_all"
+      relative: true
+    source: path
     version: "1.0.0"
   path:
     dependency: transitive
@@ -317,5 +315,5 @@ packages:
     source: hosted
     version: "2.1.4"
 sdks:
-  dart: ">=3.0.5 <4.0.0"
-  flutter: ">=3.10.0"
+  dart: ">=3.0.0 <4.0.0"
+  flutter: ">=2.8.0"

@@ -27,7 +27,7 @@ class SwiftParameter {
 
 enum SwiftMethodModifier { static, override }
 
-class SwiftMethod extends SwiftSpec {
+class SwiftMethod extends SwiftTopLevelSpec {
   final SwiftVisibility? visibility;
   final SwiftMethodModifier? modifier;
   final bool async;
@@ -51,7 +51,7 @@ class SwiftMethod extends SwiftSpec {
   });
 }
 
-class SwiftProtocol extends SwiftSpec {
+class SwiftProtocol extends SwiftTopLevelSpec {
   final SwiftVisibility? visibility;
   final String name;
   final List<String> implements;
@@ -155,9 +155,9 @@ class SwiftClass extends SwiftProtocol {
   });
 }
 
-class SwiftLibrary extends SwiftLanguage {
+class SwiftLibrary extends SwiftSpec {
   final List<String> imports;
-  final List<SwiftSpec> body;
+  final List<SwiftTopLevelSpec> body;
 
   const SwiftLibrary({
     required this.imports,
@@ -165,12 +165,12 @@ class SwiftLibrary extends SwiftLanguage {
   });
 }
 
-sealed class SwiftSpec extends SwiftLanguage {
-  const SwiftSpec();
+sealed class SwiftTopLevelSpec extends SwiftSpec {
+  const SwiftTopLevelSpec();
 }
 
-sealed class SwiftLanguage {
-  const SwiftLanguage();
+sealed class SwiftSpec {
+  const SwiftSpec();
 }
 
 class SwiftEmitter {
@@ -178,11 +178,11 @@ class SwiftEmitter {
 
   String get _space => '    ' * _indent;
 
-  Object encode(SwiftLanguage spec) {
+  Object encode(SwiftSpec spec) {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       SwiftLibrary() => _encodeLibrary(spec),
-      SwiftSpec() => _encodeSpec(spec),
+      SwiftTopLevelSpec() => _encodeTopLevelSpec(spec),
     });
     return buffer;
   }
@@ -191,11 +191,11 @@ class SwiftEmitter {
     final buffer = StringBuffer();
     buffer.writeAll(spec.imports.map((e) => 'import $e'), '\n');
     if (spec.imports.isNotEmpty) buffer.write('\n\n');
-    buffer.writeAll(spec.body.map(_encodeSpec), '\n');
+    buffer.writeAll(spec.body.map(_encodeTopLevelSpec), '\n\n');
     return buffer;
   }
 
-  Object _encodeSpec(SwiftSpec spec) {
+  Object _encodeTopLevelSpec(SwiftTopLevelSpec spec) {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       SwiftProtocol() => _encodeProtocol(spec),
@@ -261,7 +261,7 @@ class SwiftEmitter {
       _indent -= 1;
       buffer.write('\n');
     }
-    buffer.write('$_space}\n');
+    buffer.write('$_space}');
     return buffer;
   }
 

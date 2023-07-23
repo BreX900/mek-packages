@@ -38,14 +38,15 @@ class StripeApi {
     return locations;
   }
 
-  Future<PaymentIntent> createPaymentIntent() async {
-    final paymentIntent = await _stripe.paymentIntent.create(CreatePaymentIntentRequest(
-      amount: 1000,
-      currency: 'eur',
-      paymentMethodTypes: {PaymentMethodType.card},
-    ));
-    print(jsonEncode(paymentIntent.toJson()));
-    return paymentIntent;
+  Future<String> createPaymentIntent() async {
+    final paymentIntent = await _stripe.client.post('payment_intents', data: {
+      'currency': 'gbp',
+      'payment_method_types': ['card_present'],
+      'capture_method': 'manual',
+      'amount': 1000,
+    });
+    print(jsonEncode(paymentIntent));
+    return paymentIntent['client_secret'];
   }
 
 // Future<Response> _handlePayment(Request request) async {

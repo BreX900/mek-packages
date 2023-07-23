@@ -35,22 +35,25 @@ class KotlinApiCodes extends HostApiCodecs {
 
     final questionOrEmpty = type.isNullable ? '?' : '';
 
+    if (type.isDartCoreInt) {
+      return '($varAccess as$questionOrEmpty Number)$questionOrEmpty.toLong()';
+    }
     if (type.isPrimitive) return '$varAccess as ${encodeType(type)}';
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
       return '($varAccess as List<*>$questionOrEmpty)'
-          '$questionOrEmpty.map{${encodeDeserialization(typeArg, 'it')}}';
+          '$questionOrEmpty.map { ${encodeDeserialization(typeArg, 'it')} }';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
       final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
-          '.map{(k, v) -> ${encodeDeserialization(typesArgs.$1, 'k')} to ${encodeDeserialization(typesArgs.$2, 'v')}}'
+          '.map { (k, v) -> ${encodeDeserialization(typesArgs.$1, 'k')} to ${encodeDeserialization(typesArgs.$2, 'v')} }'
           '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+      return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
     if (type.isDartCoreEnum || type.element is EnumElement) {
       return '($varAccess as Int$questionOrEmpty)'
-          '$questionOrEmpty.let{${encodeName(type.displayName)}.values()[it]}';
+          '$questionOrEmpty.let { ${encodeName(type.displayName)}.values()[it] }';
     }
 
     final codec = findCodec(type);
@@ -58,12 +61,12 @@ class KotlinApiCodes extends HostApiCodecs {
       if (!type.isNullable || codec.hasNullSafeDeserialization) {
         return codec.encodeSerialization(this, type, varAccess);
       } else {
-        return '$varAccess?.let{${codec.encodeSerialization(this, type, 'it')}}';
+        return '$varAccess?.let { ${codec.encodeSerialization(this, type, 'it')} }';
       }
     }
 
     return '($varAccess as List<Any?>$questionOrEmpty)'
-        '$questionOrEmpty.let{${encodeName(type.displayName)}.deserialize(it)}';
+        '$questionOrEmpty.let { ${encodeName(type.displayName)}.deserialize(it) }';
   }
 
   @override
@@ -75,14 +78,14 @@ class KotlinApiCodes extends HostApiCodecs {
     if (type.isPrimitive) return varAccess;
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '$varAccess$questionOrEmpty.map{${encodeSerialization(typeArg, 'it')}}';
+      return '$varAccess$questionOrEmpty.map { ${encodeSerialization(typeArg, 'it')}} ';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
       final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
-          '.map{(k, v) -> ${encodeSerialization(typesArgs.$1, 'k')} to ${encodeSerialization(typesArgs.$2, 'v')}}'
+          '.map { (k, v) -> ${encodeSerialization(typesArgs.$1, 'k')} to ${encodeSerialization(typesArgs.$2, 'v')} }'
           '.toTypedArray())';
-      return type.isNullable ? '$varAccess?.let{$serializer}' : serializer;
+      return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
     if (type.isDartCoreEnum || type.element is EnumElement) {
       return '$varAccess$questionOrEmpty.ordinal';
@@ -93,7 +96,7 @@ class KotlinApiCodes extends HostApiCodecs {
       if (!type.isNullable || codec.hasNullSafeSerialization) {
         return codec.encodeSerialization(this, type, varAccess);
       } else {
-        return '$varAccess?.let{${codec.encodeSerialization(this, type, 'it')}}';
+        return '$varAccess?.let { ${codec.encodeSerialization(this, type, 'it')} }';
       }
     }
 

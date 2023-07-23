@@ -10,8 +10,7 @@ dependencies:
     sdk: flutter
 
   permission_handler: ^10.4.3
-  mek_stripe_terminal:
-    path: ../
+  mek_stripe_terminal: ^0.0.0
 
   shelf: ^1.4.1
   shelf_router: ^1.1.4
@@ -22,6 +21,12 @@ dependencies:
 
 dev_dependencies:
   mek_lints: ^2.0.0
+
+dependency_overrides:
+  one_for_all:
+    path: ../../one_for_all
+  mek_stripe_terminal:
+    path: ../
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

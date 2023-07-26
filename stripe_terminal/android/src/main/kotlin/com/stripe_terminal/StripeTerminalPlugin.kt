@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.content.ContextCompat
 import com.stripe.stripeterminal.Terminal
 import com.stripe.stripeterminal.TerminalApplicationDelegate
@@ -30,7 +29,6 @@ import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
-import java.lang.Exception
 
 class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     StripeTerminalApi,
@@ -68,6 +66,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
             )
         }
 
+        // If a hot restart is performed in flutter the terminal is already initialized but we need to clean it up
         if (Terminal.isInitialized()) {
             clean()
             return
@@ -225,63 +224,58 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     }
 
     //region Payment
+    private var _paymentIntents = HashMap<String, PaymentIntent>()
+
     override fun onRetrievePaymentIntent(
         result: Result<StripePaymentIntentApi>,
         clientSecret: String
     ) {
         _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                override fun onSuccess(paymentIntent: PaymentIntent) =
-                    result.success(paymentIntent.toApi())
-            })
-    }
-
-    private val _cancelablesCollectPaymentMethod = HashMap<Long, Cancelable?>()
-
-    override fun onStartCollectPaymentMethod(
-        result: Result<StripePaymentIntentApi>,
-        id: Long,
-        clientSecret: String,
-        moto: Boolean,
-        skipTipping: Boolean,
-    ) {
-        _cancelablesCollectPaymentMethod[id] = null
-        _terminal.retrievePaymentIntent(clientSecret,
-            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    if (!_cancelablesCollectPaymentMethod.contains(id)) return
-                    _cancelablesCollectPaymentMethod[id] = _terminal.collectPaymentMethod(
-                        paymentIntent,
-                        object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                            override fun onFailure(e: TerminalException) {
-                                _cancelablesCollectPaymentMethod.remove(id)
-                                super.onFailure(e)
-                            }
-
-                            override fun onSuccess(paymentIntent: PaymentIntent) {
-                                _cancelablesCollectPaymentMethod.remove(id)
-
-//                                _terminal.processPayment(
-//                                    paymentIntent,
-//                                    object : TerminalErrorHandler(result::error),
-//                                        PaymentIntentCallback {
-//                                        override fun onSuccess(paymentIntent: PaymentIntent) =
-//                                            result.success(paymentIntent.toApi())
-//                                    })
-                                result.success(paymentIntent.toApi())
-                            }
-                        },
-                        CollectConfiguration.Builder()
-                            .setMoto(moto)
-                            .skipTipping(skipTipping)
-                            .build(),
-                    )
+                    _paymentIntents[paymentIntent.id] = paymentIntent
+                    result.success(paymentIntent.toApi())
                 }
             })
     }
 
-    override fun onStopCollectPaymentMethod(result: Result<Unit>, id: Long) {
-        _cancelablesCollectPaymentMethod.remove(id)
+    private val _cancelablesCollectPaymentMethod = HashMap<Long, Cancelable>()
+
+    override fun onStartCollectPaymentMethod(
+        result: Result<StripePaymentIntentApi>,
+        operationId: Long,
+        paymentIntentId: String,
+        moto: Boolean,
+        skipTipping: Boolean,
+    ) {
+        val paymentIntent = _paymentIntents[paymentIntentId]
+        if (paymentIntent == null) {
+            result.error("", "")
+            return
+        }
+        _cancelablesCollectPaymentMethod[operationId] = _terminal.collectPaymentMethod(
+            paymentIntent,
+            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+                override fun onFailure(e: TerminalException) {
+                    _cancelablesCollectPaymentMethod.remove(operationId)
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess(paymentIntent: PaymentIntent) {
+                    _cancelablesCollectPaymentMethod.remove(operationId)
+                    result.success(paymentIntent.toApi())
+                    _paymentIntents[paymentIntent.id] = paymentIntent
+                }
+            },
+            CollectConfiguration.Builder()
+                .setMoto(moto)
+                .skipTipping(skipTipping)
+                .build(),
+        )
+    }
+
+    override fun onStopCollectPaymentMethod(result: Result<Unit>, operationId: Long) {
+        _cancelablesCollectPaymentMethod.remove(operationId)
             ?.cancel(object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
             })
@@ -289,17 +283,19 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     override fun onProcessPayment(
         result: Result<StripePaymentIntentApi>,
-        clientSecret: String,
+        paymentIntentId: String,
     ) {
-        _terminal.retrievePaymentIntent(clientSecret,
+        val paymentIntent = _paymentIntents[paymentIntentId]
+        if (paymentIntent == null) {
+            result.error("", "")
+            return
+        }
+        _terminal.processPayment(
+            paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    _terminal.processPayment(
-                        paymentIntent,
-                        object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                            override fun onSuccess(paymentIntent: PaymentIntent) =
-                                result.success(paymentIntent.toApi())
-                        })
+                    result.success(paymentIntent.toApi())
+                    _paymentIntents.remove(paymentIntent.id)
                 }
             })
     }
@@ -316,7 +312,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
                 location = locationId
             )
 
+            // Ignore error, the previous stream can no longer receive events
             _discoverReaderCancelable?.cancel(EmptyCallback())
+
             _discoverReaderCancelable =
                 _terminal.discoverReaders(config, object : DiscoveryListener {
                     override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
@@ -332,6 +330,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
                     override fun onSuccess() = _activity!!.runOnUiThread { sink.endOfStream() }
                 })
         }, {
+            // Ignore error, flutter stream already closed
             _discoverReaderCancelable?.cancel(EmptyCallback())
         })
     }
@@ -380,6 +379,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         _cancelablesReadReusableCard.clear()
         _cancelablesCollectPaymentMethod.values.forEach { it?.cancel(EmptyCallback()) }
         _cancelablesCollectPaymentMethod.clear()
+
+        _discoveredReaders =  arrayListOf()
+        _paymentIntents = hashMapOf()
     }
 
     // ======================== STRIPE

@@ -7,6 +7,7 @@ import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/emitters/kotlin_emitter.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
+import 'package:one_for_all_generator/src/utils.dart';
 import 'package:recase/recase.dart';
 
 class KotlinApiBuilder extends ApiBuilder {
@@ -480,8 +481,9 @@ return suspendCoroutine { continuation ->
 
   @override
   String build() => '${KotlinEmitter().encode(KotlinLibrary(
+        comments: const [generatedCodeComment],
         package: options.package,
-        imports: [
+        imports: const [
           'io.flutter.plugin.common.BinaryMessenger',
           'io.flutter.plugin.common.EventChannel',
           'io.flutter.plugin.common.MethodCall',

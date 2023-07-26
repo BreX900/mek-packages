@@ -6,6 +6,8 @@ import 'package:one_for_all/one_for_all.dart';
   hostToFlutter: true,
 )
 enum StripeTerminalExceptionCode {
+  paymentIntentNotRetrieved('Before calling this method you need to call "retrievePaymentIntent".'),
+
   cancelFailed,
   notConnectedToReader,
   alreadyConnectedToReader,
@@ -83,7 +85,9 @@ enum StripeTerminalExceptionCode {
   forceOfflineWithFeatureDisabled,
   notConnectedToInternetAndRequireOnlineSet;
 
-  const StripeTerminalExceptionCode();
+  final String? message;
+
+  const StripeTerminalExceptionCode([this.message]);
 }
 
 class StripeTerminalException {
@@ -94,5 +98,6 @@ class StripeTerminalException {
   const StripeTerminalException(this.code, this.message, this.details);
 
   @override
-  String toString() => ['$runtimeType: ${code.name}', message, details].nonNulls.join('\n');
+  String toString() =>
+      ['$runtimeType: ${code.name}', code.message, message, details].nonNulls.join('\n');
 }

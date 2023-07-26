@@ -277,7 +277,14 @@ extension CaptureMethod {
 }
 
 extension NSError {
-    func toApi() -> String {
+    func toApi() -> PlatformError {
+        guard self.scp_isAppleBuiltInReaderError else {
+            return PlatformError("", self.localizedDescription, "\(self)")
+        }
+        return PlatformError(self.toApiCode(), self.localizedDescription, "\(self)")
+    }
+
+    func toApiCode() -> String {
         let code = AppleBuiltInReaderErrorCode(rawValue: self.code)
         switch code! {
         case .unknown:

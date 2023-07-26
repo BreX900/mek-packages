@@ -1,11 +1,11 @@
 import Foundation
 import StripeTerminal
 
-class ReaderDelegate: NSObject, BluetoothReaderDelegate, LocalMobileReaderDelegate {
-    let handlers: StripeTerminalHandlersApi
+class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReaderDelegate {
+    private let handlers: StripeTerminalHandlersApi
 
-    init(handlersApi: StripeTerminalHandlersApi) {
-        handlers = handlersApi
+    init(_ handlers: StripeTerminalHandlersApi) {
+        self.handlers = handlers
     }
 
     func reader(_: Reader, didReportAvailableUpdate _: ReaderSoftwareUpdate) {

@@ -1,9 +1,21 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 import Flutter
 
-struct PlatformError: Error {
+class PlatformError: Error {
     let code: String
     let message: String?
     let details: String?
+
+    init(
+        _ code: String,
+        _ message: String? = nil,
+        _ details: String? = nil
+    ) {
+        self.code = code
+        self.message = message
+        self.details = details
+    }
 }
 
 class Result<T> {
@@ -24,8 +36,8 @@ class Result<T> {
 
     func error(
         _ code: String,
-        _ message: String,
-        _ details: Any?
+        _ message: String? = nil,
+        _ details: Any? = nil
     ) {
         result(FlutterError(code: code, message: message, details: details))
     }
@@ -49,8 +61,8 @@ class ControllerSink<T> {
 
     func error(
         _ code: String,
-        _ message: String,
-        _ details: Any?
+        _ message: String? = nil,
+        _ details: Any? = nil
     ) {
         sink(FlutterError(code: code, message: message, details: details))
     }
@@ -123,34 +135,34 @@ protocol StripeTerminalApi {
         _ clientSecret: String
     ) async throws -> StripePaymentIntentApi
 
-    func onProcessPayment(
-        _ clientSecret: String
-    ) async throws -> StripePaymentIntentApi
-
     func onInit() async throws -> Void
 
     func onStartReadReusableCard(
         _ result: Result<StripePaymentMethodApi>,
-        _ id: Int,
+        _ operationId: Int,
         _ customer: String?,
         _ metadata: [String: String]?
     ) throws
 
     func onStopReadReusableCard(
-        _ id: Int
+        _ operationId: Int
     ) async throws -> Void
 
     func onStartCollectPaymentMethod(
         _ result: Result<StripePaymentIntentApi>,
-        _ id: Int,
-        _ clientSecret: String,
+        _ operationId: Int,
+        _ paymentIntentId: String,
         _ moto: Bool,
         _ skipTipping: Bool
     ) throws
 
     func onStopCollectPaymentMethod(
-        _ id: Int
+        _ operationId: Int
     ) async throws -> Void
+
+    func onProcessPayment(
+        _ paymentIntentId: String
+    ) async throws -> StripePaymentIntentApi
 }
 
 class DiscoverReadersControllerApi {
@@ -179,12 +191,14 @@ class DiscoverReadersControllerApi {
     func removeHandler() { channel.setStreamHandler(nil) }
 }
 
-func setupStripeTerminalApi(
+private var channelStripeTerminalApi: FlutterMethodChannel? = nil
+
+func setStripeTerminalApiHandler(
     _ binaryMessenger: FlutterBinaryMessenger,
     _ hostApi: StripeTerminalApi
 ) {
-    let channel = FlutterMethodChannel(name: "StripeTerminal", binaryMessenger: binaryMessenger)
-    channel.setMethodCallHandler { call, result in
+    channelStripeTerminalApi = FlutterMethodChannel(name: "StripeTerminal", binaryMessenger: binaryMessenger)
+    channelStripeTerminalApi!.setMethodCallHandler { call, result in
         let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
             Task {
                 do {
@@ -257,11 +271,6 @@ func setupStripeTerminalApi(
                     let res = try await hostApi.onRetrievePaymentIntent(args[0] as! String)
                     return res.serialize()
                 }
-            case "processPayment":
-                runAsync {
-                    let res = try await hostApi.onProcessPayment(args[0] as! String)
-                    return res.serialize()
-                }
             case "_init":
                 runAsync {
                     try await hostApi.onInit()
@@ -283,6 +292,11 @@ func setupStripeTerminalApi(
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
                     return nil
                 }
+            case "_processPayment":
+                runAsync {
+                    let res = try await hostApi.onProcessPayment(args[0] as! String)
+                    return res.serialize()
+                }
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -292,6 +306,10 @@ func setupStripeTerminalApi(
             result(FlutterError(code: "", message: error.localizedDescription, details: nil))
         }
     }
+}
+
+func removeStripeTerminalApiHandler() {
+    channelStripeTerminalApi?.setMethodCallHandler(nil)
 }
 
 class StripeTerminalHandlersApi {
@@ -309,12 +327,8 @@ class StripeTerminalHandlersApi {
     func requestConnectionToken() async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { result in
-                if let result = result as? [AnyHashable?: Any?] {
-                    continuation.resume(throwing: PlatformError(
-                        code: result["code"] as! String,
-                        message: result["message"] as? String,
-                        details: result["details"] as? String
-                    ))
+                if let result = result as? FlutterError {
+                    continuation.resume(throwing: result)
                 } else {
                     continuation.resume(returning: result as! String)
                 }
@@ -548,6 +562,7 @@ struct CardDetailsApi {
 }
 
 enum StripeTerminalExceptionCodeApi: String {
+    case paymentIntentNotRetrieved
     case cancelFailed
     case notConnectedToReader
     case alreadyConnectedToReader

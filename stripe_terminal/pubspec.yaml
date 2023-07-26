@@ -21,6 +21,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  meta: ^1.9.1
   collection: ^1.17.0
   recase: ^4.1.0
 

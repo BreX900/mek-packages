@@ -1,4 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
+import 'package:meta/meta.dart';
 
 part 'payment_intent.g.dart';
 
@@ -31,6 +32,7 @@ class StripePaymentIntent with _$StripePaymentIntent {
   final String? setupFutureUsage;
   final String? transferGroup;
 
+  @internal
   const StripePaymentIntent({
     required this.id,
     required this.amount,

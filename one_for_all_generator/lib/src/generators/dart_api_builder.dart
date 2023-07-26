@@ -7,6 +7,7 @@ import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
+import 'package:one_for_all_generator/src/utils.dart';
 import 'package:path/path.dart';
 
 class DartApiBuilder extends ApiBuilder {
@@ -21,6 +22,7 @@ class DartApiBuilder extends ApiBuilder {
   }
 
   DartApiBuilder(super.pluginOptions, this.options, this.codecs) {
+    _library.comments.add(generatedCodeComment);
     _library.ignoreForFile.add('unused_element');
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }

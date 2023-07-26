@@ -39,7 +39,7 @@ class _MyAppState extends State<MyApp> {
   StripeReader? _reader;
 
   String? _paymentIntentClientSecret;
-  PaymentIntentStatus? _paymentIntentStatus;
+  StripePaymentIntent? _paymentIntent;
 
   @override
   void dispose() {
@@ -157,7 +157,6 @@ class _MyAppState extends State<MyApp> {
 
     _discoverReaderSub = discoverReaderStream.listen((readers) {
       setState(() => _readers = readers);
-      print('Tick!');
     }, onDone: () {
       setState(() => _discoverReaderSub = null);
     });
@@ -172,30 +171,30 @@ class _MyAppState extends State<MyApp> {
     final paymentIntentClientSecret = await _api.createPaymentIntent();
     setState(() {
       _paymentIntentClientSecret = paymentIntentClientSecret;
-      _paymentIntentStatus = PaymentIntentStatus.requiresPaymentMethod;
+      _paymentIntent = null;
     });
-    _showSnackBar('PaymentIntent created!');
+    _showSnackBar('Payment intent created!');
   }
 
-  void _collectPaymentMethod(StripeTerminal terminal, String paymentIntentClientSecret) async {
-    final paymentIntent = await terminal.collectPaymentMethod(
-      paymentIntentClientSecret,
+  void _retrievePaymentIntent(StripeTerminal terminal, String paymentIntentClientSecret) async {
+    final paymentIntent = await terminal.retrievePaymentIntent(paymentIntentClientSecret);
+    setState(() => _paymentIntent = paymentIntent);
+    _showSnackBar('Payment intent retrieved!');
+  }
+
+  void _collectPaymentMethod(StripeTerminal terminal, StripePaymentIntent paymentIntent) async {
+    final paymentIntentWithPaymentMethod = await terminal.collectPaymentMethod(
+      paymentIntent,
       skipTipping: true,
     );
-    setState(() {
-      _paymentIntentClientSecret = paymentIntent.clientSecret;
-      _paymentIntentStatus = paymentIntent.status!;
-    });
-    _showSnackBar('PaymentIntent status: ${paymentIntent.status!.name}');
+    setState(() => _paymentIntent = paymentIntentWithPaymentMethod);
+    _showSnackBar('Payment method collected!');
   }
 
-  void _confirmPaymentIntent(StripeTerminal terminal, String paymentIntentClientSecret) async {
-    final paymentIntent = await terminal.processPayment(paymentIntentClientSecret);
-    setState(() {
-      _paymentIntentClientSecret = paymentIntent.clientSecret;
-      _paymentIntentStatus = paymentIntent.status!;
-    });
-    _showSnackBar('PaymentIntent status: ${paymentIntent.status!.name}');
+  void _processPayment(StripeTerminal terminal, StripePaymentIntent paymentIntent) async {
+    final processedPaymentIntent = await terminal.processPayment(paymentIntent);
+    setState(() => _paymentIntent = processedPaymentIntent);
+    _showSnackBar('Payment processed!');
   }
 
   void _showSnackBar(String message) {
@@ -209,7 +208,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final terminal = _terminal;
     final paymentIntentClientSecret = _paymentIntentClientSecret;
-    final paymentIntentStatus = _paymentIntentStatus;
+    final paymentIntent = _paymentIntent;
 
     final mainTab = [
       TextButton(
@@ -283,24 +282,31 @@ class _MyAppState extends State<MyApp> {
         child: const Text('Create PaymentIntent'),
       ),
       TextButton(
+        onPressed: terminal != null && paymentIntentClientSecret != null
+            ? () => _retrievePaymentIntent(terminal, paymentIntentClientSecret)
+            : null,
+        child: const Text('Retrieve Payment Intent'),
+      ),
+      TextButton(
         onPressed: terminal != null &&
-                paymentIntentClientSecret != null &&
-                paymentIntentStatus == PaymentIntentStatus.requiresPaymentMethod
-            ? () => _collectPaymentMethod(terminal, paymentIntentClientSecret)
+                paymentIntent != null &&
+                paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
+            ? () => _collectPaymentMethod(terminal, paymentIntent)
             : null,
         child: const Text('Collect Payment Method'),
       ),
       TextButton(
-        onPressed: terminal != null && paymentIntentClientSecret != null
-            // && paymentIntentStatus == PaymentIntentStatus.requiresCapture
-            ? () => _confirmPaymentIntent(terminal, paymentIntentClientSecret)
+        onPressed: terminal != null &&
+                paymentIntent != null &&
+                paymentIntent.status == PaymentIntentStatus.requiresConfirmation
+            ? () => _processPayment(terminal, paymentIntent)
             : null,
         child: const Text('Process Payment'),
       ),
       const Divider(),
-      if (paymentIntentStatus != null)
+      if (paymentIntent != null)
         ListTile(
-          title: Text('PaymentIntent status: $paymentIntentStatus'),
+          title: Text('$paymentIntent'),
         )
     ];
     final cardTab = <Widget>[

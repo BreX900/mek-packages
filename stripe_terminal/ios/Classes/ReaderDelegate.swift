@@ -5,7 +5,7 @@ class ReaderDelegate: NSObject, BluetoothReaderDelegate, LocalMobileReaderDelega
     let handlers: StripeTerminalHandlersApi
 
     init(handlersApi: StripeTerminalHandlersApi) {
-        self.handlers = handlersApi
+        handlers = handlersApi
     }
 
     func reader(_: Reader, didReportAvailableUpdate _: ReaderSoftwareUpdate) {

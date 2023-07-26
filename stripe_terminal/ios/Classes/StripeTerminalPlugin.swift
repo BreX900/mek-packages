@@ -2,23 +2,42 @@ import Flutter
 import StripeTerminal
 import UIKit
 
-public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, ConnectionTokenProvider, TerminalDelegate {
+public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, ConnectionTokenProvider {
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let api = StripeTerminalHandlersApi(registrar.messenger())
-        let instance = StripeTerminalPlugin(api)
-        setupStripeTerminalApi(registrar.messenger(), instance)
+        let instance = StripeTerminalPlugin(registrar.messenger())
+        setStripeTerminalApiHandler(registrar.messenger(), instance)
+        instance.onAttachedToEngine()
     }
-
+    
+    private let discoverReadersController: DiscoverReadersControllerApi
     private let handlers: StripeTerminalHandlersApi
-    var readers: [Reader] = []
+    private var readers: [Reader] = []
 
-    init(_ handlers: StripeTerminalHandlersApi) {
-        self.handlers = handlers
+    init(_ binaryMessenger: FlutterBinaryMessenger) {
+        self.handlers = StripeTerminalHandlersApi(binaryMessenger)
+        self.discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
     }
 
+    public func onAttachedToEngine() {
+        self.setupDiscoverReaders()
+    }
+    
+    public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
+        self.discoverReadersController.removeHandler()
+        removeStripeTerminalApiHandler()
+        self.clean()
+    }
+    
     func onInit() async throws {
+        // If a hot restart is performed in flutter the terminal is already initialized but we need to clean it up
+        if Terminal.hasTokenProvider() {
+            clean()
+            return
+        }
+        
         Terminal.setTokenProvider(self)
-        Terminal.shared.delegate = self
+        Terminal.shared.delegate = TerminalDelegatePlugin(handlers)
     }
 
     public func fetchConnectionToken() async throws -> String {
@@ -33,7 +52,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
                 startingAfter: startingAfter
             )).0.map { $0.toApi() }
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -49,14 +68,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
                 findReader(serialNumber),
-                delegate: ReaderDelegate(handlersApi: handlers),
+                delegate: ReaderDelegatePlugin(handlers),
                 connectionConfig: BluetoothConnectionConfiguration(
                     locationId: locationId
                 )
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -73,7 +92,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -84,14 +103,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             let reader = try await Terminal.shared.connectLocalMobileReader(
                 findReader(serialNumber),
-                delegate: ReaderDelegate(handlersApi: handlers),
+                delegate: ReaderDelegatePlugin(handlers),
                 connectionConfig: LocalMobileConnectionConfiguration(
                     locationId: locationId
                 )
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -107,7 +126,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.disconnectReader()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -117,7 +136,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.setReaderDisplay(cart.toHost())
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -125,7 +144,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.clearReaderDisplay()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
@@ -141,7 +160,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             ReadReusableCardParameters(),
             completion: { paymentMethod, error in
                 if let error = error as? NSError {
-                    result.error(error.toApi(), error.localizedDescription, nil)
+                    let platformError = error.toApi()
+                    result.error(platformError.code, platformError.message, platformError.details)
                     return
                 }
                 result.success(paymentMethod!.toApi())
@@ -154,95 +174,128 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     ) async throws {
         try await cancelablesReadReusableCard.removeValue(forKey: id)?.cancel()
     }
+    
+    private var paymentIntents: [String: PaymentIntent] = [:]
 
     func onRetrievePaymentIntent(
         _ clientSecret: String
     ) async throws -> StripePaymentIntentApi {
         do {
-            return try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret).toApi()
+            let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
+            paymentIntents[paymentIntent.stripeId] = paymentIntent
+            return paymentIntent.toApi()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
 
-    private var cancelablesCollectPaymentMethod: [Int: Cancelable?] = [:]
+    private var cancelablesCollectPaymentMethod: [Int: Cancelable] = [:]
 
     func onStartCollectPaymentMethod(
         _ result: Result<StripePaymentIntentApi>,
-        _ id: Int,
-        _ clientSecret: String,
+        _ operationId: Int,
+        _ paymentIntentId: String,
         _: Bool,
         _: Bool
     ) throws {
-        cancelablesCollectPaymentMethod[id] = nil
-        Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret) { paymentIntent, error in
+        let paymentIntent = try findPaymentIntent(paymentIntentId)
+        self.cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
             if let error = error as? NSError {
-                result.error(error.toApi(), error.localizedDescription, nil)
+                let platformError = error.toApi()
+                result.error(platformError.code, platformError.message, platformError.details)
                 return
             }
-            if !self.cancelablesCollectPaymentMethod.containsKey(id) {
-                return
-            }
-
-            self.cancelablesCollectPaymentMethod[id] = Terminal.shared.collectPaymentMethod(paymentIntent!) { paymentIntent, error in
-                if let error = error as? NSError {
-                    result.error(error.toApi(), error.localizedDescription, nil)
-                    return
-                }
-                result.success(paymentIntent!.toApi())
-            }
+            self.paymentIntents[paymentIntent!.stripeId] = paymentIntent!
+            result.success(paymentIntent!.toApi())
         }
     }
 
     func onStopCollectPaymentMethod(
-        _ id: Int
+        _ operationId: Int
     ) async throws {
-        try await cancelablesCollectPaymentMethod.removeValue(forKey: id)??.cancel()
+        try await cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
 
     func onProcessPayment(
-        _ clientSecret: String
+        _ paymentIntentId: String
     ) async throws -> StripePaymentIntentApi {
+        let paymentIntent = try findPaymentIntent(paymentIntentId)
         do {
-            let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
             let (intent, error) = await Terminal.shared.processPayment(paymentIntent)
             if let error {
-                throw PlatformError(code: error.declineCode!, message: error.localizedDescription, details: nil)
+                throw PlatformError(error.declineCode!, error.localizedDescription)
             }
             return intent!.toApi()
         } catch let error as NSError {
-            throw platformError(error)
+            throw error.toApi()
         }
     }
-
-    public func terminal(_: Terminal, didReportUnexpectedReaderDisconnect reader: Reader) {
-        handlers.unexpectedReaderDisconnect(reader: reader.toApi())
+    
+    private var _discoverReaderCancelable: Cancelable? = nil
+    
+    func setupDiscoverReaders() {
+        discoverReadersController.setHandler({
+            sink, discoveryMethod, simulated, locationId -> FlutterError? in
+            let discoveryMethodHost = discoveryMethod.toHost()
+            guard let discoveryMethodHost else {
+                return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
+            }
+            
+            // Ignore error, the previous stream can no longer receive events
+            self._discoverReaderCancelable?.cancel { error in }
+            
+            self._discoverReaderCancelable = Terminal.shared.discoverReaders(
+                DiscoveryConfiguration(
+                    discoveryMethod: discoveryMethodHost,
+                    locationId: locationId,
+                    simulated: simulated
+                ),
+                delegate: DiscoveryDelegatePlugin(sink)
+            ) { error in
+                if let error = error as? NSError {
+                    let platformError = error.toApi()
+                    sink.error(platformError.code, platformError.message, platformError.details)
+                }
+                sink.endOfStream()
+            }
+            return nil
+        }, { discoveryMethod, simulated, locationId -> FlutterError? in
+            // Ignore error, flutter stream already closed
+            self._discoverReaderCancelable?.cancel { error in }
+            return nil
+        })
+    }
+    
+    private func clean() {
+        self._discoverReaderCancelable?.cancel { error in }
+        
+        self.cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
+        self.cancelablesCollectPaymentMethod.removeAll()
+        self.cancelablesReadReusableCard.values.forEach { $0.cancel { error in } }
+        self.cancelablesReadReusableCard.removeAll()
+        
+        self.readers = []
+        self.paymentIntents = [:]
     }
 
-    public func terminal(_: Terminal, didChangePaymentStatus status: PaymentStatus) {
-        handlers.paymentStatusChange(paymentStatus: status.toApi())
-    }
 
-    public func terminal(_: Terminal, didChangeConnectionStatus status: ConnectionStatus) {
-        handlers.connectionStatusChange(connectionStatus: status.toApi())
-    }
-
-    private func platformError(_ error: NSError) -> PlatformError {
-        guard error.scp_isAppleBuiltInReaderError else {
-            return PlatformError(code: "", message: error.localizedDescription, details: "\(error)")
-        }
-        return PlatformError(code: error.toApi(), message: error.localizedDescription, details: nil)
-    }
 
     private func findReader(_ serialNumber: String) throws -> Reader {
         guard let reader = readers.first(where: { $0.serialNumber == serialNumber }) else {
             throw PlatformError(
-                code: StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
-                message: "Reader with provided serial number no longer exists",
-                details: nil
+                StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
+                "Reader with provided serial number no longer exists"
             )
         }
         return reader
+    }
+    
+    private func findPaymentIntent(_ paymentIntentId: String) throws -> PaymentIntent {
+        let paymentIntent = paymentIntents[paymentIntentId]
+        guard let paymentIntent else {
+            throw PlatformError(StripeTerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
+        }
+        return paymentIntent
     }
 }
 

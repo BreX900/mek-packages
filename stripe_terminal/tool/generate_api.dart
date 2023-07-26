@@ -16,7 +16,7 @@ void main() async {
       package: 'com.stripe_terminal.api',
     ),
     swiftOptions: const SwiftOptions(
-      outputFile: 'ios/Classes/StripeTerminalApi.swift',
+      outputFile: 'ios/Classes/Api/StripeTerminalApi.swift',
     ),
   ).build();
 }

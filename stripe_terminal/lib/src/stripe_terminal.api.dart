@@ -1,3 +1,5 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 // ignore_for_file: unused_element
 
 part of 'stripe_terminal.dart';
@@ -148,17 +150,6 @@ class _$StripeTerminal {
     }
   }
 
-  Future<StripePaymentIntent> processPayment(String clientSecret) async {
-    try {
-      final result =
-          await _$channel.invokeMethod('processPayment', [clientSecret]);
-      return _$deserializeStripePaymentIntent(result as List);
-    } on PlatformException catch (exception) {
-      StripeTerminal._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
   Future<void> _init() async {
     try {
       await _$channel.invokeMethod('_init', []);
@@ -168,14 +159,14 @@ class _$StripeTerminal {
     }
   }
 
-  Future<StripePaymentMethod> _startReadReusableCard(
-    int id, {
+  Future<StripePaymentMethod> _startReadReusableCard({
+    required int operationId,
     required String? customer,
     required Map<String, String>? metadata,
   }) async {
     try {
       final result = await _$channel.invokeMethod('_startReadReusableCard',
-          [id, customer, metadata?.map((k, v) => MapEntry(k, v))]);
+          [operationId, customer, metadata?.map((k, v) => MapEntry(k, v))]);
       return _$deserializeStripePaymentMethod(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -183,24 +174,24 @@ class _$StripeTerminal {
     }
   }
 
-  Future<void> _stopReadReusableCard(int id) async {
+  Future<void> _stopReadReusableCard(int operationId) async {
     try {
-      await _$channel.invokeMethod('_stopReadReusableCard', [id]);
+      await _$channel.invokeMethod('_stopReadReusableCard', [operationId]);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;
     }
   }
 
-  Future<StripePaymentIntent> _startCollectPaymentMethod(
-    int id, {
-    required String clientSecret,
+  Future<StripePaymentIntent> _startCollectPaymentMethod({
+    required int operationId,
+    required String paymentIntentId,
     required bool moto,
     required bool skipTipping,
   }) async {
     try {
-      final result = await _$channel.invokeMethod(
-          '_startCollectPaymentMethod', [id, clientSecret, moto, skipTipping]);
+      final result = await _$channel.invokeMethod('_startCollectPaymentMethod',
+          [operationId, paymentIntentId, moto, skipTipping]);
       return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
@@ -208,9 +199,20 @@ class _$StripeTerminal {
     }
   }
 
-  Future<void> _stopCollectPaymentMethod(int id) async {
+  Future<void> _stopCollectPaymentMethod(int operationId) async {
     try {
-      await _$channel.invokeMethod('_stopCollectPaymentMethod', [id]);
+      await _$channel.invokeMethod('_stopCollectPaymentMethod', [operationId]);
+    } on PlatformException catch (exception) {
+      StripeTerminal._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<StripePaymentIntent> _processPayment(String paymentIntentId) async {
+    try {
+      final result =
+          await _$channel.invokeMethod('_processPayment', [paymentIntentId]);
+      return _$deserializeStripePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminal._throwIfIsHostException(exception);
       rethrow;

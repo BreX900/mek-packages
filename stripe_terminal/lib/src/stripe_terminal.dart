@@ -164,7 +164,11 @@ class StripeTerminal extends _$StripeTerminal {
     Map<String, String>? metadata,
   }) {
     return CancelableFuture(_stopReadReusableCard, (id) async {
-      return await _startReadReusableCard(id, customer: customer, metadata: metadata);
+      return await _startReadReusableCard(
+        operationId: id,
+        customer: customer,
+        metadata: metadata,
+      );
     });
   }
 
@@ -183,22 +187,22 @@ class StripeTerminal extends _$StripeTerminal {
   ///
   /// Only supports `swipe`, `tap` and `insert` method
   CancelableFuture<StripePaymentIntent> collectPaymentMethod(
-    String clientSecret, {
+    StripePaymentIntent paymentIntent, {
     bool moto = false,
     bool skipTipping = false,
   }) {
     return CancelableFuture(_stopCollectPaymentMethod, (id) async {
       return await _startCollectPaymentMethod(
-        id,
-        clientSecret: clientSecret,
+        operationId: id,
+        paymentIntentId: paymentIntent.id,
         moto: moto,
         skipTipping: skipTipping,
       );
     });
   }
 
-  @override
-  Future<StripePaymentIntent> processPayment(String clientSecret);
+  Future<StripePaymentIntent> processPayment(StripePaymentIntent paymentIntent) async =>
+      await _processPayment(paymentIntent.id);
 
   @MethodApi(kotlin: MethodApiType.sync)
   @override
@@ -213,26 +217,29 @@ class StripeTerminal extends _$StripeTerminal {
 
   @MethodApi(swift: MethodApiType.callbacks)
   @override
-  Future<StripePaymentMethod> _startReadReusableCard(
-    int id, {
+  Future<StripePaymentMethod> _startReadReusableCard({
+    required int operationId,
     required String? customer,
     required Map<String, String>? metadata,
   });
 
   @override
-  Future<void> _stopReadReusableCard(int id);
+  Future<void> _stopReadReusableCard(int operationId);
 
   @MethodApi(swift: MethodApiType.callbacks)
   @override
-  Future<StripePaymentIntent> _startCollectPaymentMethod(
-    int id, {
-    required String clientSecret,
+  Future<StripePaymentIntent> _startCollectPaymentMethod({
+    required int operationId,
+    required String paymentIntentId,
     required bool moto,
     required bool skipTipping,
   });
 
   @override
-  Future<void> _stopCollectPaymentMethod(int id);
+  Future<void> _stopCollectPaymentMethod(int operationId);
+
+  @override
+  Future<StripePaymentIntent> _processPayment(String paymentIntentId);
 
   static void _throwIfIsHostException(PlatformException exception) {
     final snakeCaseCode = exception.code.camelCase;

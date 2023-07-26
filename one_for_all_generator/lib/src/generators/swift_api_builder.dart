@@ -7,6 +7,7 @@ import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/emitters/swift_emitter.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
+import 'package:one_for_all_generator/src/utils.dart';
 import 'package:recase/recase.dart';
 
 class SwiftApiBuilder extends ApiBuilder {
@@ -18,14 +19,25 @@ class SwiftApiBuilder extends ApiBuilder {
   String get outputFile => options.outputFile;
 
   SwiftApiBuilder(super.pluginOptions, this.options, this.codecs) {
-    _specs.add(SwiftStruct(
+    final requiredPlatformErrorField = SwiftField(name: 'code', type: 'String');
+    final optionalPlatformErrorFields = [
+      SwiftField(name: 'message', type: 'String?'),
+      SwiftField(name: 'details', type: 'String?'),
+    ];
+    _specs.add(SwiftClass(
       name: 'PlatformError',
       implements: ['Error'],
       fields: [
-        SwiftField(name: 'code', type: 'String'),
-        SwiftField(name: 'message', type: 'String?'),
-        SwiftField(name: 'details', type: 'String?'),
+        requiredPlatformErrorField,
+        ...optionalPlatformErrorFields,
       ],
+      init: SwiftInit(
+        parameters: [
+          requiredPlatformErrorField.toInitParameter(label: '_'),
+          ...optionalPlatformErrorFields
+              .map((e) => e.toInitParameter(label: '_', defaultTo: 'nil')),
+        ],
+      ),
     ));
 
     final resultFields = [
@@ -60,8 +72,8 @@ class SwiftApiBuilder extends ApiBuilder {
           name: 'error',
           parameters: [
             SwiftParameter(label: '_', name: 'code', type: 'String'),
-            SwiftParameter(label: '_', name: 'message', type: 'String'),
-            SwiftParameter(label: '_', name: 'details', type: 'Any?'),
+            SwiftParameter(label: '_', name: 'message', type: 'String?', defaultTo: 'nil'),
+            SwiftParameter(label: '_', name: 'details', type: 'Any?', defaultTo: 'nil'),
           ],
           body: 'result(FlutterError(code: code, message: message, details: details))',
         ),
@@ -101,8 +113,8 @@ class SwiftApiBuilder extends ApiBuilder {
           name: 'error',
           parameters: [
             SwiftParameter(label: '_', name: 'code', type: 'String'),
-            SwiftParameter(label: '_', name: 'message', type: 'String'),
-            SwiftParameter(label: '_', name: 'details', type: 'Any?'),
+            SwiftParameter(label: '_', name: 'message', type: 'String?', defaultTo: 'nil'),
+            SwiftParameter(label: '_', name: 'details', type: 'Any?', defaultTo: 'nil'),
           ],
           body: 'sink(FlutterError(code: code, message: message, details: details))',
         ),
@@ -256,15 +268,23 @@ channel.setStreamHandler(ControllerHandler({ arguments, events in
       );
     }));
 
+    final channelVarAccess = 'channel${codecs.encodeName(element.name)}';
+    _specs.add(SwiftField(
+      visibility: SwiftVisibility.private,
+      modifier: SwiftFieldModifier.var$,
+      name: channelVarAccess,
+      type: 'FlutterMethodChannel?',
+      assignment: 'nil',
+    ));
     _specs.add(SwiftMethod(
-      name: 'setup${codecs.encodeName(element.name)}',
+      name: 'set${codecs.encodeName(element.name)}Handler',
       parameters: [
         const SwiftParameter(label: '_', name: 'binaryMessenger', type: 'FlutterBinaryMessenger'),
         SwiftParameter(label: '_', name: 'hostApi', type: codecs.encodeName(element.name)),
       ],
       body: '''
-let channel = FlutterMethodChannel(name: "${handler.channelName()}", binaryMessenger: binaryMessenger)
-channel.setMethodCallHandler { call, result in
+$channelVarAccess = FlutterMethodChannel(name: "${handler.channelName()}", binaryMessenger: binaryMessenger)
+$channelVarAccess!.setMethodCallHandler { call, result in
     let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
         Task {
             do {
@@ -314,6 +334,10 @@ ${switch (methodType) {
         result(FlutterError(code: "", message: error.localizedDescription, details: nil))
     }
 }''',
+    ));
+    _specs.add(SwiftMethod(
+      name: 'remove${codecs.encodeName(element.name)}Handler',
+      body: '$channelVarAccess?.setMethodCallHandler(nil)',
     ));
   }
 
@@ -368,12 +392,8 @@ channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotE
             MethodApiType.async => '''
 return try await withCheckedThrowingContinuation { continuation in
     channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
-        if let result = result as? [AnyHashable?: Any?] {
-            continuation.resume(throwing: PlatformError(
-                code: result["code"] as! String,
-                message: result["message"] as? String,
-                details: result["details"] as? String
-            ))
+        if let result = result as? FlutterError {
+            continuation.resume(throwing: result)
         } else {
             continuation.resume(returning: ${returnType is VoidType ? '()' : codecs.encodeDeserialization(returnType, 'result')})
         }
@@ -455,7 +475,8 @@ return try await withCheckedThrowingContinuation { continuation in
 
   @override
   String build() => '${SwiftEmitter().encode(SwiftLibrary(
-        imports: [
+        comments: const [generatedCodeComment],
+        imports: const [
           'Flutter',
         ],
         body: _specs,

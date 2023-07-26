@@ -1,3 +1,5 @@
+import 'package:one_for_all_generator/src/emitters/string_buffer_extensions.dart';
+
 enum SwiftVisibility { public, protected, private }
 
 class SwiftParameter {
@@ -6,12 +8,14 @@ class SwiftParameter {
   final String name;
   final String? annotation;
   final String type;
+  final String? defaultTo;
 
   const SwiftParameter({
     this.label,
     required this.name,
     this.annotation,
     required this.type,
+    this.defaultTo,
   }) : fieldName = null;
 
   SwiftParameter.fromField(
@@ -19,6 +23,7 @@ class SwiftParameter {
     String? label,
     String? name,
     this.annotation,
+    this.defaultTo,
   })  : fieldName = field.name,
         label = label ?? name ?? field.name,
         name = name ?? field.name,
@@ -92,29 +97,33 @@ class SwiftEnum extends SwiftProtocol {
 
 enum SwiftFieldModifier { var$, let }
 
-class SwiftField {
+class SwiftField extends SwiftTopLevelSpec {
   final SwiftVisibility? visibility;
   final SwiftFieldModifier modifier;
   final String name;
   final String type;
+  final String? assignment;
 
   const SwiftField({
     this.visibility,
     this.modifier = SwiftFieldModifier.let,
     required this.name,
     required this.type,
+    this.assignment,
   });
 
   SwiftParameter toInitParameter({
     String? label,
     String? name,
     String? annotation,
+    String? defaultTo,
   }) =>
       SwiftParameter.fromField(
         this,
         label: label,
         name: name,
         annotation: annotation,
+        defaultTo: defaultTo,
       );
 
   SwiftParameter toParameter({
@@ -156,12 +165,14 @@ class SwiftClass extends SwiftProtocol {
 }
 
 class SwiftLibrary extends SwiftSpec {
+  final List<String> comments;
   final List<String> imports;
   final List<SwiftTopLevelSpec> body;
 
   const SwiftLibrary({
-    required this.imports,
-    required this.body,
+    this.comments = const [],
+    this.imports = const [],
+    this.body = const [],
   });
 }
 
@@ -189,9 +200,18 @@ class SwiftEmitter {
 
   Object _encodeLibrary(SwiftLibrary spec) {
     final buffer = StringBuffer();
-    buffer.writeAll(spec.imports.map((e) => 'import $e'), '\n');
-    if (spec.imports.isNotEmpty) buffer.write('\n\n');
-    buffer.writeAll(spec.body.map(_encodeTopLevelSpec), '\n\n');
+    if (spec.comments.isNotEmpty) {
+      buffer.writeAllWith('// ', spec.comments, '\n');
+      buffer.write('\n\n');
+    }
+    if (spec.imports.isNotEmpty) {
+      buffer.writeAllWith('import ', spec.imports, '\n');
+      buffer.write('\n\n');
+    }
+    if (spec.body.isNotEmpty) {
+      buffer.writeAll(spec.body.map(_encodeTopLevelSpec), '\n\n');
+      buffer.write('\n');
+    }
     return buffer;
   }
 
@@ -200,6 +220,7 @@ class SwiftEmitter {
     buffer.write(switch (spec) {
       SwiftProtocol() => _encodeProtocol(spec),
       SwiftMethod() => _encodeMethod(spec),
+      SwiftField() => _encodeField(spec),
     });
     return buffer;
   }
@@ -231,8 +252,7 @@ class SwiftEmitter {
     if (spec is SwiftEnum) {
       buffer.write('\n');
       _indent += 1;
-      buffer.write('${_space}case ');
-      buffer.writeAll(spec.values, '\n${_space}case ');
+      buffer.writeAllWith('${_space}case ', spec.values, '\n');
       _indent += -1;
       buffer.write('\n');
     }
@@ -293,7 +313,8 @@ class SwiftEmitter {
       SwiftFieldModifier.var$ => 'var',
       SwiftFieldModifier.let => 'let',
     };
-    return '$_space${_encodeVisibility(spec.visibility)}$modifier ${spec.name}: ${spec.type}';
+    final assignment = spec.assignment != null ? '= ${spec.assignment}' : null;
+    return '$_space${_encodeVisibility(spec.visibility)}$modifier ${spec.name}: ${spec.type}$assignment';
   }
 
   Object _encodeMethod(SwiftMethod spec) {
@@ -334,6 +355,7 @@ class SwiftEmitter {
   Object _encodeParameter(SwiftParameter spec) {
     final annotation = spec.annotation != null ? '@${spec.annotation} ' : '';
     final label = spec.label != null ? '${spec.label} ' : '';
-    return '$_space$label${spec.name}: $annotation${spec.type}';
+    final defaultTo = spec.defaultTo != null ? ' = ${spec.defaultTo}' : '';
+    return '$_space$label${spec.name}: $annotation${spec.type}$defaultTo';
   }
 }

@@ -1,5 +1,6 @@
 name: example
 description: Demonstrates how to use the mek_stripe_terminal plugin.
+version: 1.0.0+1
 publish_to: 'none'
 
 environment:

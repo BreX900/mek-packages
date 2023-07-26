@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:one_for_all_generator/src/emitters/string_buffer_extensions.dart';
 
 enum KotlinVisibility { public, protected, private }
 
@@ -122,11 +123,13 @@ class KotlinClass extends KotlinInterface {
 }
 
 class KotlinLibrary extends KotlinSpec {
+  final List<String> comments;
   final String package;
   final List<String> imports;
   final List<KotlinTopLevelSpec> body;
 
   const KotlinLibrary({
+    this.comments = const [],
     required this.package,
     this.imports = const [],
     this.body = const [],
@@ -155,7 +158,7 @@ class KotlinEmitter {
     return buffer;
   }
 
-  Object _encodeTopLevelSpec(KotlinTopLevelSpec spec, {required bool isInInterface}) {
+  Object _encodeTopLevelSpec(KotlinTopLevelSpec spec, {bool isInInterface = false}) {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       KotlinInterface() => _encodeInterface(spec),
@@ -166,10 +169,23 @@ class KotlinEmitter {
 
   Object _encodeLibrary(KotlinLibrary spec) {
     final buffer = StringBuffer();
-    buffer.write('package ${spec.package}\n\n');
-    buffer.writeAll(spec.imports.map((e) => 'import $e'), '\n');
-    if (spec.imports.isNotEmpty) buffer.write('\n\n');
-    buffer.writeAll(spec.body.map(encode), '\n\n');
+    if (spec.comments.isNotEmpty) {
+      buffer.writeAllWith('// ', spec.comments, '\n');
+      buffer.write('\n\n');
+    }
+    if (spec.comments.isNotEmpty) {
+      buffer.write('package ');
+      buffer.write(spec.package);
+      buffer.write('\n\n');
+    }
+    if (spec.imports.isNotEmpty) {
+      buffer.writeAllWith('import ', spec.imports, '\n');
+      buffer.write('\n\n');
+    }
+    if (spec.body.isNotEmpty) {
+      buffer.writeAll(spec.body.map(_encodeTopLevelSpec), '\n\n');
+      buffer.write('\n');
+    }
     return buffer;
   }
 

@@ -27,15 +27,13 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
 
     func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
         do {
-            let locations = try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
+            return try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
                 limit: limit as NSNumber?,
                 endingBefore: endingBefore,
                 startingAfter: startingAfter
-            ))
-            return locations.0.map { $0.toApi() }
+            )).0.map { $0.toApi() }
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -48,11 +46,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         _ locationId: String,
         _: Bool
     ) async throws -> StripeReaderApi {
-        let reader = try findReader(serialNumber)
-
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
-                reader,
+                findReader(serialNumber),
                 delegate: ReaderDelegate(handlersApi: handlers),
                 connectionConfig: BluetoothConnectionConfiguration(
                     locationId: locationId
@@ -60,8 +56,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -69,19 +64,16 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         _ serialNumber: String,
         _ failIfInUse: Bool
     ) async throws -> StripeReaderApi {
-        let reader = try findReader(serialNumber)
-
         do {
             let reader = try await Terminal.shared.connectInternetReader(
-                reader,
+                findReader(serialNumber),
                 connectionConfig: InternetConnectionConfiguration(
                     failIfInUse: failIfInUse
                 )
             )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -89,11 +81,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         _ serialNumber: String,
         _ locationId: String
     ) async throws -> StripeReaderApi {
-        let reader = try findReader(serialNumber)
-
         do {
             let reader = try await Terminal.shared.connectLocalMobileReader(
-                reader,
+                findReader(serialNumber),
                 delegate: ReaderDelegate(handlersApi: handlers),
                 connectionConfig: LocalMobileConnectionConfiguration(
                     locationId: locationId
@@ -101,8 +91,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             )
             return reader.toApi()
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -118,7 +107,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.disconnectReader()
         } catch let error as NSError {
-            try throwPlatformError(error)
+            throw platformError(error)
         }
     }
 
@@ -128,7 +117,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.setReaderDisplay(cart.toHost())
         } catch let error as NSError {
-            try throwPlatformError(error)
+            throw platformError(error)
         }
     }
 
@@ -136,7 +125,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             try await Terminal.shared.clearReaderDisplay()
         } catch let error as NSError {
-            try throwPlatformError(error)
+            throw platformError(error)
         }
     }
 
@@ -170,11 +159,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         _ clientSecret: String
     ) async throws -> StripePaymentIntentApi {
         do {
-            let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
-            return paymentIntent.toApi()
+            return try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret).toApi()
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -219,14 +206,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
             let (intent, error) = await Terminal.shared.processPayment(paymentIntent)
-            if let error = error {
+            if let error {
                 throw PlatformError(code: error.declineCode!, message: error.localizedDescription, details: nil)
             }
-
             return intent!.toApi()
         } catch let error as NSError {
-            try throwPlatformError(error)
-            throw error
+            throw platformError(error)
         }
     }
 
@@ -242,15 +227,15 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         handlers.connectionStatusChange(connectionStatus: status.toApi())
     }
 
-    private func throwPlatformError(_ error: NSError) throws {
-        throw PlatformError(code: error.toApi(), message: error.localizedDescription, details: nil)
+    private func platformError(_ error: NSError) -> PlatformError {
+        guard error.scp_isAppleBuiltInReaderError else {
+            return PlatformError(code: "", message: error.localizedDescription, details: "\(error)")
+        }
+        return PlatformError(code: error.toApi(), message: error.localizedDescription, details: nil)
     }
 
     private func findReader(_ serialNumber: String) throws -> Reader {
-        let reader = readers.first { reader in
-            reader.serialNumber == serialNumber
-        }
-        guard let reader = reader else {
+        guard let reader = readers.first(where: { $0.serialNumber == serialNumber }) else {
             throw PlatformError(
                 code: StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
                 message: "Reader with provided serial number no longer exists",

@@ -2,9 +2,10 @@ package com.stripe_terminal.api
 
 import com.stripe.stripeterminal.external.models.*
 
-fun DiscoveryMethodApi.toHost(): DiscoveryMethod {
+fun DiscoveryMethodApi.toHost(): DiscoveryMethod? {
     return when (this) {
         DiscoveryMethodApi.BLUETOOTH_SCAN -> DiscoveryMethod.BLUETOOTH_SCAN
+        DiscoveryMethodApi.BLUETOOTH_PROXIMITY -> null
         DiscoveryMethodApi.INTERNET -> DiscoveryMethod.INTERNET
         DiscoveryMethodApi.LOCAL_MOBILE -> DiscoveryMethod.LOCAL_MOBILE
         DiscoveryMethodApi.HAND_OFF -> DiscoveryMethod.HANDOFF

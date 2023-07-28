@@ -5,6 +5,10 @@ enum DiscoveryMethod {
   /// The [bluetoothScan] discovery method searches for Stripe Terminal's bluetooth-capable readers.
   bluetoothScan,
 
+  /// The Bluetooth Proximity discovery method searches for a subset of Stripe Terminal's Bluetooth-capable readers.
+  /// Supported only in iOS
+  bluetoothProximity,
+
   /// The [internet] discovery method searches for internet-connected readers, such as the Verifone P400 or the BBPOS WisePOS E.
   internet,
 
@@ -12,11 +16,14 @@ enum DiscoveryMethod {
   localMobile,
 
   /// The [handOff] discovery method is only supported when running directly on a reader. It allows the user to delegate the collecting of payments to a separate application that is responsible for collecting payments.
+  /// Supported only in Android
   handOff,
 
   /// The [embedded] discovery method allows the user to collect payments using the reader upon which the Application is currently running.
+  /// Supported only in Android
   embedded,
 
   /// The [usb] discovery method allows the user to use the device's usb input(s) to interact with Stripe Terminal's usb-capable readers.
+  /// Supported only in Android
   usb,
 }

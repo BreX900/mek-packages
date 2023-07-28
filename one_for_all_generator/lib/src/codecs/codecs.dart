@@ -84,8 +84,8 @@ abstract class HostApiCodecs extends ApiCodecs {
   String encodeName(String name) => '${name.pascalCase}${pluginOptions.hostClassSuffix}';
 
   @override
-  String encodeType(DartType type) {
-    final encoded = encodePrimitiveType(type);
+  String encodeType(DartType type, [bool withNullability = true]) {
+    final encoded = encodePrimitiveType(type, withNullability);
     if (encoded != null) return encoded;
 
     final codec = findCodec(type);
@@ -96,5 +96,5 @@ abstract class HostApiCodecs extends ApiCodecs {
     });
   }
 
-  String? encodePrimitiveType(DartType type);
+  String? encodePrimitiveType(DartType type, [bool withNullability = true]);
 }

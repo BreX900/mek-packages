@@ -9,6 +9,7 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
     }
     
     func terminal(_ terminal: Terminal, didUpdateDiscoveredReaders readers: [Reader]) {
+        print("Discovered readers!")
         sink.success(readers.map { $0.toApi() })
     }
 }

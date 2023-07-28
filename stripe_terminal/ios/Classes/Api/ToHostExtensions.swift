@@ -6,6 +6,8 @@ extension DiscoveryMethodApi {
         switch self {
         case .bluetoothScan:
             return .bluetoothScan
+        case .bluetoothProximity:
+            return .bluetoothProximity
         case .internet:
             return .internet
         case .localMobile:

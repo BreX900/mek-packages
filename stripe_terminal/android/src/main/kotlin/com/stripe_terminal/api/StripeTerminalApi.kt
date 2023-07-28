@@ -544,7 +544,7 @@ enum class PaymentIntentStatusApi {
 }
 
 enum class DiscoveryMethodApi {
-    BLUETOOTH_SCAN, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
+    BLUETOOTH_SCAN, BLUETOOTH_PROXIMITY, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
 }
 
 enum class PaymentStatusApi {

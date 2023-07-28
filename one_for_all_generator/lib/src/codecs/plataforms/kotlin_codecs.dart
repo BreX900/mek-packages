@@ -7,8 +7,8 @@ class KotlinApiCodes extends HostApiCodecs {
   KotlinApiCodes(super.pluginOptions, super.codecs);
 
   @override
-  String? encodePrimitiveType(DartType type) {
-    final questionOrEmpty = type.isNullable ? '?' : '';
+  String? encodePrimitiveType(DartType type, [bool withNullability = true]) {
+    final questionOrEmpty = withNullability && type.isNullable ? '?' : '';
 
     if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
     if (type is VoidType) return 'Unit$questionOrEmpty';

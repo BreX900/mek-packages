@@ -22,7 +22,7 @@ class SwiftApiBuilder extends ApiBuilder {
     final requiredPlatformErrorField = SwiftField(name: 'code', type: 'String');
     final optionalPlatformErrorFields = [
       SwiftField(name: 'message', type: 'String?'),
-      SwiftField(name: 'details', type: 'String?'),
+      SwiftField(name: 'details', type: 'Any?'),
     ];
     _specs.add(SwiftClass(
       name: 'PlatformError',
@@ -388,12 +388,12 @@ channel = FlutterMethodChannel(
             MethodApiType.callbacks => throw UnsupportedError(
                 'Not supported method ${MethodApiType.callbacks} on ${element.name}.${e.name}'),
             MethodApiType.sync => '''
-channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'})''',
+channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters])''',
             MethodApiType.async => '''
 return try await withCheckedThrowingContinuation { continuation in
-    channel.invokeMethod("${handler.channelName(e)}", arguments: ${parameters.isNotEmpty ? '[$parameters]' : 'nil'}) { result in
+    channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters]) { result in
         if let result = result as? FlutterError {
-            continuation.resume(throwing: result)
+            continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
         } else {
             continuation.resume(returning: ${returnType is VoidType ? '()' : codecs.encodeDeserialization(returnType, 'result')})
         }

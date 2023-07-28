@@ -7,8 +7,8 @@ class SwiftApiCodes extends HostApiCodecs {
   SwiftApiCodes(super.pluginOptions, super.codecs);
 
   @override
-  String? encodePrimitiveType(DartType type) {
-    final questionOrEmpty = type.isNullable ? '?' : '';
+  String? encodePrimitiveType(DartType type, [bool withNullability = true]) {
+    final questionOrEmpty = withNullability && type.isNullable ? '?' : '';
 
     if (type.isDartCoreObject || type is DynamicType) return 'Any$questionOrEmpty';
     if (type is VoidType) return 'Void$questionOrEmpty';
@@ -34,18 +34,19 @@ class SwiftApiCodes extends HostApiCodecs {
     if (type is VoidType) throw StateError('Void type no supported');
 
     final questionOrEmpty = type.isNullable ? '?' : '';
+    final questionOrExclamation = type.isNullable ? '?' : '!';
 
     if (type.isPrimitive) {
-      return '$varAccess as! ${encodeType(type)}';
+      return '$varAccess as$questionOrExclamation ${encodeType(type, false)}';
     }
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '($varAccess as! [Any?]$questionOrEmpty)'
+      return '($varAccess as$questionOrExclamation [Any?])'
           '$questionOrEmpty.map { ${encodeDeserialization(typeArg, '\$0')} }';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final deserializer = 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable: Any])'
+      final deserializer = 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable?: Any?])'
           '.map { k, v in (${encodeDeserialization(typesArgs.$1, 'k')}, ${encodeDeserialization(typesArgs.$2, 'v')}) })';
       return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
     }

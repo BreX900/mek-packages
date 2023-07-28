@@ -5,12 +5,12 @@ import Flutter
 class PlatformError: Error {
     let code: String
     let message: String?
-    let details: String?
+    let details: Any?
 
     init(
         _ code: String,
         _ message: String? = nil,
-        _ details: String? = nil
+        _ details: Any? = nil
     ) {
         self.code = code
         self.message = message
@@ -181,10 +181,10 @@ class DiscoverReadersControllerApi {
         channel.setStreamHandler(ControllerHandler({ arguments, events in
             let args = arguments as! [Any?]
             let sink = ControllerSink<[StripeReaderApi]>(events) { $0.map { $0.serialize() } }
-            return onListen(sink, DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as! String?)
+            return onListen(sink, DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as? String)
         }, { arguments in
             let args = arguments as! [Any?]
-            return onCancel(DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as! String?)
+            return onCancel(DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as? String)
         }))
     }
 
@@ -218,7 +218,7 @@ func setStripeTerminalApiHandler(
             switch call.method {
             case "listLocations":
                 runAsync {
-                    let res = try await hostApi.onListLocations(args[0] as! String?, args[1] as! Int?, args[2] as! String?)
+                    let res = try await hostApi.onListLocations(args[0] as? String, args[1] as? Int, args[2] as? String)
                     return res.map { $0.serialize() }
                 }
             case "connectionStatus":
@@ -278,7 +278,7 @@ func setStripeTerminalApiHandler(
                 }
             case "_startReadReusableCard":
                 let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
-                try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as! String?, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable: Any]).map { k, v in (k as! String, v as! String) }) : nil)
+                try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as? String, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil)
             case "_stopReadReusableCard":
                 runAsync {
                     try await hostApi.onStopReadReusableCard(args[0] as! Int)
@@ -326,9 +326,9 @@ class StripeTerminalHandlersApi {
 
     func requestConnectionToken() async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
-            channel.invokeMethod("_onRequestConnectionToken", arguments: nil) { result in
+            channel.invokeMethod("_onRequestConnectionToken", arguments: []) { result in
                 if let result = result as? FlutterError {
-                    continuation.resume(throwing: result)
+                    continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
                 } else {
                     continuation.resume(returning: result as! String)
                 }
@@ -681,6 +681,7 @@ enum PaymentIntentStatusApi: Int {
 
 enum DiscoveryMethodApi: Int {
     case bluetoothScan
+    case bluetoothProximity
     case internet
     case localMobile
     case handOff

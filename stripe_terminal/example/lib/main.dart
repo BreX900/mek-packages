@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:example/stripe_api.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
-  // await Backend().run();
+  print('Stripe Secret Key: ${StripeApi.secretKey.isNotEmpty}');
 
   runApp(const MaterialApp(
     home: MyApp(),
@@ -55,14 +56,17 @@ class _MyAppState extends State<MyApp> {
     final permissions = [
       Permission.locationWhenInUse,
       Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
+      if (Platform.isAndroid) ...[
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+      ],
     ];
 
     for (final permission in permissions) {
       final result = await permission.request();
       print('$permission: $result');
-      if (result == PermissionStatus.denied) return;
+
+      if (result == PermissionStatus.denied || result == PermissionStatus.permanentlyDenied) return;
     }
 
     final stripeTerminal = await StripeTerminal.getInstance(
@@ -126,7 +130,9 @@ class _MyAppState extends State<MyApp> {
     }
 
     final connectedReader = switch (_discoveringMethod) {
-      DiscoveryMethod.bluetoothScan => await terminal.connectBluetoothReader(
+      DiscoveryMethod.bluetoothScan ||
+      DiscoveryMethod.bluetoothProximity =>
+        await terminal.connectBluetoothReader(
           reader.serialNumber,
           locationId: locationId,
         ),
@@ -214,6 +220,10 @@ class _MyAppState extends State<MyApp> {
       TextButton(
         onPressed: terminal == null ? () async => _initTerminal() : null,
         child: const Text('Init Stripe'),
+      ),
+      TextButton(
+        onPressed: () async => _api.createReader(),
+        child: const Text('Random button'),
       ),
     ];
     final locationTab = [

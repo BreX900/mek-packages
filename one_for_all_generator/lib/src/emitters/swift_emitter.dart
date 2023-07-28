@@ -313,7 +313,7 @@ class SwiftEmitter {
       SwiftFieldModifier.var$ => 'var',
       SwiftFieldModifier.let => 'let',
     };
-    final assignment = spec.assignment != null ? '= ${spec.assignment}' : null;
+    final assignment = spec.assignment != null ? ' = ${spec.assignment}' : '';
     return '$_space${_encodeVisibility(spec.visibility)}$modifier ${spec.name}: ${spec.type}$assignment';
   }
 

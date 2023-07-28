@@ -236,14 +236,13 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     func setupDiscoverReaders() {
         discoverReadersController.setHandler({
             sink, discoveryMethod, simulated, locationId -> FlutterError? in
+            
             let discoveryMethodHost = discoveryMethod.toHost()
             guard let discoveryMethodHost else {
                 return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
             }
-            
             // Ignore error, the previous stream can no longer receive events
             self._discoverReaderCancelable?.cancel { error in }
-            
             self._discoverReaderCancelable = Terminal.shared.discoverReaders(
                 DiscoveryConfiguration(
                     discoveryMethod: discoveryMethodHost,
@@ -252,7 +251,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
                 ),
                 delegate: DiscoveryDelegatePlugin(sink)
             ) { error in
-                if let error = error as? NSError {
+                if let error = error {
                     let platformError = error.toApi()
                     sink.error(platformError.code, platformError.message, platformError.details)
                 }
@@ -277,8 +276,6 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         self.readers = []
         self.paymentIntents = [:]
     }
-
-
 
     private func findReader(_ serialNumber: String) throws -> Reader {
         guard let reader = readers.first(where: { $0.serialNumber == serialNumber }) else {

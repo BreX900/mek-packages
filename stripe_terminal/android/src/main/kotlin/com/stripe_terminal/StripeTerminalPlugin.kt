@@ -24,6 +24,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import com.stripe_terminal.api.StripeTerminalApi
 import com.stripe_terminal.api.Result
+import com.stripe_terminal.api.StripeTerminalExceptionCodeApi
 import com.stripe_terminal.api.StripeTerminalHandlersApi
 import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
@@ -306,9 +307,16 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
         _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
         _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
+            val hostDiscoveryMethod = discoveryMethod.toHost()
+            if (hostDiscoveryMethod == null) {
+                sink.error("discoveryMethodNotSupported", null, null)
+                sink.endOfStream()
+                return@setHandler
+            }
+
             val config = DiscoveryConfiguration(
                 isSimulated = simulated,
-                discoveryMethod = discoveryMethod.toHost(),
+                discoveryMethod = hostDiscoveryMethod,
                 location = locationId
             )
 

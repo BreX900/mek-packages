@@ -1,7 +1,7 @@
 name: mek_stripe_terminal
 description: A new Flutter project.
-version: 0.0.1
-homepage:
+version: 1.0.0
+repository: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -26,21 +26,16 @@ dependencies:
   recase: ^4.1.0
 
   mek_data_class: ^1.4.0
-  one_for_all:
-    git:
-      url: https://github.com/BreX900/mek-packages
-      path: one_for_all
+  one_for_all: ^1.0.0
 
 dev_dependencies:
   mek_lints: ^2.0.0
 
-#  pigeon: ^10.1.3
   path: ^1.8.3
   build_runner: ^2.4.6
   mek_data_class_generator: ^1.5.1
 
-  one_for_all_generator:
-    path: ../one_for_all_generator
+  one_for_all_generator: ^1.0.0
 
   flutter_test:
     sdk: flutter
@@ -48,6 +43,8 @@ dev_dependencies:
 dependency_overrides:
   one_for_all:
     path: ../one_for_all
+  one_for_all_generator:
+    path: ../one_for_all_generator
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

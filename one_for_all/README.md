@@ -1,39 +1,139 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# one_for_all
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+OneForAll is a code generator tool to make communication between Flutter and the host platform type-safe, easier, and
+faster.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+OneForAll removes the necessity to manage strings across multiple platforms and languages. It also improves efficiency
+over common method channel patterns. Most importantly though, it removes the need to write custom platform channel code,
+since OneForAll generates it for you.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+For usage examples, see the [mek_stripe_terminal](https://pub.dev/packages/mek_stripe_terminal) package.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+### Supported Platforms
+
+Currently, one_for_all supports generating:
+
+- Dart
+- Kotlin code for Android
+- Swift code for iOS and macOS
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Add these dependencies to your pubspec.yaml:
+
+```yaml
+dependencies:
+  one_for_all:
+dev_dependencies:
+  one_for_all_generator:
+```
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+1. Annotate a class with `HostApi`
+2. Add an abstract method that returns a future
+3. Extend the generated class
+    ```dart
+    @HostApi()
+    class Terminal extends _$Terminal {
+      Future<List<Reader>> fetchReaders();
+    }
+    ```
+4. Generate code with:
+    - Default script
+      ```bash
+      dart run one_for_all_generator \
+        --api-path=lib/terminal.dart \
+        --kotlin-output-file=android/src/main/Terminal.kt \
+        --kotlin-package=com.terminal
+        --swift-output-file=ios/Classes/Terminal.swift
+       ```
+    - Custom script
+      ```dart
+      import 'package:one_for_all_generator/one_for_all_generator.dart';
+      void main() async {
+        await OneForAll.from(
+          options: const OneForAllOptions(
+            apiFile: 'lib/terminal.dart',
+          ),
+          dartOptions: const DartOptions(),
+          kotlinOptions: const KotlinOptions(
+            outputFile: 'android/src/main/Terminal.kt',
+            package: 'com.terminal',
+          ),
+          swiftOptions: const SwiftOptions(
+            outputFile: 'ios/Classes/Terminal.swift',
+          ),
+        ).build();
+      }
+      ```
+
+### Generating methods async, sync or using callbacks
+
+You can apply MethodApi annotation to yours to generate native methods in 3 different ways
 
 ```dart
-const like = 'sample';
+@HostApi()
+class Terminal extends _$Terminal {
+  @MethodApi(
+    kotlin: MethodApiType.<sync|async|callbacks>
+  swift: MethodApiType.<sync|async|callbacks>,
+  )
+  Future<List<Reader>> fetchReaders();
+}
 ```
 
-## Additional information
+- *sync*: The method to be implemented will have the parameters equal to the method in dart and the return type equal to
+  that of the Future of dart
+- *callbacks*: Allows normal use of channels. The first parameter of the method to be implemented will be a Result with
+  already implemented serialization and remaining parameters will be those of the method in dart. The method does not
+  return anything.
+- *async*: The method to be implemented will have the same parameters as dart but in kotlin it will be a `suspend`
+  method instead in swift it will be an `async` method. The return type equal to that of the Future of dart.
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+### Do you need to call flutter methods from native code?
+
+Define your own class with the methods to be made available in the various platforms and implement them. 
+Methods must begin with `on` or `_on`
+
+```dart
+@FlutterApi()
+class _FlutterTerminal {
+  Future<String> onFetchToken() async {
+    return await httpClient.getToken();
+  }
+}
+```
+
+Connect the channel to your implementation
+
+```dart
+final flutterTerminal = _FlutterTerminal();
+setupFlutterTerminal(flutterTerminal);
+```
+
+## Why was this package written if [pigeon](https://pub.dev/packages/pigeon) package exists?
+
+The purpose of this package is to make it easy to implement new plugins.
+
+### Dual classes
+- *pigeon*: you will need the schema of your class outside the `lib` directory and the code generated by pigeon.
+- *one_for_all*: you only have to write the abstract methods in your class and only what you are missing will be generated. This allows you to write one class already with all your public methods
+
+### Data class with non-final fields
+- *pigeon*: Classes generated in dart have non-final fields
+- *one_for_all*: Your classes are used directly. If you want to put final fields they will be final
+
+### Methods to data classes
+- *pigeon*: You can't add methods to data classes since they will be generated based on the schema without the methods
+- *one_for_all*: Your classes are used directly. If you want to put methods or getters you can do that
+
+### Write methods with named parameters
+- pigeon: does not support nominal or positional parameters in methods
+- one_for_all: full support for any type of dart parameter
+
+### How was the library written?
+- pigeon: It is faster in code generation but uses the Visitor pattern to build your generated code
+- one_for_all: It is slower in generating code but uses the same structure as build_runner, the Element classes.

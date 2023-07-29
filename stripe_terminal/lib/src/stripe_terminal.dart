@@ -26,7 +26,7 @@ part 'stripe_terminal_handlers.dart';
 )
 class StripeTerminal extends _$StripeTerminal {
   static StripeTerminal? _instance;
-  final StripeTerminalHandlers _handlers;
+  final _StripeTerminalHandlers _handlers;
 
   /// Creates an internal `StripeTerminal` instance
   StripeTerminal._(this._handlers);
@@ -39,7 +39,7 @@ class StripeTerminal extends _$StripeTerminal {
   }) async {
     if (_instance != null) return _instance!;
 
-    final handlers = StripeTerminalHandlers(fetchToken: fetchToken);
+    final handlers = _StripeTerminalHandlers(fetchToken: fetchToken);
     _$setupStripeTerminalHandlers(handlers);
     final stripeTerminal = StripeTerminal._(handlers);
 

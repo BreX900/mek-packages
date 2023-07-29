@@ -1,7 +1,8 @@
 name: one_for_all_generator
 description: A sample command-line application.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/BreX900/mek-packages/tree/main/one_for_all_generator
+homepage: https://pub.dev/packages/one_for_all
 
 environment:
   sdk: ^3.0.0
@@ -23,8 +24,11 @@ dependencies:
   dart_style: ^2.3.2
   source_gen: ^1.4.0
 
-  one_for_all:
-    path: ../one_for_all
+  one_for_all: ^1.0.0
 
 dev_dependencies:
   mek_lints: ^2.0.0
+
+dependency_overrides:
+  one_for_all:
+    path: ../one_for_all

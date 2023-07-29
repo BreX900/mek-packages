@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:stripe/stripe.dart';
 
 class StripeApi {
-  static const String secretKey = String.fromEnvironment('SECRET_KEY');
+  static const String secretKey = String.fromEnvironment('STRIPE_SECRET_KEY');
 
   final _stripe = Stripe(secretKey);
 

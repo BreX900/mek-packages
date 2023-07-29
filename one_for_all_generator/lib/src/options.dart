@@ -15,7 +15,11 @@ class OneForAllOptions {
 }
 
 class DartOptions {
-  const DartOptions();
+  final int pageWidth;
+
+  const DartOptions({
+    this.pageWidth = 80,
+  });
 }
 
 class KotlinOptions {

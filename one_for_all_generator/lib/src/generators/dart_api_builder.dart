@@ -214,7 +214,9 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  String build() => DartFormatter().format('${_library.build().accept(DartEmitter(
-        useNullSafetySyntax: true,
-      ))}');
+  String build() => DartFormatter(
+        pageWidth: options.pageWidth,
+      ).format('${_library.build().accept(DartEmitter(
+            useNullSafetySyntax: true,
+          ))}');
 }

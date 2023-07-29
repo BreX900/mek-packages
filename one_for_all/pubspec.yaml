@@ -1,14 +1,14 @@
 name: one_for_all
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/BreX900/mek-packages/tree/main/one_for_all
+homepage: https://pub.dev/packages/one_for_all
 
 environment:
-  sdk: ^3.0.5
+  sdk: ^3.0.0
 
 dependencies:
-  meta: ^1.9.1
+  meta: ^1.8.0
 
 dev_dependencies:
   mek_lints: ^2.0.0
-  test: ^1.21.0

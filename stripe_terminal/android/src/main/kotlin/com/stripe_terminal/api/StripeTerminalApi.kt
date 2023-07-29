@@ -275,7 +275,7 @@ class DiscoverReadersControllerApi(
 class StripeTerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: MethodChannel = MethodChannel(binaryMessenger, "StripeTerminalHandlers")
+    private val channel: MethodChannel = MethodChannel(binaryMessenger, "_StripeTerminalHandlers")
 
     fun requestConnectionToken(
         onError: (code: String, message: String?, details: Any?) -> Unit,

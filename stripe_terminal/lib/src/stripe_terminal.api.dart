@@ -220,8 +220,8 @@ class _$StripeTerminal {
   }
 }
 
-void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
-  const channel = MethodChannel('StripeTerminalHandlers');
+void _$setupStripeTerminalHandlers(_StripeTerminalHandlers hostApi) {
+  const channel = MethodChannel('_StripeTerminalHandlers');
   channel.setMethodCallHandler((call) async {
     final args = call.arguments as List<Object?>;
     return switch (call.method) {
@@ -237,7 +237,7 @@ void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
       '_onReportReaderSoftwareUpdateProgress' =>
         await hostApi._onReportReaderSoftwareUpdateProgress(args[0] as double),
       _ => throw UnsupportedError(
-          'StripeTerminalHandlers#Flutter.${call.method} method'),
+          '_StripeTerminalHandlers#Flutter.${call.method} method'),
     };
   });
 }

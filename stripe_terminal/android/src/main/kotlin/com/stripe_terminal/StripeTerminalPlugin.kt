@@ -28,6 +28,7 @@ import com.stripe_terminal.api.StripeTerminalExceptionCodeApi
 import com.stripe_terminal.api.StripeTerminalHandlersApi
 import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
+import com.stripe_terminal.plugin.ReaderDelegatePlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 
@@ -120,7 +121,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
                 locationId = locationId,
                 autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect
             ),
-            object : BluetoothReaderListener {},
+            ReaderDelegatePlugin(_handlers),
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
             }
@@ -193,22 +194,22 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     override fun onStartReadReusableCard(
         result: Result<StripePaymentMethodApi>,
-        id: Long,
+        operationId: Long,
         customer: String?,
         metadata: HashMap<String, String>?,
     ) {
         val params = ReadReusableCardParameters.Builder()
         if (customer != null) params.setCustomer(customer)
         if (metadata != null) params.putAllMetadata(metadata)
-        _cancelablesReadReusableCard[id] = _terminal.readReusableCard(params.build(),
+        _cancelablesReadReusableCard[operationId] = _terminal.readReusableCard(params.build(),
             object : TerminalErrorHandler(result::error), PaymentMethodCallback {
                 override fun onFailure(e: TerminalException) {
-                    _cancelablesReadReusableCard.remove(id)
+                    _cancelablesReadReusableCard.remove(operationId)
                     super.onFailure(e)
                 }
 
                 override fun onSuccess(paymentMethod: PaymentMethod) {
-                    _cancelablesReadReusableCard.remove(id)
+                    _cancelablesReadReusableCard.remove(operationId)
                     result.success(paymentMethod.toApi())
                 }
             })
@@ -216,9 +217,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     override fun onStopReadReusableCard(
         result: Result<Unit>,
-        id: Long,
+        operationId: Long,
     ) {
-        _cancelablesReadReusableCard.remove(id)
+        _cancelablesReadReusableCard.remove(operationId)
             ?.cancel(object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
             })

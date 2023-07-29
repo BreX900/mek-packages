@@ -319,7 +319,7 @@ class StripeTerminalHandlersApi {
         _ binaryMessenger: FlutterBinaryMessenger
     ) {
         channel = FlutterMethodChannel(
-            name: "StripeTerminalHandlers",
+            name: "_StripeTerminalHandlers",
             binaryMessenger: binaryMessenger
         )
     }

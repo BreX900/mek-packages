@@ -1,7 +1,7 @@
 part of 'stripe_terminal.dart';
 
 @FlutterApi()
-class StripeTerminalHandlers {
+class _StripeTerminalHandlers {
   final Future<String> Function() _fetchToken;
 
   final _unexpectedReaderDisconnectController = StreamController<StripeReader>.broadcast();
@@ -21,7 +21,7 @@ class StripeTerminalHandlers {
   Stream<double> get reportReaderSoftwareUpdateProgressStream =>
       _reportReaderSoftwareUpdateProgressController.stream;
 
-  StripeTerminalHandlers({
+  _StripeTerminalHandlers({
     required Future<String> Function() fetchToken,
   }) : _fetchToken = fetchToken;
 

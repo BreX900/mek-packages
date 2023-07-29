@@ -35,12 +35,12 @@ class _MyAppState extends State<MyApp> {
   bool _isSimulated = true;
   var _discoveringMethod = DiscoveryMethod.bluetoothScan;
   StreamSubscription? _discoverReaderSub;
-  var _readers = const <StripeReader>[];
+  var _readers = const <Reader>[];
   StreamSubscription? _onUnexpectedReaderDisconnectSub;
-  StripeReader? _reader;
+  Reader? _reader;
 
   String? _paymentIntentClientSecret;
-  StripePaymentIntent? _paymentIntent;
+  PaymentIntent? _paymentIntent;
 
   @override
   void dispose() {
@@ -115,7 +115,7 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Connection status: ${status.name}');
   }
 
-  void _toggleReader(StripeTerminal terminal, StripeReader reader) async {
+  void _toggleReader(StripeTerminal terminal, Reader reader) async {
     if (_reader != null) {
       await terminal.disconnectReader();
       _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
@@ -188,7 +188,7 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Payment intent retrieved!');
   }
 
-  void _collectPaymentMethod(StripeTerminal terminal, StripePaymentIntent paymentIntent) async {
+  void _collectPaymentMethod(StripeTerminal terminal, PaymentIntent paymentIntent) async {
     final paymentIntentWithPaymentMethod = await terminal.collectPaymentMethod(
       paymentIntent,
       skipTipping: true,
@@ -197,7 +197,7 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Payment method collected!');
   }
 
-  void _processPayment(StripeTerminal terminal, StripePaymentIntent paymentIntent) async {
+  void _processPayment(StripeTerminal terminal, PaymentIntent paymentIntent) async {
     final processedPaymentIntent = await terminal.processPayment(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
     _showSnackBar('Payment processed!');

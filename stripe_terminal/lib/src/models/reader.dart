@@ -3,7 +3,7 @@ import 'package:mek_data_class/mek_data_class.dart';
 part 'reader.g.dart';
 
 @DataClass()
-class StripeReader with _$StripeReader {
+class Reader with _$Reader {
   final LocationStatus locationStatus;
   final double batteryLevel;
   final DeviceType deviceType;
@@ -13,7 +13,7 @@ class StripeReader with _$StripeReader {
   final String serialNumber;
   final String? label;
 
-  const StripeReader({
+  const Reader({
     required this.locationStatus,
     required this.batteryLevel,
     required this.deviceType,

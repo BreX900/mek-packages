@@ -4,7 +4,7 @@ import 'package:mek_stripe_terminal/src/models/location.dart';
 part 'payment_method.g.dart';
 
 @DataClass()
-class StripePaymentMethod with _$StripePaymentMethod {
+class PaymentMethod with _$PaymentMethod {
   final String id;
   // final BillingDetails billingDetails;
   final CardDetails? cardDetails;
@@ -14,7 +14,7 @@ class StripePaymentMethod with _$StripePaymentMethod {
   final Map<String, String>? metadata;
   // final String type;
 
-  const StripePaymentMethod({
+  const PaymentMethod({
     required this.id,
     required this.metadata,
     // required this.billingDetails,

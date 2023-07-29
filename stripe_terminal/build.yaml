@@ -1,0 +1,15 @@
+targets:
+  $default:
+    sources:
+      exclude:
+        - 'test/**'
+    builders:
+      source_gen:combining_builder:
+        generate_for:
+          - 'lib/**/models/*.dart'
+
+      mek_data_class_generator|data_class:
+        generate_for:
+          - 'lib/**/models/*.dart'
+        options:
+          page_width: 100

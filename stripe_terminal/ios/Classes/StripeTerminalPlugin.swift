@@ -64,7 +64,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         _ serialNumber: String,
         _ locationId: String,
         _: Bool
-    ) async throws -> StripeReaderApi {
+    ) async throws -> ReaderApi {
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
                 findReader(serialNumber),
@@ -82,7 +82,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     func onConnectInternetReader(
         _ serialNumber: String,
         _ failIfInUse: Bool
-    ) async throws -> StripeReaderApi {
+    ) async throws -> ReaderApi {
         do {
             let reader = try await Terminal.shared.connectInternetReader(
                 findReader(serialNumber),
@@ -99,7 +99,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     func onConnectMobileReader(
         _ serialNumber: String,
         _ locationId: String
-    ) async throws -> StripeReaderApi {
+    ) async throws -> ReaderApi {
         do {
             let reader = try await Terminal.shared.connectLocalMobileReader(
                 findReader(serialNumber),
@@ -114,7 +114,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         }
     }
 
-    func onConnectedReader() async throws -> StripeReaderApi? {
+    func onConnectedReader() async throws -> ReaderApi? {
         return Terminal.shared.connectedReader?.toApi()
     }
 
@@ -151,7 +151,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     private var cancelablesReadReusableCard: [Int: Cancelable] = [:]
 
     func onStartReadReusableCard(
-        _ result: Result<StripePaymentMethodApi>,
+        _ result: Result<PaymentMethodApi>,
         _ id: Int,
         _: String?,
         _: [String: String]?
@@ -179,7 +179,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
 
     func onRetrievePaymentIntent(
         _ clientSecret: String
-    ) async throws -> StripePaymentIntentApi {
+    ) async throws -> PaymentIntentApi {
         do {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
             paymentIntents[paymentIntent.stripeId] = paymentIntent
@@ -192,7 +192,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     private var cancelablesCollectPaymentMethod: [Int: Cancelable] = [:]
 
     func onStartCollectPaymentMethod(
-        _ result: Result<StripePaymentIntentApi>,
+        _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
         _: Bool,
@@ -218,7 +218,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
 
     func onProcessPayment(
         _ paymentIntentId: String
-    ) async throws -> StripePaymentIntentApi {
+    ) async throws -> PaymentIntentApi {
         let paymentIntent = try findPaymentIntent(paymentIntentId)
         do {
             let (intent, error) = await Terminal.shared.processPayment(paymentIntent)

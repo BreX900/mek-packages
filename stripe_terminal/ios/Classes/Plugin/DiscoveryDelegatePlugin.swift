@@ -2,9 +2,9 @@ import Foundation
 import StripeTerminal
 
 class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
-    let sink: ControllerSink<[StripeReaderApi]>
+    let sink: ControllerSink<[ReaderApi]>
     
-    init(_ sink: ControllerSink<[StripeReaderApi]>) {
+    init(_ sink: ControllerSink<[ReaderApi]>) {
         self.sink = sink
     }
     

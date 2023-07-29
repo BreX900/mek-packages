@@ -8,13 +8,13 @@ environment:
   flutter: ">=3.10.0"
 
 scripts:
+  bootstrap: dart pub global activate index_generator
+
+  # To generate library dart file
   build:library: index_generator
-
-  build:api: >-
-    dart run pigeon
-    --input schema/stripe_terminal_schema.dart
-    --dart_out lib/src/stripe_terminal.dart
-
+  # To generate code to communicate between flutter and various platforms
+  build:api: dart run tool/generate_api.dart
+  # To generate *.g.dart files
   build:runner: dart run build_runner watch --delete-conflicting-outputs
 
 dependencies:

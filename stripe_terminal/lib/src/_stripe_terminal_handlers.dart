@@ -4,14 +4,14 @@ part of 'stripe_terminal.dart';
 class _StripeTerminalHandlers {
   final Future<String> Function() _fetchToken;
 
-  final _unexpectedReaderDisconnectController = StreamController<StripeReader>.broadcast();
+  final _unexpectedReaderDisconnectController = StreamController<Reader>.broadcast();
   final _connectionStatusChangeController = StreamController<ConnectionStatus>.broadcast();
   final _paymentStatusChangeController = StreamController<PaymentStatus>.broadcast();
 
   final _availableUpdateController = StreamController<bool>.broadcast();
   final _reportReaderSoftwareUpdateProgressController = StreamController<double>.broadcast();
 
-  Stream<StripeReader> get unexpectedReaderDisconnectStream =>
+  Stream<Reader> get unexpectedReaderDisconnectStream =>
       _unexpectedReaderDisconnectController.stream;
   Stream<ConnectionStatus> get connectionStatusChangeStream =>
       _connectionStatusChangeController.stream;
@@ -28,7 +28,7 @@ class _StripeTerminalHandlers {
   @MethodApi(kotlin: MethodApiType.callbacks, swift: MethodApiType.async)
   Future<String> _onRequestConnectionToken() async => await _fetchToken();
 
-  Future<void> _onUnexpectedReaderDisconnect(StripeReader reader) async =>
+  Future<void> _onUnexpectedReaderDisconnect(Reader reader) async =>
       _unexpectedReaderDisconnectController.add(reader);
 
   Future<void> _onConnectionStatusChange(ConnectionStatus connectionStatus) async =>

@@ -14,8 +14,8 @@ extension Location {
 }
 
 extension Reader {
-    func toApi() -> StripeReaderApi {
-        return StripeReaderApi(
+    func toApi() -> ReaderApi {
+        return ReaderApi(
             locationStatus: locationStatus.toApi(),
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
             deviceType: deviceType.toApi(),
@@ -160,8 +160,8 @@ extension PaymentStatus {
 }
 
 extension PaymentMethod {
-    func toApi() -> StripePaymentMethodApi {
-        return StripePaymentMethodApi(
+    func toApi() -> PaymentMethodApi {
+        return PaymentMethodApi(
             id: stripeId,
             cardDetails: card?.toApi(),
             customer: customer,
@@ -232,8 +232,8 @@ extension CardFundingType {
 }
 
 extension PaymentIntent {
-    func toApi() -> StripePaymentIntentApi {
-        return StripePaymentIntentApi(
+    func toApi() -> PaymentIntentApi {
+        return PaymentIntentApi(
             id: stripeId,
             amount: Double(amount),
             amountCapturable: 0,

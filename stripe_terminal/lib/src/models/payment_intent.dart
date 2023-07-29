@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 part 'payment_intent.g.dart';
 
 @DataClass()
-class StripePaymentIntent with _$StripePaymentIntent {
+class PaymentIntent with _$PaymentIntent {
   final String id;
   final double amount;
   final double amountCapturable;
@@ -33,14 +33,14 @@ class StripePaymentIntent with _$StripePaymentIntent {
   final String? transferGroup;
 
   @internal
-  const StripePaymentIntent({
+  const PaymentIntent({
     required this.id,
     required this.amount,
     required this.amountCapturable,
     required this.amountReceived,
     required this.created,
     required this.status,
-    this.applicationFeeAmount,
+    required this.applicationFeeAmount,
     this.livemode = true,
     this.metadata = const {},
     this.application,

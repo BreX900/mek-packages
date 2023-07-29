@@ -16,8 +16,8 @@ import 'package:mek_stripe_terminal/src/stripe_terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:recase/recase.dart';
 
+part '_stripe_terminal_handlers.dart';
 part 'stripe_terminal.api.dart';
-part 'stripe_terminal_handlers.dart';
 
 @HostApi(
   hostExceptionHandler: StripeTerminal._throwIfIsHostException,
@@ -64,16 +64,16 @@ class StripeTerminal extends _$StripeTerminal {
 
   Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
 
-  StreamController<List<StripeReader>>? _controller;
+  StreamController<List<Reader>>? _controller;
 
   /// Begins discovering readers matching the given DiscoveryConfiguration.
-  Stream<List<StripeReader>> discoverReaders({
+  Stream<List<Reader>> discoverReaders({
     DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
     bool simulated = false,
     String? locationId,
   }) {
     unawaited(_controller?.close());
-    final controller = StreamController<List<StripeReader>>(sync: true);
+    final controller = StreamController<List<Reader>>(sync: true);
     _controller = controller;
     late StreamSubscription subscription;
     controller.onListen = () {
@@ -98,7 +98,7 @@ class StripeTerminal extends _$StripeTerminal {
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
-  Future<StripeReader> connectBluetoothReader(
+  Future<Reader> connectBluetoothReader(
     String serialNumber, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
@@ -109,7 +109,7 @@ class StripeTerminal extends _$StripeTerminal {
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
-  Future<StripeReader> connectInternetReader(
+  Future<Reader> connectInternetReader(
     String serialNumber, {
     bool failIfInUse = false,
   });
@@ -118,7 +118,7 @@ class StripeTerminal extends _$StripeTerminal {
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
   @override
-  Future<StripeReader> connectMobileReader(
+  Future<Reader> connectMobileReader(
     String serialNumber, {
     required String locationId,
   });
@@ -126,14 +126,13 @@ class StripeTerminal extends _$StripeTerminal {
   /// Fetches the connected reader from the SDK. `null` if not connected
   @MethodApi(kotlin: MethodApiType.sync)
   @override
-  Future<StripeReader?> connectedReader();
+  Future<Reader?> connectedReader();
 
   /// Attempts to disconnect from the currently connected reader.
   @override
   Future<void> disconnectReader();
 
-  Stream<StripeReader> get onUnexpectedReaderDisconnect =>
-      _handlers.unexpectedReaderDisconnectStream;
+  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
   @MethodApi(kotlin: MethodApiType.sync)
   @override
@@ -159,7 +158,7 @@ class StripeTerminal extends _$StripeTerminal {
   /// Extracts payment method from the reader
   ///
   /// Only support `insert` operation on the reader
-  CancelableFuture<StripePaymentMethod> readReusableCard({
+  CancelableFuture<PaymentMethod> readReusableCard({
     String? customer,
     Map<String, String>? metadata,
   }) {
@@ -177,7 +176,7 @@ class StripeTerminal extends _$StripeTerminal {
   /// Payment intent is supposed to be generated on your backend and the `clientSecret` of the payment intent
   /// should be passed to this function.
   @override
-  Future<StripePaymentIntent> retrievePaymentIntent(String clientSecret);
+  Future<PaymentIntent> retrievePaymentIntent(String clientSecret);
 
   Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
 
@@ -186,8 +185,8 @@ class StripeTerminal extends _$StripeTerminal {
   /// should return an instance of `StripePaymentIntent` with status `requiresPaymentMethod`;
   ///
   /// Only supports `swipe`, `tap` and `insert` method
-  CancelableFuture<StripePaymentIntent> collectPaymentMethod(
-    StripePaymentIntent paymentIntent, {
+  CancelableFuture<PaymentIntent> collectPaymentMethod(
+    PaymentIntent paymentIntent, {
     bool moto = false,
     bool skipTipping = false,
   }) {
@@ -201,7 +200,7 @@ class StripeTerminal extends _$StripeTerminal {
     });
   }
 
-  Future<StripePaymentIntent> processPayment(StripePaymentIntent paymentIntent) async =>
+  Future<PaymentIntent> processPayment(PaymentIntent paymentIntent) async =>
       await _processPayment(paymentIntent.id);
 
   @MethodApi(kotlin: MethodApiType.sync)
@@ -209,7 +208,7 @@ class StripeTerminal extends _$StripeTerminal {
   Future<void> _init();
 
   @override
-  Stream<List<StripeReader>> _discoverReaders({
+  Stream<List<Reader>> _discoverReaders({
     DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
     bool simulated = false,
     String? locationId,
@@ -217,7 +216,7 @@ class StripeTerminal extends _$StripeTerminal {
 
   @MethodApi(swift: MethodApiType.callbacks)
   @override
-  Future<StripePaymentMethod> _startReadReusableCard({
+  Future<PaymentMethod> _startReadReusableCard({
     required int operationId,
     required String? customer,
     required Map<String, String>? metadata,
@@ -228,7 +227,7 @@ class StripeTerminal extends _$StripeTerminal {
 
   @MethodApi(swift: MethodApiType.callbacks)
   @override
-  Future<StripePaymentIntent> _startCollectPaymentMethod({
+  Future<PaymentIntent> _startCollectPaymentMethod({
     required int operationId,
     required String paymentIntentId,
     required bool moto,
@@ -239,7 +238,7 @@ class StripeTerminal extends _$StripeTerminal {
   Future<void> _stopCollectPaymentMethod(int operationId);
 
   @override
-  Future<StripePaymentIntent> _processPayment(String paymentIntentId);
+  Future<PaymentIntent> _processPayment(String paymentIntentId);
 
   static void _throwIfIsHostException(PlatformException exception) {
     final snakeCaseCode = exception.code.camelCase;

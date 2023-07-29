@@ -68,25 +68,25 @@ interface StripeTerminalApi {
     fun onConnectionStatus(): ConnectionStatusApi
 
     fun onConnectBluetoothReader(
-        result: Result<StripeReaderApi>,
+        result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
         autoReconnectOnUnexpectedDisconnect: Boolean,
     )
 
     fun onConnectInternetReader(
-        result: Result<StripeReaderApi>,
+        result: Result<ReaderApi>,
         serialNumber: String,
         failIfInUse: Boolean,
     )
 
     fun onConnectMobileReader(
-        result: Result<StripeReaderApi>,
+        result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
     )
 
-    fun onConnectedReader(): StripeReaderApi?
+    fun onConnectedReader(): ReaderApi?
 
     fun onDisconnectReader(
         result: Result<Unit>,
@@ -106,14 +106,14 @@ interface StripeTerminalApi {
     )
 
     fun onRetrievePaymentIntent(
-        result: Result<StripePaymentIntentApi>,
+        result: Result<PaymentIntentApi>,
         clientSecret: String,
     )
 
     fun onInit()
 
     fun onStartReadReusableCard(
-        result: Result<StripePaymentMethodApi>,
+        result: Result<PaymentMethodApi>,
         operationId: Long,
         customer: String?,
         metadata: HashMap<String, String>?,
@@ -125,7 +125,7 @@ interface StripeTerminalApi {
     )
 
     fun onStartCollectPaymentMethod(
-        result: Result<StripePaymentIntentApi>,
+        result: Result<PaymentIntentApi>,
         operationId: Long,
         paymentIntentId: String,
         moto: Boolean,
@@ -138,7 +138,7 @@ interface StripeTerminalApi {
     )
 
     fun onProcessPayment(
-        result: Result<StripePaymentIntentApi>,
+        result: Result<PaymentIntentApi>,
         paymentIntentId: String,
     )
 
@@ -164,15 +164,15 @@ interface StripeTerminalApi {
                     result.success(res.ordinal)
                 }
                 "connectBluetoothReader" -> {
-                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    val res = Result<ReaderApi>(result) { it.serialize() }
                     onConnectBluetoothReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
                 }
                 "connectInternetReader" -> {
-                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    val res = Result<ReaderApi>(result) { it.serialize() }
                     onConnectInternetReader(res, args[0] as String, args[1] as Boolean)
                 }
                 "connectMobileReader" -> {
-                    val res = Result<StripeReaderApi>(result) { it.serialize() }
+                    val res = Result<ReaderApi>(result) { it.serialize() }
                     onConnectMobileReader(res, args[0] as String, args[1] as String)
                 }
                 "connectedReader" -> {
@@ -196,7 +196,7 @@ interface StripeTerminalApi {
                     onClearReaderDisplay(res)
                 }
                 "retrievePaymentIntent" -> {
-                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onRetrievePaymentIntent(res, args[0] as String)
                 }
                 "_init" -> {
@@ -204,7 +204,7 @@ interface StripeTerminalApi {
                     result.success(null)
                 }
                 "_startReadReusableCard" -> {
-                    val res = Result<StripePaymentMethodApi>(result) { it.serialize() }
+                    val res = Result<PaymentMethodApi>(result) { it.serialize() }
                     onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
                 }
                 "_stopReadReusableCard" -> {
@@ -212,7 +212,7 @@ interface StripeTerminalApi {
                     onStopReadReusableCard(res, (args[0] as Number).toLong())
                 }
                 "_startCollectPaymentMethod" -> {
-                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
                 }
                 "_stopCollectPaymentMethod" -> {
@@ -220,7 +220,7 @@ interface StripeTerminalApi {
                     onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
                 }
                 "_processPayment" -> {
-                    val res = Result<StripePaymentIntentApi>(result) { it.serialize() }
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onProcessPayment(res, args[0] as String)
                 }
             }
@@ -256,13 +256,13 @@ class DiscoverReadersControllerApi(
     private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminal#_discoverReaders")
 
     fun setHandler(
-        onListen: (sink: ControllerSink<List<StripeReaderApi>>, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String?) -> Unit,
+        onListen: (sink: ControllerSink<List<ReaderApi>>, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String?) -> Unit,
         onCancel: () -> Unit,
     ) {
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
-                val sink = ControllerSink<List<StripeReaderApi>>(events) {it.map { it.serialize()} }
+                val sink = ControllerSink<List<ReaderApi>>(events) {it.map { it.serialize()} }
                 onListen(sink, (args[0] as Int).let { DiscoveryMethodApi.values()[it] }, args[1] as Boolean, args[2] as String?)
             }
             override fun onCancel(arguments: Any?) = onCancel()
@@ -295,7 +295,7 @@ class StripeTerminalHandlersApi(
     }
 
     fun unexpectedReaderDisconnect(
-        reader: StripeReaderApi,
+        reader: ReaderApi,
     ) {
         channel.invokeMethod("_onUnexpectedReaderDisconnect", listOf<Any?>(reader.serialize()))
     }
@@ -363,7 +363,7 @@ data class AddressApi(
     }
 }
 
-data class StripeReaderApi(
+data class ReaderApi(
     val locationStatus: LocationStatusApi,
     val batteryLevel: Double,
     val deviceType: DeviceTypeApi,
@@ -425,7 +425,7 @@ data class CartLineItemApi(
     }
 }
 
-data class StripePaymentIntentApi(
+data class PaymentIntentApi(
     val id: String,
     val amount: Double,
     val amountCapturable: Double,
@@ -483,7 +483,7 @@ data class StripePaymentIntentApi(
     }
 }
 
-data class StripePaymentMethodApi(
+data class PaymentMethodApi(
     val id: String,
     val cardDetails: CardDetailsApi?,
     val customer: String?,

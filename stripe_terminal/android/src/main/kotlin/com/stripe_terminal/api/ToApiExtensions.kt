@@ -3,8 +3,8 @@ package com.stripe_terminal.api
 import com.stripe_terminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
 
-fun Reader.toApi(): StripeReaderApi {
-    return StripeReaderApi(
+fun Reader.toApi(): ReaderApi {
+    return ReaderApi(
         locationStatus = locationStatus.toApi(),
         batteryLevel = batteryLevel?.toDouble() ?: -1.0,
         deviceType = deviceType.toApi(),
@@ -51,8 +51,8 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
     }
 }
 
-fun PaymentMethod.toApi(): StripePaymentMethodApi {
-    return StripePaymentMethodApi(
+fun PaymentMethod.toApi(): PaymentMethodApi {
+    return PaymentMethodApi(
         cardDetails = cardDetails?.toApi(),
 //        cardPresentDetails
         customer = customer,
@@ -76,8 +76,8 @@ fun CardDetails.toApi(): CardDetailsApi {
     )
 }
 
-fun PaymentIntent.toApi(): StripePaymentIntentApi {
-    return StripePaymentIntentApi(
+fun PaymentIntent.toApi(): PaymentIntentApi {
+    return PaymentIntentApi(
         amount = amount.toDouble(),
         amountCapturable = amountCapturable.toDouble(),
 //         amountDetails

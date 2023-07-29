@@ -6,12 +6,12 @@ part of 'reader.dart';
 // DataClassGenerator
 // **************************************************************************
 
-mixin _$StripeReader {
-  StripeReader get _self => this as StripeReader;
+mixin _$Reader {
+  Reader get _self => this as Reader;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StripeReader &&
+      other is Reader &&
           runtimeType == other.runtimeType &&
           _self.locationStatus == other.locationStatus &&
           _self.batteryLevel == other.batteryLevel &&
@@ -36,7 +36,7 @@ mixin _$StripeReader {
   }
 
   @override
-  String toString() => (ClassToString('StripeReader')
+  String toString() => (ClassToString('Reader')
         ..add('locationStatus', _self.locationStatus)
         ..add('batteryLevel', _self.batteryLevel)
         ..add('deviceType', _self.deviceType)

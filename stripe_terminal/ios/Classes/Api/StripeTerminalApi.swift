@@ -105,19 +105,19 @@ protocol StripeTerminalApi {
         _ serialNumber: String,
         _ locationId: String,
         _ autoReconnectOnUnexpectedDisconnect: Bool
-    ) async throws -> StripeReaderApi
+    ) async throws -> ReaderApi
 
     func onConnectInternetReader(
         _ serialNumber: String,
         _ failIfInUse: Bool
-    ) async throws -> StripeReaderApi
+    ) async throws -> ReaderApi
 
     func onConnectMobileReader(
         _ serialNumber: String,
         _ locationId: String
-    ) async throws -> StripeReaderApi
+    ) async throws -> ReaderApi
 
-    func onConnectedReader() async throws -> StripeReaderApi?
+    func onConnectedReader() async throws -> ReaderApi?
 
     func onDisconnectReader() async throws -> Void
 
@@ -133,12 +133,12 @@ protocol StripeTerminalApi {
 
     func onRetrievePaymentIntent(
         _ clientSecret: String
-    ) async throws -> StripePaymentIntentApi
+    ) async throws -> PaymentIntentApi
 
     func onInit() async throws -> Void
 
     func onStartReadReusableCard(
-        _ result: Result<StripePaymentMethodApi>,
+        _ result: Result<PaymentMethodApi>,
         _ operationId: Int,
         _ customer: String?,
         _ metadata: [String: String]?
@@ -149,7 +149,7 @@ protocol StripeTerminalApi {
     ) async throws -> Void
 
     func onStartCollectPaymentMethod(
-        _ result: Result<StripePaymentIntentApi>,
+        _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
         _ moto: Bool,
@@ -162,7 +162,7 @@ protocol StripeTerminalApi {
 
     func onProcessPayment(
         _ paymentIntentId: String
-    ) async throws -> StripePaymentIntentApi
+    ) async throws -> PaymentIntentApi
 }
 
 class DiscoverReadersControllerApi {
@@ -175,12 +175,12 @@ class DiscoverReadersControllerApi {
     }
 
     func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<[StripeReaderApi]>, _ discoveryMethod: DiscoveryMethodApi, _ simulated: Bool, _ locationId: String?) -> FlutterError?,
+        _ onListen: @escaping (_ sink: ControllerSink<[ReaderApi]>, _ discoveryMethod: DiscoveryMethodApi, _ simulated: Bool, _ locationId: String?) -> FlutterError?,
         _ onCancel: @escaping (_ discoveryMethod: DiscoveryMethodApi, _ simulated: Bool, _ locationId: String?) -> FlutterError?
     ) {
         channel.setStreamHandler(ControllerHandler({ arguments, events in
             let args = arguments as! [Any?]
-            let sink = ControllerSink<[StripeReaderApi]>(events) { $0.map { $0.serialize() } }
+            let sink = ControllerSink<[ReaderApi]>(events) { $0.map { $0.serialize() } }
             return onListen(sink, DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as? String)
         }, { arguments in
             let args = arguments as! [Any?]
@@ -277,7 +277,7 @@ func setStripeTerminalApiHandler(
                     return nil
                 }
             case "_startReadReusableCard":
-                let res = Result<StripePaymentMethodApi>(result) { $0.serialize() }
+                let res = Result<PaymentMethodApi>(result) { $0.serialize() }
                 try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as? String, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil)
             case "_stopReadReusableCard":
                 runAsync {
@@ -285,7 +285,7 @@ func setStripeTerminalApiHandler(
                     return nil
                 }
             case "_startCollectPaymentMethod":
-                let res = Result<StripePaymentIntentApi>(result) { $0.serialize() }
+                let res = Result<PaymentIntentApi>(result) { $0.serialize() }
                 try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
             case "_stopCollectPaymentMethod":
                 runAsync {
@@ -337,7 +337,7 @@ class StripeTerminalHandlersApi {
     }
 
     func unexpectedReaderDisconnect(
-        reader: StripeReaderApi
+        reader: ReaderApi
     ) {
         channel.invokeMethod("_onUnexpectedReaderDisconnect", arguments: [reader.serialize()])
     }
@@ -405,7 +405,7 @@ struct AddressApi {
     }
 }
 
-struct StripeReaderApi {
+struct ReaderApi {
     let locationStatus: LocationStatusApi
     let batteryLevel: Double
     let deviceType: DeviceTypeApi
@@ -463,7 +463,7 @@ struct CartLineItemApi {
     }
 }
 
-struct StripePaymentIntentApi {
+struct PaymentIntentApi {
     let id: String
     let amount: Double
     let amountCapturable: Double
@@ -521,7 +521,7 @@ struct StripePaymentIntentApi {
     }
 }
 
-struct StripePaymentMethodApi {
+struct PaymentMethodApi {
     let id: String
     let cardDetails: CardDetailsApi?
     let customer: String?

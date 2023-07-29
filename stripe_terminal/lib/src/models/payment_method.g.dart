@@ -6,12 +6,12 @@ part of 'payment_method.dart';
 // DataClassGenerator
 // **************************************************************************
 
-mixin _$StripePaymentMethod {
-  StripePaymentMethod get _self => this as StripePaymentMethod;
+mixin _$PaymentMethod {
+  PaymentMethod get _self => this as PaymentMethod;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StripePaymentMethod &&
+      other is PaymentMethod &&
           runtimeType == other.runtimeType &&
           _self.id == other.id &&
           _self.cardDetails == other.cardDetails &&
@@ -30,7 +30,7 @@ mixin _$StripePaymentMethod {
   }
 
   @override
-  String toString() => (ClassToString('StripePaymentMethod')
+  String toString() => (ClassToString('PaymentMethod')
         ..add('id', _self.id)
         ..add('cardDetails', _self.cardDetails)
         ..add('customer', _self.customer)

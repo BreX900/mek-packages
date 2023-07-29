@@ -6,12 +6,12 @@ part of 'payment_intent.dart';
 // DataClassGenerator
 // **************************************************************************
 
-mixin _$StripePaymentIntent {
-  StripePaymentIntent get _self => this as StripePaymentIntent;
+mixin _$PaymentIntent {
+  PaymentIntent get _self => this as PaymentIntent;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is StripePaymentIntent &&
+      other is PaymentIntent &&
           runtimeType == other.runtimeType &&
           _self.id == other.id &&
           _self.amount == other.amount &&
@@ -70,7 +70,7 @@ mixin _$StripePaymentIntent {
   }
 
   @override
-  String toString() => (ClassToString('StripePaymentIntent')
+  String toString() => (ClassToString('PaymentIntent')
         ..add('id', _self.id)
         ..add('amount', _self.amount)
         ..add('amountCapturable', _self.amountCapturable)

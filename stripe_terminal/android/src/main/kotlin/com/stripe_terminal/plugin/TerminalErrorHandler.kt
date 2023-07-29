@@ -1,8 +1,7 @@
-package com.stripe_terminal
+package com.stripe_terminal.plugin
 
 import com.stripe.stripeterminal.external.callable.ErrorCallback
 import com.stripe.stripeterminal.external.models.TerminalException
-import com.stripe_terminal.api.Result
 
 abstract class TerminalErrorHandler(private val handler: (c: String, m: String, d: String) -> Unit) : ErrorCallback {
     override fun onFailure(e: TerminalException) {

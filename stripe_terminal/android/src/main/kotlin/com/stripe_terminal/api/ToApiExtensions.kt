@@ -6,7 +6,7 @@ import java.util.Calendar
 
 fun TerminalException.toApi(): TerminalExceptionApi {
     return  TerminalExceptionApi(
-        code = errorCode.name,
+        rawCode = errorCode.name,
         message = errorMessage,
         details = stackTraceToString()
     )

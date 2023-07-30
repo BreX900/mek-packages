@@ -21,7 +21,9 @@ import com.stripe.stripeterminal.external.models.CollectConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionStatus
 import com.stripe.stripeterminal.external.models.ConnectionTokenException
+import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
+import com.stripe.stripeterminal.external.models.DiscoveryMethod
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
@@ -75,7 +77,6 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         )
     }
 
-
     override fun onInit() {
         val permissionStatus = permissions.map {
             ContextCompat.checkSelfPermission(_activity!!, it)
@@ -103,34 +104,78 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         )
     }
 
-    //region LOCATIONS
-    override fun onListLocations(
-        result: Result<List<LocationApi>>,
-        endingBefore: String?,
-        limit: Long?,
-        startingAfter: String?,
-    ) {
-        val params = ListLocationsParameters.Builder()
-        params.endingBefore = endingBefore
-        params.startingAfter = startingAfter
-        params.limit = limit?.toInt()
-        _terminal.listLocations(params.build(),
-            object : TerminalErrorHandler(result::error), LocationListCallback {
-                override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
-                    result.success(locations.map { it.toApi() })
+    //region Terminal listeners
+    override fun fetchConnectionToken(callback: ConnectionTokenCallback) {
+        _activity!!.runOnUiThread {
+            _handlers.requestConnectionToken({ code, message, details ->
+                val exception = PlatformException(code, message, details)
+                callback.onFailure(ConnectionTokenException("", exception))
+            }, { token ->
+                callback.onSuccess(token)
             })
+        }
     }
     //endregion
 
-    //region Connection Status
+    //region Reader discovery, connection and updates
+    private var _discoverReaderCancelable: Cancelable? = null
+    private val _readerDelegate = ReaderDelegatePlugin(_handlers)
+    private val _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
+
+    override fun onConnectionStatusChange(status: ConnectionStatus) {
+        _activity!!.runOnUiThread {
+            _handlers.connectionStatusChange(status.toApi())
+        }
+    }
+
     override fun onConnectionStatus(): ConnectionStatusApi {
         return _terminal.connectionStatus.toApi()
     }
-    //endregion
 
-    //region Readers
-    private val _readerDelegate = ReaderDelegatePlugin(_handlers)
-    private val _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
+    override fun onUnexpectedReaderDisconnect(reader: Reader) {
+        _activity!!.runOnUiThread {
+            _handlers.unexpectedReaderDisconnect(reader.toApi())
+        }
+    }
+
+    private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
+        _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
+        _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
+            val hostDiscoveryMethod = discoveryMethod.toHost()
+            if (hostDiscoveryMethod == null) {
+                sink.error("discoveryMethodNotSupported", null, null)
+                sink.endOfStream()
+                return@setHandler
+            }
+
+            val config = DiscoveryConfiguration(
+                isSimulated = simulated,
+                discoveryMethod = hostDiscoveryMethod,
+                location = locationId
+            )
+
+            // Ignore error, the previous stream can no longer receive events
+            _discoverReaderCancelable?.cancel(EmptyCallback())
+
+            _discoverReaderCancelable =
+                _terminal.discoverReaders(config, object : DiscoveryListener {
+                    override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
+                        _discoveredReaders = readers
+                        _activity!!.runOnUiThread { sink.success(readers.map { it.toApi() }) }
+                    }
+                }, object : TerminalErrorHandler(sink::error), Callback {
+                    override fun onFailure(e: TerminalException) = _activity!!.runOnUiThread {
+                        super.onFailure(e)
+                        sink.endOfStream()
+                    }
+
+                    override fun onSuccess() = _activity!!.runOnUiThread { sink.endOfStream() }
+                })
+        }, {
+            // Ignore error, flutter stream already closed
+            _discoverReaderCancelable?.cancel(EmptyCallback())
+        })
+    }
 
     override fun onConnectBluetoothReader(
         result: Result<ReaderApi>,
@@ -225,15 +270,6 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         return _terminal.connectedReader?.toApi()
     }
 
-    override fun onCancelReaderUpdate(result: Result<Unit>) {
-        if (_readerDelegate.cancelUpdate == null) {
-            result.success(Unit)
-        }
-        _readerDelegate.cancelUpdate?.cancel(object : Callback, TerminalErrorHandler(result::error) {
-            override fun onSuccess() = result.success(Unit)
-        })
-    }
-
     override fun onCancelReaderReconnection(result: Result<Unit>) {
         if (_readerReconnectionDelegate.cancelReconnect == null) {
             result.success(Unit)
@@ -243,8 +279,34 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         })
     }
 
+    override fun onListLocations(
+        result: Result<List<LocationApi>>,
+        endingBefore: String?,
+        limit: Long?,
+        startingAfter: String?,
+    ) {
+        val params = ListLocationsParameters.Builder()
+        params.endingBefore = endingBefore
+        params.startingAfter = startingAfter
+        params.limit = limit?.toInt()
+        _terminal.listLocations(params.build(),
+            object : TerminalErrorHandler(result::error), LocationListCallback {
+                override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
+                    result.success(locations.map { it.toApi() })
+            })
+    }
+
     override fun onInstallAvailableUpdate() {
         _terminal.installAvailableUpdate()
+    }
+
+    override fun onCancelReaderUpdate(result: Result<Unit>) {
+        if (_readerDelegate.cancelUpdate == null) {
+            result.success(Unit)
+        }
+        _readerDelegate.cancelUpdate?.cancel(object : Callback, TerminalErrorHandler(result::error) {
+            override fun onSuccess() = result.success(Unit)
+        })
     }
 
     override fun onDisconnectReader(result: Result<Unit>) {
@@ -254,58 +316,14 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     }
     //endregion
 
-    //region Reader Display
-    override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
-        _terminal.setReaderDisplay(cart.toHost(),
-            object : TerminalErrorHandler(result::error), Callback {
-                override fun onSuccess() = result.success(Unit)
-            })
-    }
-
-    override fun onClearReaderDisplay(result: Result<Unit>) {
-        _terminal.clearReaderDisplay(object : TerminalErrorHandler(result::error), Callback {
-            override fun onSuccess() = result.success(Unit)
-        })
-    }
-    //endregion
-
-    private val _cancelablesReadReusableCard = HashMap<Long, Cancelable>()
-
-    override fun onStartReadReusableCard(
-        result: Result<PaymentMethodApi>,
-        operationId: Long,
-        customer: String?,
-        metadata: HashMap<String, String>?,
-    ) {
-        val params = ReadReusableCardParameters.Builder()
-        if (customer != null) params.setCustomer(customer)
-        if (metadata != null) params.putAllMetadata(metadata)
-        _cancelablesReadReusableCard[operationId] = _terminal.readReusableCard(params.build(),
-            object : TerminalErrorHandler(result::error), PaymentMethodCallback {
-                override fun onFailure(e: TerminalException) {
-                    _cancelablesReadReusableCard.remove(operationId)
-                    super.onFailure(e)
-                }
-
-                override fun onSuccess(paymentMethod: PaymentMethod) {
-                    _cancelablesReadReusableCard.remove(operationId)
-                    result.success(paymentMethod.toApi())
-                }
-            })
-    }
-
-    override fun onStopReadReusableCard(
-        result: Result<Unit>,
-        operationId: Long,
-    ) {
-        _cancelablesReadReusableCard.remove(operationId)
-            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
-                override fun onSuccess() = result.success(Unit)
-            })
-    }
-
-    //region Payment
+    //region Taking Payment
     private var _paymentIntents = HashMap<String, PaymentIntent>()
+
+    override fun onPaymentStatusChange(status: PaymentStatus) {
+        _activity!!.runOnUiThread {
+            _handlers.paymentStatusChange(status.toApi())
+        }
+    }
 
     override fun onRetrievePaymentIntent(
         result: Result<PaymentIntentApi>,
@@ -382,49 +400,59 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     }
     //endregion
 
-    private var _discoverReaderCancelable: Cancelable? = null
+    //region Saving payment details for later use
+    private val _cancelablesReadReusableCard = HashMap<Long, Cancelable>()
 
-    private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
-        _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
-        _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
-            val hostDiscoveryMethod = discoveryMethod.toHost()
-            if (hostDiscoveryMethod == null) {
-                sink.error("discoveryMethodNotSupported", null, null)
-                sink.endOfStream()
-                return@setHandler
-            }
+    override fun onStartReadReusableCard(
+        result: Result<PaymentMethodApi>,
+        operationId: Long,
+        customer: String?,
+        metadata: HashMap<String, String>?,
+    ) {
+        val params = ReadReusableCardParameters.Builder()
+        if (customer != null) params.setCustomer(customer)
+        if (metadata != null) params.putAllMetadata(metadata)
+        _cancelablesReadReusableCard[operationId] = _terminal.readReusableCard(params.build(),
+            object : TerminalErrorHandler(result::error), PaymentMethodCallback {
+                override fun onFailure(e: TerminalException) {
+                    _cancelablesReadReusableCard.remove(operationId)
+                    super.onFailure(e)
+                }
 
-            val config = DiscoveryConfiguration(
-                isSimulated = simulated,
-                discoveryMethod = hostDiscoveryMethod,
-                location = locationId
-            )
-
-            // Ignore error, the previous stream can no longer receive events
-            _discoverReaderCancelable?.cancel(EmptyCallback())
-
-            _discoverReaderCancelable =
-                _terminal.discoverReaders(config, object : DiscoveryListener {
-                    override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
-                        _discoveredReaders = readers
-                        _activity!!.runOnUiThread { sink.success(readers.map { it.toApi() }) }
-                    }
-                }, object : TerminalErrorHandler(sink::error), Callback {
-                    override fun onFailure(e: TerminalException) = _activity!!.runOnUiThread {
-                        super.onFailure(e)
-                        sink.endOfStream()
-                    }
-
-                    override fun onSuccess() = _activity!!.runOnUiThread { sink.endOfStream() }
-                })
-        }, {
-            // Ignore error, flutter stream already closed
-            _discoverReaderCancelable?.cancel(EmptyCallback())
-        })
+                override fun onSuccess(paymentMethod: PaymentMethod) {
+                    _cancelablesReadReusableCard.remove(operationId)
+                    result.success(paymentMethod.toApi())
+                }
+            })
     }
 
-    // ======================== Flutter
+    override fun onStopReadReusableCard(
+        result: Result<Unit>,
+        operationId: Long,
+    ) {
+        _cancelablesReadReusableCard.remove(operationId)
+            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
+            })
+    }
+    //endregion
 
+    //region Display information to customers
+    override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
+        _terminal.setReaderDisplay(cart.toHost(),
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
+            })
+    }
+
+    override fun onClearReaderDisplay(result: Result<Unit>) {
+        _terminal.clearReaderDisplay(object : TerminalErrorHandler(result::error), Callback {
+            override fun onSuccess() = result.success(Unit)
+        })
+    }
+    //endregion
+
+    //region Android
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val binaryMessenger = flutterPluginBinding.binaryMessenger
         StripeTerminalPlatformApi.setHandler(binaryMessenger, this)
@@ -456,6 +484,21 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     override fun onDetachedFromActivity() {
         _activity = null
     }
+    //endregion
+
+    // ======================== INTERNAL METHODS
+
+    private fun findActiveReader(result: Result<*>, serialNumber: String): Reader? {
+        val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
+        if (reader == null) {
+            result.error(
+                TerminalException.TerminalErrorCode.READER_CONNECTED_TO_ANOTHER_DEVICE.name,
+                "Reader with provided serial number no longer exists",
+                null
+            )
+        }
+        return reader
+    }
 
     private fun clean() {
         if (_terminal.connectedReader != null) _terminal.disconnectReader(EmptyCallback())
@@ -470,52 +513,6 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
         _discoveredReaders = arrayListOf()
         _paymentIntents = hashMapOf()
-    }
-
-    // ======================== STRIPE
-
-    override fun fetchConnectionToken(callback: ConnectionTokenCallback) {
-        _activity!!.runOnUiThread {
-            _handlers.requestConnectionToken({ code, message, details ->
-                val exception = PlatformException(code, message, details)
-                callback.onFailure(ConnectionTokenException("", exception))
-            }, { token ->
-                callback.onSuccess(token)
-            })
-        }
-    }
-
-    override fun onUnexpectedReaderDisconnect(reader: Reader) {
-        _activity!!.runOnUiThread {
-            _handlers.unexpectedReaderDisconnect(reader.toApi())
-        }
-    }
-
-    override fun onConnectionStatusChange(status: ConnectionStatus) {
-        _activity!!.runOnUiThread {
-            _handlers.connectionStatusChange(status.toApi())
-        }
-    }
-
-    override fun onPaymentStatusChange(status: PaymentStatus) {
-        _activity!!.runOnUiThread {
-            _handlers.paymentStatusChange(status.toApi())
-        }
-    }
-
-    // ======================== INTERNAL METHODS
-
-
-    private fun findActiveReader(result: Result<*>, serialNumber: String): Reader? {
-        val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
-        if (reader == null) {
-            result.error(
-                TerminalException.TerminalErrorCode.READER_CONNECTED_TO_ANOTHER_DEVICE.name,
-                "Reader with provided serial number no longer exists",
-                null
-            )
-        }
-        return reader
     }
 }
 

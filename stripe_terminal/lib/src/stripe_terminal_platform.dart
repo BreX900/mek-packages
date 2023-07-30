@@ -28,12 +28,7 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @override
   Future<void> init();
 
-  @override
-  Future<List<Location>> listLocations({
-    required String? endingBefore,
-    required int? limit,
-    required String? startingAfter,
-  });
+//region Reader discovery, connection and updates
 
   @MethodApi(kotlin: MethodApiType.sync)
   @override
@@ -80,24 +75,27 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   Future<Reader?> connectedReader();
 
   @override
-  Future<void> cancelReaderUpdate();
-
-  @override
   Future<void> cancelReaderReconnection();
 
   @override
-  Future<void> disconnectReader();
+  Future<List<Location>> listLocations({
+    required String? endingBefore,
+    required int? limit,
+    required String? startingAfter,
+  });
 
   @MethodApi(kotlin: MethodApiType.sync)
   @override
   Future<void> installAvailableUpdate();
 
   @override
-  Future<void> setReaderDisplay(Cart cart);
+  Future<void> cancelReaderUpdate();
 
   @override
-  Future<void> clearReaderDisplay();
+  Future<void> disconnectReader();
+//endregion
 
+//region Taking payments
   @override
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret);
 
@@ -115,7 +113,9 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
   @override
   Future<PaymentIntent> processPayment(String paymentIntentId);
+//endregion
 
+//region Saving payment details for later use
   @MethodApi(swift: MethodApiType.callbacks)
   @override
   Future<PaymentMethod> startReadReusableCard({
@@ -126,6 +126,15 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
   @override
   Future<void> stopReadReusableCard(int operationId);
+//endregion
+
+//region Display information to customers
+  @override
+  Future<void> setReaderDisplay(Cart cart);
+
+  @override
+  Future<void> clearReaderDisplay();
+//endregion
 
   static void _throwIfIsHostException(PlatformException exception) {
     if (exception.code.isEmpty) return;

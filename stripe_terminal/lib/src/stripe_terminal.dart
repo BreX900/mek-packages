@@ -44,23 +44,13 @@ class StripeTerminal {
     return stripeTerminal;
   }
 
-  /// Returns a list of Location objects.
-  Future<List<Location>> listLocations({
-    String? endingBefore,
-    int? limit,
-    String? startingAfter,
-  }) async {
-    return await _platform.listLocations(
-      endingBefore: endingBefore,
-      limit: limit,
-      startingAfter: startingAfter,
-    );
-  }
+//region Reader discovery, connection and updates
+  Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
 
   /// Get the current [ConnectionStatus]
   Future<ConnectionStatus> connectionStatus() async => await _platform.connectionStatus();
 
-  Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
+  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
   StreamController<List<Reader>>? _controller;
 
@@ -158,39 +148,30 @@ class StripeTerminal {
   /// Fetches the connected reader from the SDK. `null` if not connected
   Future<Reader?> connectedReader() async => await _platform.connectedReader();
 
+  /// Returns a list of Location objects.
+  Future<List<Location>> listLocations({
+    String? endingBefore,
+    int? limit,
+    String? startingAfter,
+  }) async {
+    return await _platform.listLocations(
+      endingBefore: endingBefore,
+      limit: limit,
+      startingAfter: startingAfter,
+    );
+  }
+
+  Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
+
   /// Attempts to disconnect from the currently connected reader.
   Future<void> disconnectReader() async {
     await _platform.disconnectReader();
     _handlers.detachReaderDelegates();
   }
+//endregion
 
-  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
-
-  Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
-
-  /// Updates the reader display with transaction information. This method is for display purposes
-  /// only and has no correlation with what the customer is actually charged. Tax and total
-  /// are also not automatically calculated and must be set in [Cart].
-  Future<void> setReaderDisplay(Cart cart) async => await _platform.setReaderDisplay(cart);
-
-  /// Clears the reader display and resets it to the splash screen
-  Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
-
-  /// Extracts payment method from the reader
-  ///
-  /// Only support `insert` operation on the reader
-  CancelableFuture<PaymentMethod> readReusableCard({
-    String? customer,
-    Map<String, String>? metadata,
-  }) {
-    return CancelableFuture(_platform.stopReadReusableCard, (id) async {
-      return await _platform.startReadReusableCard(
-        operationId: id,
-        customer: customer,
-        metadata: metadata,
-      );
-    });
-  }
+//region Taking payments
+  Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
 
   /// Starts reading payment method based on payment intent.
   ///
@@ -199,9 +180,6 @@ class StripeTerminal {
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret) async =>
       await _platform.retrievePaymentIntent(clientSecret);
 
-  Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
-
-  ///
   /// With the payment intent retrieved capture the payment method. A sucessful function call
   /// should return an instance of `StripePaymentIntent` with status `requiresPaymentMethod`;
   ///
@@ -223,6 +201,35 @@ class StripeTerminal {
 
   Future<PaymentIntent> processPayment(PaymentIntent paymentIntent) async =>
       await _platform.processPayment(paymentIntent.id);
+//endregion
+
+//region Saving payment details for later use
+  /// Extracts payment method from the reader
+  ///
+  /// Only support `insert` operation on the reader
+  CancelableFuture<PaymentMethod> readReusableCard({
+    String? customer,
+    Map<String, String>? metadata,
+  }) {
+    return CancelableFuture(_platform.stopReadReusableCard, (id) async {
+      return await _platform.startReadReusableCard(
+        operationId: id,
+        customer: customer,
+        metadata: metadata,
+      );
+    });
+  }
+//endregion
+
+//region Display information to customers
+  /// Updates the reader display with transaction information. This method is for display purposes
+  /// only and has no correlation with what the customer is actually charged. Tax and total
+  /// are also not automatically calculated and must be set in [Cart].
+  Future<void> setReaderDisplay(Cart cart) async => await _platform.setReaderDisplay(cart);
+
+  /// Clears the reader display and resets it to the splash screen
+  Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
+//endregion
 
   StreamController<T> _handleStream<T>(
     StreamController<T>? controller,

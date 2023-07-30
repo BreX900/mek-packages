@@ -11,41 +11,46 @@ more simply by supporting streams instead of callbacks for listeners
 
 ## Features
 
-Terminal Methods:
-- ❌ cancelPaymentIntent
-- ❌ cancelSetupIntent
-- ❌ clearCachedCredentials
-- ✅ clearReaderDisplay
-- ✅ collectPaymentMethod
-- ❌ collectRefundPaymentMethod
-- ❌ collectSetupIntentPaymentMethod
-- ❌ confirmSetupIntent
-- ✅ connectBluetoothReader
-- ✅ connectHandoffReader
-- ✅ connectInternetReader
-- ✅ connectLocalMobileReader
-- ✅ connectUsbReader
-- ❌ createPaymentIntent
-- ❌ createSetupIntent
-- ✅ disconnectReader
-- ✅ discoverReaders
-- ✅ installAvailableUpdate
-- ✅ listLocations
-- ✅ processPayment
-- ❌ processRefund
-- ❌ readReusableCard
-- ✅ retrievePaymentIntent
-- ❌ retrieveSetupIntent
+**Terminal Methods**
 - ❌ setOfflineListener
-- ❌ setReaderDisplay
-- ❌ supportsReadersOfType
+- ❌ clearCachedCredentials
+- **Reader discovery, connection and updates**
+  - ✅ onConnectionStatusChange
+  - ✅ connectionStatus
+  - ❌ supportsReadersOfType
+  - ✅ onUnexpectedReaderDisconnect
+  - ✅ discoverReaders
+  - ✅ connectBluetoothReader
+  - ✅ connectHandoffReader
+  - ✅ connectInternetReader
+  - ✅ connectLocalMobileReader
+  - ✅ connectUsbReader
+  - ✅ connectedReader
+  - ✅ listLocations
+  - ✅ installAvailableUpdate
+  - ✅ disconnectReader
+- **Taking payments**
+  - ✅ onPaymentStatusChange
+  - ❌ createPaymentIntent
+  - ✅ retrievePaymentIntent
+  - ✅ collectPaymentMethod
+  - ✅ processPayment
+  - ❌ cancelPaymentIntent
+- **Saving payment details for later use**
+  - ✅ readReusableCard
+  - ❌ createSetupIntent
+  - ❌ retrieveSetupIntent
+  - ❌ cancelSetupIntent
+  - ❌ collectSetupIntentPaymentMethod
+  - ❌ confirmSetupIntent
+- **Card-present refunds**
+  - ❌ collectRefundPaymentMethod
+  - ❌ processRefund
+- **Display information to customers**
+  - ✅ setReaderDisplay
+  - ✅ clearReaderDisplay
 
-Terminal Listeners:
-- ✅ onConnectionStatusChange
-- ✅ onPaymentStatusChange
-- ✅ onUnexpectedReaderDisconnect
-
-Reader Listeners:
+**Reader Listeners**
 - ✅️ onReportAvailableUpdate
 - ✅️ onFinishInstallingUpdate
 - ✅ onReportReaderSoftwareUpdateProgress

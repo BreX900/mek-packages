@@ -43,26 +43,43 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         Terminal.shared.delegate = TerminalDelegatePlugin(handlers)
     }
 
-    public func fetchConnectionToken() async throws -> String {
-        return try await handlers.requestConnectionToken()
-    }
-
-    func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
-        do {
-            return try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
-                limit: limit as NSNumber?,
-                endingBefore: endingBefore,
-                startingAfter: startingAfter
-            )).0.map { $0.toApi() }
-        } catch let error as NSError {
-            throw error.toApi()
-        }
-    }
-    
-    
+// Reader discovery, connection and updates
+    private var _discoverReaderCancelable: Cancelable? = nil
 
     func onConnectionStatus() async throws -> ConnectionStatusApi {
         return Terminal.shared.connectionStatus.toApi()
+    }
+    
+    func setupDiscoverReaders() {
+        discoverReadersController.setHandler({
+            sink, discoveryMethod, simulated, locationId -> FlutterError? in
+            
+            let discoveryMethodHost = discoveryMethod.toHost()
+            guard let discoveryMethodHost else {
+                return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
+            }
+            // Ignore error, the previous stream can no longer receive events
+            self._discoverReaderCancelable?.cancel { error in }
+            self._discoverReaderCancelable = Terminal.shared.discoverReaders(
+                DiscoveryConfiguration(
+                    discoveryMethod: discoveryMethodHost,
+                    locationId: locationId,
+                    simulated: simulated
+                ),
+                delegate: DiscoveryDelegatePlugin(sink)
+            ) { error in
+                if let error = error {
+                    let platformError = error.toApi()
+                    sink.error(platformError.code, platformError.message, platformError.details)
+                }
+                sink.endOfStream()
+            }
+            return nil
+        }, { discoveryMethod, simulated, locationId -> FlutterError? in
+            // Ignore error, flutter stream already closed
+            self._discoverReaderCancelable?.cancel { error in }
+            return nil
+        })
     }
 
     func onConnectHandoffReader(_ serialNumber: String) async throws -> ReaderApi {
@@ -133,6 +150,22 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         return Terminal.shared.connectedReader?.toApi()
     }
     
+    func onCancelReaderReconnection() async throws {
+        try await _readerReconnectionDelegate.cancelable?.cancel()
+    }
+    
+    func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
+        do {
+            return try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
+                limit: limit as NSNumber?,
+                endingBefore: endingBefore,
+                startingAfter: startingAfter
+            )).0.map { $0.toApi() }
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+    
     func onInstallAvailableUpdate() async throws {
         Terminal.shared.installAvailableUpdate()
     }
@@ -141,10 +174,6 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         try await _readerDelegate.cancellableUpdate?.cancel()
     }
     
-    func onCancelReaderReconnection() async throws {
-        try await _readerReconnectionDelegate.cancelable?.cancel()
-    }
-
     func onDisconnectReader() async throws {
         do {
             try await Terminal.shared.disconnectReader()
@@ -152,51 +181,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             throw error.toApi()
         }
     }
-
-    func onSetReaderDisplay(
-        _ cart: CartApi
-    ) async throws {
-        do {
-            try await Terminal.shared.setReaderDisplay(cart.toHost())
-        } catch let error as NSError {
-            throw error.toApi()
-        }
-    }
-
-    func onClearReaderDisplay() async throws {
-        do {
-            try await Terminal.shared.clearReaderDisplay()
-        } catch let error as NSError {
-            throw error.toApi()
-        }
-    }
-
-    private var cancelablesReadReusableCard: [Int: Cancelable] = [:]
-
-    func onStartReadReusableCard(
-        _ result: Result<PaymentMethodApi>,
-        _ id: Int,
-        _: String?,
-        _: [String: String]?
-    ) throws {
-        cancelablesReadReusableCard[id] = Terminal.shared.readReusableCard(
-            ReadReusableCardParameters(),
-            completion: { paymentMethod, error in
-                if let error = error as? NSError {
-                    let platformError = error.toApi()
-                    result.error(platformError.code, platformError.message, platformError.details)
-                    return
-                }
-                result.success(paymentMethod!.toApi())
-            }
-        )
-    }
-
-    func onStopReadReusableCard(
-        _ id: Int
-    ) async throws {
-        try await cancelablesReadReusableCard.removeValue(forKey: id)?.cancel()
-    }
+    
+// Taking payments
     
     private var paymentIntents: [String: PaymentIntent] = [:]
 
@@ -254,38 +240,59 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-    private var _discoverReaderCancelable: Cancelable? = nil
-    
-    func setupDiscoverReaders() {
-        discoverReadersController.setHandler({
-            sink, discoveryMethod, simulated, locationId -> FlutterError? in
-            
-            let discoveryMethodHost = discoveryMethod.toHost()
-            guard let discoveryMethodHost else {
-                return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
-            }
-            // Ignore error, the previous stream can no longer receive events
-            self._discoverReaderCancelable?.cancel { error in }
-            self._discoverReaderCancelable = Terminal.shared.discoverReaders(
-                DiscoveryConfiguration(
-                    discoveryMethod: discoveryMethodHost,
-                    locationId: locationId,
-                    simulated: simulated
-                ),
-                delegate: DiscoveryDelegatePlugin(sink)
-            ) { error in
-                if let error = error {
+// Saving payment details for later use
+   
+    private var cancelablesReadReusableCard: [Int: Cancelable] = [:]
+
+    func onStartReadReusableCard(
+        _ result: Result<PaymentMethodApi>,
+        _ id: Int,
+        _: String?,
+        _: [String: String]?
+    ) throws {
+        cancelablesReadReusableCard[id] = Terminal.shared.readReusableCard(
+            ReadReusableCardParameters(),
+            completion: { paymentMethod, error in
+                if let error = error as? NSError {
                     let platformError = error.toApi()
-                    sink.error(platformError.code, platformError.message, platformError.details)
+                    result.error(platformError.code, platformError.message, platformError.details)
+                    return
                 }
-                sink.endOfStream()
+                result.success(paymentMethod!.toApi())
             }
-            return nil
-        }, { discoveryMethod, simulated, locationId -> FlutterError? in
-            // Ignore error, flutter stream already closed
-            self._discoverReaderCancelable?.cancel { error in }
-            return nil
-        })
+        )
+    }
+
+    func onStopReadReusableCard(
+        _ id: Int
+    ) async throws {
+        try await cancelablesReadReusableCard.removeValue(forKey: id)?.cancel()
+    }
+
+// Display information to customers
+    
+    func onSetReaderDisplay(
+        _ cart: CartApi
+    ) async throws {
+        do {
+            try await Terminal.shared.setReaderDisplay(cart.toHost())
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+
+    func onClearReaderDisplay() async throws {
+        do {
+            try await Terminal.shared.clearReaderDisplay()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+    
+    // PRIVATE METHODS
+    
+    public func fetchConnectionToken() async throws -> String {
+        return try await handlers.requestConnectionToken()
     }
     
     private func clean() {

@@ -165,7 +165,7 @@ class OneForAll {
         }
 
         addDeepSerializables(
-          method.returnType.singleTypeArg,
+          method.returnType.thisOrSingleTypeArg,
           flutterToHost: hostToFlutter,
           hostToFlutter: flutterToHost,
         );

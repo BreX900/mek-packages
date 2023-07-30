@@ -2,21 +2,24 @@ import Flutter
 import StripeTerminal
 import UIKit
 
-public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, ConnectionTokenProvider {
-    
+public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatformApi, ConnectionTokenProvider {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = StripeTerminalPlugin(registrar.messenger())
-        setStripeTerminalApiHandler(registrar.messenger(), instance)
+        setStripeTerminalPlatformApiHandler(registrar.messenger(), instance)
         instance.onAttachedToEngine()
     }
     
     private let discoverReadersController: DiscoverReadersControllerApi
     private let handlers: StripeTerminalHandlersApi
     private var readers: [Reader] = []
+    private let _readerDelegate: ReaderDelegatePlugin
+    private let _readerReconnectionDelegate: ReaderReconnectionDelegatePlugin
 
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         self.handlers = StripeTerminalHandlersApi(binaryMessenger)
         self.discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
+        self._readerDelegate = ReaderDelegatePlugin(handlers)
+        self._readerReconnectionDelegate = ReaderReconnectionDelegatePlugin(handlers)
     }
 
     public func onAttachedToEngine() {
@@ -25,7 +28,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
         self.discoverReadersController.removeHandler()
-        removeStripeTerminalApiHandler()
+        removeStripeTerminalPlatformApiHandler()
         self.clean()
     }
     
@@ -55,22 +58,30 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             throw error.toApi()
         }
     }
+    
+    
 
     func onConnectionStatus() async throws -> ConnectionStatusApi {
         return Terminal.shared.connectionStatus.toApi()
     }
 
+    func onConnectHandoffReader(_ serialNumber: String) async throws -> ReaderApi {
+        throw PlatformError("", "Unsupported method")
+    }
+
     func onConnectBluetoothReader(
         _ serialNumber: String,
         _ locationId: String,
-        _: Bool
+        _ autoReconnectOnUnexpectedDisconnect: Bool
     ) async throws -> ReaderApi {
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
                 findReader(serialNumber),
-                delegate: ReaderDelegatePlugin(handlers),
+                delegate: _readerDelegate,
                 connectionConfig: BluetoothConnectionConfiguration(
-                    locationId: locationId
+                    locationId: locationId,
+                    autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+                    autoReconnectionDelegate: _readerReconnectionDelegate
                 )
             )
             return reader.toApi()
@@ -103,7 +114,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
         do {
             let reader = try await Terminal.shared.connectLocalMobileReader(
                 findReader(serialNumber),
-                delegate: ReaderDelegatePlugin(handlers),
+                delegate: _readerDelegate,
                 connectionConfig: LocalMobileConnectionConfiguration(
                     locationId: locationId
                 )
@@ -113,13 +124,25 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
             throw error.toApi()
         }
     }
+    
+    func onConnectUsbReader(_ serialNumber: String, _ locationId: String, _ autoReconnectOnUnexpectedDisconnect: Bool) async throws -> ReaderApi {
+        throw PlatformError("", "Unsupported method")
+    }
 
     func onConnectedReader() async throws -> ReaderApi? {
         return Terminal.shared.connectedReader?.toApi()
     }
-
-    func onInstallAvailableUpdate(_: String) async throws {
+    
+    func onInstallAvailableUpdate() async throws {
         Terminal.shared.installAvailableUpdate()
+    }
+    
+    func onCancelReaderUpdate() async throws {
+        try await _readerDelegate.cancellableUpdate?.cancel()
+    }
+    
+    func onCancelReaderReconnection() async throws {
+        try await _readerReconnectionDelegate.cancelable?.cancel()
     }
 
     func onDisconnectReader() async throws {
@@ -280,7 +303,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     private func findReader(_ serialNumber: String) throws -> Reader {
         guard let reader = readers.first(where: { $0.serialNumber == serialNumber }) else {
             throw PlatformError(
-                StripeTerminalExceptionCodeApi.readerCommunicationError.rawValue,
+                TerminalExceptionCodeApi.readerCommunicationError.rawValue,
                 "Reader with provided serial number no longer exists"
             )
         }
@@ -290,7 +313,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalApi, C
     private func findPaymentIntent(_ paymentIntentId: String) throws -> PaymentIntent {
         let paymentIntent = paymentIntents[paymentIntentId]
         guard let paymentIntent else {
-            throw PlatformError(StripeTerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
+            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
         }
         return paymentIntent
     }

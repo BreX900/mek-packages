@@ -115,6 +115,41 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Connection status: ${status.name}');
   }
 
+  Future<Reader?> _connectReader(StripeTerminal terminal, Reader reader) async {
+    String? getLocationId() {
+      final locationId = _selectedLocation?.id ?? reader.locationId;
+      if (locationId == null) _showSnackBar('Missing location');
+      return locationId;
+    }
+
+    switch (_discoveringMethod) {
+      case DiscoveryMethod.bluetoothScan || DiscoveryMethod.bluetoothProximity:
+        final locationId = getLocationId();
+        if (locationId == null) return null;
+        return await terminal.connectBluetoothReader(
+          reader,
+          locationId: locationId,
+        );
+      case DiscoveryMethod.localMobile:
+        final locationId = getLocationId();
+        if (locationId == null) return null;
+        return await terminal.connectMobileReader(
+          reader,
+          locationId: locationId,
+        );
+      case DiscoveryMethod.internet:
+        return await terminal.connectInternetReader(reader);
+      case DiscoveryMethod.handOff:
+        return await terminal.connectHandoffReader(reader);
+      case DiscoveryMethod.usb:
+        final locationId = getLocationId();
+        if (locationId == null) return null;
+        return await terminal.connectUsbReader(reader, locationId: locationId);
+      case DiscoveryMethod.embedded:
+        _showSnackBar('Missing connect method implementation');
+    }
+  }
+
   void _toggleReader(StripeTerminal terminal, Reader reader) async {
     if (_reader != null) {
       await terminal.disconnectReader();
@@ -123,32 +158,10 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
-    final locationId = _selectedLocation?.id ?? reader.locationId;
-    if (locationId == null) {
-      _showSnackBar('Missing location');
-      return;
-    }
-
-    final connectedReader = switch (_discoveringMethod) {
-      DiscoveryMethod.bluetoothScan ||
-      DiscoveryMethod.bluetoothProximity =>
-        await terminal.connectBluetoothReader(
-          reader.serialNumber,
-          locationId: locationId,
-        ),
-      DiscoveryMethod.localMobile => await terminal.connectMobileReader(
-          reader.serialNumber,
-          locationId: locationId,
-        ),
-      DiscoveryMethod.internet ||
-      DiscoveryMethod.handOff ||
-      DiscoveryMethod.embedded ||
-      DiscoveryMethod.usb =>
-        null,
-    };
-    _showSnackBar(connectedReader != null
-        ? 'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}'
-        : 'Missing connect method implementation');
+    final connectedReader = await _connectReader(terminal, reader);
+    if (connectedReader == null) return;
+    _showSnackBar(
+        'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
     setState(() => _reader = connectedReader);
   }
 

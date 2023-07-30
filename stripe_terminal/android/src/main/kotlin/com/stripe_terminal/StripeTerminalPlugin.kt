@@ -41,11 +41,12 @@ import com.stripe_terminal.api.PaymentMethodApi
 import com.stripe_terminal.api.PlatformException
 import com.stripe_terminal.api.ReaderApi
 import com.stripe_terminal.api.Result
-import com.stripe_terminal.api.StripeTerminalApi
 import com.stripe_terminal.api.StripeTerminalHandlersApi
+import com.stripe_terminal.api.StripeTerminalPlatformApi
 import com.stripe_terminal.api.toApi
 import com.stripe_terminal.api.toHost
 import com.stripe_terminal.plugin.ReaderDelegatePlugin
+import com.stripe_terminal.plugin.ReaderReconnectionListenerPlugin
 import com.stripe_terminal.plugin.TerminalErrorHandler
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -53,7 +54,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
 
 class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
-    StripeTerminalApi,
+    StripeTerminalPlatformApi,
     ConnectionTokenProvider, TerminalListener {
     private lateinit var _handlers: StripeTerminalHandlersApi
     private lateinit var _discoverReadersController: DiscoverReadersControllerApi
@@ -128,6 +129,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     //endregion
 
     //region Readers
+    private val _readerDelegate = ReaderDelegatePlugin(_handlers)
+    private val _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
+
     override fun onConnectBluetoothReader(
         result: Result<ReaderApi>,
         serialNumber: String,
@@ -139,9 +143,25 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         _terminal.connectBluetoothReader(reader,
             ConnectionConfiguration.BluetoothConnectionConfiguration(
                 locationId = locationId,
-                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect
+                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
+                bluetoothReaderReconnectionListener = _readerReconnectionDelegate,
             ),
-            ReaderDelegatePlugin(_handlers),
+            _readerDelegate,
+            object : TerminalErrorHandler(result::error), ReaderCallback {
+                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
+            }
+        )
+    }
+
+    override fun onConnectHandoffReader(
+        result: Result<ReaderApi>,
+        serialNumber: String,
+    ) {
+        val reader = findActiveReader(result, serialNumber) ?: return
+
+        _terminal.connectHandoffReader(reader,
+            ConnectionConfiguration.HandoffConnectionConfiguration(),
+            _readerDelegate,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
             }
@@ -157,7 +177,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
         _terminal.connectInternetReader(reader,
             ConnectionConfiguration.InternetConnectionConfiguration(
-                failIfInUse = failIfInUse
+                failIfInUse = failIfInUse,
             ),
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
@@ -172,7 +192,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         val reader = findActiveReader(result, serialNumber) ?: return
 
         val config = ConnectionConfiguration.LocalMobileConnectionConfiguration(
-            locationId = locationId
+            locationId = locationId,
         )
         _terminal.connectLocalMobileReader(reader, config,
             object : TerminalErrorHandler(result::error), ReaderCallback {
@@ -180,11 +200,50 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
             })
     }
 
+    override fun onConnectUsbReader(
+        result: Result<ReaderApi>,
+        serialNumber: String,
+        locationId: String,
+        autoReconnectOnUnexpectedDisconnect: Boolean,
+    ) {
+        val reader = findActiveReader(result, serialNumber) ?: return
+
+        _terminal.connectUsbReader(reader,
+            ConnectionConfiguration.UsbConnectionConfiguration(
+                locationId = locationId,
+                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
+                usbReaderReconnectionListener = _readerReconnectionDelegate,
+            ),
+            _readerDelegate,
+            object : TerminalErrorHandler(result::error), ReaderCallback {
+                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
+            }
+        )
+    }
+
     override fun onConnectedReader(): ReaderApi? {
         return _terminal.connectedReader?.toApi()
     }
 
-    override fun onInstallAvailableUpdate(serialNumber: String) {
+    override fun onCancelReaderUpdate(result: Result<Unit>) {
+        if (_readerDelegate.cancelUpdate == null) {
+            result.success(Unit)
+        }
+        _readerDelegate.cancelUpdate?.cancel(object : Callback, TerminalErrorHandler(result::error) {
+            override fun onSuccess() = result.success(Unit)
+        })
+    }
+
+    override fun onCancelReaderReconnection(result: Result<Unit>) {
+        if (_readerReconnectionDelegate.cancelReconnect == null) {
+            result.success(Unit)
+        }
+        _readerReconnectionDelegate.cancelReconnect?.cancel(object : Callback, TerminalErrorHandler(result::error) {
+            override fun onSuccess() = result.success(Unit)
+        })
+    }
+
+    override fun onInstallAvailableUpdate() {
         _terminal.installAvailableUpdate()
     }
 
@@ -368,7 +427,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val binaryMessenger = flutterPluginBinding.binaryMessenger
-        StripeTerminalApi.setHandler(binaryMessenger, this)
+        StripeTerminalPlatformApi.setHandler(binaryMessenger, this)
         _handlers = StripeTerminalHandlersApi(binaryMessenger)
 
         setupDiscoverReadersController(binaryMessenger)
@@ -378,7 +437,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         clean()
 
         _discoverReadersController.removeHandler()
-        StripeTerminalApi.removeHandler()
+        StripeTerminalPlatformApi.removeHandler()
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -406,7 +465,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
         _cancelablesReadReusableCard.values.forEach { it.cancel(EmptyCallback()) }
         _cancelablesReadReusableCard.clear()
-        _cancelablesCollectPaymentMethod.values.forEach { it?.cancel(EmptyCallback()) }
+        _cancelablesCollectPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         _cancelablesCollectPaymentMethod.clear()
 
         _discoveredReaders = arrayListOf()

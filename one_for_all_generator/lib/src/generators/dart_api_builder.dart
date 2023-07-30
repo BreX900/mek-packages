@@ -126,8 +126,9 @@ channel.setMethodCallHandler((call) async {
   final args = call.arguments as List<Object?>;
   return switch (call.method) {
   ${methods.map((e) {
+        final isFutureReturnType = e.returnType.isDartAsyncFuture;
         return '''
-    '${e.name}' => await hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
+    '${e.name}' => ${isFutureReturnType ? 'await ' : ''}hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
         ''';
       }).join('\n')}
     _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),

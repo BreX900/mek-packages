@@ -10,4 +10,4 @@ export 'src/models/payment_intent.dart';
 export 'src/models/payment_method.dart';
 export 'src/models/reader.dart';
 export 'src/stripe_terminal.dart';
-export 'src/stripe_terminal_exception.dart';
+export 'src/terminal_exception.dart';

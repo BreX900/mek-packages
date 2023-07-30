@@ -206,10 +206,11 @@ ${methods.map((_) {
           body: [
             KotlinMethod(
               name: 'setHandler',
-              parameters: const [
-                KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
-                KotlinParameter(name: 'api', type: 'StripeTerminalApi'),
-                KotlinParameter(name: 'coroutineScope', type: 'CoroutineScope?', defaultTo: 'null'),
+              parameters: [
+                const KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
+                KotlinParameter(name: 'api', type: codecs.encodeName(element.name)),
+                const KotlinParameter(
+                    name: 'coroutineScope', type: 'CoroutineScope?', defaultTo: 'null'),
               ],
               body: '''
 channel = MethodChannel(binaryMessenger, "${handler.channelName()}")
@@ -307,7 +308,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
       ],
       body: methods.map((_) {
         final MethodHandler(element: e, kotlin: methodType) = _;
-        final returnType = e.returnType.singleTypeArg;
+        final returnType = e.returnType.thisOrSingleTypeArg;
 
         final parameters =
             e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');

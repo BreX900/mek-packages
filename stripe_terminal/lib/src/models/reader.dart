@@ -1,4 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
+import 'package:meta/meta.dart';
 
 part 'reader.g.dart';
 
@@ -13,6 +14,7 @@ class Reader with _$Reader {
   final String serialNumber;
   final String? label;
 
+  @internal
   const Reader({
     required this.locationStatus,
     required this.batteryLevel,

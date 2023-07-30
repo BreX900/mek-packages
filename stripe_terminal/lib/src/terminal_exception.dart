@@ -1,13 +1,17 @@
+import 'package:collection/collection.dart';
 import 'package:one_for_all/one_for_all.dart';
+import 'package:recase/recase.dart';
 
 @SerializableEnum(
   type: SerializableEnumType.string,
   languages: {LanguageApi.swift},
   hostToFlutter: true,
 )
-enum StripeTerminalExceptionCode {
+enum TerminalExceptionCode {
+  /// Common
   paymentIntentNotRetrieved('Before calling this method you need to call "retrievePaymentIntent".'),
 
+  /// Android
   cancelFailed,
   notConnectedToReader,
   alreadyConnectedToReader,
@@ -83,21 +87,31 @@ enum StripeTerminalExceptionCode {
   connectionTokenProviderErrorWhileForwarding,
   accountIdMismatchWhileForwarding,
   forceOfflineWithFeatureDisabled,
-  notConnectedToInternetAndRequireOnlineSet;
+  notConnectedToInternetAndRequireOnlineSet,
+
+  /// iOS
+  ;
 
   final String? message;
 
-  const StripeTerminalExceptionCode([this.message]);
+  const TerminalExceptionCode([this.message]);
 }
 
-class StripeTerminalException {
-  final StripeTerminalExceptionCode code;
+class TerminalException {
+  final String rawCode;
   final String? message;
   final String? details;
 
-  const StripeTerminalException(this.code, this.message, this.details);
+  late final TerminalExceptionCode? code =
+      TerminalExceptionCode.values.firstWhereOrNull((e) => e.name == rawCode);
+
+  TerminalException({
+    required String rawCode,
+    required this.message,
+    required this.details,
+  }) : rawCode = rawCode.camelCase;
 
   @override
   String toString() =>
-      ['$runtimeType: ${code.name}', code.message, message, details].nonNulls.join('\n');
+      ['$runtimeType: $rawCode', code?.message, message, details].nonNulls.join('\n');
 }

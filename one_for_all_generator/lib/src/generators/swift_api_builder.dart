@@ -366,7 +366,7 @@ channel = FlutterMethodChannel(
 )'''),
       methods: methods.map((_) {
         final MethodHandler(element: e, swift: methodType) = _;
-        final returnType = e.returnType.singleTypeArg;
+        final returnType = e.returnType.thisOrSingleTypeArg;
 
         final parameters =
             e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');

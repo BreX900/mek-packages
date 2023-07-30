@@ -43,7 +43,7 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
             self._handlers.readerFinishInstallingUpdate(
                 update: update?.toApi(),
                 exception: exception != nil
-                ? TerminalExceptionApi(code: exception!.code, message: exception!.message, details: "\(exception!.details ?? "")")
+                ? TerminalExceptionApi(rawCode: exception!.code, message: exception!.message, details: "\(exception!.details ?? "")")
                     : nil
             )
         }

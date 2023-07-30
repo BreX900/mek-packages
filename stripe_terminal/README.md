@@ -17,8 +17,8 @@ more simply by supporting streams instead of callbacks for listeners
 - **Reader discovery, connection and updates**
   - ✅ onConnectionStatusChange
   - ✅ connectionStatus
-  - ❌ supportsReadersOfType
   - ✅ onUnexpectedReaderDisconnect
+  - ✅ supportsReadersOfType
   - ✅ discoverReaders
   - ✅ connectBluetoothReader
   - ✅ connectHandoffReader

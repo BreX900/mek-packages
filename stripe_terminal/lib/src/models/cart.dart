@@ -5,7 +5,8 @@ part 'cart.g.dart';
 @DataClass()
 class Cart with _$Cart {
   final String currency;
-  final int tax, total;
+  final int tax;
+  final int total;
   final List<CartLineItem> lineItems;
 
   const Cart({

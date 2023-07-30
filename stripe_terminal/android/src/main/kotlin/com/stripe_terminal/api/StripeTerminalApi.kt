@@ -58,17 +58,15 @@ class ControllerSink<T>(
 }
 
 interface StripeTerminalPlatformApi {
-    fun onCancelReaderReconnection(
-        result: Result<Unit>,
-    )
+    fun onInit()
 
-    fun onCancelReaderUpdate(
-        result: Result<Unit>,
-    )
+    fun onConnectionStatus(): ConnectionStatusApi
 
-    fun onClearReaderDisplay(
-        result: Result<Unit>,
-    )
+    fun onSupportsReadersOfType(
+        deviceType: DeviceTypeApi,
+        discoveryMethod: DiscoveryMethodApi,
+        simulated: Boolean,
+    ): Boolean
 
     fun onConnectBluetoothReader(
         result: Result<ReaderApi>,
@@ -103,15 +101,9 @@ interface StripeTerminalPlatformApi {
 
     fun onConnectedReader(): ReaderApi?
 
-    fun onConnectionStatus(): ConnectionStatusApi
-
-    fun onDisconnectReader(
+    fun onCancelReaderReconnection(
         result: Result<Unit>,
     )
-
-    fun onInit()
-
-    fun onInstallAvailableUpdate()
 
     fun onListLocations(
         result: Result<List<LocationApi>>,
@@ -120,19 +112,19 @@ interface StripeTerminalPlatformApi {
         startingAfter: String?,
     )
 
-    fun onProcessPayment(
-        result: Result<PaymentIntentApi>,
-        paymentIntentId: String,
+    fun onInstallAvailableUpdate()
+
+    fun onCancelReaderUpdate(
+        result: Result<Unit>,
+    )
+
+    fun onDisconnectReader(
+        result: Result<Unit>,
     )
 
     fun onRetrievePaymentIntent(
         result: Result<PaymentIntentApi>,
         clientSecret: String,
-    )
-
-    fun onSetReaderDisplay(
-        result: Result<Unit>,
-        cart: CartApi,
     )
 
     fun onStartCollectPaymentMethod(
@@ -143,6 +135,16 @@ interface StripeTerminalPlatformApi {
         skipTipping: Boolean,
     )
 
+    fun onStopCollectPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
+    )
+
+    fun onProcessPayment(
+        result: Result<PaymentIntentApi>,
+        paymentIntentId: String,
+    )
+
     fun onStartReadReusableCard(
         result: Result<PaymentMethodApi>,
         operationId: Long,
@@ -150,14 +152,18 @@ interface StripeTerminalPlatformApi {
         metadata: HashMap<String, String>?,
     )
 
-    fun onStopCollectPaymentMethod(
+    fun onStopReadReusableCard(
         result: Result<Unit>,
         operationId: Long,
     )
 
-    fun onStopReadReusableCard(
+    fun onSetReaderDisplay(
         result: Result<Unit>,
-        operationId: Long,
+        cart: CartApi,
+    )
+
+    fun onClearReaderDisplay(
+        result: Result<Unit>,
     )
 
     private fun onMethodCall(
@@ -173,17 +179,17 @@ interface StripeTerminalPlatformApi {
                 }
             }
             when (call.method) {
-                "cancelReaderReconnection" -> {
-                    val res = Result<Unit>(result) { null }
-                    onCancelReaderReconnection(res)
+                "init" -> {
+                    onInit()
+                    result.success(null)
                 }
-                "cancelReaderUpdate" -> {
-                    val res = Result<Unit>(result) { null }
-                    onCancelReaderUpdate(res)
+                "connectionStatus" -> {
+                    val res = onConnectionStatus()
+                    result.success(res.ordinal)
                 }
-                "clearReaderDisplay" -> {
-                    val res = Result<Unit>(result) { null }
-                    onClearReaderDisplay(res)
+                "supportsReadersOfType" -> {
+                    val res = onSupportsReadersOfType((args[0] as Int).let { DeviceTypeApi.values()[it] }, (args[1] as Int).let { DiscoveryMethodApi.values()[it] }, args[2] as Boolean)
+                    result.success(res)
                 }
                 "connectBluetoothReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
@@ -209,53 +215,57 @@ interface StripeTerminalPlatformApi {
                     val res = onConnectedReader()
                     result.success(res?.serialize())
                 }
-                "connectionStatus" -> {
-                    val res = onConnectionStatus()
-                    result.success(res.ordinal)
-                }
-                "disconnectReader" -> {
+                "cancelReaderReconnection" -> {
                     val res = Result<Unit>(result) { null }
-                    onDisconnectReader(res)
-                }
-                "init" -> {
-                    onInit()
-                    result.success(null)
-                }
-                "installAvailableUpdate" -> {
-                    onInstallAvailableUpdate()
-                    result.success(null)
+                    onCancelReaderReconnection(res)
                 }
                 "listLocations" -> {
                     val res = Result<List<LocationApi>>(result) { it.map { it.serialize()}  }
                     onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
                 }
-                "processPayment" -> {
-                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onProcessPayment(res, args[0] as String)
+                "installAvailableUpdate" -> {
+                    onInstallAvailableUpdate()
+                    result.success(null)
+                }
+                "cancelReaderUpdate" -> {
+                    val res = Result<Unit>(result) { null }
+                    onCancelReaderUpdate(res)
+                }
+                "disconnectReader" -> {
+                    val res = Result<Unit>(result) { null }
+                    onDisconnectReader(res)
                 }
                 "retrievePaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onRetrievePaymentIntent(res, args[0] as String)
                 }
-                "setReaderDisplay" -> {
-                    val res = Result<Unit>(result) { null }
-                    onSetReaderDisplay(res, (args[0] as List<Any?>).let { CartApi.deserialize(it) })
-                }
                 "startCollectPaymentMethod" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
-                }
-                "startReadReusableCard" -> {
-                    val res = Result<PaymentMethodApi>(result) { it.serialize() }
-                    onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
                 }
                 "stopCollectPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
                     onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
                 }
+                "processPayment" -> {
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
+                    onProcessPayment(res, args[0] as String)
+                }
+                "startReadReusableCard" -> {
+                    val res = Result<PaymentMethodApi>(result) { it.serialize() }
+                    onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
+                }
                 "stopReadReusableCard" -> {
                     val res = Result<Unit>(result) { null }
                     onStopReadReusableCard(res, (args[0] as Number).toLong())
+                }
+                "setReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onSetReaderDisplay(res, (args[0] as List<Any?>).let { CartApi.deserialize(it) })
+                }
+                "clearReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onClearReaderDisplay(res)
                 }
             }
         } catch (e: PlatformException) {
@@ -404,26 +414,34 @@ data class AddressApi(
     }
 }
 
+enum class CardBrandApi {
+    AMEX, DINERS_CLUB, DISCOVER, JCB, MASTER_CARD, UNION_PAY, VISA, INTERAC, EFTPOS_AU;
+}
+
 data class CardDetailsApi(
-    val brand: String?,
+    val brand: CardBrandApi?,
     val country: String?,
     val expMonth: Long,
     val expYear: Long,
     val fingerprint: String?,
-    val funding: String?,
+    val funding: CardFundingTypeApi?,
     val last4: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            brand,
+            brand?.ordinal,
             country,
             expMonth,
             expYear,
             fingerprint,
-            funding,
+            funding?.ordinal,
             last4,
         )
     }
+}
+
+enum class CardFundingTypeApi {
+    CREDIT, DEBIT, PREPAID;
 }
 
 data class CartApi(
@@ -469,7 +487,7 @@ enum class ConnectionStatusApi {
 }
 
 enum class DeviceTypeApi {
-    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN;
+    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, APPLE_BUILT_IN;
 }
 
 enum class DiscoveryMethodApi {
@@ -481,7 +499,7 @@ data class LocationApi(
     val displayName: String?,
     val id: String?,
     val livemode: Boolean?,
-    val metadata: HashMap<String, String>?,
+    val metadata: HashMap<String, String>,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -489,13 +507,13 @@ data class LocationApi(
             displayName,
             id,
             livemode,
-            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
         )
     }
 }
 
 enum class LocationStatusApi {
-    UNKNOWN, SET, NOT_SET;
+    SET, NOT_SET;
 }
 
 data class PaymentIntentApi(
@@ -516,7 +534,7 @@ data class PaymentIntentApi(
     val description: String?,
     val invoice: String?,
     val livemode: Boolean,
-    val metadata: HashMap<String, String>?,
+    val metadata: HashMap<String, String>,
     val onBehalfOf: String?,
     val paymentMethodId: String?,
     val status: PaymentIntentStatusApi?,
@@ -544,7 +562,7 @@ data class PaymentIntentApi(
             description,
             invoice,
             livemode,
-            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
             onBehalfOf,
             paymentMethodId,
             status?.ordinal,
@@ -565,7 +583,7 @@ data class PaymentMethodApi(
     val cardDetails: CardDetailsApi?,
     val customer: String?,
     val livemode: Boolean,
-    val metadata: HashMap<String, String>?,
+    val metadata: HashMap<String, String>,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -573,7 +591,7 @@ data class PaymentMethodApi(
             cardDetails?.serialize(),
             customer,
             livemode,
-            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
         )
     }
 }
@@ -583,9 +601,9 @@ enum class PaymentStatusApi {
 }
 
 data class ReaderApi(
-    val locationStatus: LocationStatusApi,
+    val locationStatus: LocationStatusApi?,
     val batteryLevel: Double,
-    val deviceType: DeviceTypeApi,
+    val deviceType: DeviceTypeApi?,
     val simulated: Boolean,
     val availableUpdate: Boolean,
     val locationId: String?,
@@ -594,9 +612,9 @@ data class ReaderApi(
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            locationStatus.ordinal,
+            locationStatus?.ordinal,
             batteryLevel,
-            deviceType.ordinal,
+            deviceType?.ordinal,
             simulated,
             availableUpdate,
             locationId,
@@ -608,10 +626,6 @@ data class ReaderApi(
 
 data class ReaderSoftwareUpdateApi(
     val components: List<UpdateComponentApi>,
-    val hasConfigUpdate: Boolean,
-    val hasFirmwareUpdate: Boolean,
-    val hasIncrementalUpdate: Boolean,
-    val hasKeyUpdate: Boolean,
     val keyProfileName: String?,
     val onlyInstallRequiredUpdates: Boolean,
     val requiredAt: Long,
@@ -622,10 +636,6 @@ data class ReaderSoftwareUpdateApi(
     fun serialize(): List<Any?> {
         return listOf(
             components.map { it.ordinal} ,
-            hasConfigUpdate,
-            hasFirmwareUpdate,
-            hasIncrementalUpdate,
-            hasKeyUpdate,
             keyProfileName,
             onlyInstallRequiredUpdates,
             requiredAt,

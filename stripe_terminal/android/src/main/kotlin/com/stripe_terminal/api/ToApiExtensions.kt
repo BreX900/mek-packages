@@ -2,10 +2,9 @@ package com.stripe_terminal.api
 
 import com.stripe_terminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
-import java.util.Calendar
 
 fun TerminalException.toApi(): TerminalExceptionApi {
-    return  TerminalExceptionApi(
+    return TerminalExceptionApi(
         rawCode = errorCode.name,
         message = errorMessage,
         details = stackTraceToString()
@@ -25,15 +24,15 @@ fun Reader.toApi(): ReaderApi {
     )
 }
 
-fun LocationStatus.toApi(): LocationStatusApi {
+fun LocationStatus.toApi(): LocationStatusApi? {
     return when (this) {
-        LocationStatus.UNKNOWN -> LocationStatusApi.UNKNOWN
+        LocationStatus.UNKNOWN -> null
         LocationStatus.SET -> LocationStatusApi.SET
         LocationStatus.NOT_SET -> LocationStatusApi.NOT_SET
     }
 }
 
-fun DeviceType.toApi(): DeviceTypeApi {
+fun DeviceType.toApi(): DeviceTypeApi? {
     return when (this) {
         DeviceType.CHIPPER_1X -> DeviceTypeApi.CHIPPER1_X
         DeviceType.CHIPPER_2X -> DeviceTypeApi.CHIPPER2_X
@@ -41,14 +40,14 @@ fun DeviceType.toApi(): DeviceTypeApi {
         DeviceType.COTS_DEVICE -> DeviceTypeApi.COTS_DEVICE
         DeviceType.VERIFONE_P400 -> DeviceTypeApi.VERIFONE_P400
         DeviceType.WISECUBE -> DeviceTypeApi.WISE_CUBE
-        DeviceType.WISEPAD_3 -> DeviceTypeApi.WISEPAD3
-        DeviceType.WISEPAD_3S -> DeviceTypeApi.WISEPAD3S
-        DeviceType.WISEPOS_E -> DeviceTypeApi.WISEPOS_E
-        DeviceType.WISEPOS_E_DEVKIT -> DeviceTypeApi.WISEPOS_E_DEVKIT
+        DeviceType.WISEPAD_3 -> DeviceTypeApi.WISE_PAD3
+        DeviceType.WISEPAD_3S -> DeviceTypeApi.WISE_PAD3S
+        DeviceType.WISEPOS_E -> DeviceTypeApi.WISE_POS_E
+        DeviceType.WISEPOS_E_DEVKIT -> DeviceTypeApi.WISE_POS_E_DEVKIT
         DeviceType.ETNA -> DeviceTypeApi.ETNA
         DeviceType.STRIPE_S700 -> DeviceTypeApi.STRIPE_S700
         DeviceType.STRIPE_S700_DEVKIT -> DeviceTypeApi.STRIPE_S700_DEVKIT
-        DeviceType.UNKNOWN -> DeviceTypeApi.UNKNOWN
+        DeviceType.UNKNOWN -> null
     }
 }
 
@@ -63,10 +62,6 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
 fun ReaderSoftwareUpdate.toApi(): ReaderSoftwareUpdateApi {
     return ReaderSoftwareUpdateApi(
         components = components.map { it.toApi() },
-        hasConfigUpdate = hasConfigUpdate,
-        hasFirmwareUpdate = hasFirmwareUpdate,
-        hasIncrementalUpdate = hasIncrementalUpdate,
-        hasKeyUpdate = hasKeyUpdate,
         keyProfileName = keyProfileName,
         onlyInstallRequiredUpdates = onlyInstallRequiredUpdates,
         requiredAt = requiredAt.time,
@@ -91,7 +86,6 @@ fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
         ReaderSoftwareUpdate.UpdateTimeEstimate.ONE_TO_TWO_MINUTES -> UpdateTimeEstimateApi.ONE_TO_TWO_MINUTES
         ReaderSoftwareUpdate.UpdateTimeEstimate.TWO_TO_FIVE_MINUTES -> UpdateTimeEstimateApi.TWO_TO_FIVE_MINUTES
         ReaderSoftwareUpdate.UpdateTimeEstimate.FIVE_TO_FIFTEEN_MINUTES -> UpdateTimeEstimateApi.FIVE_TO_FIFTEEN_MINUTES
-
     }
 }
 
@@ -103,18 +97,34 @@ fun PaymentMethod.toApi(): PaymentMethodApi {
         id = id,
         // interacPresentDetails
         livemode = livemode,
-        metadata = metadata?.toHashMap(),
+        metadata = metadata?.toHashMap() ?: hashMapOf(),
     )
 }
 
 fun CardDetails.toApi(): CardDetailsApi {
     return CardDetailsApi(
-        brand = brand,
+        brand = when (brand) {
+            "amex" -> CardBrandApi.AMEX
+            "diners" -> CardBrandApi.DINERS_CLUB
+            "discover" -> CardBrandApi.DISCOVER
+            "jcb" -> CardBrandApi.JCB
+            "mastercard" -> CardBrandApi.MASTER_CARD
+            "unionpay" -> CardBrandApi.UNION_PAY
+            "visa" -> CardBrandApi.VISA
+            "unknown" -> null
+            else -> null
+        },
         country = country,
         expMonth = expMonth.toLong(),
         expYear = expYear.toLong(),
         fingerprint = fingerprint,
-        funding = funding,
+        funding = when (brand) {
+            "credit" -> CardFundingTypeApi.CREDIT
+            "debit" -> CardFundingTypeApi.DEBIT
+            "prepaid" -> CardFundingTypeApi.PREPAID
+            "unknown" -> null
+            else -> null
+        },
 //        generatedFrom
         last4 = last4,
     )
@@ -141,7 +151,7 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         invoice = invoice,
 //         lastPaymentError
         livemode = livemode,
-        metadata = metadata?.toHashMap(),
+        metadata = metadata?.toHashMap() ?: hashMapOf(),
 //         offlineBehavior
         onBehalfOf = onBehalfOf,
 //         paymentMethod
@@ -178,7 +188,7 @@ fun Location.toApi(): LocationApi {
         displayName = displayName,
         id = id,
         livemode = livemode,
-        metadata = metadata?.toHashMap(),
+        metadata = metadata?.toHashMap() ?: hashMapOf(),
     )
 }
 

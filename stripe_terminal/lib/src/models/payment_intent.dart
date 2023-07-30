@@ -23,7 +23,7 @@ class PaymentIntent with _$PaymentIntent {
   final String? invoice;
   // TODO: Remove livemode
   final bool livemode;
-  final Map<String, String>? metadata;
+  final Map<String, String> metadata;
   final String? onBehalfOf;
   final String? paymentMethodId;
   final PaymentIntentStatus? status;

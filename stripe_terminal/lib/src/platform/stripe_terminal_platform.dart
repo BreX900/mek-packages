@@ -34,6 +34,14 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @override
   Future<ConnectionStatus> connectionStatus();
 
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
+  @override
+  Future<bool> supportsReadersOfType({
+    required DeviceType deviceType,
+    required DiscoveryMethod discoveryMethod,
+    required bool simulated,
+  });
+
   @override
   Stream<List<Reader>> discoverReaders({
     required DiscoveryMethod discoveryMethod,

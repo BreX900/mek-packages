@@ -8,7 +8,7 @@ class Location with _$Location {
   final String? displayName;
   final String? id;
   final bool? livemode;
-  final Map<String, String>? metadata;
+  final Map<String, String> metadata;
 
   const Location({
     required this.address,

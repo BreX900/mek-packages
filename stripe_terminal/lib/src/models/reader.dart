@@ -3,11 +3,13 @@ import 'package:meta/meta.dart';
 
 part 'reader.g.dart';
 
+enum ConnectionStatus { notConnected, connected, connecting }
+
 @DataClass()
 class Reader with _$Reader {
-  final LocationStatus locationStatus;
+  final LocationStatus? locationStatus;
   final double batteryLevel;
-  final DeviceType deviceType;
+  final DeviceType? deviceType;
   final bool simulated;
   final bool availableUpdate;
   final String? locationId;
@@ -27,11 +29,7 @@ class Reader with _$Reader {
   });
 }
 
-enum LocationStatus {
-  unknown,
-  set,
-  notSet,
-}
+enum LocationStatus { set, notSet }
 
 enum DeviceType {
   chipper1X,
@@ -40,14 +38,12 @@ enum DeviceType {
   cotsDevice,
   verifoneP400,
   wiseCube,
-  wisepad3,
-  wisepad3s,
-  wiseposE,
-  wiseposEDevkit,
+  wisePad3,
+  wisePad3s,
+  wisePosE,
+  wisePosEDevkit,
   etna,
   stripeS700,
   stripeS700Devkit,
-  unknown
+  appleBuiltIn,
 }
-
-enum ConnectionStatus { notConnected, connected, connecting }

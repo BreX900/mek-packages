@@ -97,6 +97,12 @@ protocol StripeTerminalPlatformApi {
 
     func onConnectionStatus() async throws -> ConnectionStatusApi
 
+    func onSupportsReadersOfType(
+        _ deviceType: DeviceTypeApi,
+        _ discoveryMethod: DiscoveryMethodApi,
+        _ simulated: Bool
+    ) throws -> Bool
+
     func onConnectBluetoothReader(
         _ serialNumber: String,
         _ locationId: String,
@@ -238,6 +244,9 @@ func setStripeTerminalPlatformApiHandler(
                     let res = try await hostApi.onConnectionStatus()
                     return res.rawValue
                 }
+            case "supportsReadersOfType":
+                let res = try hostApi.onSupportsReadersOfType(DeviceTypeApi(rawValue: args[0] as! Int)!, DiscoveryMethodApi(rawValue: args[1] as! Int)!, args[2] as! Bool)
+                result(res)
             case "connectBluetoothReader":
                 runAsync {
                     let res = try await hostApi.onConnectBluetoothReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
@@ -444,26 +453,44 @@ struct AddressApi {
     }
 }
 
+enum CardBrandApi: Int {
+    case amex
+    case dinersClub
+    case discover
+    case jcb
+    case masterCard
+    case unionPay
+    case visa
+    case interac
+    case eftposAu
+}
+
 struct CardDetailsApi {
-    let brand: String?
+    let brand: CardBrandApi?
     let country: String?
     let expMonth: Int
     let expYear: Int
     let fingerprint: String?
-    let funding: String?
+    let funding: CardFundingTypeApi?
     let last4: String?
 
     func serialize() -> [Any?] {
         return [
-            brand,
+            brand?.rawValue,
             country,
             expMonth,
             expYear,
             fingerprint,
-            funding,
+            funding?.rawValue,
             last4,
         ]
     }
+}
+
+enum CardFundingTypeApi: Int {
+    case credit
+    case debit
+    case prepaid
 }
 
 struct CartApi {
@@ -513,14 +540,14 @@ enum DeviceTypeApi: Int {
     case cotsDevice
     case verifoneP400
     case wiseCube
-    case wisepad3
-    case wisepad3s
-    case wiseposE
-    case wiseposEDevkit
+    case wisePad3
+    case wisePad3s
+    case wisePosE
+    case wisePosEDevkit
     case etna
     case stripeS700
     case stripeS700Devkit
-    case unknown
+    case appleBuiltIn
 }
 
 enum DiscoveryMethodApi: Int {
@@ -538,7 +565,7 @@ struct LocationApi {
     let displayName: String?
     let id: String?
     let livemode: Bool?
-    let metadata: [String: String]?
+    let metadata: [String: String]
 
     func serialize() -> [Any?] {
         return [
@@ -546,13 +573,12 @@ struct LocationApi {
             displayName,
             id,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
         ]
     }
 }
 
 enum LocationStatusApi: Int {
-    case unknown
     case set
     case notSet
 }
@@ -575,7 +601,7 @@ struct PaymentIntentApi {
     let description: String?
     let invoice: String?
     let livemode: Bool
-    let metadata: [String: String]?
+    let metadata: [String: String]
     let onBehalfOf: String?
     let paymentMethodId: String?
     let status: PaymentIntentStatusApi?
@@ -603,7 +629,7 @@ struct PaymentIntentApi {
             description,
             invoice,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             onBehalfOf,
             paymentMethodId,
             status?.rawValue,
@@ -629,7 +655,7 @@ struct PaymentMethodApi {
     let cardDetails: CardDetailsApi?
     let customer: String?
     let livemode: Bool
-    let metadata: [String: String]?
+    let metadata: [String: String]
 
     func serialize() -> [Any?] {
         return [
@@ -637,7 +663,7 @@ struct PaymentMethodApi {
             cardDetails?.serialize(),
             customer,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
         ]
     }
 }
@@ -650,9 +676,9 @@ enum PaymentStatusApi: Int {
 }
 
 struct ReaderApi {
-    let locationStatus: LocationStatusApi
+    let locationStatus: LocationStatusApi?
     let batteryLevel: Double
-    let deviceType: DeviceTypeApi
+    let deviceType: DeviceTypeApi?
     let simulated: Bool
     let availableUpdate: Bool
     let locationId: String?
@@ -661,9 +687,9 @@ struct ReaderApi {
 
     func serialize() -> [Any?] {
         return [
-            locationStatus.rawValue,
+            locationStatus?.rawValue,
             batteryLevel,
-            deviceType.rawValue,
+            deviceType?.rawValue,
             simulated,
             availableUpdate,
             locationId,
@@ -675,10 +701,6 @@ struct ReaderApi {
 
 struct ReaderSoftwareUpdateApi {
     let components: [UpdateComponentApi]
-    let hasConfigUpdate: Bool
-    let hasFirmwareUpdate: Bool
-    let hasIncrementalUpdate: Bool
-    let hasKeyUpdate: Bool
     let keyProfileName: String?
     let onlyInstallRequiredUpdates: Bool
     let requiredAt: Date
@@ -689,10 +711,6 @@ struct ReaderSoftwareUpdateApi {
     func serialize() -> [Any?] {
         return [
             components.map { $0.rawValue },
-            hasConfigUpdate,
-            hasFirmwareUpdate,
-            hasIncrementalUpdate,
-            hasKeyUpdate,
             keyProfileName,
             onlyInstallRequiredUpdates,
             requiredAt.timeIntervalSince1970 * 1000,

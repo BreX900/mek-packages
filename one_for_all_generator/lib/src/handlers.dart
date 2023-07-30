@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/one_for_all_generator.dart';
@@ -55,7 +54,6 @@ class HostApiHandler {
 
   late final List<MethodHandler> kotlinMethods = element.methods
       .where((e) => e.isHostApiMethod)
-      .sortedBy((e) => e.name)
       .map((e) => MethodHandler.from(e, kotlinMethod))
       .toList();
   late final List<MethodHandler> swiftMethods = element.methods

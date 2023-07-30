@@ -294,7 +294,7 @@ class _MyAppState extends State<MyApp> {
               (_reader == null || _reader!.serialNumber == e.serialNumber),
           onTap: terminal != null ? () => _toggleReader(terminal, e) : null,
           title: Text(e.serialNumber),
-          subtitle: Text('${e.deviceType.name} ${e.locationId ?? 'NoLocation'}'),
+          subtitle: Text('${e.deviceType?.name ?? 'Unknown'} ${e.locationId ?? 'NoLocation'}'),
           trailing: Text('${(e.batteryLevel * 100).toInt()}'),
         );
       }),

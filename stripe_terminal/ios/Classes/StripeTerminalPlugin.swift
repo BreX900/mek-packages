@@ -50,6 +50,32 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         return Terminal.shared.connectionStatus.toApi()
     }
     
+    func onSupportsReadersOfType(
+        _ deviceType: DeviceTypeApi,
+        _ discoveryMethod: DiscoveryMethodApi,
+        _ simulated: Bool
+    ) throws -> Bool {
+        let hostDiscoveryMethod = discoveryMethod.toHost()
+        guard let hostDiscoveryMethod else {
+            return false
+        }
+        let hostDeviceType = deviceType.toHost()
+        guard let hostDeviceType else {
+            return false
+        }
+        let result = Terminal.shared.supportsReaders(
+            of: hostDeviceType,
+            discoveryMethod: hostDiscoveryMethod,
+            simulated: simulated
+        )
+        do {
+            try result.get()
+            return true
+        } catch {
+            return false
+        }
+    }
+    
     func setupDiscoverReaders() {
         discoverReadersController.setHandler({
             sink, discoveryMethod, simulated, locationId -> FlutterError? in
@@ -323,11 +349,5 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
         }
         return paymentIntent
-    }
-}
-
-extension Dictionary {
-    func containsKey(_ key: Key) -> Bool {
-        return contains(where: { entry in entry.key == key })
     }
 }

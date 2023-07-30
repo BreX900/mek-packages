@@ -35,6 +35,7 @@ import com.stripe.stripeterminal.external.models.TerminalException
 import com.stripe.stripeterminal.log.LogLevel
 import com.stripe_terminal.api.CartApi
 import com.stripe_terminal.api.ConnectionStatusApi
+import com.stripe_terminal.api.DeviceTypeApi
 import com.stripe_terminal.api.DiscoverReadersControllerApi
 import com.stripe_terminal.api.DiscoveryMethodApi
 import com.stripe_terminal.api.LocationApi
@@ -138,12 +139,28 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
         }
     }
 
+    override fun onSupportsReadersOfType(
+        deviceType: DeviceTypeApi,
+        discoveryMethod: DiscoveryMethodApi,
+        simulated: Boolean
+    ): Boolean {
+        val hostDeviceType = deviceType.toHost() ?: return  false
+        val hostDiscoveryMethod = discoveryMethod.toHost() ?: return false
+        val result = _terminal.supportsReadersOfType(
+            deviceType = hostDeviceType,
+            discoveryMethod = hostDiscoveryMethod,
+            simulated = simulated
+        )
+        return result.isSupported
+    }
+
+
     private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
         _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
         _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
             val hostDiscoveryMethod = discoveryMethod.toHost()
             if (hostDiscoveryMethod == null) {
-                sink.error("discoveryMethodNotSupported", null, null)
+                sink.error("", "Discovery method not supported: $discoveryMethod", null)
                 sink.endOfStream()
                 return@setHandler
             }

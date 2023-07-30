@@ -42,6 +42,21 @@ class _$StripeTerminalPlatform {
     }
   }
 
+  Future<bool> supportsReadersOfType({
+    required DeviceType deviceType,
+    required DiscoveryMethod discoveryMethod,
+    required bool simulated,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod('supportsReadersOfType',
+          [deviceType.index, discoveryMethod.index, simulated]);
+      return result as bool;
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
   Future<Reader> connectBluetoothReader(
     String serialNumber, {
     required String locationId,
@@ -309,12 +324,15 @@ Address _$deserializeAddress(List<Object?> serialized) => Address(
     postalCode: serialized[4] as String?,
     state: serialized[5] as String?);
 CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
-    brand: serialized[0] as String?,
+    brand:
+        serialized[0] != null ? CardBrand.values[serialized[0] as int] : null,
     country: serialized[1] as String?,
     expMonth: serialized[2] as int,
     expYear: serialized[3] as int,
     fingerprint: serialized[4] as String?,
-    funding: serialized[5] as String?,
+    funding: serialized[5] != null
+        ? CardFundingType.values[serialized[5] as int]
+        : null,
     last4: serialized[6] as String?);
 List<Object?> _$serializeCart(Cart deserialized) => [
       deserialized.currency,
@@ -331,8 +349,8 @@ Location _$deserializeLocation(List<Object?> serialized) => Location(
     displayName: serialized[1] as String?,
     id: serialized[2] as String?,
     livemode: serialized[3] as bool?,
-    metadata: (serialized[4] as Map?)
-        ?.map((k, v) => MapEntry(k as String, v as String)));
+    metadata: (serialized[4] as Map)
+        .map((k, v) => MapEntry(k as String, v as String)));
 PaymentIntent
     _$deserializePaymentIntent(List<Object?> serialized) =>
         PaymentIntent(
@@ -355,8 +373,8 @@ PaymentIntent
             description: serialized[14] as String?,
             invoice: serialized[15] as String?,
             livemode: serialized[16] as bool,
-            metadata: (serialized[17] as Map?)
-                ?.map((k, v) => MapEntry(k as String, v as String)),
+            metadata: (serialized[17] as Map)
+                .map((k, v) => MapEntry(k as String, v as String)),
             onBehalfOf: serialized[18] as String?,
             paymentMethodId: serialized[19] as String?,
             status: serialized[20] != null
@@ -375,12 +393,15 @@ PaymentMethod
                 : null,
             customer: serialized[2] as String?,
             livemode: serialized[3] as bool,
-            metadata: (serialized[4] as Map?)
-                ?.map((k, v) => MapEntry(k as String, v as String)));
+            metadata: (serialized[4] as Map)
+                .map((k, v) => MapEntry(k as String, v as String)));
 Reader _$deserializeReader(List<Object?> serialized) => Reader(
-    locationStatus: LocationStatus.values[serialized[0] as int],
+    locationStatus: serialized[0] != null
+        ? LocationStatus.values[serialized[0] as int]
+        : null,
     batteryLevel: serialized[1] as double,
-    deviceType: DeviceType.values[serialized[2] as int],
+    deviceType:
+        serialized[2] != null ? DeviceType.values[serialized[2] as int] : null,
     simulated: serialized[3] as bool,
     availableUpdate: serialized[4] as bool,
     locationId: serialized[5] as String?,
@@ -392,16 +413,12 @@ ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(
         components: (serialized[0] as List)
             .map((e) => UpdateComponent.values[e as int])
             .toList(),
-        hasConfigUpdate: serialized[1] as bool,
-        hasFirmwareUpdate: serialized[2] as bool,
-        hasIncrementalUpdate: serialized[3] as bool,
-        hasKeyUpdate: serialized[4] as bool,
-        keyProfileName: serialized[5] as String?,
-        onlyInstallRequiredUpdates: serialized[6] as bool,
-        requiredAt: DateTime.fromMillisecondsSinceEpoch(serialized[7] as int),
-        settingsVersion: serialized[8] as String?,
-        timeEstimate: UpdateTimeEstimate.values[serialized[9] as int],
-        version: serialized[10] as String);
+        keyProfileName: serialized[1] as String?,
+        onlyInstallRequiredUpdates: serialized[2] as bool,
+        requiredAt: DateTime.fromMillisecondsSinceEpoch(serialized[3] as int),
+        settingsVersion: serialized[4] as String?,
+        timeEstimate: UpdateTimeEstimate.values[serialized[5] as int],
+        version: serialized[6] as String);
 TerminalException _$deserializeTerminalException(List<Object?> serialized) =>
     TerminalException(
         rawCode: serialized[0] as String,

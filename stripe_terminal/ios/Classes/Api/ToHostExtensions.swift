@@ -18,6 +18,40 @@ extension DiscoveryMethodApi {
     }
 }
 
+extension DeviceTypeApi {
+    func toHost() -> DeviceType? {
+        switch self {
+        case .chipper2X:
+            return .chipper2X
+        case .verifoneP400:
+            return .verifoneP400
+        case .wisePad3:
+            return .wisePad3
+        case .stripeM2:
+            return .stripeM2
+        case .wisePosE:
+            return .wisePosE
+        case .wisePosEDevkit:
+            return .wisePosEDevKit
+        case .etna:
+            return .etna
+        case .chipper1X:
+            return .chipper1X
+        case .wiseCube:
+            return .wiseCube
+        case .stripeS700:
+            return .stripeS700
+        case .stripeS700Devkit:
+            return .stripeS700DevKit
+        case .appleBuiltIn:
+            return .appleBuiltIn
+        case .cotsDevice, .wisePad3s:
+            return nil
+        }
+    }
+}
+
+
 extension CartApi {
     func toHost() -> Cart {
         return Cart(

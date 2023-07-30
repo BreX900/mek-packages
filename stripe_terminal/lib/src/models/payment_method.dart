@@ -9,9 +9,10 @@ class PaymentMethod with _$PaymentMethod {
   // final BillingDetails billingDetails;
   final CardDetails? cardDetails;
   final String? customer;
-  // TODO: Delete this field
+
+  /// Only Android
   final bool livemode;
-  final Map<String, String>? metadata;
+  final Map<String, String> metadata;
   // final String type;
 
   const PaymentMethod({
@@ -42,18 +43,12 @@ class BillingDetails with _$BillingDetails {
 
 @DataClass()
 class CardDetails with _$CardDetails {
-  /// Card brand. Can be amex, diners, discover, jcb, mastercard, unionpay, visa, or unknown.
-  /// In ios there are also: interac, eftposau
-  // TODO: Create enum
-  final String? brand;
+  final CardBrand? brand;
   final String? country;
   final int expMonth;
   final int expYear;
   final String? fingerprint;
-
-  /// Card funding type. Can be credit, debit, prepaid, or unknown.
-  // TODO: Create enum
-  final String? funding;
+  final CardFundingType? funding;
   final String? last4;
 
   const CardDetails({
@@ -66,6 +61,24 @@ class CardDetails with _$CardDetails {
     required this.last4,
   });
 }
+
+enum CardBrand {
+  amex,
+  dinersClub,
+  discover,
+  jcb,
+  masterCard,
+  unionPay,
+  visa,
+
+  /// Only iOS
+  interac,
+
+  /// Only iOS
+  eftposAu;
+}
+
+enum CardFundingType { credit, debit, prepaid }
 
 // class Networks {
 //   final List<String> available;

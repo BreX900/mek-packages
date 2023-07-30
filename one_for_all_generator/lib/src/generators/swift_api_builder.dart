@@ -316,7 +316,7 @@ ${switch (methodType) {
             let res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, '\$0')} }
             try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''',
           MethodApiType.sync => '''
-            let res = try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
+            let res = try hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
             result(${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, 'res')})''',
           MethodApiType.async => '''
             runAsync {

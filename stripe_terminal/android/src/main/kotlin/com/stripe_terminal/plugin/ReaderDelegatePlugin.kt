@@ -9,7 +9,6 @@ import com.stripe.stripeterminal.external.models.Reader
 import com.stripe.stripeterminal.external.models.ReaderSoftwareUpdate
 import com.stripe.stripeterminal.external.models.TerminalException
 import com.stripe_terminal.api.StripeTerminalHandlersApi
-import com.stripe_terminal.api.TerminalExceptionApi
 import com.stripe_terminal.api.toApi
 
 class ReaderDelegatePlugin(private val _handlers: StripeTerminalHandlersApi ) :
@@ -21,8 +20,8 @@ class ReaderDelegatePlugin(private val _handlers: StripeTerminalHandlersApi ) :
         _handlers.readerReportAvailableUpdate(update.toApi())
     }
 
-    override fun onStartInstallingUpdate(update: ReaderSoftwareUpdate, cancelUpdate: Cancelable?) {
-        this.cancelUpdate = cancelUpdate
+    override fun onStartInstallingUpdate(update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
+        this.cancelUpdate = cancelable
         _handlers.readerStartInstallingUpdate(update.toApi())
     }
 

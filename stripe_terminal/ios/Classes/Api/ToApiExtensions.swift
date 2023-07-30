@@ -8,7 +8,7 @@ extension Location {
             displayName: displayName,
             id: stripeId,
             livemode: livemode,
-            metadata: metadata
+            metadata: metadata ?? [:]
         )
     }
 }
@@ -83,7 +83,7 @@ extension DiscoveryMethod {
         case .bluetoothScan:
             return .bluetoothScan
         case .bluetoothProximity:
-            fatalError("Not supported DiscoveryMethod.bluetoothProximity")
+            return .bluetoothProximity
         case .internet:
             return .internet
         case .localMobile:
@@ -95,10 +95,10 @@ extension DiscoveryMethod {
 }
 
 extension LocationStatus {
-    func toApi() -> LocationStatusApi {
+    func toApi() -> LocationStatusApi? {
         switch self {
         case .unknown:
-            return .unknown
+            return nil
         case .set:
             return .set
         case .notSet:
@@ -117,13 +117,13 @@ extension DeviceType {
         case .verifoneP400:
             return .verifoneP400
         case .wisePad3:
-            return .wisepad3
+            return .wisePad3
         case .stripeM2:
             return .stripeM2
         case .wisePosE:
-            return .wiseposE
+            return .wisePosE
         case .wisePosEDevKit:
-            return .wiseposEDevkit
+            return .wisePosEDevkit
         case .etna:
             return .etna
         case .chipper1X:
@@ -135,7 +135,7 @@ extension DeviceType {
         case .stripeS700DevKit:
             return .stripeS700Devkit
         case .appleBuiltIn:
-            fatalError("Not supported DeviceType.appleBuiltIn")
+            return .appleBuiltIn
         @unknown default:
             fatalError("WTF")
         }
@@ -146,10 +146,6 @@ extension ReaderSoftwareUpdate {
     func toApi() -> ReaderSoftwareUpdateApi {
         return ReaderSoftwareUpdateApi(
             components: components.toApi(),
-            hasConfigUpdate: <#T##Bool#>,
-            hasFirmwareUpdate: <#T##Bool#>,
-            hasIncrementalUpdate: <#T##Bool#>,
-            hasKeyUpdate: <#T##Bool#>,
             keyProfileName: nil,
             onlyInstallRequiredUpdates: false,
             requiredAt: requiredAt,
@@ -233,28 +229,28 @@ extension CardDetails {
 }
 
 extension CardBrand {
-    func toApi() -> String {
+    func toApi() -> CardBrandApi? {
         switch self {
         case .amex:
-            return "amex"
+            return .amex
         case .dinersClub:
-            return "diners"
+            return .dinersClub
         case .discover:
-            return "discover"
+            return .discover
         case .JCB:
-            return "jcb"
+            return .jcb
         case .masterCard:
-            return "mastercard"
+            return .masterCard
         case .unionPay:
-            return "unionpay"
+            return .unionPay
         case .visa:
-            return "visa"
+            return .visa
         case .unknown:
-            return "unknown"
+            return nil
         case .interac:
-            return "interac"
+            return .interac
         case .eftposAu:
-            return "eftposau"
+            return .eftposAu
         @unknown default:
             fatalError("WTF")
         }
@@ -262,16 +258,16 @@ extension CardBrand {
 }
 
 extension CardFundingType {
-    func toApi() -> String {
+    func toApi() -> CardFundingTypeApi? {
         switch self {
         case .credit:
-            return "credit"
+            return .credit
         case .debit:
-            return "debit"
+            return .debit
         case .prepaid:
-            return "prepaid"
+            return .prepaid
         case .other:
-            return "unknown"
+            return nil
         @unknown default:
             fatalError("WTF")
         }
@@ -298,7 +294,7 @@ extension PaymentIntent {
             description: description,
             invoice: nil,
             livemode: false,
-            metadata: metadata,
+            metadata: metadata ?? [:],
             onBehalfOf: nil,
             paymentMethodId: nil,
             status: status.toApi(),

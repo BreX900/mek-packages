@@ -21,6 +21,15 @@ abstract class ApiBuilder {
 
   void writeSerializableEnum(SerializableEnumHandler handler);
 
+  void writeSerializable(SerializableHandler handler) {
+    switch (handler) {
+      case SerializableClassHandler():
+        writeSerializableClass(handler);
+      case SerializableEnumHandler():
+        writeSerializableEnum(handler);
+    }
+  }
+
   String build();
 }
 

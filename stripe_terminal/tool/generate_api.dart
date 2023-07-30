@@ -3,12 +3,12 @@ import 'package:one_for_all_generator/one_for_all_generator.dart';
 void main() async {
   await OneForAll.from(
     options: const OneForAllOptions(
-      apiFile: 'lib/src/stripe_terminal_platform.dart',
+      apiFile: 'lib/src/platform/stripe_terminal_platform.dart',
       extraApiFiles: [
         'lib/src/stripe_terminal_exception.dart',
       ],
       hostClassSuffix: 'Api',
-      codecs: [ApiPlatformCodec.dateTime],
+      codecs: ApiPlatformCodec.values,
     ),
     dartOptions: const DartOptions(),
     kotlinOptions: const KotlinOptions(

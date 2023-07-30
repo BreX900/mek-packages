@@ -107,3 +107,5 @@ index_generator:
   # Define the paths of the folders in which to generate the index files
   indexes:
     - path: lib
+      exclude:
+        - src/platform/**

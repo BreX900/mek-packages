@@ -32,23 +32,6 @@ class _$StripeTerminalPlatform {
     }
   }
 
-  Future<List<Location>> listLocations({
-    required String? endingBefore,
-    required int? limit,
-    required String? startingAfter,
-  }) async {
-    try {
-      final result = await _$channel
-          .invokeMethod('listLocations', [endingBefore, limit, startingAfter]);
-      return (result as List)
-          .map((e) => _$deserializeLocation(e as List))
-          .toList();
-    } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
   Future<ConnectionStatus> connectionStatus() async {
     try {
       final result = await _$channel.invokeMethod('connectionStatus', []);
@@ -138,15 +121,6 @@ class _$StripeTerminalPlatform {
     }
   }
 
-  Future<void> cancelReaderUpdate() async {
-    try {
-      await _$channel.invokeMethod('cancelReaderUpdate', []);
-    } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
   Future<void> cancelReaderReconnection() async {
     try {
       await _$channel.invokeMethod('cancelReaderReconnection', []);
@@ -156,9 +130,17 @@ class _$StripeTerminalPlatform {
     }
   }
 
-  Future<void> disconnectReader() async {
+  Future<List<Location>> listLocations({
+    required String? endingBefore,
+    required int? limit,
+    required String? startingAfter,
+  }) async {
     try {
-      await _$channel.invokeMethod('disconnectReader', []);
+      final result = await _$channel
+          .invokeMethod('listLocations', [endingBefore, limit, startingAfter]);
+      return (result as List)
+          .map((e) => _$deserializeLocation(e as List))
+          .toList();
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -174,18 +156,18 @@ class _$StripeTerminalPlatform {
     }
   }
 
-  Future<void> setReaderDisplay(Cart cart) async {
+  Future<void> cancelReaderUpdate() async {
     try {
-      await _$channel.invokeMethod('setReaderDisplay', [_$serializeCart(cart)]);
+      await _$channel.invokeMethod('cancelReaderUpdate', []);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
 
-  Future<void> clearReaderDisplay() async {
+  Future<void> disconnectReader() async {
     try {
-      await _$channel.invokeMethod('clearReaderDisplay', []);
+      await _$channel.invokeMethod('disconnectReader', []);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -262,6 +244,24 @@ class _$StripeTerminalPlatform {
       rethrow;
     }
   }
+
+  Future<void> setReaderDisplay(Cart cart) async {
+    try {
+      await _$channel.invokeMethod('setReaderDisplay', [_$serializeCart(cart)]);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> clearReaderDisplay() async {
+    try {
+      await _$channel.invokeMethod('clearReaderDisplay', []);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
 }
 
 void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
@@ -301,6 +301,29 @@ void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
   });
 }
 
+Address _$deserializeAddress(List<Object?> serialized) => Address(
+    city: serialized[0] as String?,
+    country: serialized[1] as String?,
+    line1: serialized[2] as String?,
+    line2: serialized[3] as String?,
+    postalCode: serialized[4] as String?,
+    state: serialized[5] as String?);
+CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
+    brand: serialized[0] as String?,
+    country: serialized[1] as String?,
+    expMonth: serialized[2] as int,
+    expYear: serialized[3] as int,
+    fingerprint: serialized[4] as String?,
+    funding: serialized[5] as String?,
+    last4: serialized[6] as String?);
+List<Object?> _$serializeCart(Cart deserialized) => [
+      deserialized.currency,
+      deserialized.tax,
+      deserialized.total,
+      deserialized.lineItems.map((e) => _$serializeCartLineItem(e)).toList()
+    ];
+List<Object?> _$serializeCartLineItem(CartLineItem deserialized) =>
+    [deserialized.description, deserialized.quantity, deserialized.amount];
 Location _$deserializeLocation(List<Object?> serialized) => Location(
     address: serialized[0] != null
         ? _$deserializeAddress(serialized[0] as List)
@@ -310,30 +333,6 @@ Location _$deserializeLocation(List<Object?> serialized) => Location(
     livemode: serialized[3] as bool?,
     metadata: (serialized[4] as Map?)
         ?.map((k, v) => MapEntry(k as String, v as String)));
-Address _$deserializeAddress(List<Object?> serialized) => Address(
-    city: serialized[0] as String?,
-    country: serialized[1] as String?,
-    line1: serialized[2] as String?,
-    line2: serialized[3] as String?,
-    postalCode: serialized[4] as String?,
-    state: serialized[5] as String?);
-Reader _$deserializeReader(List<Object?> serialized) => Reader(
-    locationStatus: LocationStatus.values[serialized[0] as int],
-    batteryLevel: serialized[1] as double,
-    deviceType: DeviceType.values[serialized[2] as int],
-    simulated: serialized[3] as bool,
-    availableUpdate: serialized[4] as bool,
-    locationId: serialized[5] as String?,
-    serialNumber: serialized[6] as String,
-    label: serialized[7] as String?);
-List<Object?> _$serializeCart(Cart deserialized) => [
-      deserialized.currency,
-      deserialized.tax,
-      deserialized.total,
-      deserialized.lineItems.map((e) => _$serializeCartLineItem(e)).toList()
-    ];
-List<Object?> _$serializeCartLineItem(CartLineItem deserialized) =>
-    [deserialized.description, deserialized.quantity, deserialized.amount];
 PaymentIntent
     _$deserializePaymentIntent(List<Object?> serialized) =>
         PaymentIntent(
@@ -378,14 +377,15 @@ PaymentMethod
             livemode: serialized[3] as bool,
             metadata: (serialized[4] as Map?)
                 ?.map((k, v) => MapEntry(k as String, v as String)));
-CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
-    brand: serialized[0] as String?,
-    country: serialized[1] as String?,
-    expMonth: serialized[2] as int,
-    expYear: serialized[3] as int,
-    fingerprint: serialized[4] as String?,
-    funding: serialized[5] as String?,
-    last4: serialized[6] as String?);
+Reader _$deserializeReader(List<Object?> serialized) => Reader(
+    locationStatus: LocationStatus.values[serialized[0] as int],
+    batteryLevel: serialized[1] as double,
+    deviceType: DeviceType.values[serialized[2] as int],
+    simulated: serialized[3] as bool,
+    availableUpdate: serialized[4] as bool,
+    locationId: serialized[5] as String?,
+    serialNumber: serialized[6] as String,
+    label: serialized[7] as String?);
 ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(
         List<Object?> serialized) =>
     ReaderSoftwareUpdate(

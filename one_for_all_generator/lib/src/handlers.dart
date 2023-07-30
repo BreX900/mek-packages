@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/one_for_all_generator.dart';
@@ -54,6 +55,7 @@ class HostApiHandler {
 
   late final List<MethodHandler> kotlinMethods = element.methods
       .where((e) => e.isHostApiMethod)
+      .sortedBy((e) => e.name)
       .map((e) => MethodHandler.from(e, kotlinMethod))
       .toList();
   late final List<MethodHandler> swiftMethods = element.methods
@@ -102,21 +104,40 @@ class FlutterApiHandler {
   String channelName([MethodElement? e]) => e?.name ?? element.name;
 }
 
-class SerializableClassHandler extends Equatable {
-  static const _annotationChecker = TypeChecker.fromRuntime(SerializableClass);
-
-  final ClassElement element;
+sealed class SerializableHandler<T extends InterfaceElement> extends Equatable {
+  final T element;
   final bool kotlinGeneration;
   final bool swiftGeneration;
   final bool flutterToHost;
   final bool hostToFlutter;
 
-  const SerializableClassHandler({
+  const SerializableHandler({
     required this.element,
     required this.kotlinGeneration,
     required this.swiftGeneration,
     required this.flutterToHost,
     required this.hostToFlutter,
+  });
+
+  SerializableHandler<T> apply({
+    bool flutterToHost = false,
+    bool hostToFlutter = false,
+  });
+
+  @override
+  List<Object?> get props =>
+      [element, kotlinGeneration, swiftGeneration, flutterToHost, hostToFlutter];
+}
+
+class SerializableClassHandler extends SerializableHandler<ClassElement> {
+  static const _annotationChecker = TypeChecker.fromRuntime(SerializableClass);
+
+  const SerializableClassHandler({
+    required super.element,
+    required super.kotlinGeneration,
+    required super.swiftGeneration,
+    required super.flutterToHost,
+    required super.hostToFlutter,
   });
 
   factory SerializableClassHandler.from(ClassElement element) {
@@ -131,6 +152,7 @@ class SerializableClassHandler extends Equatable {
     );
   }
 
+  @override
   SerializableClassHandler apply({
     bool flutterToHost = false,
     bool hostToFlutter = false,
@@ -143,29 +165,20 @@ class SerializableClassHandler extends Equatable {
       hostToFlutter: this.hostToFlutter || hostToFlutter,
     );
   }
-
-  @override
-  List<Object?> get props =>
-      [element, kotlinGeneration, swiftGeneration, flutterToHost, hostToFlutter];
 }
 
-class SerializableEnumHandler extends Equatable {
+class SerializableEnumHandler extends SerializableHandler {
   static const _annotationChecker = TypeChecker.fromRuntime(SerializableEnum);
 
-  final EnumElement element;
   final SerializableEnumType type;
-  final bool kotlinGeneration;
-  final bool swiftGeneration;
-  final bool flutterToHost;
-  final bool hostToFlutter;
 
   const SerializableEnumHandler({
-    required this.element,
+    required super.element,
     required this.type,
-    required this.kotlinGeneration,
-    required this.swiftGeneration,
-    required this.flutterToHost,
-    required this.hostToFlutter,
+    required super.kotlinGeneration,
+    required super.swiftGeneration,
+    required super.flutterToHost,
+    required super.hostToFlutter,
   });
 
   factory SerializableEnumHandler.from(EnumElement element) {
@@ -182,6 +195,7 @@ class SerializableEnumHandler extends Equatable {
     );
   }
 
+  @override
   SerializableEnumHandler apply({
     bool flutterToHost = false,
     bool hostToFlutter = false,
@@ -197,8 +211,7 @@ class SerializableEnumHandler extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [element, type, kotlinGeneration, swiftGeneration, flutterToHost, hostToFlutter];
+  List<Object?> get props => super.props..add(type);
 }
 
 extension NoUndescoreString on String {

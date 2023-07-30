@@ -58,16 +58,17 @@ class ControllerSink<T>(
 }
 
 interface StripeTerminalPlatformApi {
-    fun onInit()
-
-    fun onListLocations(
-        result: Result<List<LocationApi>>,
-        endingBefore: String?,
-        limit: Long?,
-        startingAfter: String?,
+    fun onCancelReaderReconnection(
+        result: Result<Unit>,
     )
 
-    fun onConnectionStatus(): ConnectionStatusApi
+    fun onCancelReaderUpdate(
+        result: Result<Unit>,
+    )
+
+    fun onClearReaderDisplay(
+        result: Result<Unit>,
+    )
 
     fun onConnectBluetoothReader(
         result: Result<ReaderApi>,
@@ -102,32 +103,36 @@ interface StripeTerminalPlatformApi {
 
     fun onConnectedReader(): ReaderApi?
 
-    fun onCancelReaderUpdate(
-        result: Result<Unit>,
-    )
-
-    fun onCancelReaderReconnection(
-        result: Result<Unit>,
-    )
+    fun onConnectionStatus(): ConnectionStatusApi
 
     fun onDisconnectReader(
         result: Result<Unit>,
     )
 
+    fun onInit()
+
     fun onInstallAvailableUpdate()
 
-    fun onSetReaderDisplay(
-        result: Result<Unit>,
-        cart: CartApi,
+    fun onListLocations(
+        result: Result<List<LocationApi>>,
+        endingBefore: String?,
+        limit: Long?,
+        startingAfter: String?,
     )
 
-    fun onClearReaderDisplay(
-        result: Result<Unit>,
+    fun onProcessPayment(
+        result: Result<PaymentIntentApi>,
+        paymentIntentId: String,
     )
 
     fun onRetrievePaymentIntent(
         result: Result<PaymentIntentApi>,
         clientSecret: String,
+    )
+
+    fun onSetReaderDisplay(
+        result: Result<Unit>,
+        cart: CartApi,
     )
 
     fun onStartCollectPaymentMethod(
@@ -138,21 +143,16 @@ interface StripeTerminalPlatformApi {
         skipTipping: Boolean,
     )
 
-    fun onStopCollectPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    )
-
-    fun onProcessPayment(
-        result: Result<PaymentIntentApi>,
-        paymentIntentId: String,
-    )
-
     fun onStartReadReusableCard(
         result: Result<PaymentMethodApi>,
         operationId: Long,
         customer: String?,
         metadata: HashMap<String, String>?,
+    )
+
+    fun onStopCollectPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
     )
 
     fun onStopReadReusableCard(
@@ -173,17 +173,17 @@ interface StripeTerminalPlatformApi {
                 }
             }
             when (call.method) {
-                "init" -> {
-                    onInit()
-                    result.success(null)
+                "cancelReaderReconnection" -> {
+                    val res = Result<Unit>(result) { null }
+                    onCancelReaderReconnection(res)
                 }
-                "listLocations" -> {
-                    val res = Result<List<LocationApi>>(result) { it.map { it.serialize()}  }
-                    onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
+                "cancelReaderUpdate" -> {
+                    val res = Result<Unit>(result) { null }
+                    onCancelReaderUpdate(res)
                 }
-                "connectionStatus" -> {
-                    val res = onConnectionStatus()
-                    result.success(res.ordinal)
+                "clearReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onClearReaderDisplay(res)
                 }
                 "connectBluetoothReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
@@ -209,49 +209,49 @@ interface StripeTerminalPlatformApi {
                     val res = onConnectedReader()
                     result.success(res?.serialize())
                 }
-                "cancelReaderUpdate" -> {
-                    val res = Result<Unit>(result) { null }
-                    onCancelReaderUpdate(res)
-                }
-                "cancelReaderReconnection" -> {
-                    val res = Result<Unit>(result) { null }
-                    onCancelReaderReconnection(res)
+                "connectionStatus" -> {
+                    val res = onConnectionStatus()
+                    result.success(res.ordinal)
                 }
                 "disconnectReader" -> {
                     val res = Result<Unit>(result) { null }
                     onDisconnectReader(res)
                 }
+                "init" -> {
+                    onInit()
+                    result.success(null)
+                }
                 "installAvailableUpdate" -> {
                     onInstallAvailableUpdate()
                     result.success(null)
                 }
-                "setReaderDisplay" -> {
-                    val res = Result<Unit>(result) { null }
-                    onSetReaderDisplay(res, (args[0] as List<Any?>).let { CartApi.deserialize(it) })
-                }
-                "clearReaderDisplay" -> {
-                    val res = Result<Unit>(result) { null }
-                    onClearReaderDisplay(res)
-                }
-                "retrievePaymentIntent" -> {
-                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onRetrievePaymentIntent(res, args[0] as String)
-                }
-                "startCollectPaymentMethod" -> {
-                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
-                }
-                "stopCollectPaymentMethod" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
+                "listLocations" -> {
+                    val res = Result<List<LocationApi>>(result) { it.map { it.serialize()}  }
+                    onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
                 }
                 "processPayment" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onProcessPayment(res, args[0] as String)
                 }
+                "retrievePaymentIntent" -> {
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
+                    onRetrievePaymentIntent(res, args[0] as String)
+                }
+                "setReaderDisplay" -> {
+                    val res = Result<Unit>(result) { null }
+                    onSetReaderDisplay(res, (args[0] as List<Any?>).let { CartApi.deserialize(it) })
+                }
+                "startCollectPaymentMethod" -> {
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
+                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
+                }
                 "startReadReusableCard" -> {
                     val res = Result<PaymentMethodApi>(result) { it.serialize() }
                     onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
+                }
+                "stopCollectPaymentMethod" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
                 }
                 "stopReadReusableCard" -> {
                     val res = Result<Unit>(result) { null }
@@ -384,24 +384,6 @@ class StripeTerminalHandlersApi(
     }
 }
 
-data class LocationApi(
-    val address: AddressApi?,
-    val displayName: String?,
-    val id: String?,
-    val livemode: Boolean?,
-    val metadata: HashMap<String, String>?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            address?.serialize(),
-            displayName,
-            id,
-            livemode,
-            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
-        )
-    }
-}
-
 data class AddressApi(
     val city: String?,
     val country: String?,
@@ -422,26 +404,24 @@ data class AddressApi(
     }
 }
 
-data class ReaderApi(
-    val locationStatus: LocationStatusApi,
-    val batteryLevel: Double,
-    val deviceType: DeviceTypeApi,
-    val simulated: Boolean,
-    val availableUpdate: Boolean,
-    val locationId: String?,
-    val serialNumber: String,
-    val label: String?,
+data class CardDetailsApi(
+    val brand: String?,
+    val country: String?,
+    val expMonth: Long,
+    val expYear: Long,
+    val fingerprint: String?,
+    val funding: String?,
+    val last4: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            locationStatus.ordinal,
-            batteryLevel,
-            deviceType.ordinal,
-            simulated,
-            availableUpdate,
-            locationId,
-            serialNumber,
-            label,
+            brand,
+            country,
+            expMonth,
+            expYear,
+            fingerprint,
+            funding,
+            last4,
         )
     }
 }
@@ -482,6 +462,40 @@ data class CartLineItemApi(
             )
         }
     }
+}
+
+enum class ConnectionStatusApi {
+    NOT_CONNECTED, CONNECTED, CONNECTING;
+}
+
+enum class DeviceTypeApi {
+    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN;
+}
+
+enum class DiscoveryMethodApi {
+    BLUETOOTH_SCAN, BLUETOOTH_PROXIMITY, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
+}
+
+data class LocationApi(
+    val address: AddressApi?,
+    val displayName: String?,
+    val id: String?,
+    val livemode: Boolean?,
+    val metadata: HashMap<String, String>?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            address?.serialize(),
+            displayName,
+            id,
+            livemode,
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
+        )
+    }
+}
+
+enum class LocationStatusApi {
+    UNKNOWN, SET, NOT_SET;
 }
 
 data class PaymentIntentApi(
@@ -542,6 +556,10 @@ data class PaymentIntentApi(
     }
 }
 
+enum class PaymentIntentStatusApi {
+    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
+}
+
 data class PaymentMethodApi(
     val id: String,
     val cardDetails: CardDetailsApi?,
@@ -560,24 +578,30 @@ data class PaymentMethodApi(
     }
 }
 
-data class CardDetailsApi(
-    val brand: String?,
-    val country: String?,
-    val expMonth: Long,
-    val expYear: Long,
-    val fingerprint: String?,
-    val funding: String?,
-    val last4: String?,
+enum class PaymentStatusApi {
+    NOT_READY, READY, WAITING_FOR_INPUT, PROCESSING;
+}
+
+data class ReaderApi(
+    val locationStatus: LocationStatusApi,
+    val batteryLevel: Double,
+    val deviceType: DeviceTypeApi,
+    val simulated: Boolean,
+    val availableUpdate: Boolean,
+    val locationId: String?,
+    val serialNumber: String,
+    val label: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            brand,
-            country,
-            expMonth,
-            expYear,
-            fingerprint,
-            funding,
-            last4,
+            locationStatus.ordinal,
+            batteryLevel,
+            deviceType.ordinal,
+            simulated,
+            availableUpdate,
+            locationId,
+            serialNumber,
+            label,
         )
     }
 }
@@ -626,28 +650,8 @@ data class TerminalExceptionApi(
     }
 }
 
-enum class ConnectionStatusApi {
-    NOT_CONNECTED, CONNECTED, CONNECTING;
-}
-
-enum class DiscoveryMethodApi {
-    BLUETOOTH_SCAN, BLUETOOTH_PROXIMITY, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
-}
-
-enum class LocationStatusApi {
-    UNKNOWN, SET, NOT_SET;
-}
-
-enum class DeviceTypeApi {
-    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISEPAD3, WISEPAD3S, WISEPOS_E, WISEPOS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, UNKNOWN;
-}
-
-enum class PaymentIntentStatusApi {
-    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
-}
-
-enum class PaymentStatusApi {
-    NOT_READY, READY, WAITING_FOR_INPUT, PROCESSING;
+enum class TerminalExceptionCodeApi {
+    PAYMENT_INTENT_NOT_RETRIEVED, CANCEL_FAILED, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_PERMISSION_DENIED, PROCESS_INVALID_PAYMENT_INTENT, INVALID_CLIENT_SECRET, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, USB_PERMISSION_DENIED, MISSING_REQUIRED_PARAMETER, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, LOCAL_MOBILE_LIBRARY_NOT_INCLUDED, LOCAL_MOBILE_UNSUPPORTED_DEVICE, LOCAL_MOBILE_UNSUPPORTED_ANDROID_VERSION, LOCAL_MOBILE_DEVICE_TAMPERED, LOCAL_MOBILE_DEBUG_NOT_SUPPORTED, OFFLINE_MODE_UNSUPPORTED_ANDROID_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, USB_DISCOVERY_TIMED_OUT, FEATURE_NOT_ENABLED_ON_ACCOUNT, READER_BUSY, READER_COMMUNICATION_ERROR, BLUETOOTH_ERROR, BLUETOOTH_DISCONNECTED, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, LOCAL_MOBILE_NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, ANDROID_API_LEVEL_ERROR, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_PROCESS_MISMATCH, OFFLINE_TESTMODE_PAYMENT_IN_LIVEMODE, OFFLINE_LIVEMODE_PAYMENT_IN_TESTMODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_REQUIRE_ONLINE_SET;
 }
 
 enum class UpdateComponentApi {
@@ -656,8 +660,4 @@ enum class UpdateComponentApi {
 
 enum class UpdateTimeEstimateApi {
     LESS_THAN_ONE_MINUTE, ONE_TO_TWO_MINUTES, TWO_TO_FIVE_MINUTES, FIVE_TO_FIFTEEN_MINUTES;
-}
-
-enum class TerminalExceptionCodeApi {
-    PAYMENT_INTENT_NOT_RETRIEVED, CANCEL_FAILED, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_PERMISSION_DENIED, PROCESS_INVALID_PAYMENT_INTENT, INVALID_CLIENT_SECRET, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, USB_PERMISSION_DENIED, MISSING_REQUIRED_PARAMETER, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, LOCAL_MOBILE_LIBRARY_NOT_INCLUDED, LOCAL_MOBILE_UNSUPPORTED_DEVICE, LOCAL_MOBILE_UNSUPPORTED_ANDROID_VERSION, LOCAL_MOBILE_DEVICE_TAMPERED, LOCAL_MOBILE_DEBUG_NOT_SUPPORTED, OFFLINE_MODE_UNSUPPORTED_ANDROID_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, USB_DISCOVERY_TIMED_OUT, FEATURE_NOT_ENABLED_ON_ACCOUNT, READER_BUSY, READER_COMMUNICATION_ERROR, BLUETOOTH_ERROR, BLUETOOTH_DISCONNECTED, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, LOCAL_MOBILE_NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, ANDROID_API_LEVEL_ERROR, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_PROCESS_MISMATCH, OFFLINE_TESTMODE_PAYMENT_IN_LIVEMODE, OFFLINE_LIVEMODE_PAYMENT_IN_TESTMODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_REQUIRE_ONLINE_SET;
 }

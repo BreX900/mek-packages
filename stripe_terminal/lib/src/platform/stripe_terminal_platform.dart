@@ -15,7 +15,7 @@ import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
 
-part '_stripe_terminal_handlers.dart';
+part 'stripe_terminal_handlers.dart';
 part 'stripe_terminal_platform.api.dart';
 
 @HostApi(

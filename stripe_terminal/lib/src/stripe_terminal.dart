@@ -10,8 +10,8 @@ import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
+import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
-import 'package:mek_stripe_terminal/src/stripe_terminal_platform.dart';
 
 class StripeTerminal {
   static StripeTerminal? _instance;

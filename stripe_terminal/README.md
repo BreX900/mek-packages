@@ -21,10 +21,10 @@ Terminal Methods:
 - ❌ collectSetupIntentPaymentMethod
 - ❌ confirmSetupIntent
 - ✅ connectBluetoothReader
-- ❌ connectHandoffReader
+- ✅ connectHandoffReader
 - ✅ connectInternetReader
 - ✅ connectLocalMobileReader
-- ❌ connectUsbReader
+- ✅ connectUsbReader
 - ❌ createPaymentIntent
 - ❌ createSetupIntent
 - ✅ disconnectReader
@@ -46,10 +46,10 @@ Terminal Listeners:
 - ✅ onUnexpectedReaderDisconnect
 
 Reader Listeners:
-- ☑️ onReportAvailableUpdate
-- ☑️ onFinishInstallingUpdate
+- ✅️ onReportAvailableUpdate
+- ✅️ onFinishInstallingUpdate
 - ✅ onReportReaderSoftwareUpdateProgress
-- ☑️ onStartInstallingUpdate
+- ✅️ onStartInstallingUpdate
 
 Support: ✅ Fully | ☑️ Partially | ❌ Missing
 

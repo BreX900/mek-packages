@@ -92,7 +92,9 @@ class ControllerHandler: NSObject, FlutterStreamHandler {
     ) -> FlutterError? { _onCancel(arguments) }
 }
 
-protocol StripeTerminalApi {
+protocol StripeTerminalPlatformApi {
+    func onInit() async throws -> Void
+
     func onListLocations(
         _ endingBefore: String?,
         _ limit: Int?,
@@ -107,6 +109,10 @@ protocol StripeTerminalApi {
         _ autoReconnectOnUnexpectedDisconnect: Bool
     ) async throws -> ReaderApi
 
+    func onConnectHandoffReader(
+        _ serialNumber: String
+    ) async throws -> ReaderApi
+
     func onConnectInternetReader(
         _ serialNumber: String,
         _ failIfInUse: Bool
@@ -117,13 +123,21 @@ protocol StripeTerminalApi {
         _ locationId: String
     ) async throws -> ReaderApi
 
+    func onConnectUsbReader(
+        _ serialNumber: String,
+        _ locationId: String,
+        _ autoReconnectOnUnexpectedDisconnect: Bool
+    ) async throws -> ReaderApi
+
     func onConnectedReader() async throws -> ReaderApi?
+
+    func onCancelReaderUpdate() async throws -> Void
+
+    func onCancelReaderReconnection() async throws -> Void
 
     func onDisconnectReader() async throws -> Void
 
-    func onInstallAvailableUpdate(
-        _ serialNumber: String
-    ) async throws -> Void
+    func onInstallAvailableUpdate() async throws -> Void
 
     func onSetReaderDisplay(
         _ cart: CartApi
@@ -134,19 +148,6 @@ protocol StripeTerminalApi {
     func onRetrievePaymentIntent(
         _ clientSecret: String
     ) async throws -> PaymentIntentApi
-
-    func onInit() async throws -> Void
-
-    func onStartReadReusableCard(
-        _ result: Result<PaymentMethodApi>,
-        _ operationId: Int,
-        _ customer: String?,
-        _ metadata: [String: String]?
-    ) throws
-
-    func onStopReadReusableCard(
-        _ operationId: Int
-    ) async throws -> Void
 
     func onStartCollectPaymentMethod(
         _ result: Result<PaymentIntentApi>,
@@ -163,6 +164,17 @@ protocol StripeTerminalApi {
     func onProcessPayment(
         _ paymentIntentId: String
     ) async throws -> PaymentIntentApi
+
+    func onStartReadReusableCard(
+        _ result: Result<PaymentMethodApi>,
+        _ operationId: Int,
+        _ customer: String?,
+        _ metadata: [String: String]?
+    ) throws
+
+    func onStopReadReusableCard(
+        _ operationId: Int
+    ) async throws -> Void
 }
 
 class DiscoverReadersControllerApi {
@@ -171,7 +183,7 @@ class DiscoverReadersControllerApi {
     init(
         binaryMessenger: FlutterBinaryMessenger
     ) {
-        channel = FlutterEventChannel(name: "StripeTerminal#_discoverReaders", binaryMessenger: binaryMessenger)
+        channel = FlutterEventChannel(name: "StripeTerminalPlatform#discoverReaders", binaryMessenger: binaryMessenger)
     }
 
     func setHandler(
@@ -191,14 +203,14 @@ class DiscoverReadersControllerApi {
     func removeHandler() { channel.setStreamHandler(nil) }
 }
 
-private var channelStripeTerminalApi: FlutterMethodChannel? = nil
+private var channelStripeTerminalPlatformApi: FlutterMethodChannel? = nil
 
-func setStripeTerminalApiHandler(
+func setStripeTerminalPlatformApiHandler(
     _ binaryMessenger: FlutterBinaryMessenger,
-    _ hostApi: StripeTerminalApi
+    _ hostApi: StripeTerminalPlatformApi
 ) {
-    channelStripeTerminalApi = FlutterMethodChannel(name: "StripeTerminal", binaryMessenger: binaryMessenger)
-    channelStripeTerminalApi!.setMethodCallHandler { call, result in
+    channelStripeTerminalPlatformApi = FlutterMethodChannel(name: "StripeTerminalPlatform", binaryMessenger: binaryMessenger)
+    channelStripeTerminalPlatformApi!.setMethodCallHandler { call, result in
         let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
             Task {
                 do {
@@ -216,6 +228,11 @@ func setStripeTerminalApiHandler(
             let args = call.arguments as! [Any?]
                         
             switch call.method {
+            case "init":
+                runAsync {
+                    try await hostApi.onInit()
+                    return nil
+                }
             case "listLocations":
                 runAsync {
                     let res = try await hostApi.onListLocations(args[0] as? String, args[1] as? Int, args[2] as? String)
@@ -231,6 +248,11 @@ func setStripeTerminalApiHandler(
                     let res = try await hostApi.onConnectBluetoothReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
                     return res.serialize()
                 }
+            case "connectHandoffReader":
+                runAsync {
+                    let res = try await hostApi.onConnectHandoffReader(args[0] as! String)
+                    return res.serialize()
+                }
             case "connectInternetReader":
                 runAsync {
                     let res = try await hostApi.onConnectInternetReader(args[0] as! String, args[1] as! Bool)
@@ -241,10 +263,25 @@ func setStripeTerminalApiHandler(
                     let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String)
                     return res.serialize()
                 }
+            case "connectUsbReader":
+                runAsync {
+                    let res = try await hostApi.onConnectUsbReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
+                    return res.serialize()
+                }
             case "connectedReader":
                 runAsync {
                     let res = try await hostApi.onConnectedReader()
                     return res?.serialize()
+                }
+            case "cancelReaderUpdate":
+                runAsync {
+                    try await hostApi.onCancelReaderUpdate()
+                    return nil
+                }
+            case "cancelReaderReconnection":
+                runAsync {
+                    try await hostApi.onCancelReaderReconnection()
+                    return nil
                 }
             case "disconnectReader":
                 runAsync {
@@ -253,7 +290,7 @@ func setStripeTerminalApiHandler(
                 }
             case "installAvailableUpdate":
                 runAsync {
-                    try await hostApi.onInstallAvailableUpdate(args[0] as! String)
+                    try await hostApi.onInstallAvailableUpdate()
                     return nil
                 }
             case "setReaderDisplay":
@@ -271,31 +308,26 @@ func setStripeTerminalApiHandler(
                     let res = try await hostApi.onRetrievePaymentIntent(args[0] as! String)
                     return res.serialize()
                 }
-            case "_init":
-                runAsync {
-                    try await hostApi.onInit()
-                    return nil
-                }
-            case "_startReadReusableCard":
-                let res = Result<PaymentMethodApi>(result) { $0.serialize() }
-                try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as? String, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil)
-            case "_stopReadReusableCard":
-                runAsync {
-                    try await hostApi.onStopReadReusableCard(args[0] as! Int)
-                    return nil
-                }
-            case "_startCollectPaymentMethod":
+            case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
                 try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
-            case "_stopCollectPaymentMethod":
+            case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "_processPayment":
+            case "processPayment":
                 runAsync {
                     let res = try await hostApi.onProcessPayment(args[0] as! String)
                     return res.serialize()
+                }
+            case "startReadReusableCard":
+                let res = Result<PaymentMethodApi>(result) { $0.serialize() }
+                try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as? String, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil)
+            case "stopReadReusableCard":
+                runAsync {
+                    try await hostApi.onStopReadReusableCard(args[0] as! Int)
+                    return nil
                 }
             default:
                 result(FlutterMethodNotImplemented)
@@ -308,8 +340,8 @@ func setStripeTerminalApiHandler(
     }
 }
 
-func removeStripeTerminalApiHandler() {
-    channelStripeTerminalApi?.setMethodCallHandler(nil)
+func removeStripeTerminalPlatformApiHandler() {
+    channelStripeTerminalPlatformApi?.setMethodCallHandler(nil)
 }
 
 class StripeTerminalHandlersApi {
@@ -319,7 +351,7 @@ class StripeTerminalHandlersApi {
         _ binaryMessenger: FlutterBinaryMessenger
     ) {
         channel = FlutterMethodChannel(
-            name: "_StripeTerminalHandlers",
+            name: "StripeTerminalHandlers",
             binaryMessenger: binaryMessenger
         )
     }
@@ -354,16 +386,41 @@ class StripeTerminalHandlersApi {
         channel.invokeMethod("_onPaymentStatusChange", arguments: [paymentStatus.rawValue])
     }
 
-    func availableUpdate(
-        availableUpdate: Bool
+    func readerReportAvailableUpdate(
+        update: ReaderSoftwareUpdateApi
     ) {
-        channel.invokeMethod("_onAvailableUpdate", arguments: [availableUpdate])
+        channel.invokeMethod("_onReaderReportAvailableUpdate", arguments: [update.serialize()])
     }
 
-    func reportReaderSoftwareUpdateProgress(
+    func readerStartInstallingUpdate(
+        update: ReaderSoftwareUpdateApi
+    ) {
+        channel.invokeMethod("_onReaderStartInstallingUpdate", arguments: [update.serialize()])
+    }
+
+    func readerReportSoftwareUpdateProgress(
         progress: Double
     ) {
-        channel.invokeMethod("_onReportReaderSoftwareUpdateProgress", arguments: [progress])
+        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", arguments: [progress])
+    }
+
+    func readerFinishInstallingUpdate(
+        update: ReaderSoftwareUpdateApi?,
+        exception: TerminalExceptionApi?
+    ) {
+        channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
+    }
+
+    func readerReconnectFailed() {
+        channel.invokeMethod("_onReaderReconnectFailed", arguments: [])
+    }
+
+    func readerReconnectStarted() {
+        channel.invokeMethod("_onReaderReconnectStarted", arguments: [])
+    }
+
+    func readerReconnectSucceeded() {
+        channel.invokeMethod("_onReaderReconnectSucceeded", arguments: [])
     }
 }
 
@@ -561,7 +618,120 @@ struct CardDetailsApi {
     }
 }
 
-enum StripeTerminalExceptionCodeApi: String {
+struct ReaderSoftwareUpdateApi {
+    let components: [UpdateComponentApi]
+    let hasConfigUpdate: Bool
+    let hasFirmwareUpdate: Bool
+    let hasIncrementalUpdate: Bool
+    let hasKeyUpdate: Bool
+    let keyProfileName: String?
+    let onlyInstallRequiredUpdates: Bool
+    let requiredAt: Date
+    let settingsVersion: String?
+    let timeEstimate: UpdateTimeEstimateApi
+    let version: String
+
+    func serialize() -> [Any?] {
+        return [
+            components.map { $0.rawValue },
+            hasConfigUpdate,
+            hasFirmwareUpdate,
+            hasIncrementalUpdate,
+            hasKeyUpdate,
+            keyProfileName,
+            onlyInstallRequiredUpdates,
+            requiredAt.timeIntervalSince1970 * 1000,
+            settingsVersion,
+            timeEstimate.rawValue,
+            version,
+        ]
+    }
+}
+
+struct TerminalExceptionApi {
+    let rawCode: String
+    let message: String?
+    let details: String?
+
+    func serialize() -> [Any?] {
+        return [
+            rawCode,
+            message,
+            details,
+        ]
+    }
+}
+
+enum ConnectionStatusApi: Int {
+    case notConnected
+    case connected
+    case connecting
+}
+
+enum DiscoveryMethodApi: Int {
+    case bluetoothScan
+    case bluetoothProximity
+    case internet
+    case localMobile
+    case handOff
+    case embedded
+    case usb
+}
+
+enum LocationStatusApi: Int {
+    case unknown
+    case set
+    case notSet
+}
+
+enum DeviceTypeApi: Int {
+    case chipper1X
+    case chipper2X
+    case stripeM2
+    case cotsDevice
+    case verifoneP400
+    case wiseCube
+    case wisepad3
+    case wisepad3s
+    case wiseposE
+    case wiseposEDevkit
+    case etna
+    case stripeS700
+    case stripeS700Devkit
+    case unknown
+}
+
+enum PaymentIntentStatusApi: Int {
+    case canceled
+    case processing
+    case requiresCapture
+    case requiresConfirmation
+    case requiresPaymentMethod
+    case succeeded
+}
+
+enum PaymentStatusApi: Int {
+    case notReady
+    case ready
+    case waitingForInput
+    case processing
+}
+
+enum UpdateComponentApi: Int {
+    case incremental
+    case firmware
+    case config
+    case keys
+}
+
+enum UpdateTimeEstimateApi: Int {
+    case lessThanOneMinute
+    case oneToTwoMinutes
+    case twoToFiveMinutes
+    case fiveToFifteenMinutes
+}
+
+enum TerminalExceptionCodeApi: String {
     case paymentIntentNotRetrieved
     case cancelFailed
     case notConnectedToReader
@@ -639,59 +809,4 @@ enum StripeTerminalExceptionCodeApi: String {
     case accountIdMismatchWhileForwarding
     case forceOfflineWithFeatureDisabled
     case notConnectedToInternetAndRequireOnlineSet
-}
-
-enum ConnectionStatusApi: Int {
-    case notConnected
-    case connected
-    case connecting
-}
-
-enum LocationStatusApi: Int {
-    case unknown
-    case set
-    case notSet
-}
-
-enum DeviceTypeApi: Int {
-    case chipper1X
-    case chipper2X
-    case stripeM2
-    case cotsDevice
-    case verifoneP400
-    case wiseCube
-    case wisepad3
-    case wisepad3s
-    case wiseposE
-    case wiseposEDevkit
-    case etna
-    case stripeS700
-    case stripeS700Devkit
-    case unknown
-}
-
-enum PaymentIntentStatusApi: Int {
-    case canceled
-    case processing
-    case requiresCapture
-    case requiresConfirmation
-    case requiresPaymentMethod
-    case succeeded
-}
-
-enum DiscoveryMethodApi: Int {
-    case bluetoothScan
-    case bluetoothProximity
-    case internet
-    case localMobile
-    case handOff
-    case embedded
-    case usb
-}
-
-enum PaymentStatusApi: Int {
-    case notReady
-    case ready
-    case waitingForInput
-    case processing
 }

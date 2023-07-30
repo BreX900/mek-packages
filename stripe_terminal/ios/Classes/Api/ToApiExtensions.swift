@@ -142,6 +142,53 @@ extension DeviceType {
     }
 }
 
+extension ReaderSoftwareUpdate {
+    func toApi() -> ReaderSoftwareUpdateApi {
+        return ReaderSoftwareUpdateApi(
+            components: components.toApi(),
+            hasConfigUpdate: <#T##Bool#>,
+            hasFirmwareUpdate: <#T##Bool#>,
+            hasIncrementalUpdate: <#T##Bool#>,
+            hasKeyUpdate: <#T##Bool#>,
+            keyProfileName: nil,
+            onlyInstallRequiredUpdates: false,
+            requiredAt: requiredAt,
+            settingsVersion: nil,
+            timeEstimate: estimatedUpdateTime.toApi(),
+            version: deviceSoftwareVersion
+        )
+    }
+}
+
+extension UpdateComponent {
+    func toApi() -> [UpdateComponentApi] {
+        var components: [UpdateComponentApi] = []
+        if (contains(UpdateComponent.incremental)) {components.append(UpdateComponentApi.incremental)}
+        if (contains(UpdateComponent.firmware)) {components.append(UpdateComponentApi.firmware)}
+        if (contains(UpdateComponent.config)) {components.append(UpdateComponentApi.config)}
+        if (contains(UpdateComponent.keys)) {components.append(UpdateComponentApi.keys)}
+        return components
+    }
+}
+    
+extension UpdateTimeEstimate {
+    func toApi() -> UpdateTimeEstimateApi {
+        switch self {
+        case .estimateLessThan1Minute:
+            return .lessThanOneMinute
+        case .estimate1To2Minutes:
+            return .oneToTwoMinutes
+        case .estimate2To5Minutes:
+            return .twoToFiveMinutes
+        case .estimate5To15Minutes:
+            return .fiveToFifteenMinutes
+        @unknown default:
+            fatalError("WTF")
+        }
+    }
+}
+
+
 extension PaymentStatus {
     func toApi() -> PaymentStatusApi {
         switch self {
@@ -312,17 +359,17 @@ extension NSError {
         case .unsupported:
             return "unsupported"
         case .osVersionNotSupported:
-            return StripeTerminalExceptionCodeApi.localMobileUnsupportedAndroidVersion.rawValue // TODO: fix my name
+            return TerminalExceptionCodeApi.localMobileUnsupportedAndroidVersion.rawValue // TODO: fix my name
         case .modelNotSupported:
-            return StripeTerminalExceptionCodeApi.unsupportedOperation.rawValue
+            return TerminalExceptionCodeApi.unsupportedOperation.rawValue
         case .networkError:
-            return StripeTerminalExceptionCodeApi.stripeApiConnectionError.rawValue
+            return TerminalExceptionCodeApi.stripeApiConnectionError.rawValue
         case .networkAuthenticationError:
-            return StripeTerminalExceptionCodeApi.stripeApiError.rawValue
+            return TerminalExceptionCodeApi.stripeApiError.rawValue
         case .serviceConnectionError:
             return "serviceConnectionError"
         case .notReady:
-            return StripeTerminalExceptionCodeApi.sessionExpired.rawValue
+            return TerminalExceptionCodeApi.sessionExpired.rawValue
         case .emptyReaderToken:
             return "emptyReaderToken"
         case .invalidReaderToken:
@@ -338,7 +385,7 @@ extension NSError {
         case .readerMemoryFull:
             return "readerMemoryFull"
         case .readerBusy:
-            return StripeTerminalExceptionCodeApi.readerBusy.rawValue
+            return TerminalExceptionCodeApi.readerBusy.rawValue
         case .accountNotLinked:
             return "accountNotLinked"
         case .accountLinkingFailed:
@@ -370,7 +417,7 @@ extension NSError {
         case .readerSessionAuthenticationError:
             return "readerSessionAuthenticationError"
         case .readerSessionBusy:
-            return StripeTerminalExceptionCodeApi.readerBusy.rawValue
+            return TerminalExceptionCodeApi.readerBusy.rawValue
         case .readCancelled:
             return "readCancelled"
         case .invalidAmount:
@@ -378,7 +425,7 @@ extension NSError {
         case .invalidCurrency:
             return "invalidCurrency"
         case .nfcDisabled:
-            return StripeTerminalExceptionCodeApi.localMobileNfcDisabled.rawValue
+            return TerminalExceptionCodeApi.localMobileNfcDisabled.rawValue
         case .readNotAllowedDuringCall:
             return "readNotAllowedDuringCall"
         case .cardReadFailed:

@@ -2,8 +2,6 @@ library stripe_terminal;
 
 import 'dart:async';
 
-import 'package:collection/collection.dart';
-import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/discover_config.dart';
@@ -12,24 +10,17 @@ import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
-import 'package:mek_stripe_terminal/src/stripe_terminal_exception.dart';
-import 'package:one_for_all/one_for_all.dart';
-import 'package:recase/recase.dart';
+import 'package:mek_stripe_terminal/src/reader_delegates.dart';
+import 'package:mek_stripe_terminal/src/stripe_terminal_platform.dart';
 
-part '_stripe_terminal_handlers.dart';
-part 'stripe_terminal.api.dart';
-
-@HostApi(
-  hostExceptionHandler: StripeTerminal._throwIfIsHostException,
-  kotlinMethod: MethodApiType.callbacks,
-  swiftMethod: MethodApiType.async,
-)
-class StripeTerminal extends _$StripeTerminal {
+class StripeTerminal {
   static StripeTerminal? _instance;
-  final _StripeTerminalHandlers _handlers;
+
+  final StripeTerminalPlatform _platform;
+  final StripeTerminalHandlers _handlers;
 
   /// Creates an internal `StripeTerminal` instance
-  StripeTerminal._(this._handlers);
+  StripeTerminal._(this._platform, this._handlers);
 
   /// Initializes the terminal SDK
   static Future<StripeTerminal> getInstance({
@@ -39,28 +30,35 @@ class StripeTerminal extends _$StripeTerminal {
   }) async {
     if (_instance != null) return _instance!;
 
-    final handlers = _StripeTerminalHandlers(fetchToken: fetchToken);
-    _$setupStripeTerminalHandlers(handlers);
-    final stripeTerminal = StripeTerminal._(handlers);
+    final platform = StripeTerminalPlatform();
+    await platform.init();
 
-    await stripeTerminal._init();
+    final handlers = StripeTerminalHandlers(
+      platform: platform,
+      fetchToken: fetchToken,
+    );
+
+    final stripeTerminal = StripeTerminal._(platform, handlers);
 
     _instance = stripeTerminal;
     return stripeTerminal;
   }
 
   /// Returns a list of Location objects.
-  @override
   Future<List<Location>> listLocations({
     String? endingBefore,
     int? limit,
     String? startingAfter,
-  });
+  }) async {
+    return await _platform.listLocations(
+      endingBefore: endingBefore,
+      limit: limit,
+      startingAfter: startingAfter,
+    );
+  }
 
   /// Get the current [ConnectionStatus]
-  @MethodApi(kotlin: MethodApiType.sync)
-  @override
-  Future<ConnectionStatus> connectionStatus();
+  Future<ConnectionStatus> connectionStatus() async => await _platform.connectionStatus();
 
   Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
 
@@ -72,24 +70,14 @@ class StripeTerminal extends _$StripeTerminal {
     bool simulated = false,
     String? locationId,
   }) {
-    unawaited(_controller?.close());
-    final controller = StreamController<List<Reader>>(sync: true);
-    _controller = controller;
-    late StreamSubscription subscription;
-    controller.onListen = () {
-      final stream = _discoverReaders(
+    _controller = _handleStream(_controller, () {
+      return _platform.discoverReaders(
         discoveryMethod: discoveryMethod,
         simulated: simulated,
         locationId: locationId,
       );
-      subscription = stream.listen(
-        controller.add,
-        onError: controller.addError,
-        onDone: controller.close,
-      );
-    };
-    controller.onCancel = () async => await subscription.cancel();
-    return controller.stream;
+    });
+    return _controller!.stream;
   }
 
   /// Attempts to connect to the given bluetooth reader.
@@ -97,63 +85,96 @@ class StripeTerminal extends _$StripeTerminal {
   ///
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
-  @override
   Future<Reader> connectBluetoothReader(
-    String serialNumber, {
+    Reader reader, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
-  });
+    ReaderDelegate? delegate,
+    ReaderReconnectionDelegate? reconnectionDelegate,
+  }) async {
+    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    final connectedReader = await _platform.connectBluetoothReader(
+      reader.serialNumber,
+      locationId: locationId,
+      autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+    );
+    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
+    return connectedReader;
+  }
 
   /// Attempts to connect to the given internet reader.
   ///
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
-  @override
+  Future<Reader> connectHandoffReader(Reader reader, {ReaderDelegate? delegate}) async {
+    final connectedReader = await _platform.connectHandoffReader(reader.serialNumber);
+    _handlers.attachReaderDelegates(delegate, null);
+    return connectedReader;
+  }
+
+  /// Attempts to connect to the given internet reader.
+  ///
+  /// Only works if you have scanned devices within this session.
+  /// Always run `discoverReaders` before calling this function
   Future<Reader> connectInternetReader(
-    String serialNumber, {
+    Reader reader, {
     bool failIfInUse = false,
-  });
+  }) async {
+    return await _platform.connectInternetReader(reader.serialNumber, failIfInUse: failIfInUse);
+  }
 
   /// Setup: https://stripe.com/docs/terminal/payments/setup-reader/tap-to-pay
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
-  @override
   Future<Reader> connectMobileReader(
-    String serialNumber, {
+    Reader reader, {
     required String locationId,
-  });
+  }) async {
+    return await _platform.connectMobileReader(reader.serialNumber, locationId: locationId);
+  }
+
+  /// Attempts to connect to the given bluetooth reader.
+  /// [autoReconnectOnUnexpectedDisconnect] (Not implemented in IOS)
+  ///
+  /// Only works if you have scanned devices within this session.
+  /// Always run `discoverReaders` before calling this function
+  Future<Reader> connectUsbReader(
+    Reader reader, {
+    required String locationId,
+    bool autoReconnectOnUnexpectedDisconnect = false,
+    ReaderDelegate? delegate,
+    ReaderReconnectionDelegate? reconnectionDelegate,
+  }) async {
+    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    final connectedReader = await _platform.connectUsbReader(
+      reader.serialNumber,
+      locationId: locationId,
+      autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+    );
+    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
+    return connectedReader;
+  }
 
   /// Fetches the connected reader from the SDK. `null` if not connected
-  @MethodApi(kotlin: MethodApiType.sync)
-  @override
-  Future<Reader?> connectedReader();
+  Future<Reader?> connectedReader() async => await _platform.connectedReader();
 
   /// Attempts to disconnect from the currently connected reader.
-  @override
-  Future<void> disconnectReader();
+  Future<void> disconnectReader() async {
+    await _platform.disconnectReader();
+    _handlers.detachReaderDelegates();
+  }
 
   Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
-  @MethodApi(kotlin: MethodApiType.sync)
-  @override
-  Future<void> installAvailableUpdate(String serialNumber);
-
-  /// Only available on IOS
-  Stream<bool> get onReaderAvailableUpdate => _handlers.availableUpdateStream;
-
-  /// Only available on IOS
-  Stream<double> get onReportReaderSoftwareUpdateProgress =>
-      _handlers.reportReaderSoftwareUpdateProgressStream;
+  Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
 
   /// Updates the reader display with transaction information. This method is for display purposes
   /// only and has no correlation with what the customer is actually charged. Tax and total
   /// are also not automatically calculated and must be set in [Cart].
-  @override
-  Future<void> setReaderDisplay(Cart cart);
+  Future<void> setReaderDisplay(Cart cart) async => await _platform.setReaderDisplay(cart);
 
   /// Clears the reader display and resets it to the splash screen
-  @override
-  Future<void> clearReaderDisplay();
+  Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
 
   /// Extracts payment method from the reader
   ///
@@ -162,8 +183,8 @@ class StripeTerminal extends _$StripeTerminal {
     String? customer,
     Map<String, String>? metadata,
   }) {
-    return CancelableFuture(_stopReadReusableCard, (id) async {
-      return await _startReadReusableCard(
+    return CancelableFuture(_platform.stopReadReusableCard, (id) async {
+      return await _platform.startReadReusableCard(
         operationId: id,
         customer: customer,
         metadata: metadata,
@@ -175,8 +196,8 @@ class StripeTerminal extends _$StripeTerminal {
   ///
   /// Payment intent is supposed to be generated on your backend and the `clientSecret` of the payment intent
   /// should be passed to this function.
-  @override
-  Future<PaymentIntent> retrievePaymentIntent(String clientSecret);
+  Future<PaymentIntent> retrievePaymentIntent(String clientSecret) async =>
+      await _platform.retrievePaymentIntent(clientSecret);
 
   Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
 
@@ -190,8 +211,8 @@ class StripeTerminal extends _$StripeTerminal {
     bool moto = false,
     bool skipTipping = false,
   }) {
-    return CancelableFuture(_stopCollectPaymentMethod, (id) async {
-      return await _startCollectPaymentMethod(
+    return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
+      return await _platform.startCollectPaymentMethod(
         operationId: id,
         paymentIntentId: paymentIntent.id,
         moto: moto,
@@ -201,50 +222,23 @@ class StripeTerminal extends _$StripeTerminal {
   }
 
   Future<PaymentIntent> processPayment(PaymentIntent paymentIntent) async =>
-      await _processPayment(paymentIntent.id);
+      await _platform.processPayment(paymentIntent.id);
 
-  @MethodApi(kotlin: MethodApiType.sync)
-  @override
-  Future<void> _init();
-
-  @override
-  Stream<List<Reader>> _discoverReaders({
-    DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
-    bool simulated = false,
-    String? locationId,
-  });
-
-  @MethodApi(swift: MethodApiType.callbacks)
-  @override
-  Future<PaymentMethod> _startReadReusableCard({
-    required int operationId,
-    required String? customer,
-    required Map<String, String>? metadata,
-  });
-
-  @override
-  Future<void> _stopReadReusableCard(int operationId);
-
-  @MethodApi(swift: MethodApiType.callbacks)
-  @override
-  Future<PaymentIntent> _startCollectPaymentMethod({
-    required int operationId,
-    required String paymentIntentId,
-    required bool moto,
-    required bool skipTipping,
-  });
-
-  @override
-  Future<void> _stopCollectPaymentMethod(int operationId);
-
-  @override
-  Future<PaymentIntent> _processPayment(String paymentIntentId);
-
-  static void _throwIfIsHostException(PlatformException exception) {
-    final snakeCaseCode = exception.code.camelCase;
-    final code =
-        StripeTerminalExceptionCode.values.firstWhereOrNull((e) => e.name == snakeCaseCode);
-    if (code == null) return;
-    throw StripeTerminalException(code, exception.message, exception.details);
+  StreamController<T> _handleStream<T>(
+    StreamController<T>? controller,
+    Stream<T> Function() onListen,
+  ) {
+    unawaited(controller?.close());
+    final newController = StreamController<T>(sync: true);
+    late StreamSubscription subscription;
+    newController.onListen = () {
+      subscription = onListen().listen(
+        newController.add,
+        onError: newController.addError,
+        onDone: newController.close,
+      );
+    };
+    newController.onCancel = () async => await subscription.cancel();
+    return newController;
   }
 }

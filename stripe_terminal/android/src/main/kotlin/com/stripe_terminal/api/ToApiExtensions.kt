@@ -2,6 +2,15 @@ package com.stripe_terminal.api
 
 import com.stripe_terminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
+import java.util.Calendar
+
+fun TerminalException.toApi(): TerminalExceptionApi {
+    return  TerminalExceptionApi(
+        code = errorCode.name,
+        message = errorMessage,
+        details = stackTraceToString()
+    )
+}
 
 fun Reader.toApi(): ReaderApi {
     return ReaderApi(
@@ -48,6 +57,41 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
         ConnectionStatus.NOT_CONNECTED -> ConnectionStatusApi.NOT_CONNECTED
         ConnectionStatus.CONNECTING -> ConnectionStatusApi.CONNECTING
         ConnectionStatus.CONNECTED -> ConnectionStatusApi.CONNECTED
+    }
+}
+
+fun ReaderSoftwareUpdate.toApi(): ReaderSoftwareUpdateApi {
+    return ReaderSoftwareUpdateApi(
+        components = components.map { it.toApi() },
+        hasConfigUpdate = hasConfigUpdate,
+        hasFirmwareUpdate = hasFirmwareUpdate,
+        hasIncrementalUpdate = hasIncrementalUpdate,
+        hasKeyUpdate = hasKeyUpdate,
+        keyProfileName = keyProfileName,
+        onlyInstallRequiredUpdates = onlyInstallRequiredUpdates,
+        requiredAt = requiredAt.time,
+        settingsVersion = settingsVersion,
+        timeEstimate = timeEstimate.toApi(),
+        version = version,
+    )
+}
+
+fun ReaderSoftwareUpdate.UpdateComponent.toApi(): UpdateComponentApi {
+    return when (this) {
+        ReaderSoftwareUpdate.UpdateComponent.INCREMENTAL -> UpdateComponentApi.INCREMENTAL
+        ReaderSoftwareUpdate.UpdateComponent.FIRMWARE -> UpdateComponentApi.FIRMWARE
+        ReaderSoftwareUpdate.UpdateComponent.CONFIG -> UpdateComponentApi.CONFIG
+        ReaderSoftwareUpdate.UpdateComponent.KEYS -> UpdateComponentApi.KEYS
+    }
+}
+
+fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
+    return when (this) {
+        ReaderSoftwareUpdate.UpdateTimeEstimate.LESS_THAN_ONE_MINUTE -> UpdateTimeEstimateApi.LESS_THAN_ONE_MINUTE
+        ReaderSoftwareUpdate.UpdateTimeEstimate.ONE_TO_TWO_MINUTES -> UpdateTimeEstimateApi.ONE_TO_TWO_MINUTES
+        ReaderSoftwareUpdate.UpdateTimeEstimate.TWO_TO_FIVE_MINUTES -> UpdateTimeEstimateApi.TWO_TO_FIVE_MINUTES
+        ReaderSoftwareUpdate.UpdateTimeEstimate.FIVE_TO_FIFTEEN_MINUTES -> UpdateTimeEstimateApi.FIVE_TO_FIFTEEN_MINUTES
+
     }
 }
 

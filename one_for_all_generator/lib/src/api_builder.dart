@@ -25,6 +25,11 @@ abstract class ApiBuilder {
 }
 
 extension TypeArgsDartType on DartType {
+  DartType get thisOrSingleTypeArg {
+    final element = this;
+    return element is ParameterizedType ? element.typeArguments.single : this;
+  }
+
   DartType get singleTypeArg {
     final element = this as ParameterizedType;
     return element.typeArguments.single;

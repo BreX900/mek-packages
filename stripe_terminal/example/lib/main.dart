@@ -147,6 +147,7 @@ class _MyAppState extends State<MyApp> {
         return await terminal.connectUsbReader(reader, locationId: locationId);
       case DiscoveryMethod.embedded:
         _showSnackBar('Missing connect method implementation');
+        return null;
     }
   }
 

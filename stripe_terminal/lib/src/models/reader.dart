@@ -47,3 +47,22 @@ enum DeviceType {
   stripeS700Devkit,
   appleBuiltIn,
 }
+
+enum ReaderEvent { cardInserted, cardRemoved }
+
+enum ReaderDisplayMessage {
+  checkMobileDevice,
+  retryCard,
+  insertCard,
+  insertOrSwipeCard,
+  swipeCard,
+  removeCard,
+  multipleContactlessCardsDetected,
+  tryAnotherReadMethod,
+  tryAnotherCard,
+  cardRemovedTooEarly,
+}
+
+enum ReaderInputOption { insertCard, swipeCard, tapCard, manualEntry }
+
+enum BatteryStatus { critical, low, nominal }

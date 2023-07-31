@@ -14,7 +14,10 @@ import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 
 class StripeTerminal {
-  static StripeTerminal? _instance;
+  static StripeTerminalPlatform? _platformInstance;
+  static StripeTerminalHandlers? _handlersInstance;
+
+  static Future<StripeTerminal>? _instance;
 
   final StripeTerminalPlatform _platform;
   final StripeTerminalHandlers _handlers;
@@ -27,21 +30,22 @@ class StripeTerminal {
     /// A callback function that returns a Future which resolves to a connection token from your backend
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
-  }) async {
-    if (_instance != null) return _instance!;
-
-    final platform = StripeTerminalPlatform();
-    await platform.init();
-
-    final handlers = StripeTerminalHandlers(
-      platform: platform,
+  }) {
+    final platform = _platformInstance ??= StripeTerminalPlatform();
+    final handlers = _handlersInstance ??= StripeTerminalHandlers(
+      platform: _platformInstance!,
       fetchToken: fetchToken,
     );
 
-    final stripeTerminal = StripeTerminal._(platform, handlers);
-
-    _instance = stripeTerminal;
-    return stripeTerminal;
+    return _instance ??= (() async {
+      try {
+        await platform.init();
+        return StripeTerminal._(platform, handlers);
+      } catch (_) {
+        _instance = null;
+        rethrow;
+      }
+    }());
   }
 
 //region Reader discovery, connection and updates
@@ -79,7 +83,7 @@ class StripeTerminal {
     Reader reader, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
-    ReaderDelegate? delegate,
+    BluetoothReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
     assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
@@ -96,7 +100,7 @@ class StripeTerminal {
   ///
   /// Only works if you have scanned devices within this session.
   /// Always run `discoverReaders` before calling this function
-  Future<Reader> connectHandoffReader(Reader reader, {ReaderDelegate? delegate}) async {
+  Future<Reader> connectHandoffReader(Reader reader, {HandoffReaderDelegate? delegate}) async {
     final connectedReader = await _platform.connectHandoffReader(reader.serialNumber);
     _handlers.attachReaderDelegates(delegate, null);
     return connectedReader;
@@ -119,8 +123,14 @@ class StripeTerminal {
   Future<Reader> connectMobileReader(
     Reader reader, {
     required String locationId,
+    LocalMobileReaderDelegate? delegate,
   }) async {
-    return await _platform.connectMobileReader(reader.serialNumber, locationId: locationId);
+    final connectedReader = await _platform.connectMobileReader(
+      reader.serialNumber,
+      locationId: locationId,
+    );
+    _handlers.attachReaderDelegates(delegate, null);
+    return connectedReader;
   }
 
   /// Attempts to connect to the given bluetooth reader.

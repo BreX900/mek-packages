@@ -395,6 +395,36 @@ class StripeTerminalHandlersApi {
         channel.invokeMethod("_onPaymentStatusChange", arguments: [paymentStatus.rawValue])
     }
 
+    func readerReportEvent(
+        event: ReaderEventApi
+    ) {
+        channel.invokeMethod("_onReaderReportEvent", arguments: [event.rawValue])
+    }
+
+    func readerRequestDisplayMessage(
+        message: ReaderDisplayMessageApi
+    ) {
+        channel.invokeMethod("_onReaderRequestDisplayMessage", arguments: [message.rawValue])
+    }
+
+    func readerRequestInput(
+        options: [ReaderInputOptionApi]
+    ) {
+        channel.invokeMethod("_onReaderRequestInput", arguments: [options.map { $0.rawValue }])
+    }
+
+    func readerBatteryLevelUpdate(
+        batteryLevel: Double,
+        batteryStatus: BatteryStatusApi?,
+        isCharging: Bool
+    ) {
+        channel.invokeMethod("_onReaderBatteryLevelUpdate", arguments: [batteryLevel, batteryStatus?.rawValue, isCharging])
+    }
+
+    func readerReportLowBatteryWarning() {
+        channel.invokeMethod("_onReaderReportLowBatteryWarning", arguments: [])
+    }
+
     func readerReportAvailableUpdate(
         update: ReaderSoftwareUpdateApi
     ) {
@@ -451,6 +481,12 @@ struct AddressApi {
             state,
         ]
     }
+}
+
+enum BatteryStatusApi: Int {
+    case critical
+    case low
+    case nominal
 }
 
 enum CardBrandApi: Int {
@@ -697,6 +733,31 @@ struct ReaderApi {
             label,
         ]
     }
+}
+
+enum ReaderDisplayMessageApi: Int {
+    case checkMobileDevice
+    case retryCard
+    case insertCard
+    case insertOrSwipeCard
+    case swipeCard
+    case removeCard
+    case multipleContactlessCardsDetected
+    case tryAnotherReadMethod
+    case tryAnotherCard
+    case cardRemovedTooEarly
+}
+
+enum ReaderEventApi: Int {
+    case cardInserted
+    case cardRemoved
+}
+
+enum ReaderInputOptionApi: Int {
+    case insertCard
+    case swipeCard
+    case tapCard
+    case manualEntry
 }
 
 struct ReaderSoftwareUpdateApi {

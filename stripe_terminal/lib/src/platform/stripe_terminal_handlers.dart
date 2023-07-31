@@ -51,20 +51,62 @@ class StripeTerminalHandlers {
   Future<void> _onPaymentStatusChange(PaymentStatus paymentStatus) async =>
       _paymentStatusChangeController.add(paymentStatus);
 
+//region Reader delegate
+  void _onReaderReportEvent(ReaderEvent event) {
+    _runInZone(_readerDelegate, (delegate) async {
+      await delegate.onReportReaderEvent(event);
+    });
+  }
+
+  void _onReaderRequestDisplayMessage(ReaderDisplayMessage message) {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onRequestReaderDisplayMessage(message);
+    });
+  }
+
+  void _onReaderRequestInput(List<ReaderInputOption> options) {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onRequestReaderInput(options);
+    });
+  }
+
+  void _onReaderBatteryLevelUpdate(
+    double batteryLevel,
+    BatteryStatus? batteryStatus,
+    bool isCharging,
+  ) {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onReportBatteryLevelUpdate(batteryLevel, batteryStatus, isCharging);
+    });
+  }
+
+  void _onReaderReportLowBatteryWarning() {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onReportLowBatteryWarning();
+    });
+  }
+
   void _onReaderReportAvailableUpdate(ReaderSoftwareUpdate update) {
     _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
       await delegate.onReportAvailableUpdate(update);
     });
   }
 
   void _onReaderStartInstallingUpdate(ReaderSoftwareUpdate update) {
     _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
       await delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
     });
   }
 
   void _onReaderReportSoftwareUpdateProgress(double progress) {
     _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
       await delegate.onReportReaderSoftwareUpdateProgress(progress);
     });
   }
@@ -74,10 +116,13 @@ class StripeTerminalHandlers {
     TerminalException? exception,
   ) {
     _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
       await delegate.onFinishInstallingUpdate(update, exception);
     });
   }
+//endregion
 
+//region Reader reconnection delegate
   void _onReaderReconnectFailed() {
     _runInZone(_readerReconnectionDelegate, (delegate) async {
       await delegate.onReaderReconnectFailed();
@@ -100,4 +145,5 @@ class StripeTerminalHandlers {
     if (delegate == null) return;
     unawaited(Zone.current.runUnary(body, delegate));
   }
+//endregion
 }

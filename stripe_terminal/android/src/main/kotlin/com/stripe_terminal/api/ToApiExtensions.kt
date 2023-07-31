@@ -59,6 +59,47 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
     }
 }
 
+fun ReaderEvent.toApi(): ReaderEventApi {
+    return when (this) {
+        ReaderEvent.CARD_INSERTED -> ReaderEventApi.CARD_INSERTED
+        ReaderEvent.CARD_REMOVED -> ReaderEventApi.CARD_REMOVED
+    }
+}
+
+fun ReaderDisplayMessage.toApi(): ReaderDisplayMessageApi {
+    return when (this) {
+        ReaderDisplayMessage.CHECK_MOBILE_DEVICE -> ReaderDisplayMessageApi.CHECK_MOBILE_DEVICE
+        ReaderDisplayMessage.RETRY_CARD -> ReaderDisplayMessageApi.RETRY_CARD
+        ReaderDisplayMessage.INSERT_CARD -> ReaderDisplayMessageApi.INSERT_CARD
+        ReaderDisplayMessage.INSERT_OR_SWIPE_CARD -> ReaderDisplayMessageApi.INSERT_OR_SWIPE_CARD
+        ReaderDisplayMessage.SWIPE_CARD -> ReaderDisplayMessageApi.SWIPE_CARD
+        ReaderDisplayMessage.REMOVE_CARD -> ReaderDisplayMessageApi.REMOVE_CARD
+        ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED -> ReaderDisplayMessageApi.MULTIPLE_CONTACTLESS_CARDS_DETECTED
+        ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD -> ReaderDisplayMessageApi.TRY_ANOTHER_READ_METHOD
+        ReaderDisplayMessage.TRY_ANOTHER_CARD -> ReaderDisplayMessageApi.TRY_ANOTHER_CARD
+        ReaderDisplayMessage.CARD_REMOVED_TOO_EARLY -> ReaderDisplayMessageApi.CARD_REMOVED_TOO_EARLY
+    }
+}
+
+fun ReaderInputOptions.ReaderInputOption.toApi(): ReaderInputOptionApi? {
+    return when (this) {
+        ReaderInputOptions.ReaderInputOption.NONE -> null
+        ReaderInputOptions.ReaderInputOption.INSERT -> ReaderInputOptionApi.INSERT_CARD
+        ReaderInputOptions.ReaderInputOption.SWIPE -> ReaderInputOptionApi.SWIPE_CARD
+        ReaderInputOptions.ReaderInputOption.TAP -> ReaderInputOptionApi.TAP_CARD
+        ReaderInputOptions.ReaderInputOption.MANUAL_ENTRY -> ReaderInputOptionApi.MANUAL_ENTRY
+    }
+}
+
+fun BatteryStatus.toApi(): BatteryStatusApi? {
+    return when (this) {
+        BatteryStatus.UNKNOWN -> null
+        BatteryStatus.CRITICAL -> BatteryStatusApi.CRITICAL
+        BatteryStatus.LOW -> BatteryStatusApi.LOW
+        BatteryStatus.NOMINAL -> BatteryStatusApi.NOMINAL
+    }
+}
+
 fun ReaderSoftwareUpdate.toApi(): ReaderSoftwareUpdateApi {
     return ReaderSoftwareUpdateApi(
         components = components.map { it.toApi() },

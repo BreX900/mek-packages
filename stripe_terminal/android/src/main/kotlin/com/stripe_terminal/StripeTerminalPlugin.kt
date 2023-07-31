@@ -21,9 +21,7 @@ import com.stripe.stripeterminal.external.models.CollectConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionStatus
 import com.stripe.stripeterminal.external.models.ConnectionTokenException
-import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
-import com.stripe.stripeterminal.external.models.DiscoveryMethod
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
@@ -56,9 +54,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
 
-class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
-    StripeTerminalPlatformApi,
-    ConnectionTokenProvider, TerminalListener {
+class StripeTerminalPlugin: FlutterPlugin, ActivityAware, StripeTerminalPlatformApi, ConnectionTokenProvider, TerminalListener {
     private lateinit var _handlers: StripeTerminalHandlersApi
     private lateinit var _discoverReadersController: DiscoverReadersControllerApi
 
@@ -120,8 +116,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     //region Reader discovery, connection and updates
     private var _discoverReaderCancelable: Cancelable? = null
-    private val _readerDelegate = ReaderDelegatePlugin(_handlers)
-    private val _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
+    private lateinit var _readerDelegate: ReaderDelegatePlugin
+    private lateinit var _readerReconnectionDelegate: ReaderReconnectionListenerPlugin
 
     override fun onConnectionStatusChange(status: ConnectionStatus) {
         _activity!!.runOnUiThread {
@@ -469,11 +465,12 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
     }
     //endregion
 
-    //region Android
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val binaryMessenger = flutterPluginBinding.binaryMessenger
         StripeTerminalPlatformApi.setHandler(binaryMessenger, this)
         _handlers = StripeTerminalHandlersApi(binaryMessenger)
+        _readerDelegate = ReaderDelegatePlugin(_handlers)
+        _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
 
         setupDiscoverReadersController(binaryMessenger)
     }
@@ -487,21 +484,28 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware,
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         _activity = binding.activity
+        _readerDelegate.activity = binding.activity
+        _readerReconnectionDelegate.activity = binding.activity
         TerminalApplicationDelegate.onCreate(_activity!!.application)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
         _activity = null
+        _readerDelegate.activity = null
+        _readerReconnectionDelegate.activity = null
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         _activity = binding.activity
+        _readerDelegate.activity = binding.activity
+        _readerReconnectionDelegate.activity = binding.activity
     }
 
     override fun onDetachedFromActivity() {
         _activity = null
+        _readerDelegate.activity = null
+        _readerReconnectionDelegate.activity = null
     }
-    //endregion
 
     // ======================== INTERNAL METHODS
 

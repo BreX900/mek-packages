@@ -291,6 +291,20 @@ void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
           ._onConnectionStatusChange(ConnectionStatus.values[args[0] as int]),
       '_onPaymentStatusChange' => await hostApi
           ._onPaymentStatusChange(PaymentStatus.values[args[0] as int]),
+      '_onReaderReportEvent' =>
+        hostApi._onReaderReportEvent(ReaderEvent.values[args[0] as int]),
+      '_onReaderRequestDisplayMessage' =>
+        hostApi._onReaderRequestDisplayMessage(
+            ReaderDisplayMessage.values[args[0] as int]),
+      '_onReaderRequestInput' => hostApi._onReaderRequestInput((args[0] as List)
+          .map((e) => ReaderInputOption.values[e as int])
+          .toList()),
+      '_onReaderBatteryLevelUpdate' => hostApi._onReaderBatteryLevelUpdate(
+          args[0] as double,
+          args[1] != null ? BatteryStatus.values[args[1] as int] : null,
+          args[2] as bool),
+      '_onReaderReportLowBatteryWarning' =>
+        hostApi._onReaderReportLowBatteryWarning(),
       '_onReaderReportAvailableUpdate' =>
         hostApi._onReaderReportAvailableUpdate(
             _$deserializeReaderSoftwareUpdate(args[0] as List)),

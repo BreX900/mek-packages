@@ -8,6 +8,52 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
     init(_ handlers: StripeTerminalHandlersApi) {
         self._handlers = handlers
     }
+    
+    func reader(_ reader: Reader, didReportReaderEvent event: ReaderEvent, info: [AnyHashable : Any]?) {
+        DispatchQueue.main.async {
+            self._handlers.readerReportEvent(event: event.toApi())
+        }
+    }
+    
+    func localMobileReaderDidAcceptTermsOfService(_ reader: Reader) {
+        // TODO: Implement this method
+    }
+    
+    func reader(_ reader: Reader, didRequestReaderDisplayMessage message: ReaderDisplayMessage) {
+        DispatchQueue.main.async {
+            self._handlers.readerRequestDisplayMessage(message: message.toApi())
+        }
+    }
+
+    func localMobileReader(_ reader: Reader, didRequestReaderDisplayMessage message: ReaderDisplayMessage) {
+        self.reader(reader, didRequestReaderDisplayMessage: message)
+    }
+    
+    func reader(_ reader: Reader, didRequestReaderInput options: ReaderInputOptions = []) {
+        DispatchQueue.main.async {
+            self._handlers.readerRequestInput(options: options.toApi())
+        }
+    }
+    
+    func localMobileReader(_ reader: Reader, didRequestReaderInput options: ReaderInputOptions = []) {
+        self.reader(reader, didRequestReaderInput: options)
+    }
+    
+    func reader(_ reader: Reader, didReportBatteryLevel batteryLevel: Float, status: BatteryStatus, isCharging: Bool) {
+        DispatchQueue.main.async {
+            self._handlers.readerBatteryLevelUpdate(
+                batteryLevel: Double(batteryLevel),
+                batteryStatus: status.toApi(),
+                isCharging: isCharging
+            )
+        }
+    }
+    
+    func readerDidReportLowBatteryWarning(_ reader: Reader) {
+        DispatchQueue.main.async {
+            self._handlers.readerReportLowBatteryWarning()
+        }
+    }
 
     func reader(_: Reader, didReportAvailableUpdate update: ReaderSoftwareUpdate) {
         DispatchQueue.main.async {
@@ -51,21 +97,5 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
 
     func localMobileReader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: Error?) {
         self.reader(reader, didFinishInstallingUpdate: update, error: error)
-    }
-
-    func reader(_: Reader, didRequestReaderInput _: ReaderInputOptions = []) {
-        // TODO: Implement this method
-    }
-
-    func reader(_: Reader, didRequestReaderDisplayMessage _: ReaderDisplayMessage) {
-        // TODO: Implement this method
-    }
-
-    func localMobileReader(_: Reader, didRequestReaderInput _: ReaderInputOptions = []) {
-        // TODO: Implement this method
-    }
-
-    func localMobileReader(_: Reader, didRequestReaderDisplayMessage _: ReaderDisplayMessage) {
-        // TODO: Implement this method
     }
 }

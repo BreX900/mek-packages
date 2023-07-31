@@ -356,6 +356,36 @@ class StripeTerminalHandlersApi(
         channel.invokeMethod("_onPaymentStatusChange", listOf<Any?>(paymentStatus.ordinal))
     }
 
+    fun readerReportEvent(
+        event: ReaderEventApi,
+    ) {
+        channel.invokeMethod("_onReaderReportEvent", listOf<Any?>(event.ordinal))
+    }
+
+    fun readerRequestDisplayMessage(
+        message: ReaderDisplayMessageApi,
+    ) {
+        channel.invokeMethod("_onReaderRequestDisplayMessage", listOf<Any?>(message.ordinal))
+    }
+
+    fun readerRequestInput(
+        options: List<ReaderInputOptionApi>,
+    ) {
+        channel.invokeMethod("_onReaderRequestInput", listOf<Any?>(options.map { it.ordinal} ))
+    }
+
+    fun readerBatteryLevelUpdate(
+        batteryLevel: Double,
+        batteryStatus: BatteryStatusApi?,
+        isCharging: Boolean,
+    ) {
+        channel.invokeMethod("_onReaderBatteryLevelUpdate", listOf<Any?>(batteryLevel, batteryStatus?.ordinal, isCharging))
+    }
+
+    fun readerReportLowBatteryWarning() {
+        channel.invokeMethod("_onReaderReportLowBatteryWarning", listOf<Any?>())
+    }
+
     fun readerReportAvailableUpdate(
         update: ReaderSoftwareUpdateApi,
     ) {
@@ -412,6 +442,10 @@ data class AddressApi(
             state,
         )
     }
+}
+
+enum class BatteryStatusApi {
+    CRITICAL, LOW, NOMINAL;
 }
 
 enum class CardBrandApi {
@@ -622,6 +656,18 @@ data class ReaderApi(
             label,
         )
     }
+}
+
+enum class ReaderDisplayMessageApi {
+    CHECK_MOBILE_DEVICE, RETRY_CARD, INSERT_CARD, INSERT_OR_SWIPE_CARD, SWIPE_CARD, REMOVE_CARD, MULTIPLE_CONTACTLESS_CARDS_DETECTED, TRY_ANOTHER_READ_METHOD, TRY_ANOTHER_CARD, CARD_REMOVED_TOO_EARLY;
+}
+
+enum class ReaderEventApi {
+    CARD_INSERTED, CARD_REMOVED;
+}
+
+enum class ReaderInputOptionApi {
+    INSERT_CARD, SWIPE_CARD, TAP_CARD, MANUAL_ENTRY;
 }
 
 data class ReaderSoftwareUpdateApi(

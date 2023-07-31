@@ -50,18 +50,49 @@ more simply by supporting streams instead of callbacks for listeners
   - ✅ setReaderDisplay
   - ✅ clearReaderDisplay
 
-**Reader Listeners**
+<details>
+<summary>✅️️ 9/9 **Reader Listeners/Delegate**</summary>
+- ✅️ onReportReaderEvent
+- ✅️ onRequestReaderDisplayMessage
+- ✅️ onRequestReaderInput
+- ✅️ onBatteryLevelUpdate
+- ✅️ onReportLowBatteryWarning
 - ✅️ onReportAvailableUpdate
 - ✅️ onFinishInstallingUpdate
 - ✅ onReportReaderSoftwareUpdateProgress
 - ✅️ onStartInstallingUpdate
-
+</details>
+<details>
+<summary>✅️️ 3/3 **Reader Reconnection Listeners/Delegate**</summary>
+- ✅️ onReaderReconnectStarted
+- ✅️ onReaderReconnectFailed
+- ✅ onReaderReconnectSucceeded
+</details>
 Support: ✅ Fully | ☑️ Partially | ❌ Missing
 
 # Installation
 
 ## Android
-No Configuration needed, workes  out of the box.
+
+<details>
+<summary>If you are using this plugin along with Stripe Terminal SDK see this section</summary>
+[Issue #349][https://github.com/stripe/stripe-terminal-android/issues/349]
+
+```groovy
+android {
+    // TODO: remove this two directives once stripe_terminal fixes its plugin
+    //      these two snippets are excluding a dup dependency that is probably not transitive
+    //      https://github.com/stripe/stripe-terminal-android/issues/349
+    configurations {
+        all*.exclude module: 'bcprov-jdk15to18'
+    }
+    packagingOptions {
+        pickFirst 'org/bouncycastle/x509/CertPathReviewerMessages.properties'
+        pickFirst 'org/bouncycastle/x509/CertPathReviewerMessages_de.properties'
+    }
+}
+```
+</details>
 
 ## iOS
 You need to provide permission request strings to your `Info.plist` file. A sample content can be

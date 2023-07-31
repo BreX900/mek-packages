@@ -142,6 +142,73 @@ extension DeviceType {
     }
 }
 
+extension ReaderEvent {
+    func toApi() -> ReaderEventApi {
+        switch (self) {
+        case .cardInserted:
+            return .cardInserted
+        case .cardRemoved:
+            return .cardRemoved
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
+extension ReaderDisplayMessage {
+    func toApi() -> ReaderDisplayMessageApi {
+        switch (self) {
+        case .retryCard:
+            return .retryCard
+        case .insertCard:
+            return .insertCard
+        case .insertOrSwipeCard:
+            return .insertOrSwipeCard
+        case .swipeCard:
+            return .swipeCard
+        case .removeCard:
+            return .removeCard
+        case .multipleContactlessCardsDetected:
+            return .multipleContactlessCardsDetected
+        case .tryAnotherReadMethod:
+            return .tryAnotherReadMethod
+        case .tryAnotherCard:
+            return .tryAnotherCard
+        case .cardRemovedTooEarly:
+            return .cardRemovedTooEarly
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
+extension ReaderInputOptions {
+    func toApi() -> [ReaderInputOptionApi] {
+        var options: [ReaderInputOptionApi] = []
+        if (contains(ReaderInputOptions.insertCard)) { options.append(ReaderInputOptionApi.insertCard) }
+        if (contains(ReaderInputOptions.swipeCard)) { options.append(ReaderInputOptionApi.swipeCard) }
+        if (contains(ReaderInputOptions.tapCard)) { options.append(ReaderInputOptionApi.tapCard) }
+        return options
+    }
+}
+
+extension BatteryStatus {
+    func toApi() -> BatteryStatusApi? {
+        switch (self) {
+        case .critical:
+            return .critical
+        case .low:
+            return .low
+        case .nominal:
+            return .nominal
+        case .unknown:
+            return nil
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
 extension ReaderSoftwareUpdate {
     func toApi() -> ReaderSoftwareUpdateApi {
         return ReaderSoftwareUpdateApi(

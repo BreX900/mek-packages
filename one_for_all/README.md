@@ -137,3 +137,8 @@ The purpose of this package is to make it easy to implement new plugins.
 ### How was the library written?
 - pigeon: It is faster in code generation but uses the Visitor pattern to build your generated code
 - one_for_all: It is slower in generating code but uses the same structure as build_runner, the Element classes.
+
+## Contributing
+
+The code is formatted with a line/page length of 100 characters.
+Use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for your commits.

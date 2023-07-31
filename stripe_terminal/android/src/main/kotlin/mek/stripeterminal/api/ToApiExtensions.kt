@@ -1,6 +1,6 @@
-package com.stripe_terminal.api
+package mek.stripeterminal.api
 
-import com.stripe_terminal.toHashMap
+import mek.stripeterminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
 
 fun TerminalException.toApi(): TerminalExceptionApi {

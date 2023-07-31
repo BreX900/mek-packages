@@ -1,4 +1,4 @@
-package com.stripe_terminal.plugin
+package mek.stripeterminal.plugin
 
 import com.stripe.stripeterminal.external.callable.ErrorCallback
 import com.stripe.stripeterminal.external.models.TerminalException

@@ -64,7 +64,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.stripe_terminal
+        package: mek.stripeterminal
         pluginClass: StripeTerminalPlugin
       ios:
         pluginClass: StripeTerminalPlugin

@@ -1,4 +1,4 @@
-package com.stripe_terminal.stripe_terminal_example
+package mek.stripeterminal.example
 
 import io.flutter.embedding.android.FlutterActivity
 

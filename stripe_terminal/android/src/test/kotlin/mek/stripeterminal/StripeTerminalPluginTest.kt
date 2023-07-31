@@ -1,4 +1,4 @@
-package com.stripe_terminal.stripe_terminal
+package mek.stripeterminal
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel

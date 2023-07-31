@@ -1,15 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-package com.stripe_terminal.api
+package mek.stripeterminal.api
 
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -283,7 +280,7 @@ interface StripeTerminalPlatformApi {
             coroutineScope: CoroutineScope? = null,
         ) {
             channel = MethodChannel(binaryMessenger, "StripeTerminalPlatform")
-            this.coroutineScope = coroutineScope ?: MainScope()
+            Companion.coroutineScope = coroutineScope ?: MainScope()
             channel.setMethodCallHandler(api::onMethodCall)
         }
 

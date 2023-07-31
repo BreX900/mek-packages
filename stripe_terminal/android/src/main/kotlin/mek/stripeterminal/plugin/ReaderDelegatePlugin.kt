@@ -1,4 +1,4 @@
-package com.stripe_terminal.plugin
+package mek.stripeterminal.plugin
 
 import android.app.Activity
 import com.stripe.stripeterminal.external.callable.BluetoothReaderListener
@@ -13,8 +13,8 @@ import com.stripe.stripeterminal.external.models.ReaderEvent
 import com.stripe.stripeterminal.external.models.ReaderInputOptions
 import com.stripe.stripeterminal.external.models.ReaderSoftwareUpdate
 import com.stripe.stripeterminal.external.models.TerminalException
-import com.stripe_terminal.api.StripeTerminalHandlersApi
-import com.stripe_terminal.api.toApi
+import mek.stripeterminal.api.StripeTerminalHandlersApi
+import mek.stripeterminal.api.toApi
 
 class ReaderDelegatePlugin(private val _handlers: StripeTerminalHandlersApi) :
     BluetoothReaderListener, HandoffReaderListener, UsbReaderListener {

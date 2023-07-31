@@ -1,4 +1,4 @@
-package com.stripe_terminal.api
+package mek.stripeterminal.api
 
 import com.stripe.stripeterminal.external.models.*
 

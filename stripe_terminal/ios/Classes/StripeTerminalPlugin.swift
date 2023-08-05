@@ -234,7 +234,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
 
-    private var cancelablesCollectPaymentMethod: [Int: Cancelable] = [:]
+    private var _cancelablesCollectPaymentMethod: [Int: Cancelable] = [:]
 
     func onStartCollectPaymentMethod(
         _ result: Result<PaymentIntentApi>,
@@ -244,7 +244,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _: Bool
     ) throws {
         let paymentIntent = try findPaymentIntent(paymentIntentId)
-        self.cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
+        self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
+            self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
             if let error = error as? NSError {
                 let platformError = error.toApi()
                 result.error(platformError.code, platformError.message, platformError.details)
@@ -258,7 +259,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     func onStopCollectPaymentMethod(
         _ operationId: Int
     ) async throws {
-        try await cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
+        try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
 
     func onProcessPayment(
@@ -302,6 +303,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _cancelablesReadReusableCard[operationId] = Terminal.shared.readReusableCard(
             ReadReusableCardParameters(),
             completion: { paymentMethod, error in
+                self._cancelablesReadReusableCard.removeValue(forKey: operationId)
                 if let error = error as? NSError {
                     let platformError = error.toApi()
                     result.error(platformError.code, platformError.message, platformError.details)
@@ -360,6 +362,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             setupIntent,
             customerConsentCollected: customerConsentCollected,
             completion: { setupIntent, error in
+                self._cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
                     let platformError = error.toApi()
                     result.error(platformError.code, platformError.message, platformError.details)
@@ -388,6 +391,52 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             let newSetupIntent = try await Terminal.shared.cancelSetupIntent(setupIntent)
             _setupIntents.removeValue(forKey: setupIntentId)
             return newSetupIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+// Card-present refunds
+    private var _cancelablesCollectRefundPaymentMethod: [Int: Cancelable] = [:]
+
+    func onStartCollectRefundPaymentMethod(
+        _ result: Result<Void>,
+        _ operationId: Int,
+        _ chargeId: String,
+        _ amount: Int,
+        _ currency: String,
+        _ metadata: [String : String]?,
+        _ reverseTransfer: Bool?,
+        _ refundApplicationFee: Bool?
+    ) throws {
+        var params = RefundParameters(chargeId: chargeId, amount: UInt(amount), currency: currency)
+        if let metadata = metadata { params.metadata = metadata }
+        if let reverseTransfer = reverseTransfer { params.reverseTransfer = NSNumber(value: reverseTransfer) }
+        if let refundApplicationFee = refundApplicationFee { params.refundApplicationFee = NSNumber(value: refundApplicationFee) }
+        _cancelablesCollectRefundPaymentMethod[operationId] = Terminal.shared.collectRefundPaymentMethod(
+            params,
+            completion: { error in
+                self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)
+                if let error = error as? NSError {
+                    let platformError = error.toApi()
+                    result.error(platformError.code, platformError.message, platformError.details)
+                    return
+                }
+                result.success(())
+            }
+        )
+    }
+    
+    func onStopCollectRefundPaymentMethod(_ operationId: Int) async throws {
+        try await _cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)?.cancel()
+    }
+    
+    func onProcessRefund() async throws -> RefundApi {
+        do {
+            let (refund, error) = await Terminal.shared.processRefund()
+            if let error {
+                throw PlatformError("\(error.code)", error.localizedDescription)
+            }
+            return refund!.toApi()
         } catch let error as NSError {
             throw error.toApi()
         }
@@ -422,8 +471,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func clean() {
         self._discoverReaderCancelable?.cancel { error in }
         
-        self.cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
-        self.cancelablesCollectPaymentMethod.removeAll()
+        self._cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
+        self._cancelablesCollectPaymentMethod.removeAll()
         self._cancelablesReadReusableCard.values.forEach { $0.cancel { error in } }
         self._cancelablesReadReusableCard.removeAll()
         

@@ -274,6 +274,8 @@ extension PaymentMethod {
         return PaymentMethodApi(
             id: stripeId,
             cardDetails: card?.toApi(),
+            cardPresent: cardPresent?.toApi(),
+            interacPresent: interacPresent?.toApi(),
             customer: customer,
             livemode: true,
             metadata: metadata
@@ -291,6 +293,65 @@ extension CardDetails {
             fingerprint: fingerprint,
             funding: funding.toApi(),
             last4: last4
+        )
+    }
+}
+
+extension CardPresentDetails {
+    func toApi() -> CardPresentDetailsApi {
+        return CardPresentDetailsApi(
+            brand: brand.toApi(),
+            country: country,
+            expMonth: expMonth,
+            expYear: expYear,
+            fingerprint: fingerprint,
+            funding: funding.toApi(),
+            last4: last4,
+            cardholderName: cardholderName,
+            emvAuthData: emvAuthData,
+            generatedCard: generatedCard,
+            incrementalAuthorizationStatus: incrementalAuthorizationStatus.toApi(),
+            networks: networks?.toApi(),
+            receipt: receipt?.toApi()
+        )
+    }
+}
+
+extension SCPIncrementalAuthorizationStatus {
+    func toApi() -> IncrementalAuthorizationStatusApi? {
+        switch self {
+        case .unknown:
+            return nil
+        case .notSupported:
+            return .notSupported
+        case .supported:
+            return .supported
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
+extension SCPNetworks {
+    func toApi() -> CardNetworksApi {
+        return CardNetworksApi(
+            available: available?.map { CardBrand(rawValue: Int(truncating: $0))!.toApi()! } ?? [],
+            preferred: nil
+        )
+    }
+}
+
+extension ReceiptDetails {
+    func toApi() -> ReceiptDetailsApi {
+        return ReceiptDetailsApi(
+            accountType: accountType,
+            applicationPreferredName: applicationPreferredName,
+            authorizationCode: authorizationCode,
+            authorizationResponseCode: authorizationResponseCode,
+            applicationCryptogram: applicationCryptogram,
+            dedicatedFileName: dedicatedFileName,
+            transactionStatusInformation: transactionStatusInformation,
+            terminalVerificationResults: terminalVerificationResults
         )
     }
 }
@@ -485,6 +546,48 @@ extension SetupAttemptCardPresentDetails {
     }
 }
 
+extension Refund {
+    func toApi() -> RefundApi {
+        return RefundApi(
+            id: stripeId,
+            amount: Int(amount),
+            chargeId: charge,
+            created: created,
+            currency: currency,
+            metadata: metadata,
+            reason: reason,
+            status: status.toApi(),
+            paymentMethodDetails: paymentMethodDetails?.toApi(),
+            failureReason: failureReason
+        )
+    }
+}
+
+extension PaymentMethodDetails {
+    func toApi() -> PaymentMethodDetailsApi {
+        return PaymentMethodDetailsApi(
+            cardPresent: cardPresent?.toApi(),
+            interacPresent: interacPresent?.toApi()
+        )
+    }
+}
+
+extension RefundStatus {
+    func toApi() -> RefundStatusApi? {
+        switch self {
+        case .succeeded:
+            return .succeeded
+        case .pending:
+            return .pending
+        case .failed:
+            return .failed
+        case .unknown:
+            return nil
+        @unknown default:
+            fatalError()
+        }
+    }
+}
 
 
 

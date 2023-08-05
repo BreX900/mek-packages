@@ -3,17 +3,10 @@ library stripe_terminal;
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:mek_stripe_terminal/src/models/cart.dart';
-import 'package:mek_stripe_terminal/src/models/discover_config.dart';
-import 'package:mek_stripe_terminal/src/models/location.dart';
-import 'package:mek_stripe_terminal/src/models/payment.dart';
-import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
-import 'package:mek_stripe_terminal/src/models/payment_method.dart';
-import 'package:mek_stripe_terminal/src/models/reader.dart';
-import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
+import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
+import 'package:mek_stripe_terminal/src/models/card.dart';
+import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
-import 'package:mek_stripe_terminal/src/reader_delegates.dart';
-import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
 
 part 'stripe_terminal_handlers.dart';
@@ -170,7 +163,26 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
   @override
   Future<SetupIntent> cancelSetupIntent(String setupIntentId);
+//endregion
 
+//region Card-present refunds
+  @override
+  @MethodApi(swift: MethodApiType.callbacks)
+  Future<void> startCollectRefundPaymentMethod({
+    required int operationId,
+    required String chargeId,
+    required int amount,
+    required String currency,
+    required Map<String, String>? metadata,
+    required bool? reverseTransfer,
+    required bool? refundApplicationFee,
+  });
+
+  @override
+  Future<void> stopCollectRefundPaymentMethod(int operationId);
+
+  @override
+  Future<Refund> processRefund();
 //endregion
 
 //region Display information to customers

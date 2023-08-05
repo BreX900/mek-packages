@@ -364,6 +364,51 @@ class _$StripeTerminalPlatform {
     }
   }
 
+  Future<void> startCollectRefundPaymentMethod({
+    required int operationId,
+    required String chargeId,
+    required int amount,
+    required String currency,
+    required Map<String, String>? metadata,
+    required bool? reverseTransfer,
+    required bool? refundApplicationFee,
+  }) async {
+    try {
+      await _$channel.invokeMethod('startCollectRefundPaymentMethod', [
+        operationId,
+        chargeId,
+        amount,
+        currency,
+        metadata?.map((k, v) => MapEntry(k, v)),
+        reverseTransfer,
+        refundApplicationFee
+      ]);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> stopCollectRefundPaymentMethod(int operationId) async {
+    try {
+      await _$channel
+          .invokeMethod('stopCollectRefundPaymentMethod', [operationId]);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<Refund> processRefund() async {
+    try {
+      final result = await _$channel.invokeMethod('processRefund', []);
+      return _$deserializeRefund(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
   Future<void> setReaderDisplay(Cart cart) async {
     try {
       await _$channel.invokeMethod('setReaderDisplay', [_$serializeCart(cart)]);
@@ -452,6 +497,37 @@ CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
         ? CardFundingType.values[serialized[5] as int]
         : null,
     last4: serialized[6] as String?);
+CardNetworks _$deserializeCardNetworks(List<Object?> serialized) =>
+    CardNetworks(
+        available: (serialized[0] as List)
+            .map((e) => CardBrand.values[e as int])
+            .toList(),
+        preferred: serialized[1] as String?);
+CardPresentDetails _$deserializeCardPresentDetails(List<Object?> serialized) =>
+    CardPresentDetails(
+        brand: serialized[0] != null
+            ? CardBrand.values[serialized[0] as int]
+            : null,
+        country: serialized[1] as String?,
+        expMonth: serialized[2] as int,
+        expYear: serialized[3] as int,
+        fingerprint: serialized[4] as String?,
+        funding: serialized[5] != null
+            ? CardFundingType.values[serialized[5] as int]
+            : null,
+        last4: serialized[6] as String?,
+        cardholderName: serialized[7] as String?,
+        emvAuthData: serialized[8] as String?,
+        generatedCard: serialized[9] as String?,
+        incrementalAuthorizationStatus: serialized[10] != null
+            ? IncrementalAuthorizationStatus.values[serialized[10] as int]
+            : null,
+        networks: serialized[11] != null
+            ? _$deserializeCardNetworks(serialized[11] as List)
+            : null,
+        receipt: serialized[12] != null
+            ? _$deserializeReceiptDetails(serialized[12] as List)
+            : null);
 List<Object?> _$serializeCart(Cart deserialized) => [
       deserialized.currency,
       deserialized.tax,
@@ -517,10 +593,25 @@ PaymentMethod
             cardDetails: serialized[1] != null
                 ? _$deserializeCardDetails(serialized[1] as List)
                 : null,
-            customer: serialized[2] as String?,
-            livemode: serialized[3] as bool,
-            metadata: (serialized[4] as Map)
+            cardPresent: serialized[2] != null
+                ? _$deserializeCardPresentDetails(serialized[2] as List)
+                : null,
+            interacPresent: serialized[3] != null
+                ? _$deserializeCardPresentDetails(serialized[3] as List)
+                : null,
+            customer: serialized[4] as String?,
+            livemode: serialized[5] as bool,
+            metadata: (serialized[6] as Map)
                 .map((k, v) => MapEntry(k as String, v as String)));
+PaymentMethodDetails _$deserializePaymentMethodDetails(
+        List<Object?> serialized) =>
+    PaymentMethodDetails(
+        cardPresent: serialized[0] != null
+            ? _$deserializeCardPresentDetails(serialized[0] as List)
+            : null,
+        interacPresent: serialized[1] != null
+            ? _$deserializeCardPresentDetails(serialized[1] as List)
+            : null);
 Reader _$deserializeReader(List<Object?> serialized) => Reader(
     locationStatus: serialized[0] != null
         ? LocationStatus.values[serialized[0] as int]
@@ -545,6 +636,32 @@ ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(
         settingsVersion: serialized[4] as String?,
         timeEstimate: UpdateTimeEstimate.values[serialized[5] as int],
         version: serialized[6] as String);
+ReceiptDetails _$deserializeReceiptDetails(List<Object?> serialized) =>
+    ReceiptDetails(
+        accountType: serialized[0] as String?,
+        applicationPreferredName: serialized[1] as String,
+        authorizationCode: serialized[2] as String?,
+        authorizationResponseCode: serialized[3] as String,
+        applicationCryptogram: serialized[4] as String,
+        dedicatedFileName: serialized[5] as String,
+        transactionStatusInformation: serialized[6] as String,
+        terminalVerificationResults: serialized[7] as String);
+Refund _$deserializeRefund(List<Object?> serialized) => Refund(
+    id: serialized[0] as String,
+    amount: serialized[1] as int,
+    chargeId: serialized[2] as String,
+    created: DateTime.fromMillisecondsSinceEpoch(serialized[3] as int),
+    currency: serialized[4] as String,
+    metadata: (serialized[5] as Map)
+        .map((k, v) => MapEntry(k as String, v as String)),
+    reason: serialized[6] as String?,
+    status: serialized[7] != null
+        ? RefundStatus.values[serialized[7] as int]
+        : null,
+    paymentMethodDetails: serialized[8] != null
+        ? _$deserializePaymentMethodDetails(serialized[8] as List)
+        : null,
+    failureReason: serialized[9] as String?);
 SetupAttempt _$deserializeSetupAttempt(List<Object?> serialized) =>
     SetupAttempt(
         id: serialized[0] as String,

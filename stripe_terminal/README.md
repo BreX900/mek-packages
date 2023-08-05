@@ -45,8 +45,8 @@ Offline mode is not supported
   - ✅ confirmSetupIntent
   - ✅ cancelSetupIntent
 - **Card-present refunds**
-  - ❌ collectRefundPaymentMethod
-  - ❌ processRefund
+  - ✅ collectRefundPaymentMethod
+  - ✅ processRefund
 - **Display information to customers**
   - ✅ setReaderDisplay
   - ✅ clearReaderDisplay

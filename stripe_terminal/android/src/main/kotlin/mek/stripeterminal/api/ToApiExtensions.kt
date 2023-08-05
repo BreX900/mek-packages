@@ -132,43 +132,96 @@ fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
 
 fun PaymentMethod.toApi(): PaymentMethodApi {
     return PaymentMethodApi(
-        cardDetails = cardDetails?.toApi(),
-//        cardPresentDetails
-        customer = customer,
         id = id,
-        // interacPresentDetails
+        cardDetails = cardDetails?.toApi(),
+        cardPresent = cardPresentDetails?.toApi(),
+        interacPresent = interacPresentDetails?.toApi(),
+        customer = customer,
         livemode = livemode,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
     )
 }
 
+fun cardBrandToApi(value: String?): CardBrandApi? {
+    return when (value) {
+        "amex" -> CardBrandApi.AMEX
+        "diners" -> CardBrandApi.DINERS_CLUB
+        "discover" -> CardBrandApi.DISCOVER
+        "jcb" -> CardBrandApi.JCB
+        "mastercard" -> CardBrandApi.MASTER_CARD
+        "unionpay" -> CardBrandApi.UNION_PAY
+        "visa" -> CardBrandApi.VISA
+        "unknown" -> null
+        else -> null
+    }
+}
+
+fun fundingToApi(value: String?): CardFundingTypeApi? {
+    return when (value) {
+        "credit" -> CardFundingTypeApi.CREDIT
+        "debit" -> CardFundingTypeApi.DEBIT
+        "prepaid" -> CardFundingTypeApi.PREPAID
+        "unknown" -> null
+        else -> null
+    }
+}
+
 fun CardDetails.toApi(): CardDetailsApi {
     return CardDetailsApi(
-        brand = when (brand) {
-            "amex" -> CardBrandApi.AMEX
-            "diners" -> CardBrandApi.DINERS_CLUB
-            "discover" -> CardBrandApi.DISCOVER
-            "jcb" -> CardBrandApi.JCB
-            "mastercard" -> CardBrandApi.MASTER_CARD
-            "unionpay" -> CardBrandApi.UNION_PAY
-            "visa" -> CardBrandApi.VISA
-            "unknown" -> null
-            else -> null
-        },
+        brand = cardBrandToApi(brand),
         country = country,
         expMonth = expMonth.toLong(),
         expYear = expYear.toLong(),
         fingerprint = fingerprint,
-        funding = when (brand) {
-            "credit" -> CardFundingTypeApi.CREDIT
-            "debit" -> CardFundingTypeApi.DEBIT
-            "prepaid" -> CardFundingTypeApi.PREPAID
-            "unknown" -> null
-            else -> null
-        },
-//        generatedFrom
+        funding = fundingToApi(funding),
         last4 = last4,
     )
+}
+
+fun CardPresentDetails.toApi(): CardPresentDetailsApi {
+    return CardPresentDetailsApi(
+        brand = cardBrandToApi(brand),
+        country = country,
+        expMonth = expMonth.toLong(),
+        expYear = expYear.toLong(),
+        fingerprint = fingerprint,
+        funding = fundingToApi(funding),
+        last4 = last4,
+        cardholderName = cardholderName,
+        generatedCard = generatedCard,
+        receipt = receiptDetails?.toApi(),
+        emvAuthData = emvAuthData,
+        networks = networks?.toApi(),
+        incrementalAuthorizationStatus = incrementalAuthorizationStatus.toApi(),
+    )
+}
+
+fun ReceiptDetails.toApi(): ReceiptDetailsApi {
+    return ReceiptDetailsApi(
+        accountType = accountType,
+        applicationPreferredName = applicationPreferredName!!,
+        authorizationCode = authorizationCode,
+        authorizationResponseCode = authorizationResponseCode!!,
+        applicationCryptogram = applicationCryptogram!!,
+        dedicatedFileName = dedicatedFileName!!,
+        transactionStatusInformation = tsi!!,
+        terminalVerificationResults = tvr!!,
+    )
+}
+
+fun CardNetworks.toApi(): CardNetworksApi {
+    return CardNetworksApi(
+        available = available.map { cardBrandToApi(it)!! },
+        preferred = preferred
+    )
+}
+
+fun IncrementalAuthorizationStatus.toApi(): IncrementalAuthorizationStatusApi? {
+    return when (this) {
+        IncrementalAuthorizationStatus.NOT_SUPPORTED -> IncrementalAuthorizationStatusApi.NOT_SUPPORTED
+        IncrementalAuthorizationStatus.SUPPORTED -> IncrementalAuthorizationStatusApi.SUPPORTED
+        IncrementalAuthorizationStatus.UNKNOWN -> null
+    }
 }
 
 fun PaymentIntent.toApi(): PaymentIntentApi {
@@ -319,5 +372,32 @@ fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
     return SetupAttemptCardPresentDetailsApi(
         emvAuthData = emvAuthData!!,
         generatedCard = generatedCard!!,
+    )
+}
+
+fun Refund.toApi(): RefundApi {
+    return RefundApi(
+        id = id,
+        amount = amount!!,
+        chargeId = chargeId!!,
+        created = created!!,
+        currency = currency!!,
+        metadata = metadata?.toHashMap() ?: HashMap(),
+        reason = reason,
+        status = when (status) {
+            "succeeded" -> RefundStatusApi.SUCCEEDED
+            "pending" -> RefundStatusApi.PENDING
+            "failed" -> RefundStatusApi.FAILED
+            else -> null
+        },
+        paymentMethodDetails = paymentMethodDetails?.toApi(),
+        failureReason = failureReason,
+    )
+}
+
+fun PaymentMethodDetails.toApi(): PaymentMethodDetailsApi {
+    return PaymentMethodDetailsApi(
+        cardPresent = cardPresentDetails?.toApi(),
+        interacPresent = interacPresentDetails?.toApi()
     )
 }

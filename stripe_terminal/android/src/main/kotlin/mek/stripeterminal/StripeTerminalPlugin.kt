@@ -16,6 +16,7 @@ import com.stripe.stripeterminal.external.callable.LocationListCallback
 import com.stripe.stripeterminal.external.callable.PaymentIntentCallback
 import com.stripe.stripeterminal.external.callable.PaymentMethodCallback
 import com.stripe.stripeterminal.external.callable.ReaderCallback
+import com.stripe.stripeterminal.external.callable.RefundCallback
 import com.stripe.stripeterminal.external.callable.SetupIntentCallback
 import com.stripe.stripeterminal.external.callable.TerminalListener
 import com.stripe.stripeterminal.external.models.CaptureMethod
@@ -33,6 +34,8 @@ import com.stripe.stripeterminal.external.models.PaymentMethodType
 import com.stripe.stripeterminal.external.models.PaymentStatus
 import com.stripe.stripeterminal.external.models.ReadReusableCardParameters
 import com.stripe.stripeterminal.external.models.Reader
+import com.stripe.stripeterminal.external.models.Refund
+import com.stripe.stripeterminal.external.models.RefundParameters
 import com.stripe.stripeterminal.external.models.SetupIntent
 import com.stripe.stripeterminal.external.models.SetupIntentCancellationParameters
 import com.stripe.stripeterminal.external.models.SetupIntentParameters
@@ -63,6 +66,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import mek.stripeterminal.api.CaptureMethodApi
 import mek.stripeterminal.api.PaymentIntentParametersApi
 import mek.stripeterminal.api.PaymentMethodTypeApi
+import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
@@ -469,7 +473,6 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     private var _setupIntents = HashMap<String, SetupIntent>()
     private val _cancelablesCollectSetupIntentPaymentMethod = HashMap<Long, Cancelable>()
 
-
     override fun onStartReadReusableCard(
         result: Result<PaymentMethodApi>,
         operationId: Long,
@@ -594,6 +597,57 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
                     result.success(setupIntent.toApi())
                 }
             })
+    }
+    //endregion
+
+    //region Saving payment details for later use
+    private val _cancelablesCollectRefundPaymentMethod = HashMap<Long, Cancelable>()
+
+    override fun onStartCollectRefundPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
+        chargeId: String,
+        amount: Long,
+        currency: String,
+        metadata: HashMap<String, String>?,
+        reverseTransfer: Boolean?,
+        refundApplicationFee: Boolean?
+    ) {
+        _cancelablesCollectRefundPaymentMethod[operationId] = _terminal.collectRefundPaymentMethod(
+            RefundParameters.Builder(
+                chargeId = chargeId,
+                amount = amount,
+                currency = currency,
+            ).let {
+                metadata?.let(it::setMetadata)
+                reverseTransfer?.let(it::setReverseTransfer)
+                refundApplicationFee?.let(it::setRefundApplicationFee)
+                it.build()
+            },
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onFailure(e: TerminalException) {
+                    _cancelablesCollectRefundPaymentMethod.remove(operationId)
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess() {
+                    _cancelablesCollectRefundPaymentMethod.remove(operationId)
+                    result.success(Unit)
+                }
+            })
+    }
+
+    override fun onStopCollectRefundPaymentMethod(result: Result<Unit>, operationId: Long) {
+        _cancelablesCollectRefundPaymentMethod.remove(operationId)
+            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
+            })
+    }
+
+    override fun onProcessRefund(result: Result<RefundApi>) {
+        _terminal.processRefund(object: TerminalErrorHandler(result::error), RefundCallback {
+            override fun onSuccess(refund: Refund) = result.success(refund.toApi())
+        })
     }
     //endregion
 

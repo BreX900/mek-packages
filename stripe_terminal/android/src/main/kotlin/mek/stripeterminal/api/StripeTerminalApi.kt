@@ -203,6 +203,26 @@ interface StripeTerminalPlatformApi {
         setupIntentId: String,
     )
 
+    fun onStartCollectRefundPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
+        chargeId: String,
+        amount: Long,
+        currency: String,
+        metadata: HashMap<String, String>?,
+        reverseTransfer: Boolean?,
+        refundApplicationFee: Boolean?,
+    )
+
+    fun onStopCollectRefundPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
+    )
+
+    fun onProcessRefund(
+        result: Result<RefundApi>,
+    )
+
     fun onSetReaderDisplay(
         result: Result<Unit>,
         cart: CartApi,
@@ -336,6 +356,18 @@ interface StripeTerminalPlatformApi {
                 "cancelSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
                     onCancelSetupIntent(res, args[0] as String)
+                }
+                "startCollectRefundPaymentMethod" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStartCollectRefundPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String, args[4]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[5] as Boolean?, args[6] as Boolean?)
+                }
+                "stopCollectRefundPaymentMethod" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopCollectRefundPaymentMethod(res, (args[0] as Number).toLong())
+                }
+                "processRefund" -> {
+                    val res = Result<RefundApi>(result) { it.serialize() }
+                    onProcessRefund(res)
                 }
                 "setReaderDisplay" -> {
                     val res = Result<Unit>(result) { null }
@@ -560,6 +592,52 @@ enum class CardFundingTypeApi {
     CREDIT, DEBIT, PREPAID;
 }
 
+data class CardNetworksApi(
+    val available: List<CardBrandApi>,
+    val preferred: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            available.map { it.ordinal} ,
+            preferred,
+        )
+    }
+}
+
+data class CardPresentDetailsApi(
+    val brand: CardBrandApi?,
+    val country: String?,
+    val expMonth: Long,
+    val expYear: Long,
+    val fingerprint: String?,
+    val funding: CardFundingTypeApi?,
+    val last4: String?,
+    val cardholderName: String?,
+    val emvAuthData: String?,
+    val generatedCard: String?,
+    val incrementalAuthorizationStatus: IncrementalAuthorizationStatusApi?,
+    val networks: CardNetworksApi?,
+    val receipt: ReceiptDetailsApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            brand?.ordinal,
+            country,
+            expMonth,
+            expYear,
+            fingerprint,
+            funding?.ordinal,
+            last4,
+            cardholderName,
+            emvAuthData,
+            generatedCard,
+            incrementalAuthorizationStatus?.ordinal,
+            networks?.serialize(),
+            receipt?.serialize(),
+        )
+    }
+}
+
 data class CartApi(
     val currency: String,
     val tax: Long,
@@ -608,6 +686,10 @@ enum class DeviceTypeApi {
 
 enum class DiscoveryMethodApi {
     BLUETOOTH_SCAN, BLUETOOTH_PROXIMITY, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
+}
+
+enum class IncrementalAuthorizationStatusApi {
+    NOT_SUPPORTED, SUPPORTED;
 }
 
 data class LocationApi(
@@ -717,6 +799,8 @@ enum class PaymentIntentStatusApi {
 data class PaymentMethodApi(
     val id: String,
     val cardDetails: CardDetailsApi?,
+    val cardPresent: CardPresentDetailsApi?,
+    val interacPresent: CardPresentDetailsApi?,
     val customer: String?,
     val livemode: Boolean,
     val metadata: HashMap<String, String>,
@@ -725,9 +809,23 @@ data class PaymentMethodApi(
         return listOf(
             id,
             cardDetails?.serialize(),
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
             customer,
             livemode,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+        )
+    }
+}
+
+data class PaymentMethodDetailsApi(
+    val cardPresent: CardPresentDetailsApi?,
+    val interacPresent: CardPresentDetailsApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
         )
     }
 }
@@ -796,6 +894,62 @@ data class ReaderSoftwareUpdateApi(
             version,
         )
     }
+}
+
+data class ReceiptDetailsApi(
+    val accountType: String?,
+    val applicationPreferredName: String,
+    val authorizationCode: String?,
+    val authorizationResponseCode: String,
+    val applicationCryptogram: String,
+    val dedicatedFileName: String,
+    val transactionStatusInformation: String,
+    val terminalVerificationResults: String,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            accountType,
+            applicationPreferredName,
+            authorizationCode,
+            authorizationResponseCode,
+            applicationCryptogram,
+            dedicatedFileName,
+            transactionStatusInformation,
+            terminalVerificationResults,
+        )
+    }
+}
+
+data class RefundApi(
+    val id: String,
+    val amount: Long,
+    val chargeId: String,
+    val created: Long,
+    val currency: String,
+    val metadata: HashMap<String, String>,
+    val reason: String?,
+    val status: RefundStatusApi?,
+    val paymentMethodDetails: PaymentMethodDetailsApi?,
+    val failureReason: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            id,
+            amount,
+            chargeId,
+            created,
+            currency,
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            reason,
+            status?.ordinal,
+            paymentMethodDetails?.serialize(),
+            failureReason,
+        )
+    }
+}
+
+enum class RefundStatusApi {
+    SUCCEEDED, PENDING, FAILED;
 }
 
 data class SetupAttemptApi(

@@ -10,6 +10,7 @@ import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
+import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
@@ -275,6 +276,32 @@ class StripeTerminal {
   Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
       _platform.cancelSetupIntent(setupIntent.id);
 
+//endregion
+
+//region Card-present refunds
+
+  CancelableFuture<void> collectRefundPaymentMethod({
+    required String chargeId,
+    required int amount,
+    required String currency,
+    Map<String, String>? metadata,
+    bool? reverseTransfer,
+    bool? refundApplicationFee,
+  }) {
+    return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
+      return await _platform.startCollectRefundPaymentMethod(
+        operationId: id,
+        chargeId: chargeId,
+        amount: amount,
+        currency: currency,
+        metadata: metadata,
+        reverseTransfer: reverseTransfer,
+        refundApplicationFee: refundApplicationFee,
+      );
+    });
+  }
+
+  Future<Refund> processRefund() async => await _platform.processRefund();
 //endregion
 
 //region Display information to customers

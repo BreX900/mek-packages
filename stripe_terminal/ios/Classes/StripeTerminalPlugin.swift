@@ -210,14 +210,24 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
 // Taking payments
     
-    private var paymentIntents: [String: PaymentIntent] = [:]
+    private var _paymentIntents: [String: PaymentIntent] = [:]
+    
+    func onCreatePaymentIntent(_ parameters: PaymentIntentParametersApi) async throws -> PaymentIntentApi {
+        do {
+            let paymentIntent = try await Terminal.shared.createPaymentIntent(parameters.toHost())
+            _paymentIntents[paymentIntent.stripeId] = paymentIntent
+            return paymentIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
 
     func onRetrievePaymentIntent(
         _ clientSecret: String
     ) async throws -> PaymentIntentApi {
         do {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
-            paymentIntents[paymentIntent.stripeId] = paymentIntent
+            _paymentIntents[paymentIntent.stripeId] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
             throw error.toApi()
@@ -240,7 +250,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
                 result.error(platformError.code, platformError.message, platformError.details)
                 return
             }
-            self.paymentIntents[paymentIntent!.stripeId] = paymentIntent!
+            self._paymentIntents[paymentIntent!.stripeId] = paymentIntent!
             result.success(paymentIntent!.toApi())
         }
     }
@@ -264,6 +274,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         } catch let error as NSError {
             throw error.toApi()
         }
+    }
+    
+    func onCancelPaymentIntent(_ paymentIntentId: String) async throws {
+        let paymentIntent = try findPaymentIntent(paymentIntentId)
+        try await Terminal.shared.cancelPaymentIntent(paymentIntent)
+        _paymentIntents.removeValue(forKey: paymentIntentId)
     }
     
 // Saving payment details for later use
@@ -330,7 +346,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         self.cancelablesReadReusableCard.removeAll()
         
         self.readers = []
-        self.paymentIntents = [:]
+        self._paymentIntents = [:]
     }
 
     private func findReader(_ serialNumber: String) throws -> Reader {
@@ -344,7 +360,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
     
     private func findPaymentIntent(_ paymentIntentId: String) throws -> PaymentIntent {
-        let paymentIntent = paymentIntents[paymentIntentId]
+        let paymentIntent = _paymentIntents[paymentIntentId]
         guard let paymentIntent else {
             throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
         }

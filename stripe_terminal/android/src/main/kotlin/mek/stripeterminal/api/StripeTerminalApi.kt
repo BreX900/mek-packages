@@ -7,6 +7,9 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -119,6 +122,11 @@ interface StripeTerminalPlatformApi {
         result: Result<Unit>,
     )
 
+    fun onCreatePaymentIntent(
+        result: Result<PaymentIntentApi>,
+        parameters: PaymentIntentParametersApi,
+    )
+
     fun onRetrievePaymentIntent(
         result: Result<PaymentIntentApi>,
         clientSecret: String,
@@ -139,6 +147,11 @@ interface StripeTerminalPlatformApi {
 
     fun onProcessPayment(
         result: Result<PaymentIntentApi>,
+        paymentIntentId: String,
+    )
+
+    fun onCancelPaymentIntent(
+        result: Result<Unit>,
         paymentIntentId: String,
     )
 
@@ -232,6 +245,10 @@ interface StripeTerminalPlatformApi {
                     val res = Result<Unit>(result) { null }
                     onDisconnectReader(res)
                 }
+                "createPaymentIntent" -> {
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
+                    onCreatePaymentIntent(res, (args[0] as List<Any?>).let { PaymentIntentParametersApi.deserialize(it) })
+                }
                 "retrievePaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onRetrievePaymentIntent(res, args[0] as String)
@@ -247,6 +264,10 @@ interface StripeTerminalPlatformApi {
                 "processPayment" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onProcessPayment(res, args[0] as String)
+                }
+                "cancelPaymentIntent" -> {
+                    val res = Result<Unit>(result) { null }
+                    onCancelPaymentIntent(res, args[0] as String)
                 }
                 "startReadReusableCard" -> {
                     val res = Result<PaymentMethodApi>(result) { it.serialize() }
@@ -280,7 +301,7 @@ interface StripeTerminalPlatformApi {
             coroutineScope: CoroutineScope? = null,
         ) {
             channel = MethodChannel(binaryMessenger, "StripeTerminalPlatform")
-            Companion.coroutineScope = coroutineScope ?: MainScope()
+            this.coroutineScope = coroutineScope ?: MainScope()
             channel.setMethodCallHandler(api::onMethodCall)
         }
 
@@ -445,6 +466,10 @@ enum class BatteryStatusApi {
     CRITICAL, LOW, NOMINAL;
 }
 
+enum class CaptureMethodApi {
+    AUTOMATIC, MANUAL;
+}
+
 enum class CardBrandApi {
     AMEX, DINERS_CLUB, DISCOVER, JCB, MASTER_CARD, UNION_PAY, VISA, INTERAC, EFTPOS_AU;
 }
@@ -605,6 +630,26 @@ data class PaymentIntentApi(
     }
 }
 
+data class PaymentIntentParametersApi(
+    val amount: Long,
+    val currency: String,
+    val captureMethod: CaptureMethodApi,
+    val paymentMethodTypes: List<PaymentMethodTypeApi>,
+) {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): PaymentIntentParametersApi {
+            return PaymentIntentParametersApi(
+                amount = (serialized[0] as Number).toLong(),
+                currency = serialized[1] as String,
+                captureMethod = (serialized[2] as Int).let { CaptureMethodApi.values()[it] },
+                paymentMethodTypes = (serialized[3] as List<*>).map { (it as Int).let { PaymentMethodTypeApi.values()[it] } },
+            )
+        }
+    }
+}
+
 enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
 }
@@ -625,6 +670,10 @@ data class PaymentMethodApi(
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
         )
     }
+}
+
+enum class PaymentMethodTypeApi {
+    CARD_PRESENT, CARD, INTERACT_PRESENT;
 }
 
 enum class PaymentStatusApi {

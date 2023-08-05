@@ -183,6 +183,9 @@ class StripeTerminal {
 //region Taking payments
   Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
 
+  Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters) async =>
+      await _platform.createPaymentIntent(parameters);
+
   /// Starts reading payment method based on payment intent.
   ///
   /// Payment intent is supposed to be generated on your backend and the `clientSecret` of the payment intent
@@ -211,6 +214,9 @@ class StripeTerminal {
 
   Future<PaymentIntent> processPayment(PaymentIntent paymentIntent) async =>
       await _platform.processPayment(paymentIntent.id);
+
+  Future<void> cancelPaymentIntent(PaymentIntent paymentIntent) async =>
+      await _platform.cancelPaymentIntent(paymentIntent.id);
 //endregion
 
 //region Saving payment details for later use

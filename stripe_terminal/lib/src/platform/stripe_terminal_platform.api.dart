@@ -189,6 +189,18 @@ class _$StripeTerminalPlatform {
     }
   }
 
+  Future<PaymentIntent> createPaymentIntent(
+      PaymentIntentParameters parameters) async {
+    try {
+      final result = await _$channel.invokeMethod('createPaymentIntent',
+          [_$serializePaymentIntentParameters(parameters)]);
+      return _$deserializePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret) async {
     try {
       final result =
@@ -230,6 +242,15 @@ class _$StripeTerminalPlatform {
       final result =
           await _$channel.invokeMethod('processPayment', [paymentIntentId]);
       return _$deserializePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> cancelPaymentIntent(String paymentIntentId) async {
+    try {
+      await _$channel.invokeMethod('cancelPaymentIntent', [paymentIntentId]);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -398,6 +419,14 @@ PaymentIntent
             receiptEmail: serialized[22] as String?,
             setupFutureUsage: serialized[23] as String?,
             transferGroup: serialized[24] as String?);
+List<Object?> _$serializePaymentIntentParameters(
+        PaymentIntentParameters deserialized) =>
+    [
+      deserialized.amount,
+      deserialized.currency,
+      deserialized.captureMethod.index,
+      deserialized.paymentMethodTypes.map((e) => e.index).toList()
+    ];
 PaymentMethod
     _$deserializePaymentMethod(List<Object?> serialized) =>
         PaymentMethod(

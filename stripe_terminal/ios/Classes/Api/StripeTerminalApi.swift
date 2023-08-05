@@ -145,6 +145,10 @@ protocol StripeTerminalPlatformApi {
 
     func onDisconnectReader() async throws -> Void
 
+    func onCreatePaymentIntent(
+        _ parameters: PaymentIntentParametersApi
+    ) async throws -> PaymentIntentApi
+
     func onRetrievePaymentIntent(
         _ clientSecret: String
     ) async throws -> PaymentIntentApi
@@ -164,6 +168,10 @@ protocol StripeTerminalPlatformApi {
     func onProcessPayment(
         _ paymentIntentId: String
     ) async throws -> PaymentIntentApi
+
+    func onCancelPaymentIntent(
+        _ paymentIntentId: String
+    ) async throws -> Void
 
     func onStartReadReusableCard(
         _ result: Result<PaymentMethodApi>,
@@ -302,6 +310,11 @@ func setStripeTerminalPlatformApiHandler(
                     try await hostApi.onDisconnectReader()
                     return nil
                 }
+            case "createPaymentIntent":
+                runAsync {
+                    let res = try await hostApi.onCreatePaymentIntent(PaymentIntentParametersApi.deserialize(args[0] as! [Any?]))
+                    return res.serialize()
+                }
             case "retrievePaymentIntent":
                 runAsync {
                     let res = try await hostApi.onRetrievePaymentIntent(args[0] as! String)
@@ -319,6 +332,11 @@ func setStripeTerminalPlatformApiHandler(
                 runAsync {
                     let res = try await hostApi.onProcessPayment(args[0] as! String)
                     return res.serialize()
+                }
+            case "cancelPaymentIntent":
+                runAsync {
+                    try await hostApi.onCancelPaymentIntent(args[0] as! String)
+                    return nil
                 }
             case "startReadReusableCard":
                 let res = Result<PaymentMethodApi>(result) { $0.serialize() }
@@ -487,6 +505,11 @@ enum BatteryStatusApi: Int {
     case critical
     case low
     case nominal
+}
+
+enum CaptureMethodApi: Int {
+    case automatic
+    case manual
 }
 
 enum CardBrandApi: Int {
@@ -677,6 +700,24 @@ struct PaymentIntentApi {
     }
 }
 
+struct PaymentIntentParametersApi {
+    let amount: Int
+    let currency: String
+    let captureMethod: CaptureMethodApi
+    let paymentMethodTypes: [PaymentMethodTypeApi]
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> PaymentIntentParametersApi {
+        return PaymentIntentParametersApi(
+            amount: serialized[0] as! Int,
+            currency: serialized[1] as! String,
+            captureMethod: CaptureMethodApi(rawValue: serialized[2] as! Int)!,
+            paymentMethodTypes: (serialized[3] as! [Any?]).map { PaymentMethodTypeApi(rawValue: $0 as! Int)! }
+        )
+    }
+}
+
 enum PaymentIntentStatusApi: Int {
     case canceled
     case processing
@@ -702,6 +743,12 @@ struct PaymentMethodApi {
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
         ]
     }
+}
+
+enum PaymentMethodTypeApi: Int {
+    case cardPresent
+    case card
+    case interactPresent
 }
 
 enum PaymentStatusApi: Int {

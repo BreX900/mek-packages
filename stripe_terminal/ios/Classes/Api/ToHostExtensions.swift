@@ -1,6 +1,41 @@
 import Foundation
 import StripeTerminal
 
+extension PaymentIntentParametersApi {
+    func toHost() -> PaymentIntentParameters {
+        return PaymentIntentParameters(
+            amount: UInt(amount),
+            currency: currency,
+            paymentMethodTypes: paymentMethodTypes.map { $0.toHost() },
+            captureMethod: captureMethod.toHost()
+        )
+    }
+}
+
+extension PaymentMethodTypeApi {
+    func toHost() -> String {
+        switch (self) {
+        case .cardPresent:
+            return "card_present"
+        case .card:
+            return "card"
+        case .interactPresent:
+            return "interact_present"
+        }
+    }
+}
+
+extension CaptureMethodApi {
+    func toHost() -> CaptureMethod {
+        switch (self) {
+        case .automatic:
+            return .automatic
+        case .manual:
+            return .manual
+        }
+    }
+}
+
 extension DiscoveryMethodApi {
     func toHost() -> DiscoveryMethod? {
         switch self {

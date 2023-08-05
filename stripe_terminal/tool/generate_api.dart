@@ -12,8 +12,8 @@ void main() async {
     ),
     dartOptions: const DartOptions(),
     kotlinOptions: const KotlinOptions(
-      outputFile: 'android/src/main/kotlin/com/stripe_terminal/api/StripeTerminalApi.kt',
-      package: 'com.stripe_terminal.api',
+      package: 'mek.stripeterminal.api',
+      outputFile: 'android/src/main/kotlin/mek/stripeterminal/api/StripeTerminalApi.kt',
     ),
     swiftOptions: const SwiftOptions(
       outputFile: 'ios/Classes/Api/StripeTerminalApi.swift',

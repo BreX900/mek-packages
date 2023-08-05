@@ -105,6 +105,9 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
 //region Taking payments
   @override
+  Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters);
+
+  @override
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret);
 
   @MethodApi(swift: MethodApiType.callbacks)
@@ -121,6 +124,8 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
   @override
   Future<PaymentIntent> processPayment(String paymentIntentId);
+
+  Future<void> cancelPaymentIntent(String paymentIntentId);
 //endregion
 
 //region Saving payment details for later use

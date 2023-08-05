@@ -70,3 +70,21 @@ enum PaymentIntentStatus {
   requiresPaymentMethod,
   succeeded,
 }
+
+class PaymentIntentParameters {
+  final int amount;
+  final String currency;
+  final CaptureMethod captureMethod;
+  final List<PaymentMethodType> paymentMethodTypes;
+
+  const PaymentIntentParameters({
+    required this.amount,
+    required this.currency,
+    required this.captureMethod,
+    required this.paymentMethodTypes,
+  });
+}
+
+enum PaymentMethodType { cardPresent, card, interactPresent }
+
+enum CaptureMethod { automatic, manual }

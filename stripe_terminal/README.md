@@ -11,8 +11,9 @@ more simply by supporting streams instead of callbacks for listeners
 
 ## Features
 
+Offline mode is not supported
+
 **Terminal Methods**
-- ❌ setOfflineListener
 - ❌ clearCachedCredentials
 - **Reader discovery, connection and updates**
   - ✅ onConnectionStatusChange
@@ -31,11 +32,11 @@ more simply by supporting streams instead of callbacks for listeners
   - ✅ disconnectReader
 - **Taking payments**
   - ✅ onPaymentStatusChange
-  - ❌ createPaymentIntent
+  - ✅ createPaymentIntent
   - ✅ retrievePaymentIntent
   - ✅ collectPaymentMethod
   - ✅ processPayment
-  - ❌ cancelPaymentIntent
+  - ✅ cancelPaymentIntent
 - **Saving payment details for later use**
   - ✅ readReusableCard
   - ❌ createSetupIntent

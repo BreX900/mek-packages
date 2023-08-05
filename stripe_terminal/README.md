@@ -39,11 +39,11 @@ Offline mode is not supported
   - ✅ cancelPaymentIntent
 - **Saving payment details for later use**
   - ✅ readReusableCard
-  - ❌ createSetupIntent
-  - ❌ retrieveSetupIntent
-  - ❌ cancelSetupIntent
-  - ❌ collectSetupIntentPaymentMethod
-  - ❌ confirmSetupIntent
+  - ✅ createSetupIntent
+  - ✅ retrieveSetupIntent
+  - ✅ collectSetupIntentPaymentMethod
+  - ✅ confirmSetupIntent
+  - ✅ cancelSetupIntent
 - **Card-present refunds**
   - ❌ collectRefundPaymentMethod
   - ❌ processRefund

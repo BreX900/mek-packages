@@ -252,3 +252,72 @@ fun PaymentStatus.toApi(): PaymentStatusApi {
         PaymentStatus.PROCESSING -> PaymentStatusApi.PROCESSING
     }
 }
+
+fun SetupIntent.toApi(): SetupIntentApi {
+    return SetupIntentApi(
+        id = id,
+        created = created,
+        customerId = customerId,
+        metadata = metadata.toHashMap(),
+        usage = usage!!.toApi(),
+        status = status!!.toApi(),
+        latestAttempt = latestAttempt?.toApi(),
+    )
+}
+
+fun SetupIntentUsage.toApi(): SetupIntentUsageApi {
+    return when (this) {
+        SetupIntentUsage.ON_SESSION -> SetupIntentUsageApi.ON_SESSION
+        SetupIntentUsage.OFF_SESSION -> SetupIntentUsageApi.OFF_SESSION
+    }
+}
+
+fun SetupIntentStatus.toApi(): SetupIntentStatusApi {
+    return when (this) {
+        SetupIntentStatus.REQUIRES_PAYMENT_METHOD -> SetupIntentStatusApi.REQUIRES_PAYMENT_METHOD
+        SetupIntentStatus.REQUIRES_CONFIRMATION -> SetupIntentStatusApi.REQUIRES_CONFIRMATION
+        SetupIntentStatus.REQUIRES_ACTION -> SetupIntentStatusApi.REQUIRES_ACTION
+        SetupIntentStatus.PROCESSING -> SetupIntentStatusApi.PROCESSING
+        SetupIntentStatus.SUCCEEDED -> SetupIntentStatusApi.SUCCEEDED
+        SetupIntentStatus.CANCELLED -> SetupIntentStatusApi.CANCELLED
+    }
+}
+
+fun SetupAttempt.toApi(): SetupAttemptApi {
+    return SetupAttemptApi(
+        id = id,
+        applicationId = applicationId,
+        created = created,
+        customerId = customerId,
+        onBehalfOfId = onBehalfOfId,
+        paymentMethodId = paymentMethodId,
+        paymentMethodDetails = paymentMethodDetails.toApi(),
+        setupIntentId = setupIntentId!!,
+        status = status.toApi(),
+    )
+}
+
+fun SetupAttemptStatus.toApi(): SetupAttemptStatusApi {
+    return when (this) {
+        SetupAttemptStatus.REQUIRES_CONFIRMATION -> SetupAttemptStatusApi.REQUIRES_CONFIRMATION
+        SetupAttemptStatus.REQUIRES_ACTION -> SetupAttemptStatusApi.REQUIRES_ACTION
+        SetupAttemptStatus.PROCESSING -> SetupAttemptStatusApi.PROCESSING
+        SetupAttemptStatus.SUCCEEDED -> SetupAttemptStatusApi.SUCCEEDED
+        SetupAttemptStatus.FAILED -> SetupAttemptStatusApi.FAILED
+        SetupAttemptStatus.ABANDONED -> SetupAttemptStatusApi.ABANDONED
+    }
+}
+
+fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi {
+    return SetupAttemptPaymentMethodDetailsApi(
+        cardPresent = cardPresentDetails?.toApi(),
+        interacPresent = interacPresentDetails?.toApi()
+    )
+}
+
+fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
+    return SetupAttemptCardPresentDetailsApi(
+        emvAuthData = emvAuthData!!,
+        generatedCard = generatedCard!!,
+    )
+}

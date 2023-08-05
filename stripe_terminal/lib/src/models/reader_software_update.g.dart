@@ -14,10 +14,6 @@ mixin _$ReaderSoftwareUpdate {
       other is ReaderSoftwareUpdate &&
           runtimeType == other.runtimeType &&
           $listEquality.equals(_self.components, other.components) &&
-          _self.hasConfigUpdate == other.hasConfigUpdate &&
-          _self.hasFirmwareUpdate == other.hasFirmwareUpdate &&
-          _self.hasIncrementalUpdate == other.hasIncrementalUpdate &&
-          _self.hasKeyUpdate == other.hasKeyUpdate &&
           _self.keyProfileName == other.keyProfileName &&
           _self.onlyInstallRequiredUpdates == other.onlyInstallRequiredUpdates &&
           _self.requiredAt == other.requiredAt &&
@@ -28,10 +24,6 @@ mixin _$ReaderSoftwareUpdate {
   int get hashCode {
     var hashCode = 0;
     hashCode = $hashCombine(hashCode, $listEquality.hash(_self.components));
-    hashCode = $hashCombine(hashCode, _self.hasConfigUpdate.hashCode);
-    hashCode = $hashCombine(hashCode, _self.hasFirmwareUpdate.hashCode);
-    hashCode = $hashCombine(hashCode, _self.hasIncrementalUpdate.hashCode);
-    hashCode = $hashCombine(hashCode, _self.hasKeyUpdate.hashCode);
     hashCode = $hashCombine(hashCode, _self.keyProfileName.hashCode);
     hashCode = $hashCombine(hashCode, _self.onlyInstallRequiredUpdates.hashCode);
     hashCode = $hashCombine(hashCode, _self.requiredAt.hashCode);
@@ -44,10 +36,6 @@ mixin _$ReaderSoftwareUpdate {
   @override
   String toString() => (ClassToString('ReaderSoftwareUpdate')
         ..add('components', _self.components)
-        ..add('hasConfigUpdate', _self.hasConfigUpdate)
-        ..add('hasFirmwareUpdate', _self.hasFirmwareUpdate)
-        ..add('hasIncrementalUpdate', _self.hasIncrementalUpdate)
-        ..add('hasKeyUpdate', _self.hasKeyUpdate)
         ..add('keyProfileName', _self.keyProfileName)
         ..add('onlyInstallRequiredUpdates', _self.onlyInstallRequiredUpdates)
         ..add('requiredAt', _self.requiredAt)

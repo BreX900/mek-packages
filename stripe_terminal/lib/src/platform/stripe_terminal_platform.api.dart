@@ -248,9 +248,11 @@ class _$StripeTerminalPlatform {
     }
   }
 
-  Future<void> cancelPaymentIntent(String paymentIntentId) async {
+  Future<PaymentIntent> cancelPaymentIntent(String paymentIntentId) async {
     try {
-      await _$channel.invokeMethod('cancelPaymentIntent', [paymentIntentId]);
+      final result = await _$channel
+          .invokeMethod('cancelPaymentIntent', [paymentIntentId]);
+      return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -275,6 +277,87 @@ class _$StripeTerminalPlatform {
   Future<void> stopReadReusableCard(int operationId) async {
     try {
       await _$channel.invokeMethod('stopReadReusableCard', [operationId]);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<SetupIntent> createSetupIntent({
+    required String? customerId,
+    required Map<String, String>? metadata,
+    required String? onBehalfOf,
+    required String? description,
+    required SetupIntentUsage? usage,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod('createSetupIntent', [
+        customerId,
+        metadata?.map((k, v) => MapEntry(k, v)),
+        onBehalfOf,
+        description,
+        usage?.index
+      ]);
+      return _$deserializeSetupIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<SetupIntent> retrieveSetupIntent(String clientSecret) async {
+    try {
+      final result =
+          await _$channel.invokeMethod('retrieveSetupIntent', [clientSecret]);
+      return _$deserializeSetupIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<SetupIntent> startCollectSetupIntentPaymentMethod({
+    required int operationId,
+    required String setupIntentId,
+    required bool customerConsentCollected,
+  }) async {
+    try {
+      final result = await _$channel.invokeMethod(
+          'startCollectSetupIntentPaymentMethod',
+          [operationId, setupIntentId, customerConsentCollected]);
+      return _$deserializeSetupIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<void> stopCollectSetupIntentPaymentMethod(int operationId) async {
+    try {
+      await _$channel
+          .invokeMethod('stopCollectSetupIntentPaymentMethod', [operationId]);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<SetupIntent> confirmSetupIntent(String setupIntentId) async {
+    try {
+      final result =
+          await _$channel.invokeMethod('confirmSetupIntent', [setupIntentId]);
+      return _$deserializeSetupIntent(result as List);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  Future<SetupIntent> cancelSetupIntent(String setupIntentId) async {
+    try {
+      final result =
+          await _$channel.invokeMethod('cancelSetupIntent', [setupIntentId]);
+      return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -462,6 +545,45 @@ ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(
         settingsVersion: serialized[4] as String?,
         timeEstimate: UpdateTimeEstimate.values[serialized[5] as int],
         version: serialized[6] as String);
+SetupAttempt _$deserializeSetupAttempt(List<Object?> serialized) =>
+    SetupAttempt(
+        id: serialized[0] as String,
+        applicationId: serialized[1] as String?,
+        created: DateTime.fromMillisecondsSinceEpoch(serialized[2] as int),
+        customerId: serialized[3] as String?,
+        onBehalfOfId: serialized[4] as String?,
+        paymentMethodId: serialized[5] as String?,
+        paymentMethodDetails: serialized[6] != null
+            ? _$deserializeSetupAttemptPaymentMethodDetails(
+                serialized[6] as List)
+            : null,
+        setupIntentId: serialized[7] as String,
+        status: SetupAttemptStatus.values[serialized[8] as int]);
+SetupAttemptCardPresentDetails _$deserializeSetupAttemptCardPresentDetails(
+        List<Object?> serialized) =>
+    SetupAttemptCardPresentDetails(
+        emvAuthData: serialized[0] as String,
+        generatedCard: serialized[1] as String);
+SetupAttemptPaymentMethodDetails _$deserializeSetupAttemptPaymentMethodDetails(
+        List<Object?> serialized) =>
+    SetupAttemptPaymentMethodDetails(
+        cardPresent: serialized[0] != null
+            ? _$deserializeSetupAttemptCardPresentDetails(serialized[0] as List)
+            : null,
+        interacPresent: serialized[1] != null
+            ? _$deserializeSetupAttemptCardPresentDetails(serialized[1] as List)
+            : null);
+SetupIntent _$deserializeSetupIntent(List<Object?> serialized) => SetupIntent(
+    id: serialized[0] as String,
+    created: DateTime.fromMillisecondsSinceEpoch(serialized[1] as int),
+    customerId: serialized[2] as String?,
+    metadata: (serialized[3] as Map)
+        .map((k, v) => MapEntry(k as String, v as String)),
+    usage: SetupIntentUsage.values[serialized[4] as int],
+    status: SetupIntentStatus.values[serialized[5] as int],
+    latestAttempt: serialized[6] != null
+        ? _$deserializeSetupAttempt(serialized[6] as List)
+        : null);
 TerminalException _$deserializeTerminalException(List<Object?> serialized) =>
     TerminalException(
         rawCode: serialized[0] as String,

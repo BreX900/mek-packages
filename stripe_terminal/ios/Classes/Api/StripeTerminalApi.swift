@@ -171,7 +171,7 @@ protocol StripeTerminalPlatformApi {
 
     func onCancelPaymentIntent(
         _ paymentIntentId: String
-    ) async throws -> Void
+    ) async throws -> PaymentIntentApi
 
     func onStartReadReusableCard(
         _ result: Result<PaymentMethodApi>,
@@ -183,6 +183,37 @@ protocol StripeTerminalPlatformApi {
     func onStopReadReusableCard(
         _ operationId: Int
     ) async throws -> Void
+
+    func onCreateSetupIntent(
+        _ customerId: String?,
+        _ metadata: [String: String]?,
+        _ onBehalfOf: String?,
+        _ description: String?,
+        _ usage: SetupIntentUsageApi?
+    ) async throws -> SetupIntentApi
+
+    func onRetrieveSetupIntent(
+        _ clientSecret: String
+    ) async throws -> SetupIntentApi
+
+    func onStartCollectSetupIntentPaymentMethod(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
+        _ setupIntentId: String,
+        _ customerConsentCollected: Bool
+    ) throws
+
+    func onStopCollectSetupIntentPaymentMethod(
+        _ operationId: Int
+    ) async throws -> Void
+
+    func onConfirmSetupIntent(
+        _ setupIntentId: String
+    ) async throws -> SetupIntentApi
+
+    func onCancelSetupIntent(
+        _ setupIntentId: String
+    ) async throws -> SetupIntentApi
 
     func onSetReaderDisplay(
         _ cart: CartApi
@@ -335,8 +366,8 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "cancelPaymentIntent":
                 runAsync {
-                    try await hostApi.onCancelPaymentIntent(args[0] as! String)
-                    return nil
+                    let res = try await hostApi.onCancelPaymentIntent(args[0] as! String)
+                    return res.serialize()
                 }
             case "startReadReusableCard":
                 let res = Result<PaymentMethodApi>(result) { $0.serialize() }
@@ -345,6 +376,34 @@ func setStripeTerminalPlatformApiHandler(
                 runAsync {
                     try await hostApi.onStopReadReusableCard(args[0] as! Int)
                     return nil
+                }
+            case "createSetupIntent":
+                runAsync {
+                    let res = try await hostApi.onCreateSetupIntent(args[0] as? String, args[1] != nil ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[2] as? String, args[3] as? String, args[4] != nil ? SetupIntentUsageApi(rawValue: args[4] as! Int)! : nil)
+                    return res.serialize()
+                }
+            case "retrieveSetupIntent":
+                runAsync {
+                    let res = try await hostApi.onRetrieveSetupIntent(args[0] as! String)
+                    return res.serialize()
+                }
+            case "startCollectSetupIntentPaymentMethod":
+                let res = Result<SetupIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool)
+            case "stopCollectSetupIntentPaymentMethod":
+                runAsync {
+                    try await hostApi.onStopCollectSetupIntentPaymentMethod(args[0] as! Int)
+                    return nil
+                }
+            case "confirmSetupIntent":
+                runAsync {
+                    let res = try await hostApi.onConfirmSetupIntent(args[0] as! String)
+                    return res.serialize()
+                }
+            case "cancelSetupIntent":
+                runAsync {
+                    let res = try await hostApi.onCancelSetupIntent(args[0] as! String)
+                    return res.serialize()
                 }
             case "setReaderDisplay":
                 runAsync {
@@ -827,6 +886,101 @@ struct ReaderSoftwareUpdateApi {
             version,
         ]
     }
+}
+
+struct SetupAttemptApi {
+    let id: String
+    let applicationId: String?
+    let created: Date
+    let customerId: String?
+    let onBehalfOfId: String?
+    let paymentMethodId: String?
+    let paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?
+    let setupIntentId: String
+    let status: SetupAttemptStatusApi
+
+    func serialize() -> [Any?] {
+        return [
+            id,
+            applicationId,
+            created.timeIntervalSince1970 * 1000,
+            customerId,
+            onBehalfOfId,
+            paymentMethodId,
+            paymentMethodDetails?.serialize(),
+            setupIntentId,
+            status.rawValue,
+        ]
+    }
+}
+
+struct SetupAttemptCardPresentDetailsApi {
+    let emvAuthData: String
+    let generatedCard: String
+
+    func serialize() -> [Any?] {
+        return [
+            emvAuthData,
+            generatedCard,
+        ]
+    }
+}
+
+struct SetupAttemptPaymentMethodDetailsApi {
+    let cardPresent: SetupAttemptCardPresentDetailsApi?
+    let interacPresent: SetupAttemptCardPresentDetailsApi?
+
+    func serialize() -> [Any?] {
+        return [
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
+        ]
+    }
+}
+
+enum SetupAttemptStatusApi: Int {
+    case requiresConfirmation
+    case requiresAction
+    case processing
+    case succeeded
+    case failed
+    case abandoned
+}
+
+struct SetupIntentApi {
+    let id: String
+    let created: Date
+    let customerId: String?
+    let metadata: [String: String]
+    let usage: SetupIntentUsageApi
+    let status: SetupIntentStatusApi
+    let latestAttempt: SetupAttemptApi?
+
+    func serialize() -> [Any?] {
+        return [
+            id,
+            created.timeIntervalSince1970 * 1000,
+            customerId,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            usage.rawValue,
+            status.rawValue,
+            latestAttempt?.serialize(),
+        ]
+    }
+}
+
+enum SetupIntentStatusApi: Int {
+    case requiresPaymentMethod
+    case requiresConfirmation
+    case requiresAction
+    case processing
+    case succeeded
+    case cancelled
+}
+
+enum SetupIntentUsageApi: Int {
+    case onSession
+    case offSession
 }
 
 struct TerminalExceptionApi {

@@ -49,3 +49,10 @@ fun CartLineItemApi.toHost(): CartLineItem {
         amount = amount
     ).build()
 }
+
+fun SetupIntentUsageApi.toHost(): String {
+    return when (this) {
+        SetupIntentUsageApi.ON_SESSION -> "on_session"
+        SetupIntentUsageApi.OFF_SESSION -> "off_session"
+    }
+}

@@ -96,3 +96,14 @@ extension CartApi {
         )
     }
 }
+
+extension SetupIntentUsageApi {
+    func toHost() -> SetupIntentUsage {
+        switch self {
+        case .offSession:
+            return .offSession
+        case .onSession:
+            return .onSession
+        }
+    }
+}

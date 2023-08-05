@@ -10,6 +10,7 @@ import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
+import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 
@@ -235,6 +236,45 @@ class StripeTerminal {
       );
     });
   }
+
+  Future<SetupIntent> createSetupIntent({
+    required String? customerId,
+    Map<String, String>? metadata,
+    String? onBehalfOf,
+    String? description,
+    SetupIntentUsage? usage,
+  }) async {
+    return await _platform.createSetupIntent(
+      customerId: customerId,
+      metadata: metadata,
+      onBehalfOf: onBehalfOf,
+      description: description,
+      usage: usage,
+    );
+  }
+
+  Future<SetupIntent> retrieveSetupIntent(String clientSecret) async =>
+      await _platform.retrieveSetupIntent(clientSecret);
+
+  CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
+    SetupIntent setupIntent, {
+    required bool customerConsentCollected,
+  }) {
+    return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
+      return await _platform.startCollectSetupIntentPaymentMethod(
+        operationId: id,
+        setupIntentId: setupIntent.id,
+        customerConsentCollected: customerConsentCollected,
+      );
+    });
+  }
+
+  Future<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) async =>
+      _platform.confirmSetupIntent(setupIntent.id);
+
+  Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
+      _platform.cancelSetupIntent(setupIntent.id);
+
 //endregion
 
 //region Display information to customers

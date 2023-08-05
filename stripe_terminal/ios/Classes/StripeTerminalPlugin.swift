@@ -276,23 +276,30 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-    func onCancelPaymentIntent(_ paymentIntentId: String) async throws {
-        let paymentIntent = try findPaymentIntent(paymentIntentId)
-        try await Terminal.shared.cancelPaymentIntent(paymentIntent)
-        _paymentIntents.removeValue(forKey: paymentIntentId)
+    func onCancelPaymentIntent(_ paymentIntentId: String) async throws -> PaymentIntentApi {
+        do {
+            let paymentIntent = try findPaymentIntent(paymentIntentId)
+            let newPaymentIntent = try await Terminal.shared.cancelPaymentIntent(paymentIntent)
+            _paymentIntents.removeValue(forKey: paymentIntentId)
+            return newPaymentIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
     }
     
 // Saving payment details for later use
    
-    private var cancelablesReadReusableCard: [Int: Cancelable] = [:]
+    private var _cancelablesReadReusableCard: [Int: Cancelable] = [:]
+    private var _setupIntents: [String: SetupIntent] = [:]
+    private var _cancelablesCollectSetupIntentPaymentMethod: [Int: Cancelable] = [:]
 
     func onStartReadReusableCard(
         _ result: Result<PaymentMethodApi>,
-        _ id: Int,
+        _ operationId: Int,
         _: String?,
         _: [String: String]?
     ) throws {
-        cancelablesReadReusableCard[id] = Terminal.shared.readReusableCard(
+        _cancelablesReadReusableCard[operationId] = Terminal.shared.readReusableCard(
             ReadReusableCardParameters(),
             completion: { paymentMethod, error in
                 if let error = error as? NSError {
@@ -306,9 +313,84 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
 
     func onStopReadReusableCard(
-        _ id: Int
+        _ operationId: Int
     ) async throws {
-        try await cancelablesReadReusableCard.removeValue(forKey: id)?.cancel()
+        try await _cancelablesReadReusableCard.removeValue(forKey: operationId)?.cancel()
+    }
+    
+    func onCreateSetupIntent(
+        _ customerId: String?,
+        _ metadata: [String : String]?,
+        _ onBehalfOf: String?,
+        _ description: String?,
+        _ usage: SetupIntentUsageApi?
+    ) async throws -> SetupIntentApi {
+        let params = SetupIntentParameters(customer: customerId)
+        params.metadata = metadata
+        params.onBehalfOf = onBehalfOf
+        params.stripeDescription = description
+        if let usage = usage { params.usage = usage.toHost() }
+        do {
+            let setupIntent = try await Terminal.shared.createSetupIntent(params)
+            _setupIntents[setupIntent.stripeId] = setupIntent
+            return setupIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+    
+    func onRetrieveSetupIntent(_ clientSecret: String) async throws -> SetupIntentApi {
+        do {
+            let setupIntent = try await Terminal.shared.retrieveSetupIntent(clientSecret: clientSecret)
+            _setupIntents[setupIntent.stripeId] = setupIntent
+            return setupIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
+    }
+    
+    func onStartCollectSetupIntentPaymentMethod(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
+        _ setupIntentId: String,
+        _ customerConsentCollected: Bool
+    ) throws {
+        let setupIntent = try findSetupIntent(setupIntentId)
+        _cancelablesCollectSetupIntentPaymentMethod[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
+            setupIntent,
+            customerConsentCollected: customerConsentCollected,
+            completion: { setupIntent, error in
+                if let error = error as? NSError {
+                    let platformError = error.toApi()
+                    result.error(platformError.code, platformError.message, platformError.details)
+                    return
+                }
+                self._setupIntents[setupIntent!.stripeId] = setupIntent!
+                result.success(setupIntent!.toApi())
+            }
+        )
+    }
+    
+    func onStopCollectSetupIntentPaymentMethod(_ operationId: Int) async throws {
+        try await _cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)?.cancel()
+    }
+    
+    func onConfirmSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
+        let setupIntent = try findSetupIntent(setupIntentId)
+        let newSetupIntent = await Terminal.shared.confirmSetupIntent(setupIntent)
+        _setupIntents[setupIntent.stripeId] = setupIntent
+        return setupIntent.toApi()
+    }
+    
+    func onCancelSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
+        let setupIntent = try findSetupIntent(setupIntentId)
+        do {
+            let newSetupIntent = try await Terminal.shared.cancelSetupIntent(setupIntent)
+            _setupIntents.removeValue(forKey: setupIntentId)
+            return newSetupIntent.toApi()
+        } catch let error as NSError {
+            throw error.toApi()
+        }
     }
 
 // Display information to customers
@@ -342,8 +424,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         
         self.cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
         self.cancelablesCollectPaymentMethod.removeAll()
-        self.cancelablesReadReusableCard.values.forEach { $0.cancel { error in } }
-        self.cancelablesReadReusableCard.removeAll()
+        self._cancelablesReadReusableCard.values.forEach { $0.cancel { error in } }
+        self._cancelablesReadReusableCard.removeAll()
         
         self.readers = []
         self._paymentIntents = [:]
@@ -365,5 +447,13 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
         }
         return paymentIntent
+    }
+    
+    private func findSetupIntent(_ setupIntentId: String) throws -> SetupIntent {
+        let setupIntent = _setupIntents[setupIntentId]
+        guard let setupIntent else {
+            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
+        }
+        return setupIntent
     }
 }

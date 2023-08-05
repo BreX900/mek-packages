@@ -151,7 +151,7 @@ interface StripeTerminalPlatformApi {
     )
 
     fun onCancelPaymentIntent(
-        result: Result<Unit>,
+        result: Result<PaymentIntentApi>,
         paymentIntentId: String,
     )
 
@@ -165,6 +165,42 @@ interface StripeTerminalPlatformApi {
     fun onStopReadReusableCard(
         result: Result<Unit>,
         operationId: Long,
+    )
+
+    fun onCreateSetupIntent(
+        result: Result<SetupIntentApi>,
+        customerId: String?,
+        metadata: HashMap<String, String>?,
+        onBehalfOf: String?,
+        description: String?,
+        usage: SetupIntentUsageApi?,
+    )
+
+    fun onRetrieveSetupIntent(
+        result: Result<SetupIntentApi>,
+        clientSecret: String,
+    )
+
+    fun onStartCollectSetupIntentPaymentMethod(
+        result: Result<SetupIntentApi>,
+        operationId: Long,
+        setupIntentId: String,
+        customerConsentCollected: Boolean,
+    )
+
+    fun onStopCollectSetupIntentPaymentMethod(
+        result: Result<Unit>,
+        operationId: Long,
+    )
+
+    fun onConfirmSetupIntent(
+        result: Result<SetupIntentApi>,
+        setupIntentId: String,
+    )
+
+    fun onCancelSetupIntent(
+        result: Result<SetupIntentApi>,
+        setupIntentId: String,
     )
 
     fun onSetReaderDisplay(
@@ -266,7 +302,7 @@ interface StripeTerminalPlatformApi {
                     onProcessPayment(res, args[0] as String)
                 }
                 "cancelPaymentIntent" -> {
-                    val res = Result<Unit>(result) { null }
+                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onCancelPaymentIntent(res, args[0] as String)
                 }
                 "startReadReusableCard" -> {
@@ -276,6 +312,30 @@ interface StripeTerminalPlatformApi {
                 "stopReadReusableCard" -> {
                     val res = Result<Unit>(result) { null }
                     onStopReadReusableCard(res, (args[0] as Number).toLong())
+                }
+                "createSetupIntent" -> {
+                    val res = Result<SetupIntentApi>(result) { it.serialize() }
+                    onCreateSetupIntent(res, args[0] as String?, args[1]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[2] as String?, args[3] as String?, (args[4] as Int?)?.let { SetupIntentUsageApi.values()[it] })
+                }
+                "retrieveSetupIntent" -> {
+                    val res = Result<SetupIntentApi>(result) { it.serialize() }
+                    onRetrieveSetupIntent(res, args[0] as String)
+                }
+                "startCollectSetupIntentPaymentMethod" -> {
+                    val res = Result<SetupIntentApi>(result) { it.serialize() }
+                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean)
+                }
+                "stopCollectSetupIntentPaymentMethod" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong())
+                }
+                "confirmSetupIntent" -> {
+                    val res = Result<SetupIntentApi>(result) { it.serialize() }
+                    onConfirmSetupIntent(res, args[0] as String)
+                }
+                "cancelSetupIntent" -> {
+                    val res = Result<SetupIntentApi>(result) { it.serialize() }
+                    onCancelSetupIntent(res, args[0] as String)
                 }
                 "setReaderDisplay" -> {
                     val res = Result<Unit>(result) { null }
@@ -736,6 +796,90 @@ data class ReaderSoftwareUpdateApi(
             version,
         )
     }
+}
+
+data class SetupAttemptApi(
+    val id: String,
+    val applicationId: String?,
+    val created: Long,
+    val customerId: String?,
+    val onBehalfOfId: String?,
+    val paymentMethodId: String?,
+    val paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?,
+    val setupIntentId: String,
+    val status: SetupAttemptStatusApi,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            id,
+            applicationId,
+            created,
+            customerId,
+            onBehalfOfId,
+            paymentMethodId,
+            paymentMethodDetails?.serialize(),
+            setupIntentId,
+            status.ordinal,
+        )
+    }
+}
+
+data class SetupAttemptCardPresentDetailsApi(
+    val emvAuthData: String,
+    val generatedCard: String,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            emvAuthData,
+            generatedCard,
+        )
+    }
+}
+
+data class SetupAttemptPaymentMethodDetailsApi(
+    val cardPresent: SetupAttemptCardPresentDetailsApi?,
+    val interacPresent: SetupAttemptCardPresentDetailsApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
+        )
+    }
+}
+
+enum class SetupAttemptStatusApi {
+    REQUIRES_CONFIRMATION, REQUIRES_ACTION, PROCESSING, SUCCEEDED, FAILED, ABANDONED;
+}
+
+data class SetupIntentApi(
+    val id: String,
+    val created: Long,
+    val customerId: String?,
+    val metadata: HashMap<String, String>,
+    val usage: SetupIntentUsageApi,
+    val status: SetupIntentStatusApi,
+    val latestAttempt: SetupAttemptApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            id,
+            created,
+            customerId,
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            usage.ordinal,
+            status.ordinal,
+            latestAttempt?.serialize(),
+        )
+    }
+}
+
+enum class SetupIntentStatusApi {
+    REQUIRES_PAYMENT_METHOD, REQUIRES_CONFIRMATION, REQUIRES_ACTION, PROCESSING, SUCCEEDED, CANCELLED;
+}
+
+enum class SetupIntentUsageApi {
+    ON_SESSION, OFF_SESSION;
 }
 
 data class TerminalExceptionApi(

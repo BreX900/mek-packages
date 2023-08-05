@@ -11,6 +11,7 @@ import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
+import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
@@ -125,7 +126,8 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @override
   Future<PaymentIntent> processPayment(String paymentIntentId);
 
-  Future<void> cancelPaymentIntent(String paymentIntentId);
+  @override
+  Future<PaymentIntent> cancelPaymentIntent(String paymentIntentId);
 //endregion
 
 //region Saving payment details for later use
@@ -139,6 +141,36 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
   @override
   Future<void> stopReadReusableCard(int operationId);
+
+  @override
+  Future<SetupIntent> createSetupIntent({
+    required String? customerId,
+    required Map<String, String>? metadata,
+    required String? onBehalfOf,
+    required String? description,
+    required SetupIntentUsage? usage,
+  });
+
+  @override
+  Future<SetupIntent> retrieveSetupIntent(String clientSecret);
+
+  @MethodApi(swift: MethodApiType.callbacks)
+  @override
+  Future<SetupIntent> startCollectSetupIntentPaymentMethod({
+    required int operationId,
+    required String setupIntentId,
+    required bool customerConsentCollected,
+  });
+
+  @override
+  Future<void> stopCollectSetupIntentPaymentMethod(int operationId);
+
+  @override
+  Future<SetupIntent> confirmSetupIntent(String setupIntentId);
+
+  @override
+  Future<SetupIntent> cancelSetupIntent(String setupIntentId);
+
 //endregion
 
 //region Display information to customers

@@ -71,7 +71,8 @@ enum PaymentIntentStatus {
   succeeded,
 }
 
-class PaymentIntentParameters {
+@DataClass()
+class PaymentIntentParameters with _$PaymentIntentParameters {
   final int amount;
   final String currency;
   final CaptureMethod captureMethod;

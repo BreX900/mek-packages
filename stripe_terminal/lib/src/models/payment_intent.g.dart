@@ -98,3 +98,33 @@ mixin _$PaymentIntent {
         ..add('transferGroup', _self.transferGroup))
       .toString();
 }
+
+mixin _$PaymentIntentParameters {
+  PaymentIntentParameters get _self => this as PaymentIntentParameters;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PaymentIntentParameters &&
+          runtimeType == other.runtimeType &&
+          _self.amount == other.amount &&
+          _self.currency == other.currency &&
+          _self.captureMethod == other.captureMethod &&
+          $listEquality.equals(_self.paymentMethodTypes, other.paymentMethodTypes);
+  @override
+  int get hashCode {
+    var hashCode = 0;
+    hashCode = $hashCombine(hashCode, _self.amount.hashCode);
+    hashCode = $hashCombine(hashCode, _self.currency.hashCode);
+    hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
+    hashCode = $hashCombine(hashCode, $listEquality.hash(_self.paymentMethodTypes));
+    return $hashFinish(hashCode);
+  }
+
+  @override
+  String toString() => (ClassToString('PaymentIntentParameters')
+        ..add('amount', _self.amount)
+        ..add('currency', _self.currency)
+        ..add('captureMethod', _self.captureMethod)
+        ..add('paymentMethodTypes', _self.paymentMethodTypes))
+      .toString();
+}

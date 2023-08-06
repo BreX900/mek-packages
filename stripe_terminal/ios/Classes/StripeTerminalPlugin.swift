@@ -10,6 +10,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
     
     private let handlers: StripeTerminalHandlersApi
+    
+    private var _isLogActive = false
 
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         self.handlers = StripeTerminalHandlersApi(binaryMessenger)
@@ -28,7 +30,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         self._clean()
     }
     
-    func onInit() async throws {
+    func onInit(_ shouldPrintLogs: Bool) async throws {
         // If a hot restart is performed in flutter the terminal is already initialized but we need to clean it up
         if Terminal.hasTokenProvider() {
             _clean()
@@ -38,6 +40,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         let delegate = TerminalDelegatePlugin(handlers)
         Terminal.setTokenProvider(delegate)
         Terminal.shared.delegate = delegate
+        if (shouldPrintLogs) { Terminal.setLogListener { message in print(message) } }
     }
     
     func onClearCachedCredentials() throws {

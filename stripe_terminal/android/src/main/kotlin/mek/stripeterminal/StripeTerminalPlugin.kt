@@ -83,7 +83,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     private val _terminal: Terminal get() = Terminal.getInstance()
 
-    override fun onInit() {
+    override fun onInit(shouldPrintLogs: Boolean) {
         val permissionStatus = permissions.map {
             ContextCompat.checkSelfPermission(_activity!!, it)
         }
@@ -106,7 +106,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         val delegate = TerminalDelegatePlugin(_handlers)
         Terminal.initTerminal(
             _activity!!.applicationContext,
-            LogLevel.NONE,
+            if (shouldPrintLogs) LogLevel.VERBOSE else LogLevel.NONE,
             delegate,
             delegate,
         )

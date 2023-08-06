@@ -23,9 +23,9 @@ class _$StripeTerminalPlatform {
         (e) => (e as List).map((e) => _$deserializeReader(e as List)).toList());
   }
 
-  Future<void> init() async {
+  Future<void> init({required bool shouldPrintLogs}) async {
     try {
-      await _$channel.invokeMethod('init', []);
+      await _$channel.invokeMethod('init', [shouldPrintLogs]);
     } on PlatformException catch (exception) {
       StripeTerminalPlatform._throwIfIsHostException(exception);
       rethrow;

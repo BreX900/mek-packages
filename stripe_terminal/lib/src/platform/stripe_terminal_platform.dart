@@ -20,7 +20,7 @@ part 'stripe_terminal_platform.api.dart';
 class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @MethodApi(kotlin: MethodApiType.sync)
   @override
-  Future<void> init();
+  Future<void> init({required bool shouldPrintLogs});
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override

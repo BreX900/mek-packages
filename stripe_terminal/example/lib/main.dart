@@ -9,6 +9,8 @@ import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   print('Stripe Secret Key: ${StripeApi.secretKey.isNotEmpty}');
 
   runApp(const MaterialApp(
@@ -70,11 +72,10 @@ class _MyAppState extends State<MyApp> {
     }
 
     final stripeTerminal = await StripeTerminal.getInstance(
+      shouldPrintLogs: true,
       fetchToken: _fetchConnectionToken,
     );
-    setState(() {
-      _terminal = stripeTerminal;
-    });
+    setState(() => _terminal = stripeTerminal);
     _onConnectionStatusChangeSub = stripeTerminal.onConnectionStatusChange.listen((event) {
       print('Connection Status Changed: ${event.name}');
       setState(() => _connectionStatus = event);

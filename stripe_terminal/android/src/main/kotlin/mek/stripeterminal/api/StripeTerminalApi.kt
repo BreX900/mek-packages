@@ -58,7 +58,9 @@ class ControllerSink<T>(
 }
 
 interface StripeTerminalPlatformApi {
-    fun onInit()
+    fun onInit(
+        shouldPrintLogs: Boolean,
+    )
 
     fun onClearCachedCredentials()
 
@@ -248,7 +250,7 @@ interface StripeTerminalPlatformApi {
             }
             when (call.method) {
                 "init" -> {
-                    onInit()
+                    onInit(args[0] as Boolean)
                     result.success(null)
                 }
                 "clearCachedCredentials" -> {

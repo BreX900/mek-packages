@@ -16,7 +16,7 @@ import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 
 class StripeTerminal {
-  static StripeTerminalPlatform? _platformInstance;
+  static final _platformInstance = StripeTerminalPlatform();
   static StripeTerminalHandlers? _handlersInstance;
 
   static Future<StripeTerminal>? _instance;
@@ -29,19 +29,21 @@ class StripeTerminal {
 
   /// Initializes the terminal SDK
   static Future<StripeTerminal> getInstance({
+    bool shouldPrintLogs = false,
+
     /// A callback function that returns a Future which resolves to a connection token from your backend
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
   }) {
-    final platform = _platformInstance ??= StripeTerminalPlatform();
+    final platform = _platformInstance;
     final handlers = _handlersInstance ??= StripeTerminalHandlers(
-      platform: _platformInstance!,
+      platform: platform,
       fetchToken: fetchToken,
     );
 
     return _instance ??= (() async {
       try {
-        await platform.init();
+        await platform.init(shouldPrintLogs: shouldPrintLogs);
         return StripeTerminal._(platform, handlers);
       } catch (_) {
         _instance = null;
@@ -49,6 +51,8 @@ class StripeTerminal {
       }
     }());
   }
+
+  Future<void> clearCachedCredentials() async => await _platform.clearCachedCredentials();
 
 //region Reader discovery, connection and updates
   Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;

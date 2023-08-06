@@ -1,5 +1,6 @@
 import 'package:mek_data_class/mek_data_class.dart';
 import 'package:mek_stripe_terminal/src/models/card.dart';
+import 'package:meta/meta.dart';
 
 part 'refund.g.dart';
 
@@ -16,6 +17,7 @@ class Refund with _$Refund {
   final PaymentMethodDetails? paymentMethodDetails;
   final String? failureReason;
 
+  @internal
   const Refund({
     required this.id,
     required this.amount,

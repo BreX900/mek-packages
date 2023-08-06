@@ -1,4 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
+import 'package:meta/meta.dart';
 
 part 'setup_intent.g.dart';
 
@@ -12,6 +13,7 @@ class SetupIntent with _$SetupIntent {
   final SetupIntentStatus status;
   final SetupAttempt? latestAttempt;
 
+  @internal
   const SetupIntent({
     required this.id,
     required this.created,

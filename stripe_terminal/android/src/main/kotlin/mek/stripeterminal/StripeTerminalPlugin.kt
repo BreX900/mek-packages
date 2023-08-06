@@ -60,6 +60,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import mek.stripeterminal.api.CaptureMethodApi
 import mek.stripeterminal.api.PaymentIntentParametersApi
 import mek.stripeterminal.api.PaymentMethodTypeApi
+import mek.stripeterminal.api.PaymentStatusApi
 import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
@@ -121,9 +122,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     private lateinit var _readerDelegate: ReaderDelegatePlugin
     private lateinit var _readerReconnectionDelegate: ReaderReconnectionListenerPlugin
 
-    override fun onConnectionStatus(): ConnectionStatusApi {
-        return _terminal.connectionStatus.toApi()
-    }
+    override fun onGetConnectionStatus(): ConnectionStatusApi = _terminal.connectionStatus.toApi()
 
     override fun onSupportsReadersOfType(
         deviceType: DeviceTypeApi,
@@ -268,9 +267,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         )
     }
 
-    override fun onConnectedReader(): ReaderApi? {
-        return _terminal.connectedReader?.toApi()
-    }
+    override fun onGetConnectedReader(): ReaderApi? = _terminal.connectedReader?.toApi()
 
     override fun onCancelReaderReconnection(result: Result<Unit>) {
         if (_readerReconnectionDelegate.cancelReconnect == null) {
@@ -299,9 +296,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
             })
     }
 
-    override fun onInstallAvailableUpdate() {
-        _terminal.installAvailableUpdate()
-    }
+    override fun onInstallAvailableUpdate() = _terminal.installAvailableUpdate()
 
     override fun onCancelReaderUpdate(result: Result<Unit>) {
         if (_readerDelegate.cancelUpdate == null) {
@@ -322,6 +317,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     //region Taking Payment
     private var _paymentIntents = HashMap<String, PaymentIntent>()
+
+    override fun onGetPaymentStatus(): PaymentStatusApi = _terminal.paymentStatus.toApi()
 
     override fun onCreatePaymentIntent(
         result: Result<PaymentIntentApi>,

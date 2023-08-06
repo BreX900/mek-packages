@@ -14,21 +14,19 @@ mixin _$PaymentMethod {
       other is PaymentMethod &&
           runtimeType == other.runtimeType &&
           _self.id == other.id &&
-          _self.cardDetails == other.cardDetails &&
+          _self.card == other.card &&
           _self.cardPresent == other.cardPresent &&
           _self.interacPresent == other.interacPresent &&
           _self.customer == other.customer &&
-          _self.livemode == other.livemode &&
           $mapEquality.equals(_self.metadata, other.metadata);
   @override
   int get hashCode {
     var hashCode = 0;
     hashCode = $hashCombine(hashCode, _self.id.hashCode);
-    hashCode = $hashCombine(hashCode, _self.cardDetails.hashCode);
+    hashCode = $hashCombine(hashCode, _self.card.hashCode);
     hashCode = $hashCombine(hashCode, _self.cardPresent.hashCode);
     hashCode = $hashCombine(hashCode, _self.interacPresent.hashCode);
     hashCode = $hashCombine(hashCode, _self.customer.hashCode);
-    hashCode = $hashCombine(hashCode, _self.livemode.hashCode);
     hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
     return $hashFinish(hashCode);
   }
@@ -36,11 +34,10 @@ mixin _$PaymentMethod {
   @override
   String toString() => (ClassToString('PaymentMethod')
         ..add('id', _self.id)
-        ..add('cardDetails', _self.cardDetails)
+        ..add('card', _self.card)
         ..add('cardPresent', _self.cardPresent)
         ..add('interacPresent', _self.interacPresent)
         ..add('customer', _self.customer)
-        ..add('livemode', _self.livemode)
         ..add('metadata', _self.metadata))
       .toString();
 }

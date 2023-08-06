@@ -133,11 +133,10 @@ fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
 fun PaymentMethod.toApi(): PaymentMethodApi {
     return PaymentMethodApi(
         id = id,
-        cardDetails = cardDetails?.toApi(),
+        card = cardDetails?.toApi(),
         cardPresent = cardPresentDetails?.toApi(),
         interacPresent = interacPresentDetails?.toApi(),
         customer = customer,
-        livemode = livemode,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
     )
 }
@@ -244,7 +243,6 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         id = id,
         invoice = invoice,
 //         lastPaymentError
-        livemode = livemode,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
 //         offlineBehavior
         onBehalfOf = onBehalfOf,

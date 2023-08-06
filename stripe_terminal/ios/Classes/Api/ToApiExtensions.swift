@@ -273,11 +273,10 @@ extension PaymentMethod {
     func toApi() -> PaymentMethodApi {
         return PaymentMethodApi(
             id: stripeId,
-            cardDetails: card?.toApi(),
+            card: card?.toApi(),
             cardPresent: cardPresent?.toApi(),
             interacPresent: interacPresent?.toApi(),
             customer: customer,
-            livemode: true,
             metadata: metadata
         )
     }
@@ -421,7 +420,6 @@ extension PaymentIntent {
             customer: nil,
             description: description,
             invoice: nil,
-            livemode: false,
             metadata: metadata ?? [:],
             onBehalfOf: nil,
             paymentMethodId: nil,

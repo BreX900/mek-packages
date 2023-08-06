@@ -3,10 +3,19 @@ library stripe_terminal;
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:mek_stripe_terminal/src/models/card.dart';
+import 'package:mek_stripe_terminal/src/models/cart.dart';
+import 'package:mek_stripe_terminal/src/models/discover_config.dart';
+import 'package:mek_stripe_terminal/src/models/location.dart';
+import 'package:mek_stripe_terminal/src/models/payment.dart';
+import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
+import 'package:mek_stripe_terminal/src/models/payment_method.dart';
+import 'package:mek_stripe_terminal/src/models/reader.dart';
+import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
+import 'package:mek_stripe_terminal/src/reader_delegates.dart';
+import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
 
 part 'stripe_terminal_handlers.dart';
@@ -28,9 +37,9 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 
 //region Reader discovery, connection and updates
 
-  @MethodApi(kotlin: MethodApiType.sync)
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override
-  Future<ConnectionStatus> connectionStatus();
+  Future<ConnectionStatus> getConnectionStatus();
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override
@@ -76,9 +85,9 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
     required bool autoReconnectOnUnexpectedDisconnect,
   });
 
-  @MethodApi(kotlin: MethodApiType.sync)
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override
-  Future<Reader?> connectedReader();
+  Future<Reader?> getConnectedReader();
 
   @override
   Future<void> cancelReaderReconnection();
@@ -90,7 +99,7 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
     required String? startingAfter,
   });
 
-  @MethodApi(kotlin: MethodApiType.sync)
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override
   Future<void> installAvailableUpdate();
 
@@ -102,6 +111,10 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 //endregion
 
 //region Taking payments
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
+  @override
+  Future<PaymentStatus> getPaymentStatus();
+
   @override
   Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters);
 

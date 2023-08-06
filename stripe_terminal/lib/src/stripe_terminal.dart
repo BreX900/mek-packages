@@ -58,7 +58,7 @@ class StripeTerminal {
   Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
 
   /// Get the current [ConnectionStatus]
-  Future<ConnectionStatus> connectionStatus() async => await _platform.connectionStatus();
+  Future<ConnectionStatus> getConnectionStatus() async => await _platform.getConnectionStatus();
 
   Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
@@ -162,7 +162,7 @@ class StripeTerminal {
   }
 
   /// Fetches the connected reader from the SDK. `null` if not connected
-  Future<Reader?> connectedReader() async => await _platform.connectedReader();
+  Future<Reader?> getConnectedReader() async => await _platform.getConnectedReader();
 
   /// Returns a list of Location objects.
   Future<List<Location>> listLocations({
@@ -188,6 +188,8 @@ class StripeTerminal {
 
 //region Taking payments
   Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
+
+  Future<PaymentStatus> getPaymentStatus() async => await _platform.getPaymentStatus();
 
   Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters) async =>
       await _platform.createPaymentIntent(parameters);

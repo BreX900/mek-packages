@@ -54,7 +54,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private let _readerDelegate: ReaderDelegatePlugin
     private let _readerReconnectionDelegate: ReaderReconnectionDelegatePlugin
 
-    func onConnectionStatus() async throws -> ConnectionStatusApi {
+    func onGetConnectionStatus() throws -> ConnectionStatusApi {
         return Terminal.shared.connectionStatus.toApi()
     }
     
@@ -180,7 +180,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         throw PlatformError("", "Unsupported method")
     }
 
-    func onConnectedReader() async throws -> ReaderApi? {
+    func onGetConnectedReader() throws -> ReaderApi? {
         return Terminal.shared.connectedReader?.toApi()
     }
     
@@ -200,7 +200,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-    func onInstallAvailableUpdate() async throws {
+    func onInstallAvailableUpdate() throws {
         Terminal.shared.installAvailableUpdate()
     }
     
@@ -219,6 +219,10 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
 // Taking payments
     
     private var _paymentIntents: [String: PaymentIntent] = [:]
+    
+    func onGetPaymentStatus() throws -> PaymentStatusApi {
+        return Terminal.shared.paymentStatus.toApi()
+    }
     
     func onCreatePaymentIntent(_ parameters: PaymentIntentParametersApi) async throws -> PaymentIntentApi {
         do {
@@ -388,9 +392,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     func onConfirmSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
         let setupIntent = try _findSetupIntent(setupIntentId)
-        let newSetupIntent = await Terminal.shared.confirmSetupIntent(setupIntent)
-        _setupIntents[setupIntent.stripeId] = setupIntent
-        return setupIntent.toApi()
+        let (newSetupIntent, error) = await Terminal.shared.confirmSetupIntent(setupIntent)
+        if let error {
+            throw PlatformError(error.declineCode!, error.localizedDescription)
+        }
+        _setupIntents[newSetupIntent!.stripeId] = newSetupIntent!
+        return newSetupIntent!.toApi()
     }
     
     func onCancelSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
@@ -416,7 +423,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ reverseTransfer: Bool?,
         _ refundApplicationFee: Bool?
     ) throws {
-        var params = RefundParameters(chargeId: chargeId, amount: UInt(amount), currency: currency)
+        let params = RefundParameters(chargeId: chargeId, amount: UInt(amount), currency: currency)
         if let metadata = metadata { params.metadata = metadata }
         if let reverseTransfer = reverseTransfer { params.reverseTransfer = NSNumber(value: reverseTransfer) }
         if let refundApplicationFee = refundApplicationFee { params.refundApplicationFee = NSNumber(value: refundApplicationFee) }

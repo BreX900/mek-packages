@@ -64,7 +64,7 @@ interface StripeTerminalPlatformApi {
 
     fun onClearCachedCredentials()
 
-    fun onConnectionStatus(): ConnectionStatusApi
+    fun onGetConnectionStatus(): ConnectionStatusApi
 
     fun onSupportsReadersOfType(
         deviceType: DeviceTypeApi,
@@ -103,7 +103,7 @@ interface StripeTerminalPlatformApi {
         autoReconnectOnUnexpectedDisconnect: Boolean,
     )
 
-    fun onConnectedReader(): ReaderApi?
+    fun onGetConnectedReader(): ReaderApi?
 
     fun onCancelReaderReconnection(
         result: Result<Unit>,
@@ -125,6 +125,8 @@ interface StripeTerminalPlatformApi {
     fun onDisconnectReader(
         result: Result<Unit>,
     )
+
+    fun onGetPaymentStatus(): PaymentStatusApi
 
     fun onCreatePaymentIntent(
         result: Result<PaymentIntentApi>,
@@ -257,8 +259,8 @@ interface StripeTerminalPlatformApi {
                     onClearCachedCredentials()
                     result.success(null)
                 }
-                "connectionStatus" -> {
-                    val res = onConnectionStatus()
+                "getConnectionStatus" -> {
+                    val res = onGetConnectionStatus()
                     result.success(res.ordinal)
                 }
                 "supportsReadersOfType" -> {
@@ -285,8 +287,8 @@ interface StripeTerminalPlatformApi {
                     val res = Result<ReaderApi>(result) { it.serialize() }
                     onConnectUsbReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
                 }
-                "connectedReader" -> {
-                    val res = onConnectedReader()
+                "getConnectedReader" -> {
+                    val res = onGetConnectedReader()
                     result.success(res?.serialize())
                 }
                 "cancelReaderReconnection" -> {
@@ -308,6 +310,10 @@ interface StripeTerminalPlatformApi {
                 "disconnectReader" -> {
                     val res = Result<Unit>(result) { null }
                     onDisconnectReader(res)
+                }
+                "getPaymentStatus" -> {
+                    val res = onGetPaymentStatus()
+                    result.success(res.ordinal)
                 }
                 "createPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
@@ -739,7 +745,6 @@ data class PaymentIntentApi(
     val customer: String?,
     val description: String?,
     val invoice: String?,
-    val livemode: Boolean,
     val metadata: HashMap<String, String>,
     val onBehalfOf: String?,
     val paymentMethodId: String?,
@@ -767,7 +772,6 @@ data class PaymentIntentApi(
             customer,
             description,
             invoice,
-            livemode,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
             onBehalfOf,
             paymentMethodId,
@@ -806,21 +810,19 @@ enum class PaymentIntentStatusApi {
 
 data class PaymentMethodApi(
     val id: String,
-    val cardDetails: CardDetailsApi?,
+    val card: CardDetailsApi?,
     val cardPresent: CardPresentDetailsApi?,
     val interacPresent: CardPresentDetailsApi?,
     val customer: String?,
-    val livemode: Boolean,
     val metadata: HashMap<String, String>,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
             id,
-            cardDetails?.serialize(),
+            card?.serialize(),
             cardPresent?.serialize(),
             interacPresent?.serialize(),
             customer,
-            livemode,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
         )
     }

@@ -112,7 +112,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _checkStatus(StripeTerminal terminal) async {
-    final status = await terminal.connectionStatus();
+    final status = await terminal.getConnectionStatus();
     _showSnackBar('Connection status: ${status.name}');
   }
 

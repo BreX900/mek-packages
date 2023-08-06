@@ -7,26 +7,19 @@ part 'payment_method.g.dart';
 @DataClass()
 class PaymentMethod with _$PaymentMethod {
   final String id;
-  // TODO: Rename to card
-  final CardDetails? cardDetails;
+  final CardDetails? card;
   final CardPresentDetails? cardPresent;
   final CardPresentDetails? interacPresent;
   final String? customer;
-
-  // TODO: Remove
-  /// Only Android
-  @Deprecated('Removed in next release')
-  final bool livemode;
   final Map<String, String> metadata;
 
   const PaymentMethod({
     required this.id,
-    required this.cardDetails,
+    required this.card,
     required this.cardPresent,
     required this.interacPresent,
     required this.customer,
     required this.metadata,
-    required this.livemode,
   });
 }
 

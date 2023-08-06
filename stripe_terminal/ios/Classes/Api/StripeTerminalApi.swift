@@ -99,7 +99,7 @@ protocol StripeTerminalPlatformApi {
 
     func onClearCachedCredentials() throws -> Void
 
-    func onConnectionStatus() async throws -> ConnectionStatusApi
+    func onGetConnectionStatus() throws -> ConnectionStatusApi
 
     func onSupportsReadersOfType(
         _ deviceType: DeviceTypeApi,
@@ -133,7 +133,7 @@ protocol StripeTerminalPlatformApi {
         _ autoReconnectOnUnexpectedDisconnect: Bool
     ) async throws -> ReaderApi
 
-    func onConnectedReader() async throws -> ReaderApi?
+    func onGetConnectedReader() throws -> ReaderApi?
 
     func onCancelReaderReconnection() async throws -> Void
 
@@ -143,11 +143,13 @@ protocol StripeTerminalPlatformApi {
         _ startingAfter: String?
     ) async throws -> [LocationApi]
 
-    func onInstallAvailableUpdate() async throws -> Void
+    func onInstallAvailableUpdate() throws -> Void
 
     func onCancelReaderUpdate() async throws -> Void
 
     func onDisconnectReader() async throws -> Void
+
+    func onGetPaymentStatus() throws -> PaymentStatusApi
 
     func onCreatePaymentIntent(
         _ parameters: PaymentIntentParametersApi
@@ -302,11 +304,9 @@ func setStripeTerminalPlatformApiHandler(
             case "clearCachedCredentials":
                 let res = try hostApi.onClearCachedCredentials()
                 result(nil)
-            case "connectionStatus":
-                runAsync {
-                    let res = try await hostApi.onConnectionStatus()
-                    return res.rawValue
-                }
+            case "getConnectionStatus":
+                let res = try hostApi.onGetConnectionStatus()
+                result(res.rawValue)
             case "supportsReadersOfType":
                 let res = try hostApi.onSupportsReadersOfType(DeviceTypeApi(rawValue: args[0] as! Int)!, DiscoveryMethodApi(rawValue: args[1] as! Int)!, args[2] as! Bool)
                 result(res)
@@ -335,11 +335,9 @@ func setStripeTerminalPlatformApiHandler(
                     let res = try await hostApi.onConnectUsbReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
                     return res.serialize()
                 }
-            case "connectedReader":
-                runAsync {
-                    let res = try await hostApi.onConnectedReader()
-                    return res?.serialize()
-                }
+            case "getConnectedReader":
+                let res = try hostApi.onGetConnectedReader()
+                result(res?.serialize())
             case "cancelReaderReconnection":
                 runAsync {
                     try await hostApi.onCancelReaderReconnection()
@@ -351,10 +349,8 @@ func setStripeTerminalPlatformApiHandler(
                     return res.map { $0.serialize() }
                 }
             case "installAvailableUpdate":
-                runAsync {
-                    try await hostApi.onInstallAvailableUpdate()
-                    return nil
-                }
+                let res = try hostApi.onInstallAvailableUpdate()
+                result(nil)
             case "cancelReaderUpdate":
                 runAsync {
                     try await hostApi.onCancelReaderUpdate()
@@ -365,6 +361,9 @@ func setStripeTerminalPlatformApiHandler(
                     try await hostApi.onDisconnectReader()
                     return nil
                 }
+            case "getPaymentStatus":
+                let res = try hostApi.onGetPaymentStatus()
+                result(res.rawValue)
             case "createPaymentIntent":
                 runAsync {
                     let res = try await hostApi.onCreatePaymentIntent(PaymentIntentParametersApi.deserialize(args[0] as! [Any?]))
@@ -806,7 +805,6 @@ struct PaymentIntentApi {
     let customer: String?
     let description: String?
     let invoice: String?
-    let livemode: Bool
     let metadata: [String: String]
     let onBehalfOf: String?
     let paymentMethodId: String?
@@ -834,7 +832,6 @@ struct PaymentIntentApi {
             customer,
             description,
             invoice,
-            livemode,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             onBehalfOf,
             paymentMethodId,
@@ -876,21 +873,19 @@ enum PaymentIntentStatusApi: Int {
 
 struct PaymentMethodApi {
     let id: String
-    let cardDetails: CardDetailsApi?
+    let card: CardDetailsApi?
     let cardPresent: CardPresentDetailsApi?
     let interacPresent: CardPresentDetailsApi?
     let customer: String?
-    let livemode: Bool
     let metadata: [String: String]
 
     func serialize() -> [Any?] {
         return [
             id,
-            cardDetails?.serialize(),
+            card?.serialize(),
             cardPresent?.serialize(),
             interacPresent?.serialize(),
             customer,
-            livemode,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
         ]
     }

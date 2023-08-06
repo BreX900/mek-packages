@@ -29,7 +29,6 @@ mixin _$PaymentIntent {
           _self.customer == other.customer &&
           _self.description == other.description &&
           _self.invoice == other.invoice &&
-          _self.livemode == other.livemode &&
           $mapEquality.equals(_self.metadata, other.metadata) &&
           _self.onBehalfOf == other.onBehalfOf &&
           _self.paymentMethodId == other.paymentMethodId &&
@@ -57,7 +56,6 @@ mixin _$PaymentIntent {
     hashCode = $hashCombine(hashCode, _self.customer.hashCode);
     hashCode = $hashCombine(hashCode, _self.description.hashCode);
     hashCode = $hashCombine(hashCode, _self.invoice.hashCode);
-    hashCode = $hashCombine(hashCode, _self.livemode.hashCode);
     hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
     hashCode = $hashCombine(hashCode, _self.onBehalfOf.hashCode);
     hashCode = $hashCombine(hashCode, _self.paymentMethodId.hashCode);
@@ -87,7 +85,6 @@ mixin _$PaymentIntent {
         ..add('customer', _self.customer)
         ..add('description', _self.description)
         ..add('invoice', _self.invoice)
-        ..add('livemode', _self.livemode)
         ..add('metadata', _self.metadata)
         ..add('onBehalfOf', _self.onBehalfOf)
         ..add('paymentMethodId', _self.paymentMethodId)

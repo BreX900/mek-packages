@@ -21,8 +21,6 @@ class PaymentIntent with _$PaymentIntent {
   final String? customer;
   final String? description;
   final String? invoice;
-  // TODO: Remove livemode
-  final bool livemode;
   final Map<String, String> metadata;
   final String? onBehalfOf;
   final String? paymentMethodId;
@@ -41,7 +39,6 @@ class PaymentIntent with _$PaymentIntent {
     required this.created,
     required this.status,
     required this.applicationFeeAmount,
-    this.livemode = true,
     this.metadata = const {},
     this.application,
     this.captureMethod,

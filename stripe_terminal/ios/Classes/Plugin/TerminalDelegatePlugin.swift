@@ -1,11 +1,15 @@
 import Foundation
 import StripeTerminal
 
-class TerminalDelegatePlugin: NSObject, TerminalDelegate {
+class TerminalDelegatePlugin: NSObject, ConnectionTokenProvider, TerminalDelegate {
     private let handlers: StripeTerminalHandlersApi
 
     init(_ handlers: StripeTerminalHandlersApi) {
         self.handlers = handlers
+    }
+    
+    public func fetchConnectionToken() async throws -> String {
+        return try await handlers.requestConnectionToken()
     }
     
     public func terminal(_: Terminal, didReportUnexpectedReaderDisconnect reader: Reader) {

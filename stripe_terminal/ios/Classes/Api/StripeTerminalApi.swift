@@ -95,6 +95,8 @@ class ControllerHandler: NSObject, FlutterStreamHandler {
 protocol StripeTerminalPlatformApi {
     func onInit() async throws -> Void
 
+    func onClearCachedCredentials() throws -> Void
+
     func onConnectionStatus() async throws -> ConnectionStatusApi
 
     func onSupportsReadersOfType(
@@ -295,6 +297,9 @@ func setStripeTerminalPlatformApiHandler(
                     try await hostApi.onInit()
                     return nil
                 }
+            case "clearCachedCredentials":
+                let res = try hostApi.onClearCachedCredentials()
+                result(nil)
             case "connectionStatus":
                 runAsync {
                     let res = try await hostApi.onConnectionStatus()

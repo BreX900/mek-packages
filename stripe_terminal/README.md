@@ -11,65 +11,11 @@ more simply by supporting streams instead of callbacks for listeners
 
 ## Features
 
-Offline mode is not supported
+All features of android and ios sdk are supported
+- Android sdk version: 2.22.0
+- IOS sdk version: 2.22.0
 
-**Terminal Methods**
-- ❌ clearCachedCredentials
-- **Reader discovery, connection and updates**
-  - ✅ onConnectionStatusChange
-  - ✅ connectionStatus
-  - ✅ onUnexpectedReaderDisconnect
-  - ✅ supportsReadersOfType
-  - ✅ discoverReaders
-  - ✅ connectBluetoothReader
-  - ✅ connectHandoffReader
-  - ✅ connectInternetReader
-  - ✅ connectLocalMobileReader
-  - ✅ connectUsbReader
-  - ✅ connectedReader
-  - ✅ listLocations
-  - ✅ installAvailableUpdate
-  - ✅ disconnectReader
-- **Taking payments**
-  - ✅ onPaymentStatusChange
-  - ✅ createPaymentIntent
-  - ✅ retrievePaymentIntent
-  - ✅ collectPaymentMethod
-  - ✅ processPayment
-  - ✅ cancelPaymentIntent
-- **Saving payment details for later use**
-  - ✅ readReusableCard
-  - ✅ createSetupIntent
-  - ✅ retrieveSetupIntent
-  - ✅ collectSetupIntentPaymentMethod
-  - ✅ confirmSetupIntent
-  - ✅ cancelSetupIntent
-- **Card-present refunds**
-  - ✅ collectRefundPaymentMethod
-  - ✅ processRefund
-- **Display information to customers**
-  - ✅ setReaderDisplay
-  - ✅ clearReaderDisplay
-
-<details>
-<summary>✅️️ 9/9 **Reader Listeners/Delegate**</summary>
-- ✅️ onReportReaderEvent
-- ✅️ onRequestReaderDisplayMessage
-- ✅️ onRequestReaderInput
-- ✅️ onBatteryLevelUpdate
-- ✅️ onReportLowBatteryWarning
-- ✅️ onReportAvailableUpdate
-- ✅️ onFinishInstallingUpdate
-- ✅ onReportReaderSoftwareUpdateProgress
-- ✅️ onStartInstallingUpdate
-</details>
-<details>
-<summary>✅️️ 3/3 **Reader Reconnection Listeners/Delegate**</summary>
-- ✅️ onReaderReconnectStarted
-- ✅️ onReaderReconnectFailed
-- ✅ onReaderReconnectSucceeded
-</details>
-Support: ✅ Fully | ☑️ Partially | ❌ Missing
+> Offline mode is not supported
 
 # Installation
 

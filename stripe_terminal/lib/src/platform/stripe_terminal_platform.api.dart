@@ -32,6 +32,15 @@ class _$StripeTerminalPlatform {
     }
   }
 
+  Future<void> clearCachedCredentials() async {
+    try {
+      await _$channel.invokeMethod('clearCachedCredentials', []);
+    } on PlatformException catch (exception) {
+      StripeTerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
   Future<ConnectionStatus> connectionStatus() async {
     try {
       final result = await _$channel.invokeMethod('connectionStatus', []);

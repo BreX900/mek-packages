@@ -60,6 +60,8 @@ class ControllerSink<T>(
 interface StripeTerminalPlatformApi {
     fun onInit()
 
+    fun onClearCachedCredentials()
+
     fun onConnectionStatus(): ConnectionStatusApi
 
     fun onSupportsReadersOfType(
@@ -247,6 +249,10 @@ interface StripeTerminalPlatformApi {
             when (call.method) {
                 "init" -> {
                     onInit()
+                    result.success(null)
+                }
+                "clearCachedCredentials" -> {
+                    onClearCachedCredentials()
                     result.success(null)
                 }
                 "connectionStatus" -> {

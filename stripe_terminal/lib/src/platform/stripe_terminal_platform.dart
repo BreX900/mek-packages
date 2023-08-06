@@ -22,6 +22,10 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @override
   Future<void> init();
 
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
+  @override
+  Future<void> clearCachedCredentials();
+
 //region Reader discovery, connection and updates
 
   @MethodApi(kotlin: MethodApiType.sync)

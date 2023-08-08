@@ -4,6 +4,8 @@
 - feat: added support to `collectRefundPaymentMethod` and `processRefund`
 - feat: added support to `createSetupIntent`, `retrieveSetupIntent`, `collectSetupIntentPaymentMethod`, `confirmSetupIntent` and `cancelSetupIntent`
 - feat: added support to `createPaymentIntent` and `cancelPaymentIntent`
+- chore: update android StripeTerminal dependency to 2.23.0
+- chore: update ios StripeTerminal dependency to 2.23.1
 
 **Braking Changes**
 - refactor: removed `liveMode` on `PaymentIntent` and `PaymentMethod` classes, not supported on ios

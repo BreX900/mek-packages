@@ -225,39 +225,32 @@ fun IncrementalAuthorizationStatus.toApi(): IncrementalAuthorizationStatusApi? {
 
 fun PaymentIntent.toApi(): PaymentIntentApi {
     return PaymentIntentApi(
+        id = id,
+        created = created,
+        status = status!!.toApi(),
         amount = amount.toDouble(),
+        captureMethod = captureMethod!!,
+        currency = currency!!,
+        metadata = metadata?.toHashMap() ?: hashMapOf(),
+        paymentMethodId = paymentMethodId,
+        amountTip = amountTip?.toDouble(),
+        statementDescriptor = statementDescriptor,
+        statementDescriptorSuffix = statementDescriptorSuffix,
+        // Only Android
         amountCapturable = amountCapturable.toDouble(),
-//         amountDetails
         amountReceived = amountReceived.toDouble(),
-//         amountTip
         application = application,
         applicationFeeAmount = applicationFeeAmount.toDouble(),
         canceledAt = canceledAt,
         cancellationReason = cancellationReason,
-        captureMethod = captureMethod,
         clientSecret = clientSecret,
         confirmationMethod = confirmationMethod,
-        created = created,
-        currency = currency,
         description = description,
-        id = id,
         invoice = invoice,
-//         lastPaymentError
-        metadata = metadata?.toHashMap() ?: hashMapOf(),
-//         offlineBehavior
         onBehalfOf = onBehalfOf,
-//         paymentMethod
-//         paymentMethodData
-        paymentMethodId = paymentMethodId,
-//         paymentMethodOptions
-//         paymentMethodUnion
         receiptEmail = receiptEmail,
         review = review,
         setupFutureUsage = setupFutureUsage,
-//         statementDescriptor
-//         statementDescriptorSuffix
-        status = status?.toApi(),
-//        stripeAccountId
         transferGroup = transferGroup,
         customer = customer,
     )

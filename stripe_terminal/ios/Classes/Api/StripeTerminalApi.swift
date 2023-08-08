@@ -790,25 +790,28 @@ enum LocationStatusApi: Int {
 
 struct PaymentIntentApi {
     let id: String
+    let created: Date
+    let status: PaymentIntentStatusApi
     let amount: Double
-    let amountCapturable: Double
-    let amountReceived: Double
+    let captureMethod: String
+    let currency: String
+    let metadata: [String: String]
+    let paymentMethodId: String?
+    let amountTip: Double?
+    let statementDescriptor: String?
+    let statementDescriptorSuffix: String?
+    let amountCapturable: Double?
+    let amountReceived: Double?
     let application: String?
     let applicationFeeAmount: Double?
-    let captureMethod: String?
     let cancellationReason: String?
     let canceledAt: Date?
     let clientSecret: String?
     let confirmationMethod: String?
-    let created: Date
-    let currency: String?
     let customer: String?
     let description: String?
     let invoice: String?
-    let metadata: [String: String]
     let onBehalfOf: String?
-    let paymentMethodId: String?
-    let status: PaymentIntentStatusApi?
     let review: String?
     let receiptEmail: String?
     let setupFutureUsage: String?
@@ -817,25 +820,28 @@ struct PaymentIntentApi {
     func serialize() -> [Any?] {
         return [
             id,
+            created.timeIntervalSince1970 * 1000,
+            status.rawValue,
             amount,
+            captureMethod,
+            currency,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            paymentMethodId,
+            amountTip,
+            statementDescriptor,
+            statementDescriptorSuffix,
             amountCapturable,
             amountReceived,
             application,
             applicationFeeAmount,
-            captureMethod,
             cancellationReason,
             canceledAt != nil ? canceledAt!.timeIntervalSince1970 * 1000 : nil,
             clientSecret,
             confirmationMethod,
-            created.timeIntervalSince1970 * 1000,
-            currency,
             customer,
             description,
             invoice,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             onBehalfOf,
-            paymentMethodId,
-            status?.rawValue,
             review,
             receiptEmail,
             setupFutureUsage,

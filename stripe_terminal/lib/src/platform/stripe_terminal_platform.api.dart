@@ -568,34 +568,35 @@ PaymentIntent
     _$deserializePaymentIntent(List<Object?> serialized) =>
         PaymentIntent(
             id: serialized[0] as String,
-            amount: serialized[1] as double,
-            amountCapturable: serialized[2] as double,
-            amountReceived: serialized[3] as double,
-            application: serialized[4] as String?,
-            applicationFeeAmount: serialized[5] as double?,
-            captureMethod: serialized[6] as String?,
-            cancellationReason: serialized[7] as String?,
-            canceledAt: serialized[8] != null
-                ? DateTime.fromMillisecondsSinceEpoch(serialized[8] as int)
-                : null,
-            clientSecret: serialized[9] as String?,
-            confirmationMethod: serialized[10] as String?,
-            created: DateTime.fromMillisecondsSinceEpoch(serialized[11] as int),
-            currency: serialized[12] as String?,
-            customer: serialized[13] as String?,
-            description: serialized[14] as String?,
-            invoice: serialized[15] as String?,
-            metadata: (serialized[16] as Map)
+            created: DateTime.fromMillisecondsSinceEpoch(serialized[1] as int),
+            status: PaymentIntentStatus.values[serialized[2] as int],
+            amount: serialized[3] as double,
+            captureMethod: serialized[4] as String,
+            currency: serialized[5] as String,
+            metadata: (serialized[6] as Map)
                 .map((k, v) => MapEntry(k as String, v as String)),
-            onBehalfOf: serialized[17] as String?,
-            paymentMethodId: serialized[18] as String?,
-            status: serialized[19] != null
-                ? PaymentIntentStatus.values[serialized[19] as int]
+            paymentMethodId: serialized[7] as String?,
+            amountTip: serialized[8] as double?,
+            statementDescriptor: serialized[9] as String?,
+            statementDescriptorSuffix: serialized[10] as String?,
+            amountCapturable: serialized[11] as double?,
+            amountReceived: serialized[12] as double?,
+            application: serialized[13] as String?,
+            applicationFeeAmount: serialized[14] as double?,
+            cancellationReason: serialized[15] as String?,
+            canceledAt: serialized[16] != null
+                ? DateTime.fromMillisecondsSinceEpoch(serialized[16] as int)
                 : null,
-            review: serialized[20] as String?,
-            receiptEmail: serialized[21] as String?,
-            setupFutureUsage: serialized[22] as String?,
-            transferGroup: serialized[23] as String?);
+            clientSecret: serialized[17] as String?,
+            confirmationMethod: serialized[18] as String?,
+            customer: serialized[19] as String?,
+            description: serialized[20] as String?,
+            invoice: serialized[21] as String?,
+            onBehalfOf: serialized[22] as String?,
+            review: serialized[23] as String?,
+            receiptEmail: serialized[24] as String?,
+            setupFutureUsage: serialized[25] as String?,
+            transferGroup: serialized[26] as String?);
 List<Object?> _$serializePaymentIntentParameters(
         PaymentIntentParameters deserialized) =>
     [

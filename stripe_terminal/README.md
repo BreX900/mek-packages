@@ -11,9 +11,9 @@ more simply by supporting streams instead of callbacks for listeners
 
 ## Features
 
-All features of android and ios sdk are supported
-- Android sdk version: 2.22.0
-- IOS sdk version: 2.22.0
+All features of android and ios sdk are supported (Also the TapToPay feature)
+- Android sdk version: 2.23.0
+- IOS sdk version: 2.23.1
 
 > Offline mode is not supported
 

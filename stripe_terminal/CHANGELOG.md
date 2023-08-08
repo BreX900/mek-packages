@@ -1,4 +1,5 @@
 
+## 2.0.0
 - feat: added support to `getPaymentStatus`
 - feat: added support to `clearCachedCredentials`
 - feat: added support to `collectRefundPaymentMethod` and `processRefund`

@@ -1,4 +1,8 @@
 
+## 2.1.0
+- docs: Documented readers (methods, classes) and payment intents (methods)
+- feat: added `Readers.batteryStatus` field
+
 ## 2.0.0
 - feat: added support to `getPaymentStatus`
 - feat: added support to `clearCachedCredentials`

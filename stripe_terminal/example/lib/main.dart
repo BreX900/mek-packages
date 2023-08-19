@@ -43,12 +43,14 @@ class _MyAppState extends State<MyApp> {
 
   String? _paymentIntentClientSecret;
   PaymentIntent? _paymentIntent;
+  CancelableFuture<PaymentIntent>? _collectingPaymentMethod;
 
   @override
   void dispose() {
     unawaited(_onConnectionStatusChangeSub?.cancel());
     unawaited(_discoverReaderSub?.cancel());
     unawaited(_onUnexpectedReaderDisconnectSub?.cancel());
+    unawaited(_collectingPaymentMethod?.cancel());
     super.dispose();
   }
 
@@ -204,12 +206,31 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _collectPaymentMethod(StripeTerminal terminal, PaymentIntent paymentIntent) async {
-    final paymentIntentWithPaymentMethod = await terminal.collectPaymentMethod(
+    final collectingPaymentMethod = terminal.collectPaymentMethod(
       paymentIntent,
       skipTipping: true,
     );
-    setState(() => _paymentIntent = paymentIntentWithPaymentMethod);
-    _showSnackBar('Payment method collected!');
+    setState(() {
+      _collectingPaymentMethod = collectingPaymentMethod;
+    });
+
+    try {
+      final paymentIntentWithPaymentMethod = await collectingPaymentMethod;
+      setState(() => _paymentIntent = paymentIntentWithPaymentMethod);
+      _showSnackBar('Payment method collected!');
+    } on TerminalException catch (exception) {
+      switch (exception.code) {
+        case TerminalExceptionCode.canceled:
+          setState(() => _collectingPaymentMethod = null);
+          _showSnackBar('Collecting Payment method is cancelled!');
+        default:
+          rethrow;
+      }
+    }
+  }
+
+  void _cancelCollectingPaymentMethod(CancelableFuture<PaymentIntent> cancelable) async {
+    await cancelable.cancel();
   }
 
   void _processPayment(StripeTerminal terminal, PaymentIntent paymentIntent) async {
@@ -230,6 +251,7 @@ class _MyAppState extends State<MyApp> {
     final terminal = _terminal;
     final paymentIntentClientSecret = _paymentIntentClientSecret;
     final paymentIntent = _paymentIntent;
+    final collectingPaymentMethod = _collectingPaymentMethod;
 
     final mainTab = [
       TextButton(
@@ -312,14 +334,21 @@ class _MyAppState extends State<MyApp> {
             : null,
         child: const Text('Retrieve Payment Intent'),
       ),
-      TextButton(
-        onPressed: terminal != null &&
-                paymentIntent != null &&
-                paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
-            ? () => _collectPaymentMethod(terminal, paymentIntent)
-            : null,
-        child: const Text('Collect Payment Method'),
-      ),
+      if (collectingPaymentMethod == null)
+        TextButton(
+          onPressed: terminal != null &&
+                  _reader != null &&
+                  paymentIntent != null &&
+                  paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
+              ? () => _collectPaymentMethod(terminal, paymentIntent)
+              : null,
+          child: const Text('Collect Payment Method'),
+        )
+      else
+        TextButton(
+          onPressed: () => _cancelCollectingPaymentMethod(collectingPaymentMethod),
+          child: const Text('Cancel Collecting Payment Method'),
+        ),
       TextButton(
         onPressed: terminal != null &&
                 paymentIntent != null &&

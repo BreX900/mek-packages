@@ -3,6 +3,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/src/codecs/types/date_time_codec.dart';
+import 'package:one_for_all_generator/src/codecs/types/duration_codec.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -56,7 +57,13 @@ class ApiPlatformCodec<T> {
     swift: DateTimeSwiftApiCodec(),
   );
 
-  static const List<ApiPlatformCodec> values = [dateTime];
+  static const ApiPlatformCodec<Duration> duration = ApiPlatformCodec(
+    dart: DurationDartApiCodec(),
+    kotlin: DurationKotlinApiCodec(),
+    swift: DurationSwiftApiCodec(),
+  );
+
+  static const List<ApiPlatformCodec> values = [dateTime, duration];
 }
 
 abstract class ApiCodecs {

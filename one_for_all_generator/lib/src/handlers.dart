@@ -130,16 +130,29 @@ sealed class SerializableHandler<T extends InterfaceElement> extends Equatable {
 class SerializableClassHandler extends SerializableHandler<ClassElement> {
   static const _annotationChecker = TypeChecker.fromRuntime(SerializableClass);
 
+  final List<SerializableClassHandler>? children;
+
   const SerializableClassHandler({
     required super.element,
     required super.kotlinGeneration,
     required super.swiftGeneration,
     required super.flutterToHost,
     required super.hostToFlutter,
+    required this.children,
   });
 
   factory SerializableClassHandler.from(ClassElement element) {
     final annotation = ConstantReader(_annotationChecker.firstAnnotationOf(element));
+
+    List<SerializableClassHandler>? children;
+    if (element.isSealed) {
+      final childChecker = TypeChecker.fromStatic(element.thisType);
+      children = LibraryReader(element.library)
+          .classes
+          .where(childChecker.isSuperOf)
+          .map(SerializableClassHandler.from)
+          .toList();
+    }
 
     return SerializableClassHandler(
       element: element,
@@ -147,6 +160,7 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
       swiftGeneration: annotation.peek('swiftGeneration')?.boolValue ?? true,
       flutterToHost: false,
       hostToFlutter: false,
+      children: children,
     );
   }
 
@@ -161,6 +175,9 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
       swiftGeneration: swiftGeneration,
       flutterToHost: this.flutterToHost || flutterToHost,
       hostToFlutter: this.hostToFlutter || hostToFlutter,
+      children: children
+          ?.map((e) => e.apply(flutterToHost: flutterToHost, hostToFlutter: hostToFlutter))
+          .toList(),
     );
   }
 }

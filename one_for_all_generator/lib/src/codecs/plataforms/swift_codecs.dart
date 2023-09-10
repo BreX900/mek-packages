@@ -64,7 +64,12 @@ class SwiftApiCodes extends HostApiCodecs {
       }
     }
 
-    final deserializer = '${encodeName(type.displayName)}.deserialize($varAccess as! [Any?])';
+    final element = type.element;
+
+    final deserializerMethod = element is ClassElement && element.isSealed
+        ? 'deserialize${encodeName(type.displayName)}'
+        : '${encodeName(type.displayName)}.deserialize';
+    final deserializer = '$deserializerMethod($varAccess as! [Any?])';
     return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
   }
 

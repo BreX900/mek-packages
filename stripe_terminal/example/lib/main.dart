@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:example/models/discovery_method.dart';
 import 'package:example/stripe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
@@ -148,9 +149,6 @@ class _MyAppState extends State<MyApp> {
         final locationId = getLocationId();
         if (locationId == null) return null;
         return await terminal.connectUsbReader(reader, locationId: locationId);
-      case DiscoveryMethod.embedded:
-        _showSnackBar('Missing connect method implementation');
-        return null;
     }
   }
 
@@ -172,11 +170,26 @@ class _MyAppState extends State<MyApp> {
   void _startDiscoverReaders(StripeTerminal terminal) {
     setState(() => _readers = const []);
 
-    final discoverReaderStream = terminal.discoverReaders(
-      locationId: _selectedLocation?.id,
-      discoveryMethod: _discoveringMethod,
-      simulated: _isSimulated,
-    );
+    final configuration = switch (_discoveringMethod) {
+      DiscoveryMethod.bluetoothScan => BluetoothDiscoveryConfiguration(
+          isSimulated: _isSimulated,
+        ),
+      DiscoveryMethod.bluetoothProximity => BluetoothProximityDiscoveryConfiguration(
+          isSimulated: _isSimulated,
+        ),
+      DiscoveryMethod.handOff => const HandoffDiscoveryConfiguration(),
+      DiscoveryMethod.internet => InternetDiscoveryConfiguration(
+          isSimulated: _isSimulated,
+        ),
+      DiscoveryMethod.localMobile => LocalMobileDiscoveryConfiguration(
+          isSimulated: _isSimulated,
+        ),
+      DiscoveryMethod.usb => UsbDiscoveryConfiguration(
+          isSimulated: _isSimulated,
+        ),
+    };
+
+    final discoverReaderStream = terminal.discoverReaders(configuration);
 
     setState(() {
       _discoverReaderSub = discoverReaderStream.listen((readers) {
@@ -222,8 +235,8 @@ class _MyAppState extends State<MyApp> {
       _showSnackBar('Payment method collected!');
     } on TerminalException catch (exception) {
       switch (exception.rawCode) {
-        case "2020" ||
-              "cancelled": // TODO map error codes from swift/android and unify them for dart
+        // TODO: map error codes from swift/android and unify them for dart
+        case '2020' || 'cancelled':
           setState(() => _collectingPaymentMethod = null);
           _showSnackBar('Collecting Payment method is cancelled!');
         default:
@@ -237,7 +250,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _processPayment(StripeTerminal terminal, PaymentIntent paymentIntent) async {
-    final processedPaymentIntent = await terminal.processPayment(paymentIntent);
+    final processedPaymentIntent = await terminal.confirmPaymentIntent(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
     _showSnackBar('Payment processed!');
   }

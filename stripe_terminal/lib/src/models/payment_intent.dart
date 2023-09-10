@@ -78,6 +78,7 @@ enum PaymentIntentStatus {
   succeeded,
 }
 
+// TODO: https://github.com/BreX900/mek-packages/issues/11
 @DataClass()
 class PaymentIntentParameters with _$PaymentIntentParameters {
   final int amount;

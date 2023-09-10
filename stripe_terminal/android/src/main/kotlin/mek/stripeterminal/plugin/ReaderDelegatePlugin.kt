@@ -1,13 +1,9 @@
 package mek.stripeterminal.plugin
 
-import android.app.Activity
-import com.stripe.stripeterminal.external.callable.BluetoothReaderListener
 import com.stripe.stripeterminal.external.callable.Cancelable
 import com.stripe.stripeterminal.external.callable.HandoffReaderListener
-import com.stripe.stripeterminal.external.callable.ReaderReconnectionListener
-import com.stripe.stripeterminal.external.callable.UsbReaderListener
+import com.stripe.stripeterminal.external.callable.ReaderListener
 import com.stripe.stripeterminal.external.models.BatteryStatus
-import com.stripe.stripeterminal.external.models.Reader
 import com.stripe.stripeterminal.external.models.ReaderDisplayMessage
 import com.stripe.stripeterminal.external.models.ReaderEvent
 import com.stripe.stripeterminal.external.models.ReaderInputOptions
@@ -18,7 +14,7 @@ import mek.stripeterminal.api.toApi
 import mek.stripeterminal.runOnMainThread
 
 class ReaderDelegatePlugin(private val _handlers: StripeTerminalHandlersApi) :
-    BluetoothReaderListener, HandoffReaderListener, UsbReaderListener {
+    ReaderListener, HandoffReaderListener {
     var cancelUpdate: Cancelable? = null
 
     override fun onReportReaderEvent(event: ReaderEvent) = runOnMainThread {
@@ -74,25 +70,3 @@ class ReaderDelegatePlugin(private val _handlers: StripeTerminalHandlersApi) :
     }
 }
 
-class ReaderReconnectionListenerPlugin(private val _handlers: StripeTerminalHandlersApi) :
-    ReaderReconnectionListener {
-    var cancelReconnect: Cancelable? = null
-
-    override fun onReaderReconnectStarted(
-        reader: Reader,
-        cancelReconnect: Cancelable,
-    ) = runOnMainThread {
-        this.cancelReconnect = cancelReconnect;
-        _handlers.readerReconnectStarted()
-    }
-
-    override fun onReaderReconnectFailed(reader: Reader) = runOnMainThread {
-        cancelReconnect = null
-        _handlers.readerReconnectFailed()
-    }
-
-    override fun onReaderReconnectSucceeded(reader: Reader) = runOnMainThread {
-        cancelReconnect = null
-        _handlers.readerReconnectSucceeded()
-    }
-}

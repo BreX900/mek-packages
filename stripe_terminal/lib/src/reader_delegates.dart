@@ -44,9 +44,9 @@ class BluetoothReaderDelegate extends PhysicalReaderDelegate {}
 class UsbReaderDelegate extends PhysicalReaderDelegate {}
 
 abstract class ReaderReconnectionDelegate {
-  FutureOr<void> onReaderReconnectFailed();
+  FutureOr<void> onReaderReconnectFailed(Reader reader);
 
-  FutureOr<void> onReaderReconnectStarted(Cancellable cancelReconnect);
+  FutureOr<void> onReaderReconnectStarted(Reader reader, Cancellable cancelReconnect);
 
-  FutureOr<void> onReaderReconnectSucceeded();
+  FutureOr<void> onReaderReconnectSucceeded(Reader reader);
 }

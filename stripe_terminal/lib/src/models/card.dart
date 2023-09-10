@@ -2,27 +2,6 @@ import 'package:mek_data_class/mek_data_class.dart';
 
 part 'card.g.dart';
 
-@DataClass()
-class CardDetails with _$CardDetails {
-  final CardBrand? brand;
-  final String? country;
-  final int expMonth;
-  final int expYear;
-  final String? fingerprint;
-  final CardFundingType? funding;
-  final String? last4;
-
-  const CardDetails({
-    required this.brand,
-    required this.country,
-    required this.expMonth,
-    required this.expYear,
-    required this.fingerprint,
-    required this.funding,
-    required this.last4,
-  });
-}
-
 enum CardBrand {
   amex,
   dinersClub,
@@ -47,7 +26,6 @@ class CardPresentDetails with _$CardPresentDetails {
   final String? country;
   final int expMonth;
   final int expYear;
-  final String? fingerprint;
   final CardFundingType? funding;
   final String? last4;
 
@@ -63,7 +41,6 @@ class CardPresentDetails with _$CardPresentDetails {
     required this.country,
     required this.expMonth,
     required this.expYear,
-    required this.fingerprint,
     required this.funding,
     required this.last4,
     required this.cardholderName,

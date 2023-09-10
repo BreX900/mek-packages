@@ -123,21 +123,21 @@ class StripeTerminalHandlers {
 //endregion
 
 //region Reader reconnection delegate
-  void _onReaderReconnectFailed() {
+  void _onReaderReconnectFailed(Reader reader) {
     _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectFailed();
+      await delegate.onReaderReconnectFailed(reader);
     });
   }
 
-  void _onReaderReconnectStarted() {
+  void _onReaderReconnectStarted(Reader reader) {
     _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectStarted(_platform.cancelReaderReconnection);
+      await delegate.onReaderReconnectStarted(reader, _platform.cancelReaderReconnection);
     });
   }
 
-  void _onReaderReconnectSucceeded() {
+  void _onReaderReconnectSucceeded(Reader reader) {
     _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectSucceeded();
+      await delegate.onReaderReconnectSucceeded(reader);
     });
   }
 

@@ -9,6 +9,7 @@ import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
 import 'package:one_for_all_generator/src/utils.dart';
 import 'package:path/path.dart';
+import 'package:source_gen/source_gen.dart' show LibraryReader, TypeChecker;
 
 class DartApiBuilder extends ApiBuilder {
   final DartOptions options;
@@ -137,12 +138,33 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  void writeSerializableClass(SerializableClassHandler handler) {
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+  void writeSerializableClass(SerializableClassHandler handler, {bool withName = false}) {
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
     final serializedRef = const Reference('List<Object?>');
     final deserializedRef = Reference(element.name);
+
+    if (children != null) {
+      if (flutterToHost) {
+        final childChecker = TypeChecker.fromStatic(element.thisType);
+        final children = LibraryReader(element.library).classes.where(childChecker.isSuperOf);
+        _library.body.add(Method((b) => b
+          ..returns = serializedRef
+          ..name = '_\$serialize${element.name}'
+          ..requiredParameters.add(Parameter((b) => b
+            ..type = deserializedRef
+            ..name = 'deserialized'))
+          ..lambda = true
+          ..body = Code('switch (deserialized) {\n'
+              '${children.map((e) => '  ${e.name}() => _\$serialize${e.name}(deserialized),\n').join('')}'
+              '}')));
+      }
+      for (final child in children) {
+        writeSerializableClass(child, withName: true);
+      }
+      return;
+    }
 
     if (flutterToHost) {
       _library.body.add(Method((b) => b
@@ -152,9 +174,12 @@ channel.setMethodCallHandler((call) async {
           ..type = deserializedRef
           ..name = 'deserialized'))
         ..lambda = true
-        ..body = Code('[${fields.map((e) {
-          return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
-        }).join(',')}]')));
+        ..body = Code('[${[
+          if (withName) '\'${element.name}\'',
+          ...fields.map((e) {
+            return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
+          }),
+        ].join(',')}]')));
     }
 
     if (hostToFlutter) {

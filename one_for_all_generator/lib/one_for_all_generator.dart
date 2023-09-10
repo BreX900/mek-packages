@@ -69,7 +69,7 @@ class OneForAll {
   }
 
   Future<void> build() async {
-    print('Building...');
+    print('Scanning...');
 
     final apiAbsolutePaths = [options.apiFile, ...options.extraApiFiles]
         .map((e) => path_.absolute(path_.normalize(e)))

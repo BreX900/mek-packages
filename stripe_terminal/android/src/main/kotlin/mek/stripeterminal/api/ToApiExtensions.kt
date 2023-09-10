@@ -19,6 +19,7 @@ fun Reader.toApi(): ReaderApi {
         simulated = isSimulated,
         availableUpdate = availableUpdate?.hasFirmwareUpdate ?: false,
         locationId = location?.id,
+        location = location?.toApi(),
         label = label,
         serialNumber = serialNumber!!,
     )
@@ -130,17 +131,6 @@ fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
     }
 }
 
-fun PaymentMethod.toApi(): PaymentMethodApi {
-    return PaymentMethodApi(
-        id = id,
-        card = cardDetails?.toApi(),
-        cardPresent = cardPresentDetails?.toApi(),
-        interacPresent = interacPresentDetails?.toApi(),
-        customer = customer,
-        metadata = metadata?.toHashMap() ?: hashMapOf(),
-    )
-}
-
 fun cardBrandToApi(value: String?): CardBrandApi? {
     return when (value) {
         "amex" -> CardBrandApi.AMEX
@@ -165,25 +155,12 @@ fun fundingToApi(value: String?): CardFundingTypeApi? {
     }
 }
 
-fun CardDetails.toApi(): CardDetailsApi {
-    return CardDetailsApi(
-        brand = cardBrandToApi(brand),
-        country = country,
-        expMonth = expMonth.toLong(),
-        expYear = expYear.toLong(),
-        fingerprint = fingerprint,
-        funding = fundingToApi(funding),
-        last4 = last4,
-    )
-}
-
 fun CardPresentDetails.toApi(): CardPresentDetailsApi {
     return CardPresentDetailsApi(
         brand = cardBrandToApi(brand),
         country = country,
         expMonth = expMonth.toLong(),
         expYear = expYear.toLong(),
-        fingerprint = fingerprint,
         funding = fundingToApi(funding),
         last4 = last4,
         cardholderName = cardholderName,
@@ -225,7 +202,7 @@ fun IncrementalAuthorizationStatus.toApi(): IncrementalAuthorizationStatusApi? {
 
 fun PaymentIntent.toApi(): PaymentIntentApi {
     return PaymentIntentApi(
-        id = id,
+        id = id!!,
         created = created,
         status = status!!.toApi(),
         amount = amount.toDouble(),

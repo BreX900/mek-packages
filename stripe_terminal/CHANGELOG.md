@@ -1,3 +1,20 @@
+## Next release
+- build(android): The `minSdkVersion` has been updated to 26. This means that the SDK will no longer support devices running Android 7.1.2 (Nougat) or earlier. Older devices can continue to use the 2.x versions of the SDK while on the maintenance schedule.
+- feat: Added to `Reader` class the `location` field.
+- fix(android): `Terminal.onUnexpectedReaderDisconnect` will be emit if a command cannot be sent to an internet reader. Previously, this callback was only invoked when a periodic status check failed.
+- refactor: Removed `moto` param on `Terminal.startCollectPaymentMethod` method
+- fix(android): For readers that require updates to be installed upon connecting, `Terminal.onConnectionStatusChange` will now be emitted with `connected` _after_ the updates complete successfully, not before.
+
+*BREAKING CHANGES*
+- feat: `ReconnectionDelegate` methods now provide the instance of the `Reader` that is being reconnected.
+- refactor: Deprecated classes and members have been replaced or removed:
+    - `CardDetails.fingerprint` and `CardPresentDetails.fingerprint` have been removed from mobile SDKs. You will still be able to access the fingerprint server-side.
+- refactor: `DiscoveryConfiguration` has been converted to a sealed type, instead of relying on the `DiscoveryMethod` enum to disambiguate different discovery methods.
+- refactor: `Terminal.processPayment` has been renamed to `Terminal.confirmPaymentIntent`.
+- refactor: `Terminal.processRefund` has been renamed to `Terminal.confirmRefund`.
+- refactor: Removed `embedded` readers support 
+- refactor: `Terminal.readReusableCard` has been removed. This functionality is replaced by [Setup Intents](https://stripe.com/docs/terminal/features/saving-cards/save-cards-directly?terminal-sdk-platform=android).
+
 ## 2.1.4
 - fix(ios): fix: store readers after discovery, otherwise lookup for connection will always fail. Thanks [@Kuama-IT](https://github.com/Kuama-IT)
 - fix(ios): TimeInterval to Int inside DateTimeDartApiCodec. Thanks [@Kuama-IT](https://github.com/Kuama-IT)

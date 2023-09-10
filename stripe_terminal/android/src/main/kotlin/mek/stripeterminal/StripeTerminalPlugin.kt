@@ -1,6 +1,7 @@
 package mek.stripeterminal
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,29 +10,27 @@ import com.stripe.stripeterminal.Terminal
 import com.stripe.stripeterminal.TerminalApplicationDelegate
 import com.stripe.stripeterminal.external.callable.Callback
 import com.stripe.stripeterminal.external.callable.Cancelable
-import com.stripe.stripeterminal.external.callable.DiscoveryListener
 import com.stripe.stripeterminal.external.callable.LocationListCallback
 import com.stripe.stripeterminal.external.callable.PaymentIntentCallback
-import com.stripe.stripeterminal.external.callable.PaymentMethodCallback
 import com.stripe.stripeterminal.external.callable.ReaderCallback
 import com.stripe.stripeterminal.external.callable.RefundCallback
 import com.stripe.stripeterminal.external.callable.SetupIntentCallback
 import com.stripe.stripeterminal.external.models.CaptureMethod
 import com.stripe.stripeterminal.external.models.CollectConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
-import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
 import com.stripe.stripeterminal.external.models.PaymentIntentParameters
 import com.stripe.stripeterminal.external.models.PaymentMethod
 import com.stripe.stripeterminal.external.models.PaymentMethodType
-import com.stripe.stripeterminal.external.models.ReadReusableCardParameters
 import com.stripe.stripeterminal.external.models.Reader
 import com.stripe.stripeterminal.external.models.Refund
+import com.stripe.stripeterminal.external.models.RefundConfiguration
 import com.stripe.stripeterminal.external.models.RefundParameters
 import com.stripe.stripeterminal.external.models.SetupIntent
 import com.stripe.stripeterminal.external.models.SetupIntentCancellationParameters
+import com.stripe.stripeterminal.external.models.SetupIntentConfiguration
 import com.stripe.stripeterminal.external.models.SetupIntentParameters
 import com.stripe.stripeterminal.external.models.TerminalException
 import com.stripe.stripeterminal.log.LogLevel
@@ -39,10 +38,8 @@ import mek.stripeterminal.api.CartApi
 import mek.stripeterminal.api.ConnectionStatusApi
 import mek.stripeterminal.api.DeviceTypeApi
 import mek.stripeterminal.api.DiscoverReadersControllerApi
-import mek.stripeterminal.api.DiscoveryMethodApi
 import mek.stripeterminal.api.LocationApi
 import mek.stripeterminal.api.PaymentIntentApi
-import mek.stripeterminal.api.PaymentMethodApi
 import mek.stripeterminal.api.PlatformException
 import mek.stripeterminal.api.ReaderApi
 import mek.stripeterminal.api.Result
@@ -58,6 +55,7 @@ import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
 import mek.stripeterminal.api.CaptureMethodApi
+import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.PaymentIntentParametersApi
 import mek.stripeterminal.api.PaymentMethodTypeApi
 import mek.stripeterminal.api.PaymentStatusApi
@@ -65,6 +63,7 @@ import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
+import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
 
 class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatformApi {
@@ -117,8 +116,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     //region Reader discovery, connection and updates
     private lateinit var _discoverReadersController: DiscoverReadersControllerApi
-    private var _discoverReaderCancelable: Cancelable? = null
-    private var _discoveredReaders: List<Reader> = arrayListOf()
+    private var _discoverReadersSubject = DiscoverReadersSubject()
+    private val _discoveredReaders: List<Reader> get() = _discoverReadersSubject.readers
     private lateinit var _readerDelegate: ReaderDelegatePlugin
     private lateinit var _readerReconnectionDelegate: ReaderReconnectionListenerPlugin
 
@@ -126,56 +125,23 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     override fun onSupportsReadersOfType(
         deviceType: DeviceTypeApi,
-        discoveryMethod: DiscoveryMethodApi,
-        simulated: Boolean
+        discoveryConfiguration: DiscoveryConfigurationApi,
     ): Boolean {
         val hostDeviceType = deviceType.toHost() ?: return false
-        val hostDiscoveryMethod = discoveryMethod.toHost() ?: return false
+        val hostDiscoveryConfiguration = discoveryConfiguration.toHost() ?: return false
         val result = _terminal.supportsReadersOfType(
             deviceType = hostDeviceType,
-            discoveryMethod = hostDiscoveryMethod,
-            simulated = simulated
+            discoveryConfiguration = hostDiscoveryConfiguration,
         )
         return result.isSupported
     }
 
     private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
         _discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
-        _discoverReadersController.setHandler({ sink, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String? ->
-            val hostDiscoveryMethod = discoveryMethod.toHost()
-            if (hostDiscoveryMethod == null) {
-                sink.error("", "Discovery method not supported: $discoveryMethod", null)
-                sink.endOfStream()
-                return@setHandler
-            }
-
-            val config = DiscoveryConfiguration(
-                isSimulated = simulated,
-                discoveryMethod = hostDiscoveryMethod,
-                location = locationId
-            )
-
-            // Ignore error, the previous stream can no longer receive events
-            _discoverReaderCancelable?.cancel(EmptyCallback())
-
-            _discoverReaderCancelable =
-                _terminal.discoverReaders(config, object : DiscoveryListener {
-                    override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
-                        _discoveredReaders = readers
-                        runOnMainThread { sink.success(readers.map { it.toApi() }) }
-                    }
-                }, object : TerminalErrorHandler(sink::error), Callback {
-                    override fun onFailure(e: TerminalException) = runOnMainThread {
-                        super.onFailure(e)
-                        sink.endOfStream()
-                    }
-
-                    override fun onSuccess() = runOnMainThread { sink.endOfStream() }
-                })
-        }, {
-            // Ignore error, flutter stream already closed
-            _discoverReaderCancelable?.cancel(EmptyCallback())
-        })
+        _discoverReadersController.setHandler(
+            _discoverReadersSubject::onListen,
+            _discoverReadersSubject::onCancel
+        )
     }
 
     override fun onConnectBluetoothReader(
@@ -341,7 +307,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
                 },
             ).build(), object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    _paymentIntents[paymentIntent.id] = paymentIntent
+                    _paymentIntents[paymentIntent.id!!] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
             })
@@ -354,7 +320,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         _terminal.retrievePaymentIntent(clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    _paymentIntents[paymentIntent.id] = paymentIntent
+                    _paymentIntents[paymentIntent.id!!] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
             })
@@ -366,7 +332,6 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         result: Result<PaymentIntentApi>,
         operationId: Long,
         paymentIntentId: String,
-        moto: Boolean,
         skipTipping: Boolean,
     ) {
         val paymentIntent = _paymentIntents[paymentIntentId]
@@ -385,11 +350,10 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     _cancelablesCollectPaymentMethod.remove(operationId)
                     result.success(paymentIntent.toApi())
-                    _paymentIntents[paymentIntent.id] = paymentIntent
+                    _paymentIntents[paymentIntent.id!!] = paymentIntent
                 }
             },
             CollectConfiguration.Builder()
-                .setMoto(moto)
                 .skipTipping(skipTipping)
                 .build(),
         )
@@ -402,12 +366,12 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
             })
     }
 
-    override fun onProcessPayment(
+    override fun onConfirmPaymentIntent(
         result: Result<PaymentIntentApi>,
         paymentIntentId: String,
     ) {
         val paymentIntent = findPaymentIntent(result, paymentIntentId) ?: return
-        _terminal.processPayment(
+        _terminal.confirmPaymentIntent(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
@@ -431,42 +395,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     //endregion
 
     //region Saving payment details for later use
-    private var _cancelablesReadReusableCard = HashMap<Long, Cancelable>()
     private var _setupIntents = HashMap<String, SetupIntent>()
     private var _cancelablesCollectSetupIntentPaymentMethod = HashMap<Long, Cancelable>()
-
-    override fun onStartReadReusableCard(
-        result: Result<PaymentMethodApi>,
-        operationId: Long,
-        customer: String?,
-        metadata: HashMap<String, String>?,
-    ) {
-        val params = ReadReusableCardParameters.Builder()
-        if (customer != null) params.setCustomer(customer)
-        if (metadata != null) params.putAllMetadata(metadata)
-        _cancelablesReadReusableCard[operationId] = _terminal.readReusableCard(params.build(),
-            object : TerminalErrorHandler(result::error), PaymentMethodCallback {
-                override fun onFailure(e: TerminalException) {
-                    _cancelablesReadReusableCard.remove(operationId)
-                    super.onFailure(e)
-                }
-
-                override fun onSuccess(paymentMethod: PaymentMethod) {
-                    _cancelablesReadReusableCard.remove(operationId)
-                    result.success(paymentMethod.toApi())
-                }
-            })
-    }
-
-    override fun onStopReadReusableCard(
-        result: Result<Unit>,
-        operationId: Long,
-    ) {
-        _cancelablesReadReusableCard.remove(operationId)
-            ?.cancel(object : TerminalErrorHandler(result::error), Callback {
-                override fun onSuccess() = result.success(Unit)
-            })
-    }
 
     override fun onCreateSetupIntent(
         result: Result<SetupIntentApi>,
@@ -508,13 +438,19 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         result: Result<SetupIntentApi>,
         operationId: Long,
         setupIntentId: String,
-        customerConsentCollected: Boolean
+        customerConsentCollected: Boolean,
+        isCustomerCancellationEnabled: Boolean?,
     ) {
         val setupIntent = findSetupIntent(result, setupIntentId) ?: return
+
+        val config = SetupIntentConfiguration.Builder();
+        isCustomerCancellationEnabled?.let(config::setEnableCustomerCancellation)
+
         _cancelablesCollectSetupIntentPaymentMethod[operationId] =
             _terminal.collectSetupIntentPaymentMethod(
                 setupIntent,
                 customerConsentCollected,
+                config = config.build(),
                 object : TerminalErrorHandler(result::error), SetupIntentCallback {
                     override fun onFailure(e: TerminalException) {
                         _cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
@@ -573,8 +509,12 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         currency: String,
         metadata: HashMap<String, String>?,
         reverseTransfer: Boolean?,
-        refundApplicationFee: Boolean?
+        refundApplicationFee: Boolean?,
+        isCustomerCancellationEnabled: Boolean?,
     ) {
+        val config = RefundConfiguration.Builder()
+        isCustomerCancellationEnabled?.let(config::setEnableCustomerCancellation)
+
         _cancelablesCollectRefundPaymentMethod[operationId] = _terminal.collectRefundPaymentMethod(
             RefundParameters.Builder(
                 chargeId = chargeId,
@@ -586,6 +526,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
                 refundApplicationFee?.let(it::setRefundApplicationFee)
                 it.build()
             },
+            config = config.build(),
             object : TerminalErrorHandler(result::error), Callback {
                 override fun onFailure(e: TerminalException) {
                     _cancelablesCollectRefundPaymentMethod.remove(operationId)
@@ -606,8 +547,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
             })
     }
 
-    override fun onProcessRefund(result: Result<RefundApi>) {
-        _terminal.processRefund(object : TerminalErrorHandler(result::error), RefundCallback {
+    override fun onConfirmRefund(result: Result<RefundApi>) {
+        _terminal.confirmRefund(object : TerminalErrorHandler(result::error), RefundCallback {
             override fun onSuccess(refund: Refund) = result.success(refund.toApi())
         })
     }
@@ -702,16 +643,12 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     private fun clean() {
         if (_terminal.connectedReader != null) _terminal.disconnectReader(EmptyCallback())
 
-        _discoverReaderCancelable?.cancel(EmptyCallback())
-        _discoverReaderCancelable = null
-        _discoveredReaders = arrayListOf()
+        _discoverReadersSubject.clear()
 
         _cancelablesCollectPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         _cancelablesCollectPaymentMethod = hashMapOf()
         _paymentIntents = hashMapOf()
 
-        _cancelablesReadReusableCard.values.forEach { it.cancel(EmptyCallback()) }
-        _cancelablesReadReusableCard = hashMapOf()
         _cancelablesCollectSetupIntentPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         _cancelablesCollectSetupIntentPaymentMethod = hashMapOf()
         _setupIntents = hashMapOf()

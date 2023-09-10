@@ -1,7 +1,9 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:recase/recase.dart';
 
+@experimental
 @SerializableEnum(
   type: SerializableEnumType.string,
   languages: {LanguageApi.swift},
@@ -102,6 +104,7 @@ class TerminalException {
   final String? message;
   final String? details;
 
+  @experimental
   late final TerminalExceptionCode? code =
       TerminalExceptionCode.values.firstWhereOrNull((e) => e.name == rawCode);
 

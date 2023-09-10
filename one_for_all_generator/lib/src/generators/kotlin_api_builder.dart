@@ -373,14 +373,51 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeSerializableClass(SerializableClassHandler handler) {
+  void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
     if (!handler.kotlinGeneration) return;
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
 
+    if (children != null) {
+      _specs.add(KotlinClass(
+        modifier: KotlinClassModifier.sealed,
+        name: codecs.encodeName(element.name),
+        body: [
+          if (flutterToHost)
+            KotlinClass(
+              modifier: KotlinClassModifier.companion,
+              name: 'object',
+              body: [
+                KotlinMethod(
+                  name: 'deserialize',
+                  parameters: [
+                    const KotlinParameter(
+                      name: 'serialized',
+                      type: 'List<Any?>',
+                    ),
+                  ],
+                  returns: codecs.encodeType(element.thisType),
+                  body: 'return when (serialized[0]) {\n'
+                      '${children.map((h) {
+                    return '    "${h.element.name}" -> ${codecs.encodeName(h.element.name)}.deserialize(serialized.drop(1))\n';
+                  }).join()}'
+                      '    else -> throw Error()\n'
+                      '}',
+                ),
+              ],
+            ),
+        ],
+      ));
+      for (final child in children) {
+        writeSerializableClass(child, extend: element);
+      }
+      return;
+    }
+
     _specs.add(KotlinClass(
-      modifier: KotlinClassModifier.data,
+      modifier: fields.isNotEmpty ? KotlinClassModifier.data : null,
       name: codecs.encodeName(element.name),
+      extend: extend != null ? '${codecs.encodeName(extend.name)}()' : null,
       initializers: fields.map((e) {
         return KotlinField(
           name: _encodeVarName(e.name),

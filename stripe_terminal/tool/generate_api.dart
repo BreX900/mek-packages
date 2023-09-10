@@ -10,7 +10,9 @@ void main() async {
       hostClassSuffix: 'Api',
       codecs: ApiPlatformCodec.values,
     ),
-    dartOptions: const DartOptions(),
+    dartOptions: const DartOptions(
+      pageWidth: 100,
+    ),
     kotlinOptions: const KotlinOptions(
       package: 'mek.stripeterminal.api',
       outputFile: 'android/src/main/kotlin/mek/stripeterminal/api/StripeTerminalApi.kt',

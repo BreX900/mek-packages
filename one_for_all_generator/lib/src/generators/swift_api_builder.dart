@@ -408,13 +408,45 @@ return try await withCheckedThrowingContinuation { continuation in
   }
 
   @override
-  void writeSerializableClass(SerializableClassHandler handler) {
+  void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
     if (!handler.swiftGeneration) return;
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter) = handler;
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
     final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+
+    if (children != null) {
+      _specs.add(SwiftProtocol(
+        name: codecs.encodeName(element.name),
+      ));
+      if (flutterToHost) {
+        _specs.add(SwiftMethod(
+          name: 'deserialize${codecs.encodeName(element.name)}',
+          parameters: [
+            const SwiftParameter(
+              label: '_',
+              name: 'serialized',
+              type: '[Any?]',
+            ),
+          ],
+          returns: codecs.encodeType(element.thisType),
+          body: 'switch serialized[0] as! String {\n'
+              '${children.map((h) {
+            return 'case "${h.element.name}":\n'
+                '    return ${codecs.encodeName(h.element.name)}.deserialize(Array(serialized.dropFirst()))\n';
+          }).join()}'
+              'default:\n'
+              '    fatalError()\n'
+              '}',
+        ));
+      }
+      for (final child in children) {
+        writeSerializableClass(child, extend: element);
+      }
+      return;
+    }
 
     _specs.add(SwiftStruct(
       name: codecs.encodeName(element.name),
+      implements: [if (extend != null) codecs.encodeName(extend.name)],
       fields: fields.map((e) {
         return SwiftField(
           name: _encodeVarName(e.name),

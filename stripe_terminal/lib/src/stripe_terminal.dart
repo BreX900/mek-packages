@@ -4,11 +4,10 @@ import 'dart:async';
 
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
-import 'package:mek_stripe_terminal/src/models/discover_config.dart';
+import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
-import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
@@ -88,13 +87,11 @@ class StripeTerminal {
   ///   a reader to taking payments.
   Future<bool> supportsReadersOfType({
     required DeviceType deviceType,
-    required DiscoveryMethod discoveryMethod,
-    required bool simulated,
+    required DiscoveryConfiguration discoveryConfiguration,
   }) async {
-    return _platform.supportsReadersOfType(
+    return await _platform.supportsReadersOfType(
       deviceType: deviceType,
-      discoveryMethod: discoveryMethod,
-      simulated: simulated,
+      discoveryConfiguration: discoveryConfiguration,
     );
   }
 
@@ -121,17 +118,9 @@ class StripeTerminal {
   /// When connect* method is called, the SDK uses a connection token and the given reader information
   ///   to register the reader to your Stripe account. If the SDK does not already have a connection token,
   ///   it will call the fetchToken method which was passed as an argument in [getInstance].
-  Stream<List<Reader>> discoverReaders({
-    DiscoveryMethod discoveryMethod = DiscoveryMethod.bluetoothScan,
-    bool simulated = false,
-    String? locationId,
-  }) {
+  Stream<List<Reader>> discoverReaders(DiscoveryConfiguration discoveryConfiguration) {
     _controller = _handleStream(_controller, () {
-      return _platform.discoverReaders(
-        discoveryMethod: discoveryMethod,
-        simulated: simulated,
-        locationId: locationId,
-      );
+      return _platform.discoverReaders(discoveryConfiguration);
     });
     return _controller!.stream;
   }
@@ -302,21 +291,19 @@ class StripeTerminal {
   /// After resolving the error, you may call collectPaymentMethod again to either try the same card again, or try a different card.
   ///
   /// If collecting a payment method succeeds, the method complete with a [PaymentIntent] with status
-  /// [PaymentIntentStatus.requiresConfirmation], indicating that you should call [processPayment] to finish the payment.
+  /// [PaymentIntentStatus.requiresConfirmation], indicating that you should call [confirmPaymentIntent] to finish the payment.
   ///
   /// Note that if [collectPaymentMethod] is canceled, the future will be complete with a Canceled error.
   ///
   /// Only supports `swipe`, `tap` and `insert` method
   CancelableFuture<PaymentIntent> collectPaymentMethod(
     PaymentIntent paymentIntent, {
-    bool moto = false,
     bool skipTipping = false,
   }) {
     return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
       return await _platform.startCollectPaymentMethod(
         operationId: id,
         paymentIntentId: paymentIntent.id,
-        moto: moto,
         skipTipping: skipTipping,
       );
     });
@@ -335,20 +322,20 @@ class StripeTerminal {
   /// Your app should inspect the updated [PaymentIntent] to decide how to retry the payment.
   ///
   /// If the updated PaymentIntent is nil, the request to Stripe’s servers timed out and
-  /// the [PaymentIntent]’s status is unknown. We recommend that you retry [processPayment] with
+  /// the [PaymentIntent]’s status is unknown. We recommend that you retry [confirmPaymentIntent] with
   /// the original [PaymentIntent]. If you instead choose to abandon the original [PaymentIntent]
   /// and create a new one, do not capture the original [PaymentIntent]. If you do, you might
   /// charge your customer twice.
   ///
   /// If the updated [PaymentIntent]’s status is still [PaymentIntentStatus.requiresConfirmation]
   ///   (e.g., the request failed because your app is not connected to the internet), you can call
-  ///   [processPayment] again with the updated [PaymentIntent] to retry the request.
+  ///   [confirmPaymentIntent] again with the updated [PaymentIntent] to retry the request.
   ///
   /// If the updated [PaymentIntent]’s status changes to [PaymentIntentStatus.requiresPaymentMethod]
   ///   (e.g., the request failed because the card was declined), call [collectPaymentMethod]
   ///   with the updated [PaymentIntent] to try charging another card.
-  Future<PaymentIntent> processPayment(PaymentIntent paymentIntent) async =>
-      await _platform.processPayment(paymentIntent.id);
+  Future<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) async =>
+      await _platform.confirmPaymentIntent(paymentIntent.id);
 
   /// Cancels an [PaymentIntent].
   ///
@@ -361,21 +348,6 @@ class StripeTerminal {
 //endregion
 
 //region Saving payment details for later use
-  /// Extracts payment method from the reader
-  ///
-  /// Only support `insert` operation on the reader
-  CancelableFuture<PaymentMethod> readReusableCard({
-    String? customer,
-    Map<String, String>? metadata,
-  }) {
-    return CancelableFuture(_platform.stopReadReusableCard, (id) async {
-      return await _platform.startReadReusableCard(
-        operationId: id,
-        customer: customer,
-        metadata: metadata,
-      );
-    });
-  }
 
   Future<SetupIntent> createSetupIntent({
     required String? customerId,
@@ -396,29 +368,33 @@ class StripeTerminal {
   Future<SetupIntent> retrieveSetupIntent(String clientSecret) async =>
       await _platform.retrieveSetupIntent(clientSecret);
 
+  /// - [isCustomerCancellationEnabled] Only available on Android
   CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
     SetupIntent setupIntent, {
     required bool customerConsentCollected,
+    bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
         setupIntentId: setupIntent.id,
         customerConsentCollected: customerConsentCollected,
+        isCustomerCancellationEnabled: isCustomerCancellationEnabled,
       );
     });
   }
 
   Future<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) async =>
-      _platform.confirmSetupIntent(setupIntent.id);
+      await _platform.confirmSetupIntent(setupIntent.id);
 
   Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
-      _platform.cancelSetupIntent(setupIntent.id);
+      await _platform.cancelSetupIntent(setupIntent.id);
 
 //endregion
 
 //region Card-present refunds
 
+  /// - [isCustomerCancellationEnabled] Only available on Android
   CancelableFuture<void> collectRefundPaymentMethod({
     required String chargeId,
     required int amount,
@@ -426,6 +402,7 @@ class StripeTerminal {
     Map<String, String>? metadata,
     bool? reverseTransfer,
     bool? refundApplicationFee,
+    bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
       return await _platform.startCollectRefundPaymentMethod(
@@ -436,11 +413,12 @@ class StripeTerminal {
         metadata: metadata,
         reverseTransfer: reverseTransfer,
         refundApplicationFee: refundApplicationFee,
+        isCustomerCancellationEnabled: isCustomerCancellationEnabled,
       );
     });
   }
 
-  Future<Refund> processRefund() async => await _platform.processRefund();
+  Future<Refund> confirmRefund() async => await _platform.confirmRefund();
 //endregion
 
 //region Display information to customers

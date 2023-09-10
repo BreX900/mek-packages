@@ -6,45 +6,6 @@ part of 'card.dart';
 // DataClassGenerator
 // **************************************************************************
 
-mixin _$CardDetails {
-  CardDetails get _self => this as CardDetails;
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CardDetails &&
-          runtimeType == other.runtimeType &&
-          _self.brand == other.brand &&
-          _self.country == other.country &&
-          _self.expMonth == other.expMonth &&
-          _self.expYear == other.expYear &&
-          _self.fingerprint == other.fingerprint &&
-          _self.funding == other.funding &&
-          _self.last4 == other.last4;
-  @override
-  int get hashCode {
-    var hashCode = 0;
-    hashCode = $hashCombine(hashCode, _self.brand.hashCode);
-    hashCode = $hashCombine(hashCode, _self.country.hashCode);
-    hashCode = $hashCombine(hashCode, _self.expMonth.hashCode);
-    hashCode = $hashCombine(hashCode, _self.expYear.hashCode);
-    hashCode = $hashCombine(hashCode, _self.fingerprint.hashCode);
-    hashCode = $hashCombine(hashCode, _self.funding.hashCode);
-    hashCode = $hashCombine(hashCode, _self.last4.hashCode);
-    return $hashFinish(hashCode);
-  }
-
-  @override
-  String toString() => (ClassToString('CardDetails')
-        ..add('brand', _self.brand)
-        ..add('country', _self.country)
-        ..add('expMonth', _self.expMonth)
-        ..add('expYear', _self.expYear)
-        ..add('fingerprint', _self.fingerprint)
-        ..add('funding', _self.funding)
-        ..add('last4', _self.last4))
-      .toString();
-}
-
 mixin _$CardPresentDetails {
   CardPresentDetails get _self => this as CardPresentDetails;
   @override
@@ -56,7 +17,6 @@ mixin _$CardPresentDetails {
           _self.country == other.country &&
           _self.expMonth == other.expMonth &&
           _self.expYear == other.expYear &&
-          _self.fingerprint == other.fingerprint &&
           _self.funding == other.funding &&
           _self.last4 == other.last4 &&
           _self.cardholderName == other.cardholderName &&
@@ -72,7 +32,6 @@ mixin _$CardPresentDetails {
     hashCode = $hashCombine(hashCode, _self.country.hashCode);
     hashCode = $hashCombine(hashCode, _self.expMonth.hashCode);
     hashCode = $hashCombine(hashCode, _self.expYear.hashCode);
-    hashCode = $hashCombine(hashCode, _self.fingerprint.hashCode);
     hashCode = $hashCombine(hashCode, _self.funding.hashCode);
     hashCode = $hashCombine(hashCode, _self.last4.hashCode);
     hashCode = $hashCombine(hashCode, _self.cardholderName.hashCode);
@@ -90,7 +49,6 @@ mixin _$CardPresentDetails {
         ..add('country', _self.country)
         ..add('expMonth', _self.expMonth)
         ..add('expYear', _self.expYear)
-        ..add('fingerprint', _self.fingerprint)
         ..add('funding', _self.funding)
         ..add('last4', _self.last4)
         ..add('cardholderName', _self.cardholderName)

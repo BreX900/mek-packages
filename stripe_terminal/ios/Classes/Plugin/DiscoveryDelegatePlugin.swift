@@ -25,23 +25,17 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
 
     func onListen(
         _ sink: ControllerSink<[ReaderApi]>,
-        _ discoveryMethod: DiscoveryMethodApi,
-        _ simulated: Bool,
-        _ locationId: String?
+        _ configuration: DiscoveryConfigurationApi
     ) -> FlutterError? {
         self._cancel()
         
-        let discoveryMethodHost = discoveryMethod.toHost()
-        guard let discoveryMethodHost else {
-            return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
+        let configurationHost = try! configuration.toHost()
+        guard let configurationHost else {
+            return FlutterError(code: "", message: "DiscoveryConfiguration not supported", details: nil)
         }
          
         self._cancelable = Terminal.shared.discoverReaders(
-            DiscoveryConfiguration(
-                discoveryMethod: discoveryMethodHost,
-                locationId: locationId,
-                simulated: simulated
-            ),
+            configurationHost,
             delegate: self
         ) { error in
             self._cancelable = nil
@@ -59,11 +53,7 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
         return nil
     }
     
-    func onCancel(
-        _ discoveryMethod: DiscoveryMethodApi,
-        _ simulated: Bool,
-        _ locationId: String?
-    ) -> FlutterError? {
+    func onCancel(_ configuration: DiscoveryConfigurationApi) -> FlutterError? {
         self._cancel()
         return nil
     }

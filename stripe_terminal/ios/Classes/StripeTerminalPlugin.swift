@@ -10,7 +10,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
     
     private let handlers: StripeTerminalHandlersApi
-    
+
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         self.handlers = StripeTerminalHandlersApi(binaryMessenger)
         self._discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
@@ -60,10 +60,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     func onSupportsReadersOfType(
         _ deviceType: DeviceTypeApi,
-        _ discoveryMethod: DiscoveryMethodApi,
-        _ simulated: Bool
+        _ discoveryConfiguration: DiscoveryConfigurationApi
     ) throws -> Bool {
-        let hostDiscoveryMethod = discoveryMethod.toHost()
+        let hostDiscoveryMethod = discoveryConfiguration.toHostDiscoveryMethod()
         guard let hostDiscoveryMethod else {
             return false
         }
@@ -74,7 +73,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         let result = Terminal.shared.supportsReaders(
             of: hostDeviceType,
             discoveryMethod: hostDiscoveryMethod,
-            simulated: simulated
+            simulated: discoveryConfiguration.toHostSimulated()
         )
         do {
             try result.get()
@@ -100,15 +99,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ locationId: String,
         _ autoReconnectOnUnexpectedDisconnect: Bool
     ) async throws -> ReaderApi {
+        let config = BluetoothConnectionConfigurationBuilder(locationId: locationId)
+            .setAutoReconnectOnUnexpectedDisconnect(autoReconnectOnUnexpectedDisconnect)
+            .setAutoReconnectionDelegate(_readerReconnectionDelegate)
         do {
             let reader = try await Terminal.shared.connectBluetoothReader(
                 _findReader(serialNumber),
                 delegate: _readerDelegate,
-                connectionConfig: BluetoothConnectionConfiguration(
-                    locationId: locationId,
-                    autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-                    autoReconnectionDelegate: _readerReconnectionDelegate
-                )
+                connectionConfig: config.build()
             )
             return reader.toApi()
         } catch let error as NSError {
@@ -120,12 +118,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ serialNumber: String,
         _ failIfInUse: Bool
     ) async throws -> ReaderApi {
+        let config = InternetConnectionConfigurationBuilder()
+            .setFailIfInUse(failIfInUse)
         do {
             let reader = try await Terminal.shared.connectInternetReader(
                 _findReader(serialNumber),
-                connectionConfig: InternetConnectionConfiguration(
-                    failIfInUse: failIfInUse
-                )
+                connectionConfig: config.build()
             )
             return reader.toApi()
         } catch let error as NSError {
@@ -137,13 +135,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ serialNumber: String,
         _ locationId: String
     ) async throws -> ReaderApi {
+        let config = LocalMobileConnectionConfigurationBuilder(locationId: locationId)
         do {
             let reader = try await Terminal.shared.connectLocalMobileReader(
                 _findReader(serialNumber),
                 delegate: _readerDelegate,
-                connectionConfig: LocalMobileConnectionConfiguration(
-                    locationId: locationId
-                )
+                connectionConfig: config.build()
             )
             return reader.toApi()
         } catch let error as NSError {
@@ -164,12 +161,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
     
     func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
+        let params = ListLocationsParametersBuilder()
+            .setEndingBefore(endingBefore)
+            .setStartingAfter(startingAfter)
+        limit.apply { params.setLimit(UInt($0)) }
         do {
-            return try await Terminal.shared.listLocations(parameters: ListLocationsParameters(
-                limit: limit as NSNumber?,
-                endingBefore: endingBefore,
-                startingAfter: startingAfter
-            )).0.map { $0.toApi() }
+            return try await Terminal.shared.listLocations(parameters: params.build()).0.map { $0.toApi() }
         } catch let error as NSError {
             throw error.toApi()
         }
@@ -201,8 +198,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     func onCreatePaymentIntent(_ parameters: PaymentIntentParametersApi) async throws -> PaymentIntentApi {
         do {
+            
             let paymentIntent = try await Terminal.shared.createPaymentIntent(parameters.toHost())
-            _paymentIntents[paymentIntent.stripeId] = paymentIntent
+            _paymentIntents[paymentIntent.stripeId!] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
             throw error.toApi()
@@ -214,7 +212,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     ) async throws -> PaymentIntentApi {
         do {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
-            _paymentIntents[paymentIntent.stripeId] = paymentIntent
+            _paymentIntents[paymentIntent.stripeId!] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
             throw error.toApi()
@@ -227,8 +225,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
-        _: Bool,
-        _: Bool
+        _ skipTipping: Bool
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
@@ -238,7 +235,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
                 result.error(platformError.code, platformError.message, platformError.details)
                 return
             }
-            self._paymentIntents[paymentIntent!.stripeId] = paymentIntent!
+            self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
             result.success(paymentIntent!.toApi())
         }
     }
@@ -249,12 +246,12 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
 
-    func onProcessPayment(
+    func onConfirmPaymentIntent(
         _ paymentIntentId: String
     ) async throws -> PaymentIntentApi {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
         do {
-            let (intent, error) = await Terminal.shared.processPayment(paymentIntent)
+            let (intent, error) = await Terminal.shared.confirmPaymentIntent(paymentIntent)
             if let error {
                 throw PlatformError(error.declineCode!, error.localizedDescription)
             }
@@ -277,35 +274,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
 // MARK: - Saving payment details for later use
    
-    private var _cancelablesReadReusableCard: [Int: Cancelable] = [:]
     private var _setupIntents: [String: SetupIntent] = [:]
     private var _cancelablesCollectSetupIntentPaymentMethod: [Int: Cancelable] = [:]
-
-    func onStartReadReusableCard(
-        _ result: Result<PaymentMethodApi>,
-        _ operationId: Int,
-        _: String?,
-        _: [String: String]?
-    ) throws {
-        _cancelablesReadReusableCard[operationId] = Terminal.shared.readReusableCard(
-            ReadReusableCardParameters(),
-            completion: { paymentMethod, error in
-                self._cancelablesReadReusableCard.removeValue(forKey: operationId)
-                if let error = error as? NSError {
-                    let platformError = error.toApi()
-                    result.error(platformError.code, platformError.message, platformError.details)
-                    return
-                }
-                result.success(paymentMethod!.toApi())
-            }
-        )
-    }
-
-    func onStopReadReusableCard(
-        _ operationId: Int
-    ) async throws {
-        try await _cancelablesReadReusableCard.removeValue(forKey: operationId)?.cancel()
-    }
     
     func onCreateSetupIntent(
         _ customerId: String?,
@@ -314,13 +284,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ description: String?,
         _ usage: SetupIntentUsageApi?
     ) async throws -> SetupIntentApi {
-        let params = SetupIntentParameters(customer: customerId)
-        params.metadata = metadata
-        params.onBehalfOf = onBehalfOf
-        params.stripeDescription = description
-        if let usage = usage { params.usage = usage.toHost() }
+        let params = SetupIntentParametersBuilder()
+        params.setCustomer(customerId)
+        params.setMetadata(metadata)
+        params.setOnBehalfOf(onBehalfOf)
+        params.setStripeDescription(description)
+        usage.apply { params.setUsage($0.toHost()) }
         do {
-            let setupIntent = try await Terminal.shared.createSetupIntent(params)
+            let setupIntent = try await Terminal.shared.createSetupIntent(params.build())
             _setupIntents[setupIntent.stripeId] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
@@ -342,7 +313,8 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ result: Result<SetupIntentApi>,
         _ operationId: Int,
         _ setupIntentId: String,
-        _ customerConsentCollected: Bool
+        _ customerConsentCollected: Bool,
+        _ isCustomerCancellationEnabled: Bool?
     ) throws {
         let setupIntent = try _findSetupIntent(setupIntentId)
         _cancelablesCollectSetupIntentPaymentMethod[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
@@ -396,14 +368,15 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         _ currency: String,
         _ metadata: [String : String]?,
         _ reverseTransfer: Bool?,
-        _ refundApplicationFee: Bool?
+        _ refundApplicationFee: Bool?,
+        _ isCustomerCancellationEnabled: Bool?
     ) throws {
-        let params = RefundParameters(chargeId: chargeId, amount: UInt(amount), currency: currency)
-        if let metadata = metadata { params.metadata = metadata }
-        if let reverseTransfer = reverseTransfer { params.reverseTransfer = NSNumber(value: reverseTransfer) }
-        if let refundApplicationFee = refundApplicationFee { params.refundApplicationFee = NSNumber(value: refundApplicationFee) }
+        let params = RefundParametersBuilder(chargeId: chargeId, amount: UInt(amount), currency: currency)
+        params.setMetadata(metadata)
+        reverseTransfer.apply(params.setReverseTransfer)
+        params.setMetadata(metadata)
         _cancelablesCollectRefundPaymentMethod[operationId] = Terminal.shared.collectRefundPaymentMethod(
-            params,
+            try params.build(),
             completion: { error in
                 self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
@@ -420,9 +393,9 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         try await _cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
     
-    func onProcessRefund() async throws -> RefundApi {
+    func onConfirmRefund() async throws -> RefundApi {
         do {
-            let (refund, error) = await Terminal.shared.processRefund()
+            let (refund, error) = await Terminal.shared.confirmRefund()
             if let error {
                 throw PlatformError("\(error.code)", error.localizedDescription)
             }
@@ -462,9 +435,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         self._cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectPaymentMethod = [:]
         self._paymentIntents = [:]
-        
-        self._cancelablesReadReusableCard.values.forEach { $0.cancel { error in } }
-        self._cancelablesReadReusableCard = [:]
+
         self._cancelablesCollectSetupIntentPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectSetupIntentPaymentMethod = [:]
         self._setupIntents = [:]

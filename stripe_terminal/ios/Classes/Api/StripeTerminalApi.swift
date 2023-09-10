@@ -103,8 +103,7 @@ protocol StripeTerminalPlatformApi {
 
     func onSupportsReadersOfType(
         _ deviceType: DeviceTypeApi,
-        _ discoveryMethod: DiscoveryMethodApi,
-        _ simulated: Bool
+        _ discoveryConfiguration: DiscoveryConfigurationApi
     ) throws -> Bool
 
     func onConnectBluetoothReader(
@@ -163,7 +162,6 @@ protocol StripeTerminalPlatformApi {
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
-        _ moto: Bool,
         _ skipTipping: Bool
     ) throws
 
@@ -171,24 +169,13 @@ protocol StripeTerminalPlatformApi {
         _ operationId: Int
     ) async throws -> Void
 
-    func onProcessPayment(
+    func onConfirmPaymentIntent(
         _ paymentIntentId: String
     ) async throws -> PaymentIntentApi
 
     func onCancelPaymentIntent(
         _ paymentIntentId: String
     ) async throws -> PaymentIntentApi
-
-    func onStartReadReusableCard(
-        _ result: Result<PaymentMethodApi>,
-        _ operationId: Int,
-        _ customer: String?,
-        _ metadata: [String: String]?
-    ) throws
-
-    func onStopReadReusableCard(
-        _ operationId: Int
-    ) async throws -> Void
 
     func onCreateSetupIntent(
         _ customerId: String?,
@@ -206,7 +193,8 @@ protocol StripeTerminalPlatformApi {
         _ result: Result<SetupIntentApi>,
         _ operationId: Int,
         _ setupIntentId: String,
-        _ customerConsentCollected: Bool
+        _ customerConsentCollected: Bool,
+        _ isCustomerCancellationEnabled: Bool?
     ) throws
 
     func onStopCollectSetupIntentPaymentMethod(
@@ -229,14 +217,15 @@ protocol StripeTerminalPlatformApi {
         _ currency: String,
         _ metadata: [String: String]?,
         _ reverseTransfer: Bool?,
-        _ refundApplicationFee: Bool?
+        _ refundApplicationFee: Bool?,
+        _ isCustomerCancellationEnabled: Bool?
     ) throws
 
     func onStopCollectRefundPaymentMethod(
         _ operationId: Int
     ) async throws -> Void
 
-    func onProcessRefund() async throws -> RefundApi
+    func onConfirmRefund() async throws -> RefundApi
 
     func onSetReaderDisplay(
         _ cart: CartApi
@@ -255,16 +244,16 @@ class DiscoverReadersControllerApi {
     }
 
     func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<[ReaderApi]>, _ discoveryMethod: DiscoveryMethodApi, _ simulated: Bool, _ locationId: String?) -> FlutterError?,
-        _ onCancel: @escaping (_ discoveryMethod: DiscoveryMethodApi, _ simulated: Bool, _ locationId: String?) -> FlutterError?
+        _ onListen: @escaping (_ sink: ControllerSink<[ReaderApi]>, _ configuration: DiscoveryConfigurationApi) -> FlutterError?,
+        _ onCancel: @escaping (_ configuration: DiscoveryConfigurationApi) -> FlutterError?
     ) {
         channel.setStreamHandler(ControllerHandler({ arguments, events in
             let args = arguments as! [Any?]
             let sink = ControllerSink<[ReaderApi]>(events) { $0.map { $0.serialize() } }
-            return onListen(sink, DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as? String)
+            return onListen(sink, deserializeDiscoveryConfigurationApi(args[0] as! [Any?]))
         }, { arguments in
             let args = arguments as! [Any?]
-            return onCancel(DiscoveryMethodApi(rawValue: args[0] as! Int)!, args[1] as! Bool, args[2] as? String)
+            return onCancel(deserializeDiscoveryConfigurationApi(args[0] as! [Any?]))
         }))
     }
 
@@ -308,7 +297,7 @@ func setStripeTerminalPlatformApiHandler(
                 let res = try hostApi.onGetConnectionStatus()
                 result(res.rawValue)
             case "supportsReadersOfType":
-                let res = try hostApi.onSupportsReadersOfType(DeviceTypeApi(rawValue: args[0] as! Int)!, DiscoveryMethodApi(rawValue: args[1] as! Int)!, args[2] as! Bool)
+                let res = try hostApi.onSupportsReadersOfType(DeviceTypeApi(rawValue: args[0] as! Int)!, deserializeDiscoveryConfigurationApi(args[1] as! [Any?]))
                 result(res)
             case "connectBluetoothReader":
                 runAsync {
@@ -376,29 +365,21 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool)
             case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "processPayment":
+            case "confirmPaymentIntent":
                 runAsync {
-                    let res = try await hostApi.onProcessPayment(args[0] as! String)
+                    let res = try await hostApi.onConfirmPaymentIntent(args[0] as! String)
                     return res.serialize()
                 }
             case "cancelPaymentIntent":
                 runAsync {
                     let res = try await hostApi.onCancelPaymentIntent(args[0] as! String)
                     return res.serialize()
-                }
-            case "startReadReusableCard":
-                let res = Result<PaymentMethodApi>(result) { $0.serialize() }
-                try hostApi.onStartReadReusableCard(res, args[0] as! Int, args[1] as? String, args[2] != nil ? Dictionary(uniqueKeysWithValues: (args[2] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil)
-            case "stopReadReusableCard":
-                runAsync {
-                    try await hostApi.onStopReadReusableCard(args[0] as! Int)
-                    return nil
                 }
             case "createSetupIntent":
                 runAsync {
@@ -412,7 +393,7 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "startCollectSetupIntentPaymentMethod":
                 let res = Result<SetupIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool)
+                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? Bool)
             case "stopCollectSetupIntentPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectSetupIntentPaymentMethod(args[0] as! Int)
@@ -430,15 +411,15 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "startCollectRefundPaymentMethod":
                 let res = Result<Void>(result) { nil }
-                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, args[4] != nil ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool)
+                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, args[4] != nil ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool, args[7] as? Bool)
             case "stopCollectRefundPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectRefundPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "processRefund":
+            case "confirmRefund":
                 runAsync {
-                    let res = try await hostApi.onProcessRefund()
+                    let res = try await hostApi.onConfirmRefund()
                     return res.serialize()
                 }
             case "setReaderDisplay":
@@ -565,16 +546,22 @@ class StripeTerminalHandlersApi {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
 
-    func readerReconnectFailed() {
-        channel.invokeMethod("_onReaderReconnectFailed", arguments: [])
+    func readerReconnectFailed(
+        reader: ReaderApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectFailed", arguments: [reader.serialize()])
     }
 
-    func readerReconnectStarted() {
-        channel.invokeMethod("_onReaderReconnectStarted", arguments: [])
+    func readerReconnectStarted(
+        reader: ReaderApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectStarted", arguments: [reader.serialize()])
     }
 
-    func readerReconnectSucceeded() {
-        channel.invokeMethod("_onReaderReconnectSucceeded", arguments: [])
+    func readerReconnectSucceeded(
+        reader: ReaderApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectSucceeded", arguments: [reader.serialize()])
     }
 }
 
@@ -621,28 +608,6 @@ enum CardBrandApi: Int {
     case eftposAu
 }
 
-struct CardDetailsApi {
-    let brand: CardBrandApi?
-    let country: String?
-    let expMonth: Int
-    let expYear: Int
-    let fingerprint: String?
-    let funding: CardFundingTypeApi?
-    let last4: String?
-
-    func serialize() -> [Any?] {
-        return [
-            brand?.rawValue,
-            country,
-            expMonth,
-            expYear,
-            fingerprint,
-            funding?.rawValue,
-            last4,
-        ]
-    }
-}
-
 enum CardFundingTypeApi: Int {
     case credit
     case debit
@@ -666,7 +631,6 @@ struct CardPresentDetailsApi {
     let country: String?
     let expMonth: Int
     let expYear: Int
-    let fingerprint: String?
     let funding: CardFundingTypeApi?
     let last4: String?
     let cardholderName: String?
@@ -682,7 +646,6 @@ struct CardPresentDetailsApi {
             country,
             expMonth,
             expYear,
-            fingerprint,
             funding?.rawValue,
             last4,
             cardholderName,
@@ -752,14 +715,103 @@ enum DeviceTypeApi: Int {
     case appleBuiltIn
 }
 
-enum DiscoveryMethodApi: Int {
-    case bluetoothScan
-    case bluetoothProximity
-    case internet
-    case localMobile
-    case handOff
-    case embedded
-    case usb
+protocol DiscoveryConfigurationApi {}
+
+func deserializeDiscoveryConfigurationApi(
+    _ serialized: [Any?]
+) -> DiscoveryConfigurationApi {
+    switch serialized[0] as! String {
+    case "BluetoothDiscoveryConfiguration":
+        return BluetoothDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "BluetoothProximityDiscoveryConfiguration":
+        return BluetoothProximityDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "HandoffDiscoveryConfiguration":
+        return HandoffDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "InternetDiscoveryConfiguration":
+        return InternetDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "LocalMobileDiscoveryConfiguration":
+        return LocalMobileDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "UsbDiscoveryConfiguration":
+        return UsbDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    default:
+        fatalError()
+    }
+}
+
+struct BluetoothDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    let isSimulated: Bool
+    let timeout: Int?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> BluetoothDiscoveryConfigurationApi {
+        return BluetoothDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool,
+            timeout: serialized[1] as? Int
+        )
+    }
+}
+
+struct BluetoothProximityDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    let isSimulated: Bool
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> BluetoothProximityDiscoveryConfigurationApi {
+        return BluetoothProximityDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool
+        )
+    }
+}
+
+struct HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> HandoffDiscoveryConfigurationApi {
+        return HandoffDiscoveryConfigurationApi(
+        
+        )
+    }
+}
+
+struct InternetDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    let isSimulated: Bool
+    let locationId: String?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> InternetDiscoveryConfigurationApi {
+        return InternetDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool,
+            locationId: serialized[1] as? String
+        )
+    }
+}
+
+struct LocalMobileDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    let isSimulated: Bool
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> LocalMobileDiscoveryConfigurationApi {
+        return LocalMobileDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool
+        )
+    }
+}
+
+struct UsbDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+    let isSimulated: Bool
+    let timeout: Int?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> UsbDiscoveryConfigurationApi {
+        return UsbDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool,
+            timeout: serialized[1] as? Int
+        )
+    }
 }
 
 enum IncrementalAuthorizationStatusApi: Int {
@@ -879,26 +931,6 @@ enum PaymentIntentStatusApi: Int {
     case succeeded
 }
 
-struct PaymentMethodApi {
-    let id: String
-    let card: CardDetailsApi?
-    let cardPresent: CardPresentDetailsApi?
-    let interacPresent: CardPresentDetailsApi?
-    let customer: String?
-    let metadata: [String: String]
-
-    func serialize() -> [Any?] {
-        return [
-            id,
-            card?.serialize(),
-            cardPresent?.serialize(),
-            interacPresent?.serialize(),
-            customer,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
-        ]
-    }
-}
-
 struct PaymentMethodDetailsApi {
     let cardPresent: CardPresentDetailsApi?
     let interacPresent: CardPresentDetailsApi?
@@ -929,6 +961,7 @@ struct ReaderApi {
     let deviceType: DeviceTypeApi?
     let simulated: Bool
     let locationId: String?
+    let location: LocationApi?
     let serialNumber: String
     let availableUpdate: Bool
     let batteryLevel: Double
@@ -940,6 +973,7 @@ struct ReaderApi {
             deviceType?.rawValue,
             simulated,
             locationId,
+            location?.serialize(),
             serialNumber,
             availableUpdate,
             batteryLevel,

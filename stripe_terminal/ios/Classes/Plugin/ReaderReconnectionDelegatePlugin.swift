@@ -9,24 +9,24 @@ class ReaderReconnectionDelegatePlugin: NSObject, ReconnectionDelegate {
         self._handlers = handlers
     }
 
-    func terminal(_ terminal: Terminal, didStartReaderReconnect cancelable: Cancelable) {
+    func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable) {
         self.cancelable = cancelable
         DispatchQueue.main.async {
-            self._handlers.readerReconnectStarted()
+            self._handlers.readerReconnectStarted(reader: reader.toApi())
         }
     }
     
-    func terminalDidFailReaderReconnect(_ terminal: Terminal) {
+    func readerDidFailReconnect(_ reader: Reader) {
         self.cancelable = nil
         DispatchQueue.main.async {
-            self._handlers.readerReconnectFailed()
+            self._handlers.readerReconnectFailed(reader: reader.toApi())
         }
     }
     
-    func terminalDidSucceedReaderReconnect(_ terminal: Terminal) {
+    func readerDidSucceedReconnect(_ reader: Reader) {
         self.cancelable = nil
         DispatchQueue.main.async {
-            self._handlers.readerReconnectSucceeded()
+            self._handlers.readerReconnectSucceeded(reader: reader.toApi())
         }
     }
 }

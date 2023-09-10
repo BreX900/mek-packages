@@ -20,6 +20,7 @@ extension Reader {
             deviceType: deviceType.toApi(),
             simulated: simulated,
             locationId: locationId,
+            location: location?.toApi(),
             serialNumber: serialNumber,
             availableUpdate: availableUpdate != nil,
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
@@ -71,23 +72,6 @@ extension ConnectionStatus {
             return .connected
         case .connecting:
             return .connecting
-        @unknown default:
-            fatalError("WTF")
-        }
-    }
-}
-
-extension DiscoveryMethod {
-    func toApi() -> DiscoveryMethodApi {
-        switch self {
-        case .bluetoothScan:
-            return .bluetoothScan
-        case .bluetoothProximity:
-            return .bluetoothProximity
-        case .internet:
-            return .internet
-        case .localMobile:
-            return .localMobile
         @unknown default:
             fatalError("WTF")
         }
@@ -269,33 +253,6 @@ extension PaymentStatus {
     }
 }
 
-extension PaymentMethod {
-    func toApi() -> PaymentMethodApi {
-        return PaymentMethodApi(
-            id: stripeId,
-            card: card?.toApi(),
-            cardPresent: cardPresent?.toApi(),
-            interacPresent: interacPresent?.toApi(),
-            customer: customer,
-            metadata: metadata
-        )
-    }
-}
-
-extension CardDetails {
-    func toApi() -> CardDetailsApi {
-        return CardDetailsApi(
-            brand: brand.toApi(),
-            country: country,
-            expMonth: expMonth,
-            expYear: expYear,
-            fingerprint: fingerprint,
-            funding: funding.toApi(),
-            last4: last4
-        )
-    }
-}
-
 extension CardPresentDetails {
     func toApi() -> CardPresentDetailsApi {
         return CardPresentDetailsApi(
@@ -303,7 +260,6 @@ extension CardPresentDetails {
             country: country,
             expMonth: expMonth,
             expYear: expYear,
-            fingerprint: fingerprint,
             funding: funding.toApi(),
             last4: last4,
             cardholderName: cardholderName,
@@ -404,7 +360,7 @@ extension CardFundingType {
 extension PaymentIntent {
     func toApi() -> PaymentIntentApi {
         return PaymentIntentApi(
-            id: stripeId,
+            id: stripeId!,
             created: created,
             status: status.toApi(),
             amount: Double(amount),

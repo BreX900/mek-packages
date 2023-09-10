@@ -1,16 +1,27 @@
 package mek.stripeterminal.api
 
 import com.stripe.stripeterminal.external.models.*
+import mek.stripeterminal.microsecondsToSeconds
 
-fun DiscoveryMethodApi.toHost(): DiscoveryMethod? {
+fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
     return when (this) {
-        DiscoveryMethodApi.BLUETOOTH_SCAN -> DiscoveryMethod.BLUETOOTH_SCAN
-        DiscoveryMethodApi.BLUETOOTH_PROXIMITY -> null
-        DiscoveryMethodApi.INTERNET -> DiscoveryMethod.INTERNET
-        DiscoveryMethodApi.LOCAL_MOBILE -> DiscoveryMethod.LOCAL_MOBILE
-        DiscoveryMethodApi.HAND_OFF -> DiscoveryMethod.HANDOFF
-        DiscoveryMethodApi.EMBEDDED -> DiscoveryMethod.EMBEDDED
-        DiscoveryMethodApi.USB -> DiscoveryMethod.USB
+        is BluetoothDiscoveryConfigurationApi -> DiscoveryConfiguration.BluetoothDiscoveryConfiguration(
+            isSimulated = isSimulated,
+            timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+        )
+        is BluetoothProximityDiscoveryConfigurationApi -> null
+        is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.HandoffDiscoveryConfiguration()
+        is InternetDiscoveryConfigurationApi -> DiscoveryConfiguration.InternetDiscoveryConfiguration(
+            isSimulated = isSimulated,
+            location = locationId,
+        )
+        is LocalMobileDiscoveryConfigurationApi -> DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
+            isSimulated = isSimulated,
+        )
+        is UsbDiscoveryConfigurationApi -> DiscoveryConfiguration.UsbDiscoveryConfiguration(
+            isSimulated = isSimulated,
+            timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+        )
     }
 }
 

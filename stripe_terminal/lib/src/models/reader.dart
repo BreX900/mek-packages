@@ -55,6 +55,8 @@ class Reader with _$Reader {
   /// this field will update to that new location’s id.
   final String? locationId;
 
+  final Location? location;
+
   // TODO: Add location field
 
   /// The reader’s serial number.
@@ -96,6 +98,7 @@ class Reader with _$Reader {
     required this.availableUpdate,
     required this.serialNumber,
     required this.locationId,
+    required this.location,
     required this.label,
   });
 }

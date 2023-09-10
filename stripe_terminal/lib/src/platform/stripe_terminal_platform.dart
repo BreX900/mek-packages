@@ -5,11 +5,10 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/models/card.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
-import 'package:mek_stripe_terminal/src/models/discover_config.dart';
+import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
-import 'package:mek_stripe_terminal/src/models/payment_method.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
@@ -45,16 +44,11 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   @override
   Future<bool> supportsReadersOfType({
     required DeviceType deviceType,
-    required DiscoveryMethod discoveryMethod,
-    required bool simulated,
+    required DiscoveryConfiguration discoveryConfiguration,
   });
 
   @override
-  Stream<List<Reader>> discoverReaders({
-    required DiscoveryMethod discoveryMethod,
-    required bool simulated,
-    required String? locationId,
-  });
+  Stream<List<Reader>> discoverReaders(DiscoveryConfiguration configuration);
 
   @override
   Future<Reader> connectBluetoothReader(
@@ -126,7 +120,6 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   Future<PaymentIntent> startCollectPaymentMethod({
     required int operationId,
     required String paymentIntentId,
-    required bool moto,
     required bool skipTipping,
   });
 
@@ -134,24 +127,13 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
   Future<void> stopCollectPaymentMethod(int operationId);
 
   @override
-  Future<PaymentIntent> processPayment(String paymentIntentId);
+  Future<PaymentIntent> confirmPaymentIntent(String paymentIntentId);
 
   @override
   Future<PaymentIntent> cancelPaymentIntent(String paymentIntentId);
 //endregion
 
 //region Saving payment details for later use
-  @MethodApi(swift: MethodApiType.callbacks)
-  @override
-  Future<PaymentMethod> startReadReusableCard({
-    required int operationId,
-    required String? customer,
-    required Map<String, String>? metadata,
-  });
-
-  @override
-  Future<void> stopReadReusableCard(int operationId);
-
   @override
   Future<SetupIntent> createSetupIntent({
     required String? customerId,
@@ -170,6 +152,7 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
     required int operationId,
     required String setupIntentId,
     required bool customerConsentCollected,
+    required bool? isCustomerCancellationEnabled,
   });
 
   @override
@@ -193,13 +176,14 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
     required Map<String, String>? metadata,
     required bool? reverseTransfer,
     required bool? refundApplicationFee,
+    required bool? isCustomerCancellationEnabled,
   });
 
   @override
   Future<void> stopCollectRefundPaymentMethod(int operationId);
 
   @override
-  Future<Refund> processRefund();
+  Future<Refund> confirmRefund();
 //endregion
 
 //region Display information to customers

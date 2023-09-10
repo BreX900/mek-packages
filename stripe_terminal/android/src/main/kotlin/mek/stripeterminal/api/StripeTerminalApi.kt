@@ -68,8 +68,7 @@ interface StripeTerminalPlatformApi {
 
     fun onSupportsReadersOfType(
         deviceType: DeviceTypeApi,
-        discoveryMethod: DiscoveryMethodApi,
-        simulated: Boolean,
+        discoveryConfiguration: DiscoveryConfigurationApi,
     ): Boolean
 
     fun onConnectBluetoothReader(
@@ -142,7 +141,6 @@ interface StripeTerminalPlatformApi {
         result: Result<PaymentIntentApi>,
         operationId: Long,
         paymentIntentId: String,
-        moto: Boolean,
         skipTipping: Boolean,
     )
 
@@ -151,7 +149,7 @@ interface StripeTerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onProcessPayment(
+    fun onConfirmPaymentIntent(
         result: Result<PaymentIntentApi>,
         paymentIntentId: String,
     )
@@ -159,18 +157,6 @@ interface StripeTerminalPlatformApi {
     fun onCancelPaymentIntent(
         result: Result<PaymentIntentApi>,
         paymentIntentId: String,
-    )
-
-    fun onStartReadReusableCard(
-        result: Result<PaymentMethodApi>,
-        operationId: Long,
-        customer: String?,
-        metadata: HashMap<String, String>?,
-    )
-
-    fun onStopReadReusableCard(
-        result: Result<Unit>,
-        operationId: Long,
     )
 
     fun onCreateSetupIntent(
@@ -192,6 +178,7 @@ interface StripeTerminalPlatformApi {
         operationId: Long,
         setupIntentId: String,
         customerConsentCollected: Boolean,
+        isCustomerCancellationEnabled: Boolean?,
     )
 
     fun onStopCollectSetupIntentPaymentMethod(
@@ -218,6 +205,7 @@ interface StripeTerminalPlatformApi {
         metadata: HashMap<String, String>?,
         reverseTransfer: Boolean?,
         refundApplicationFee: Boolean?,
+        isCustomerCancellationEnabled: Boolean?,
     )
 
     fun onStopCollectRefundPaymentMethod(
@@ -225,7 +213,7 @@ interface StripeTerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onProcessRefund(
+    fun onConfirmRefund(
         result: Result<RefundApi>,
     )
 
@@ -264,7 +252,7 @@ interface StripeTerminalPlatformApi {
                     result.success(res.ordinal)
                 }
                 "supportsReadersOfType" -> {
-                    val res = onSupportsReadersOfType((args[0] as Int).let { DeviceTypeApi.values()[it] }, (args[1] as Int).let { DiscoveryMethodApi.values()[it] }, args[2] as Boolean)
+                    val res = onSupportsReadersOfType((args[0] as Int).let { DeviceTypeApi.values()[it] }, (args[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
                     result.success(res)
                 }
                 "connectBluetoothReader" -> {
@@ -325,27 +313,19 @@ interface StripeTerminalPlatformApi {
                 }
                 "startCollectPaymentMethod" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
+                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean)
                 }
                 "stopCollectPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
                     onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
                 }
-                "processPayment" -> {
+                "confirmPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onProcessPayment(res, args[0] as String)
+                    onConfirmPaymentIntent(res, args[0] as String)
                 }
                 "cancelPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onCancelPaymentIntent(res, args[0] as String)
-                }
-                "startReadReusableCard" -> {
-                    val res = Result<PaymentMethodApi>(result) { it.serialize() }
-                    onStartReadReusableCard(res, (args[0] as Number).toLong(), args[1] as String?, args[2]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) })
-                }
-                "stopReadReusableCard" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStopReadReusableCard(res, (args[0] as Number).toLong())
                 }
                 "createSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
@@ -357,7 +337,7 @@ interface StripeTerminalPlatformApi {
                 }
                 "startCollectSetupIntentPaymentMethod" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean)
+                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean?)
                 }
                 "stopCollectSetupIntentPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
@@ -373,15 +353,15 @@ interface StripeTerminalPlatformApi {
                 }
                 "startCollectRefundPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
-                    onStartCollectRefundPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String, args[4]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[5] as Boolean?, args[6] as Boolean?)
+                    onStartCollectRefundPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String, args[4]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[5] as Boolean?, args[6] as Boolean?, args[7] as Boolean?)
                 }
                 "stopCollectRefundPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
                     onStopCollectRefundPaymentMethod(res, (args[0] as Number).toLong())
                 }
-                "processRefund" -> {
+                "confirmRefund" -> {
                     val res = Result<RefundApi>(result) { it.serialize() }
-                    onProcessRefund(res)
+                    onConfirmRefund(res)
                 }
                 "setReaderDisplay" -> {
                     val res = Result<Unit>(result) { null }
@@ -424,14 +404,14 @@ class DiscoverReadersControllerApi(
     private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminalPlatform#discoverReaders")
 
     fun setHandler(
-        onListen: (sink: ControllerSink<List<ReaderApi>>, discoveryMethod: DiscoveryMethodApi, simulated: Boolean, locationId: String?) -> Unit,
+        onListen: (sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) -> Unit,
         onCancel: () -> Unit,
     ) {
         channel.setStreamHandler(object : EventChannel.StreamHandler {
             override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
                 val args = arguments as List<Any?>
                 val sink = ControllerSink<List<ReaderApi>>(events) {it.map { it.serialize()} }
-                onListen(sink, (args[0] as Int).let { DiscoveryMethodApi.values()[it] }, args[1] as Boolean, args[2] as String?)
+                onListen(sink, (args[0] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
             }
             override fun onCancel(arguments: Any?) = onCancel()
         })
@@ -535,16 +515,22 @@ class StripeTerminalHandlersApi(
         channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
 
-    fun readerReconnectFailed() {
-        channel.invokeMethod("_onReaderReconnectFailed", listOf<Any?>())
+    fun readerReconnectFailed(
+        reader: ReaderApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectFailed", listOf<Any?>(reader.serialize()))
     }
 
-    fun readerReconnectStarted() {
-        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>())
+    fun readerReconnectStarted(
+        reader: ReaderApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize()))
     }
 
-    fun readerReconnectSucceeded() {
-        channel.invokeMethod("_onReaderReconnectSucceeded", listOf<Any?>())
+    fun readerReconnectSucceeded(
+        reader: ReaderApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectSucceeded", listOf<Any?>(reader.serialize()))
     }
 }
 
@@ -580,28 +566,6 @@ enum class CardBrandApi {
     AMEX, DINERS_CLUB, DISCOVER, JCB, MASTER_CARD, UNION_PAY, VISA, INTERAC, EFTPOS_AU;
 }
 
-data class CardDetailsApi(
-    val brand: CardBrandApi?,
-    val country: String?,
-    val expMonth: Long,
-    val expYear: Long,
-    val fingerprint: String?,
-    val funding: CardFundingTypeApi?,
-    val last4: String?,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            brand?.ordinal,
-            country,
-            expMonth,
-            expYear,
-            fingerprint,
-            funding?.ordinal,
-            last4,
-        )
-    }
-}
-
 enum class CardFundingTypeApi {
     CREDIT, DEBIT, PREPAID;
 }
@@ -623,7 +587,6 @@ data class CardPresentDetailsApi(
     val country: String?,
     val expMonth: Long,
     val expYear: Long,
-    val fingerprint: String?,
     val funding: CardFundingTypeApi?,
     val last4: String?,
     val cardholderName: String?,
@@ -639,7 +602,6 @@ data class CardPresentDetailsApi(
             country,
             expMonth,
             expYear,
-            fingerprint,
             funding?.ordinal,
             last4,
             cardholderName,
@@ -698,8 +660,109 @@ enum class DeviceTypeApi {
     CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, APPLE_BUILT_IN;
 }
 
-enum class DiscoveryMethodApi {
-    BLUETOOTH_SCAN, BLUETOOTH_PROXIMITY, INTERNET, LOCAL_MOBILE, HAND_OFF, EMBEDDED, USB;
+sealed class DiscoveryConfigurationApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): DiscoveryConfigurationApi {
+            return when (serialized[0]) {
+                "BluetoothDiscoveryConfiguration" -> BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "BluetoothProximityDiscoveryConfiguration" -> BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "HandoffDiscoveryConfiguration" -> HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "InternetDiscoveryConfiguration" -> InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "LocalMobileDiscoveryConfiguration" -> LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "UsbDiscoveryConfiguration" -> UsbDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                else -> throw Error()
+            }
+        }
+    }
+}
+
+data class BluetoothDiscoveryConfigurationApi(
+    val isSimulated: Boolean,
+    val timeout: Long?,
+): DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): BluetoothDiscoveryConfigurationApi {
+            return BluetoothDiscoveryConfigurationApi(
+                isSimulated = serialized[0] as Boolean,
+                timeout = serialized[1] as Long?,
+            )
+        }
+    }
+}
+
+data class BluetoothProximityDiscoveryConfigurationApi(
+    val isSimulated: Boolean,
+): DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): BluetoothProximityDiscoveryConfigurationApi {
+            return BluetoothProximityDiscoveryConfigurationApi(
+                isSimulated = serialized[0] as Boolean,
+            )
+        }
+    }
+}
+
+class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): HandoffDiscoveryConfigurationApi {
+            return HandoffDiscoveryConfigurationApi(
+            )
+        }
+    }
+}
+
+data class InternetDiscoveryConfigurationApi(
+    val isSimulated: Boolean,
+    val locationId: String?,
+): DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): InternetDiscoveryConfigurationApi {
+            return InternetDiscoveryConfigurationApi(
+                isSimulated = serialized[0] as Boolean,
+                locationId = serialized[1] as String?,
+            )
+        }
+    }
+}
+
+data class LocalMobileDiscoveryConfigurationApi(
+    val isSimulated: Boolean,
+): DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): LocalMobileDiscoveryConfigurationApi {
+            return LocalMobileDiscoveryConfigurationApi(
+                isSimulated = serialized[0] as Boolean,
+            )
+        }
+    }
+}
+
+data class UsbDiscoveryConfigurationApi(
+    val isSimulated: Boolean,
+    val timeout: Long?,
+): DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): UsbDiscoveryConfigurationApi {
+            return UsbDiscoveryConfigurationApi(
+                isSimulated = serialized[0] as Boolean,
+                timeout = serialized[1] as Long?,
+            )
+        }
+    }
 }
 
 enum class IncrementalAuthorizationStatusApi {
@@ -814,26 +877,6 @@ enum class PaymentIntentStatusApi {
     CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
 }
 
-data class PaymentMethodApi(
-    val id: String,
-    val card: CardDetailsApi?,
-    val cardPresent: CardPresentDetailsApi?,
-    val interacPresent: CardPresentDetailsApi?,
-    val customer: String?,
-    val metadata: HashMap<String, String>,
-) {
-    fun serialize(): List<Any?> {
-        return listOf(
-            id,
-            card?.serialize(),
-            cardPresent?.serialize(),
-            interacPresent?.serialize(),
-            customer,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
-        )
-    }
-}
-
 data class PaymentMethodDetailsApi(
     val cardPresent: CardPresentDetailsApi?,
     val interacPresent: CardPresentDetailsApi?,
@@ -859,6 +902,7 @@ data class ReaderApi(
     val deviceType: DeviceTypeApi?,
     val simulated: Boolean,
     val locationId: String?,
+    val location: LocationApi?,
     val serialNumber: String,
     val availableUpdate: Boolean,
     val batteryLevel: Double,
@@ -870,6 +914,7 @@ data class ReaderApi(
             deviceType?.ordinal,
             simulated,
             locationId,
+            location?.serialize(),
             serialNumber,
             availableUpdate,
             batteryLevel,

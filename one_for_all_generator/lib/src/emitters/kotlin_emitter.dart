@@ -96,7 +96,7 @@ class KotlinField extends KotlinClassInitializer {
   });
 }
 
-enum KotlinClassModifier { abstract, data, companion }
+enum KotlinClassModifier { abstract, data, sealed, companion }
 
 sealed class KotlinClassInitializer {
   const KotlinClassInitializer();
@@ -207,6 +207,7 @@ class KotlinEmitter {
       KotlinClass() => switch (spec.modifier) {
           KotlinClassModifier.abstract => 'abstract class',
           KotlinClassModifier.data => 'data class',
+          KotlinClassModifier.sealed => 'sealed class',
           KotlinClassModifier.companion => 'companion',
           null => 'class',
         },

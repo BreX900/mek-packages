@@ -856,23 +856,23 @@ enum class PaymentStatusApi {
 
 data class ReaderApi(
     val locationStatus: LocationStatusApi?,
-    val batteryLevel: Double,
     val deviceType: DeviceTypeApi?,
     val simulated: Boolean,
-    val availableUpdate: Boolean,
     val locationId: String?,
     val serialNumber: String,
+    val availableUpdate: Boolean,
+    val batteryLevel: Double,
     val label: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
             locationStatus?.ordinal,
-            batteryLevel,
             deviceType?.ordinal,
             simulated,
-            availableUpdate,
             locationId,
             serialNumber,
+            availableUpdate,
+            batteryLevel,
             label,
         )
     }

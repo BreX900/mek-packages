@@ -480,11 +480,13 @@ class StripeTerminalHandlersApi {
 
     func requestConnectionToken() async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
-            channel.invokeMethod("_onRequestConnectionToken", arguments: []) { result in
-                if let result = result as? FlutterError {
-                    continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
-                } else {
-                    continuation.resume(returning: result as! String)
+            DispatchQueue.main.async {
+                self.channel.invokeMethod("_onRequestConnectionToken", arguments: []) { result in
+                    if let result = result as? FlutterError {
+                        continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
+                    } else {
+                        continuation.resume(returning: result as! String)
+                    }
                 }
             }
         }
@@ -924,23 +926,23 @@ enum PaymentStatusApi: Int {
 
 struct ReaderApi {
     let locationStatus: LocationStatusApi?
-    let batteryLevel: Double
     let deviceType: DeviceTypeApi?
     let simulated: Bool
-    let availableUpdate: Bool
     let locationId: String?
     let serialNumber: String
+    let availableUpdate: Bool
+    let batteryLevel: Double
     let label: String?
 
     func serialize() -> [Any?] {
         return [
             locationStatus?.rawValue,
-            batteryLevel,
             deviceType?.rawValue,
             simulated,
-            availableUpdate,
             locationId,
             serialNumber,
+            availableUpdate,
+            batteryLevel,
             label,
         ]
     }

@@ -391,11 +391,13 @@ channel = FlutterMethodChannel(
 channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters])''',
             MethodApiType.async => '''
 return try await withCheckedThrowingContinuation { continuation in
-    channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters]) { result in
-        if let result = result as? FlutterError {
-            continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
-        } else {
-            continuation.resume(returning: ${returnType is VoidType ? '()' : codecs.encodeDeserialization(returnType, 'result')})
+    DispatchQueue.main.async {
+        self.channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters]) { result in
+            if let result = result as? FlutterError {
+                continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
+            } else {
+                continuation.resume(returning: ${returnType is VoidType ? '()' : codecs.encodeDeserialization(returnType, 'result')})
+            }
         }
     }
 }''',

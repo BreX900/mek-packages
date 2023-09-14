@@ -1,4 +1,7 @@
 
+## 2.1.2
+- fix(ios): Executed fetch token and more actions on main thread
+
 ## 2.1.0
 - docs: Documented readers (methods, classes) and payment intents (methods)
 - feat: added `Readers.batteryStatus` field

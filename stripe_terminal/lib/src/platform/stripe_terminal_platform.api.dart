@@ -634,13 +634,13 @@ Reader _$deserializeReader(List<Object?> serialized) => Reader(
     locationStatus: serialized[0] != null
         ? LocationStatus.values[serialized[0] as int]
         : null,
-    batteryLevel: serialized[1] as double,
     deviceType:
-        serialized[2] != null ? DeviceType.values[serialized[2] as int] : null,
-    simulated: serialized[3] as bool,
-    availableUpdate: serialized[4] as bool,
-    locationId: serialized[5] as String?,
-    serialNumber: serialized[6] as String,
+        serialized[1] != null ? DeviceType.values[serialized[1] as int] : null,
+    simulated: serialized[2] as bool,
+    locationId: serialized[3] as String?,
+    serialNumber: serialized[4] as String,
+    availableUpdate: serialized[5] as bool,
+    batteryLevel: serialized[6] as double,
     label: serialized[7] as String?);
 ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(
         List<Object?> serialized) =>

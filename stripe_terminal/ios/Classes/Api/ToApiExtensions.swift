@@ -17,12 +17,12 @@ extension Reader {
     func toApi() -> ReaderApi {
         return ReaderApi(
             locationStatus: locationStatus.toApi(),
-            batteryLevel: batteryLevel?.doubleValue ?? -1.0,
             deviceType: deviceType.toApi(),
             simulated: simulated,
-            availableUpdate: availableUpdate != nil,
             locationId: locationId,
             serialNumber: serialNumber,
+            availableUpdate: availableUpdate != nil,
+            batteryLevel: batteryLevel?.doubleValue ?? -1.0,
             label: label
         )
     }

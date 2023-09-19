@@ -454,10 +454,10 @@ class StripeTerminal {
 //endregion
 
   StreamController<T> _handleStream<T>(
-    StreamController<T>? controller,
+    StreamController<T>? oldController,
     Stream<T> Function() onListen,
   ) {
-    unawaited(controller?.close());
+    unawaited(oldController?.close());
     final newController = StreamController<T>(sync: true);
     late StreamSubscription subscription;
     newController.onListen = () {

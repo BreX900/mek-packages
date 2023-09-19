@@ -1,3 +1,5 @@
+## 2.1.3
+- fix(ios): Fixed discoveryReaders method, it does not emit any readers and the new stream was immediately closed on subsequent invocations
 
 ## 2.1.2
 - fix(ios): Executed fetch token and more actions on main thread

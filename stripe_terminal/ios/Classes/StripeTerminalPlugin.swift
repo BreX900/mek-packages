@@ -11,8 +11,6 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     private let handlers: StripeTerminalHandlersApi
     
-    private var _isLogActive = false
-
     init(_ binaryMessenger: FlutterBinaryMessenger) {
         self.handlers = StripeTerminalHandlersApi(binaryMessenger)
         self._discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
@@ -49,8 +47,10 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
 
 // Reader discovery, connection and updates
     private let _discoverReadersController: DiscoverReadersControllerApi
-    private var _discoverReaderCancelable: Cancelable? = nil
-    private var _readers: [Reader] = []
+    private let _discoveryDelegate = DiscoveryDelegatePlugin()
+    private var _readers: [Reader] { get {
+        return _discoveryDelegate.readers
+    } }
     private let _readerDelegate: ReaderDelegatePlugin
     private let _readerReconnectionDelegate: ReaderReconnectionDelegatePlugin
 
@@ -85,35 +85,10 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     }
     
     func setupDiscoverReaders() {
-        _discoverReadersController.setHandler({
-            sink, discoveryMethod, simulated, locationId -> FlutterError? in
-            
-            let discoveryMethodHost = discoveryMethod.toHost()
-            guard let discoveryMethodHost else {
-                return FlutterError(code: "discoveryMethodNotSupported", message: nil, details: nil)
-            }
-            // Ignore error, the previous stream can no longer receive events
-            self._discoverReaderCancelable?.cancel { error in }
-            self._discoverReaderCancelable = Terminal.shared.discoverReaders(
-                DiscoveryConfiguration(
-                    discoveryMethod: discoveryMethodHost,
-                    locationId: locationId,
-                    simulated: simulated
-                ),
-                delegate: DiscoveryDelegatePlugin(sink)
-            ) { error in
-                if let error = error {
-                    let platformError = error.toApi()
-                    sink.error(platformError.code, platformError.message, platformError.details)
-                }
-                sink.endOfStream()
-            }
-            return nil
-        }, { discoveryMethod, simulated, locationId -> FlutterError? in
-            // Ignore error, flutter stream already closed
-            self._discoverReaderCancelable?.cancel { error in }
-            return nil
-        })
+        _discoverReadersController.setHandler(
+            _discoveryDelegate.onListen,
+            _discoveryDelegate.onCancel
+        )
     }
 
     func onConnectHandoffReader(_ serialNumber: String) async throws -> ReaderApi {
@@ -482,8 +457,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func _clean() {
         if (Terminal.shared.connectedReader != nil) { Terminal.shared.disconnectReader  { error in } }
         
-        self._discoverReaderCancelable?.cancel { error in }
-        self._readers = []
+        self._discoveryDelegate.clear()
         
         self._cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectPaymentMethod = [:]

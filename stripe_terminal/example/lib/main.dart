@@ -178,10 +178,12 @@ class _MyAppState extends State<MyApp> {
       simulated: _isSimulated,
     );
 
-    _discoverReaderSub = discoverReaderStream.listen((readers) {
-      setState(() => _readers = readers);
-    }, onDone: () {
-      setState(() => _discoverReaderSub = null);
+    setState(() {
+      _discoverReaderSub = discoverReaderStream.listen((readers) {
+        setState(() => _readers = readers);
+      }, onDone: () {
+        setState(() => _discoverReaderSub = null);
+      });
     });
   }
 

@@ -606,7 +606,7 @@ extension Error {
 extension NSError {
     func toApi() -> PlatformError {
         guard self.scp_isAppleBuiltInReaderError else {
-            return PlatformError("", self.localizedDescription, "\(self)")
+            return PlatformError("\(self.code)", self.localizedDescription, "\(self)")
         }
         return PlatformError(self.toApiCode(), self.localizedDescription, "\(self)")
     }

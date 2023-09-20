@@ -1,3 +1,8 @@
+## 2.1.4
+- fix(ios): fix: store readers after discovery, otherwise lookup for connection will always fail. Thanks [@Kuama-IT](https://github.com/Kuama-IT)
+- fix(ios): TimeInterval to Int inside DateTimeDartApiCodec. Thanks [@Kuama-IT](https://github.com/Kuama-IT)
+- fix(ios): Error codes are correctly transmitted to dart. Thanks [@Kuama-IT](https://github.com/Kuama-IT)
+
 ## 2.1.3
 - fix(ios): Fixed discoveryReaders method, it does not emit any readers and the new stream was immediately closed on subsequent invocations
 

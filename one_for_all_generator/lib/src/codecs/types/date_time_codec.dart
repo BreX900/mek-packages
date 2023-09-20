@@ -49,5 +49,5 @@ class DateTimeSwiftApiCodec extends ApiCodec<DateTime> {
 
   @override
   String encodeSerialization(ApiCodecs codecs, DartType type, String varAccess) =>
-      '$varAccess.timeIntervalSince1970 * 1000';
+      'Int($varAccess.timeIntervalSince1970 * 1000)';
 }

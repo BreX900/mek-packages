@@ -18,6 +18,7 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
     
     func terminal(_ terminal: Terminal, didUpdateDiscoveredReaders readers: [Reader]) {
         DispatchQueue.main.async {
+            self._readers = readers
             self._sink?.success(readers.map { $0.toApi() })
         }
     }

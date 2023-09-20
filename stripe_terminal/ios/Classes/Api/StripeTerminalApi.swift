@@ -822,7 +822,7 @@ struct PaymentIntentApi {
     func serialize() -> [Any?] {
         return [
             id,
-            created.timeIntervalSince1970 * 1000,
+            Int(created.timeIntervalSince1970 * 1000),
             status.rawValue,
             amount,
             captureMethod,
@@ -837,7 +837,7 @@ struct PaymentIntentApi {
             application,
             applicationFeeAmount,
             cancellationReason,
-            canceledAt != nil ? canceledAt!.timeIntervalSince1970 * 1000 : nil,
+            canceledAt != nil ? Int(canceledAt!.timeIntervalSince1970 * 1000) : nil,
             clientSecret,
             confirmationMethod,
             customer,
@@ -987,7 +987,7 @@ struct ReaderSoftwareUpdateApi {
             components.map { $0.rawValue },
             keyProfileName,
             onlyInstallRequiredUpdates,
-            requiredAt.timeIntervalSince1970 * 1000,
+            Int(requiredAt.timeIntervalSince1970 * 1000),
             settingsVersion,
             timeEstimate.rawValue,
             version,
@@ -1036,7 +1036,7 @@ struct RefundApi {
             id,
             amount,
             chargeId,
-            created.timeIntervalSince1970 * 1000,
+            Int(created.timeIntervalSince1970 * 1000),
             currency,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             reason,
@@ -1068,7 +1068,7 @@ struct SetupAttemptApi {
         return [
             id,
             applicationId,
-            created.timeIntervalSince1970 * 1000,
+            Int(created.timeIntervalSince1970 * 1000),
             customerId,
             onBehalfOfId,
             paymentMethodId,
@@ -1124,7 +1124,7 @@ struct SetupIntentApi {
     func serialize() -> [Any?] {
         return [
             id,
-            created.timeIntervalSince1970 * 1000,
+            Int(created.timeIntervalSince1970 * 1000),
             customerId,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             usage.rawValue,

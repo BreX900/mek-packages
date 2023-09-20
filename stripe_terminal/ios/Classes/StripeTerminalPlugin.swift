@@ -45,7 +45,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         Terminal.shared.clearCachedCredentials()
     }
 
-// Reader discovery, connection and updates
+// MARK: - Reader discovery, connection and updates
     private let _discoverReadersController: DiscoverReadersControllerApi
     private let _discoveryDelegate = DiscoveryDelegatePlugin()
     private var _readers: [Reader] { get {
@@ -191,7 +191,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-// Taking payments
+// MARK: - Taking payments
     
     private var _paymentIntents: [String: PaymentIntent] = [:]
     
@@ -275,7 +275,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-// Saving payment details for later use
+// MARK: - Saving payment details for later use
    
     private var _cancelablesReadReusableCard: [Int: Cancelable] = [:]
     private var _setupIntents: [String: SetupIntent] = [:]
@@ -385,7 +385,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             throw error.toApi()
         }
     }
-// Card-present refunds
+// MARK: - Card-present refunds
     private var _cancelablesCollectRefundPaymentMethod: [Int: Cancelable] = [:]
 
     func onStartCollectRefundPaymentMethod(
@@ -432,7 +432,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
 
-// Display information to customers
+// MARK: - Display information to customers
     
     func onSetReaderDisplay(
         _ cart: CartApi
@@ -452,7 +452,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         }
     }
     
-    // PRIVATE METHODS
+// MARK: - PRIVATE METHODS
     
     private func _clean() {
         if (Terminal.shared.connectedReader != nil) { Terminal.shared.disconnectReader  { error in } }

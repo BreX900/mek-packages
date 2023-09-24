@@ -1,0 +1,36 @@
+name: Integration StripeTerminal
+
+on:
+  pull_request:
+    paths: [ 'stripe_terminal/**', 'one_for_all/**' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: stripe_terminal
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.x'
+
+      - name: Resolve dependencies
+        run: flutter pub get
+        timeout-minutes: 2
+
+      - name: Check code formatting
+        run: >-
+          dart format --line-length 100 --set-exit-if-changed --output none
+          $(find . ! -path "./.dart_tool/**" ! -path "./build/**" -name "*.dart" ! -name "*.g.dart")
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos

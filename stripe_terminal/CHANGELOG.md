@@ -1,4 +1,6 @@
-## Next release
+## 3.0.0-dev
+- fix(ios): Fixes incorrect checking `null` values from flutter
+- feat: added more parameters to `PaymentIntentParams` class
 - build(android): The `minSdkVersion` has been updated to 26. This means that the SDK will no longer support devices running Android 7.1.2 (Nougat) or earlier. Older devices can continue to use the 2.x versions of the SDK while on the maintenance schedule.
 - feat: Added to `Reader` class the `location` field.
 - fix(android): `Terminal.onUnexpectedReaderDisconnect` will be emit if a command cannot be sent to an internet reader. Previously, this callback was only invoked when a periodic status check failed.

@@ -3,13 +3,65 @@ import StripeTerminal
 
 extension PaymentIntentParametersApi {
     func toHost() throws -> PaymentIntentParameters {
-        return try PaymentIntentParametersBuilder(
+        let b = PaymentIntentParametersBuilder(
                 amount: UInt(amount),
                 currency: currency
             )
             .setPaymentMethodTypes(paymentMethodTypes.map { $0.toHost() })
             .setCaptureMethod(captureMethod.toHost())
+            .setMetadata(metadata)
+            .setStripeDescription(description)
+            .setStatementDescriptor(statementDescriptor)
+            .setStatementDescriptorSuffix(statementDescriptorSuffix)
+            .setReceiptEmail(receiptEmail)
+            .setCustomer(customerId)
+            .setApplicationFeeAmount(applicationFeeAmount?.toNSNumber())
+            .setTransferDataDestination(transferDataDestination)
+            .setTransferGroup(transferGroup)
+            .setOnBehalfOf(onBehalfOf)
+            .setSetupFutureUsage(setupFutureUsage)
+        if let it = paymentMethodOptionsParameters { b.setPaymentMethodOptionsParameters(try it.toHost()) }
+        return try b.build()
+    }
+}
+
+extension PaymentMethodOptionsParametersApi {
+    func toHost() throws -> PaymentMethodOptionsParameters {
+        return try PaymentMethodOptionsParametersBuilder(
+            cardPresentParameters: try cardPresentParameters.toHost()
+        )
             .build()
+    }
+}
+
+extension CardPresentParametersApi {
+    func toHost() throws -> CardPresentParameters {
+        let b = CardPresentParametersBuilder()
+        if let it = captureMethod { b.setCaptureMethod(it.toHost()) }
+        if let it = requestedPriority { b.setRequestedPriority(it.toHost()) }
+        if let it = requestExtendedAuthorization { b.setRequestExtendedAuthorization(it) }
+        if let it = requestIncrementalAuthorizationSupport { b.setRequestIncrementalAuthorizationSupport(it) }
+        return try b.build()
+    }
+}
+
+extension CardPresentCaptureMethodApi {
+    func toHost() -> CardPresentCaptureMethod {
+        switch self {
+        case .manualPreferred:
+            return .manualPreferred
+        }
+    }
+}
+
+extension CardPresentRoutingApi {
+    func toHost() -> CardPresentRouting {
+        switch self {
+        case .domestic:
+            return .domestic
+        case .international:
+            return .international
+        }
     }
 }
 
@@ -28,7 +80,7 @@ extension PaymentMethodTypeApi {
 
 extension CaptureMethodApi {
     func toHost() -> CaptureMethod {
-        switch (self) {
+        switch self {
         case .automatic:
             return .automatic
         case .manual:

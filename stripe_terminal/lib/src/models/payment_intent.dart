@@ -1,4 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
+import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:meta/meta.dart';
 
 part 'payment_intent.g.dart';
@@ -86,14 +87,49 @@ class PaymentIntentParameters with _$PaymentIntentParameters {
   final CaptureMethod captureMethod;
   final List<PaymentMethodType> paymentMethodTypes;
 
-  const PaymentIntentParameters({
+  final Map<String, String> metadata;
+  final String? description;
+  final String? statementDescriptor;
+  final String? statementDescriptorSuffix;
+  final String? receiptEmail;
+  final String? customerId;
+  final int? applicationFeeAmount;
+  final String? transferDataDestination;
+  final String? transferGroup;
+  final String? onBehalfOf;
+  final String? setupFutureUsage;
+
+  final PaymentMethodOptionsParameters? paymentMethodOptionsParameters;
+
+  PaymentIntentParameters({
     required this.amount,
     required this.currency,
     required this.captureMethod,
     required this.paymentMethodTypes,
+    this.metadata = const {},
+    this.description,
+    this.statementDescriptor,
+    this.statementDescriptorSuffix,
+    this.receiptEmail,
+    this.customerId,
+    this.applicationFeeAmount,
+    this.transferDataDestination,
+    this.transferGroup,
+    this.onBehalfOf,
+    this.setupFutureUsage,
+    this.paymentMethodOptionsParameters,
   });
 }
 
 enum PaymentMethodType { cardPresent, card, interactPresent }
 
 enum CaptureMethod { automatic, manual }
+
+@DataClass()
+class PaymentMethodOptionsParameters with _$PaymentMethodOptionsParameters {
+  final CardPresentParameters cardPresentParameters;
+
+  const PaymentMethodOptionsParameters({
+    required this.cardPresentParameters,
+  });
+}

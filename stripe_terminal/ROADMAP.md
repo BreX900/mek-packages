@@ -1,4 +1,7 @@
 #### Ready
+- Update [README.md](./README.md)
+
+#### Done
 - https://github.com/BreX900/mek-packages/issues/11
 
 # Android

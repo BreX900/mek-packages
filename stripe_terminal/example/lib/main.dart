@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:example/models/discovery_method.dart';
+import 'package:example/models/k.dart';
 import 'package:example/stripe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
@@ -42,7 +43,8 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription? _onUnexpectedReaderDisconnectSub;
   Reader? _reader;
 
-  String? _paymentIntentClientSecret;
+  StreamSubscription? _onPaymentStatusChangeSub;
+  PaymentStatus _paymentStatus = PaymentStatus.notReady;
   PaymentIntent? _paymentIntent;
   CancelableFuture<PaymentIntent>? _collectingPaymentMethod;
 
@@ -51,6 +53,7 @@ class _MyAppState extends State<MyApp> {
     unawaited(_onConnectionStatusChangeSub?.cancel());
     unawaited(_discoverReaderSub?.cancel());
     unawaited(_onUnexpectedReaderDisconnectSub?.cancel());
+    unawaited(_onPaymentStatusChangeSub?.cancel());
     unawaited(_collectingPaymentMethod?.cancel());
     super.dispose();
   }
@@ -79,13 +82,17 @@ class _MyAppState extends State<MyApp> {
       fetchToken: _fetchConnectionToken,
     );
     setState(() => _terminal = stripeTerminal);
-    _onConnectionStatusChangeSub = stripeTerminal.onConnectionStatusChange.listen((event) {
-      print('Connection Status Changed: ${event.name}');
-      setState(() => _connectionStatus = event);
+    _onConnectionStatusChangeSub = stripeTerminal.onConnectionStatusChange.listen((status) {
+      print('Connection Status Changed: ${status.name}');
+      setState(() => _connectionStatus = status);
     });
-    _onUnexpectedReaderDisconnectSub = stripeTerminal.onUnexpectedReaderDisconnect.listen((event) {
-      print('Reader Unexpected Disconnected: ${event.label}');
+    _onUnexpectedReaderDisconnectSub = stripeTerminal.onUnexpectedReaderDisconnect.listen((reader) {
+      print('Reader Unexpected Disconnected: ${reader.label}');
       setState(() => _reader = null);
+    });
+    _onPaymentStatusChangeSub = stripeTerminal.onPaymentStatusChange.listen((status) {
+      print('Payment Status Changed: ${status.name}');
+      setState(() => _paymentStatus = status);
     });
   }
 
@@ -119,7 +126,7 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Connection status: ${status.name}');
   }
 
-  Future<Reader?> _connectReader(StripeTerminal terminal, Reader reader) async {
+  Future<Reader?> _tryConnectReader(StripeTerminal terminal, Reader reader) async {
     String? getLocationId() {
       final locationId = _selectedLocation?.id ?? reader.locationId;
       if (locationId == null) _showSnackBar('Missing location');
@@ -152,19 +159,18 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _toggleReader(StripeTerminal terminal, Reader reader) async {
-    if (_reader != null) {
-      await terminal.disconnectReader();
-      _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
-      setState(() => _reader = null);
-      return;
-    }
-
-    final connectedReader = await _connectReader(terminal, reader);
+  void _connectReader(StripeTerminal terminal, Reader reader) async {
+    final connectedReader = await _tryConnectReader(terminal, reader);
     if (connectedReader == null) return;
     _showSnackBar(
         'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
     setState(() => _reader = connectedReader);
+  }
+
+  void _disconnectReader(StripeTerminal terminal) async {
+    await terminal.disconnectReader();
+    _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
+    setState(() => _reader = null);
   }
 
   void _startDiscoverReaders(StripeTerminal terminal) {
@@ -205,16 +211,19 @@ class _MyAppState extends State<MyApp> {
     setState(() => _discoverReaderSub = null);
   }
 
-  void _createPaymentIntent() async {
-    final paymentIntentClientSecret = await _api.createPaymentIntent();
-    setState(() {
-      _paymentIntentClientSecret = paymentIntentClientSecret;
-      _paymentIntent = null;
-    });
+  void _createPaymentIntent(StripeTerminal terminal) async {
+    final paymentIntent = await terminal.createPaymentIntent(PaymentIntentParameters(
+      amount: 200,
+      currency: K.currency,
+      captureMethod: CaptureMethod.automatic,
+      paymentMethodTypes: [PaymentMethodType.cardPresent],
+    ));
+    setState(() => _paymentIntent = paymentIntent);
     _showSnackBar('Payment intent created!');
   }
 
-  void _retrievePaymentIntent(StripeTerminal terminal, String paymentIntentClientSecret) async {
+  void _createFromApiAndRetrievePaymentIntentFromSdk(StripeTerminal terminal) async {
+    final paymentIntentClientSecret = await _api.createPaymentIntent();
     final paymentIntent = await terminal.retrievePaymentIntent(paymentIntentClientSecret);
     setState(() => _paymentIntent = paymentIntent);
     _showSnackBar('Payment intent retrieved!');
@@ -231,13 +240,16 @@ class _MyAppState extends State<MyApp> {
 
     try {
       final paymentIntentWithPaymentMethod = await collectingPaymentMethod;
-      setState(() => _paymentIntent = paymentIntentWithPaymentMethod);
+      setState(() {
+        _paymentIntent = paymentIntentWithPaymentMethod;
+        _collectingPaymentMethod = null;
+      });
       _showSnackBar('Payment method collected!');
     } on TerminalException catch (exception) {
+      setState(() => _collectingPaymentMethod = null);
       switch (exception.rawCode) {
         // TODO: map error codes from swift/android and unify them for dart
         case '2020' || 'cancelled':
-          setState(() => _collectingPaymentMethod = null);
           _showSnackBar('Collecting Payment method is cancelled!');
         default:
           rethrow;
@@ -265,7 +277,6 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final terminal = _terminal;
-    final paymentIntentClientSecret = _paymentIntentClientSecret;
     final paymentIntent = _paymentIntent;
     final collectingPaymentMethod = _collectingPaymentMethod;
 
@@ -315,7 +326,14 @@ class _MyAppState extends State<MyApp> {
           );
         }).toList(),
       ),
-      if (_discoverReaderSub == null)
+      if (_connectionStatus != ConnectionStatus.notConnected)
+        TextButton(
+          onPressed: terminal != null && _connectionStatus == ConnectionStatus.connected
+              ? () => _disconnectReader(terminal)
+              : null,
+          child: const Text('Disconnect Reader'),
+        )
+      else if (_discoverReaderSub == null)
         TextButton(
           onPressed: terminal != null ? () => _startDiscoverReaders(terminal) : null,
           child: const Text('Scan Devices'),
@@ -332,7 +350,9 @@ class _MyAppState extends State<MyApp> {
           enabled: terminal != null &&
               _connectionStatus != ConnectionStatus.connecting &&
               (_reader == null || _reader!.serialNumber == e.serialNumber),
-          onTap: terminal != null ? () => _toggleReader(terminal, e) : null,
+          onTap: terminal != null && _connectionStatus == ConnectionStatus.notConnected
+              ? () => _connectReader(terminal, e)
+              : null,
           title: Text(e.serialNumber),
           subtitle: Text('${e.deviceType?.name ?? 'Unknown'} ${e.locationId ?? 'NoLocation'}'),
           trailing: Text('${(e.batteryLevel * 100).toInt()}'),
@@ -340,15 +360,18 @@ class _MyAppState extends State<MyApp> {
       }),
     ];
     final paymentTab = [
-      TextButton(
-        onPressed: _createPaymentIntent,
-        child: const Text('Create PaymentIntent'),
+      ListTile(
+        selected: true,
+        title: Text('Payment Status: ${_paymentStatus.name}'),
       ),
       TextButton(
-        onPressed: terminal != null && paymentIntentClientSecret != null
-            ? () => _retrievePaymentIntent(terminal, paymentIntentClientSecret)
-            : null,
-        child: const Text('Retrieve Payment Intent'),
+        onPressed: terminal != null ? () => _createPaymentIntent(terminal) : null,
+        child: const Text('Create PaymentIntent via Skd'),
+      ),
+      TextButton(
+        onPressed:
+            terminal != null ? () => _createFromApiAndRetrievePaymentIntentFromSdk(terminal) : null,
+        child: const Text('Create PaymentIntent via Api and Retrieve it via Sdk'),
       ),
       if (collectingPaymentMethod == null)
         TextButton(
@@ -380,20 +403,10 @@ class _MyAppState extends State<MyApp> {
         )
     ];
     final cardTab = <Widget>[
-      // TextButton(
-      //   child: const Text('Read Reusable Card Detail'),
-      //   onPressed: () async {
-      //     stripeTerminal.readReusableCardDetail().then((StripePaymentMethod paymentMethod) {
-      //       _showSnackbar(
-      //         'A card was read: ${paymentMethod.cardDetails}',
-      //       );
-      //     });
-      //   },
-      // ),
       TextButton(
         onPressed: terminal != null
             ? () async => await terminal.setReaderDisplay(const Cart(
-                  currency: 'USD',
+                  currency: K.currency,
                   tax: 130,
                   total: 1000,
                   lineItems: [

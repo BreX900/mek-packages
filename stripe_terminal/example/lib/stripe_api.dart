@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:example/models/k.dart';
 import 'package:stripe/stripe.dart';
 
 class StripeApi {
@@ -45,7 +46,7 @@ class StripeApi {
 
   Future<String> createPaymentIntent() async {
     final paymentIntent = await _stripe.client.post('payment_intents', data: {
-      'currency': 'gbp',
+      'currency': K.currency,
       'payment_method_types': ['card_present'],
       'capture_method': 'manual',
       'amount': 1000,

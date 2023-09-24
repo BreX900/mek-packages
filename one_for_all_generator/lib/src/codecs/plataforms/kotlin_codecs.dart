@@ -59,9 +59,9 @@ class KotlinApiCodes extends HostApiCodecs {
     final codec = findCodec(type);
     if (codec != null) {
       if (!type.isNullable || codec.hasNullSafeDeserialization) {
-        return codec.encodeSerialization(this, type, varAccess);
+        return codec.encodeDeserialization(this, type, varAccess);
       } else {
-        return '$varAccess?.let { ${codec.encodeSerialization(this, type, 'it')} }';
+        return '$varAccess?.let { ${codec.encodeDeserialization(this, type, 'it')} }';
       }
     }
 

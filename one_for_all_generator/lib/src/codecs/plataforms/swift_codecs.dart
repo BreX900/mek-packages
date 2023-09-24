@@ -58,9 +58,9 @@ class SwiftApiCodes extends HostApiCodecs {
     final codec = findCodec(type);
     if (codec != null) {
       if (!type.isNullable || codec.hasNullSafeDeserialization) {
-        return codec.encodeSerialization(this, type, varAccess);
+        return codec.encodeDeserialization(this, type, varAccess);
       } else {
-        return '$varAccess != nil ? ${codec.encodeSerialization(this, type, varAccess)} : nil';
+        return '$varAccess != nil ? ${codec.encodeDeserialization(this, type, varAccess)} : nil';
       }
     }
 

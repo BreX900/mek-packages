@@ -90,3 +90,27 @@ class ReceiptDetails with _$ReceiptDetails {
     required this.terminalVerificationResults,
   });
 }
+
+enum CardPresentCaptureMethod {
+  manualPreferred,
+}
+
+@DataClass()
+class CardPresentParameters with _$CardPresentParameters {
+  final CardPresentCaptureMethod? captureMethod;
+  final bool? requestExtendedAuthorization;
+  final bool? requestIncrementalAuthorizationSupport;
+  final CardPresentRouting? requestedPriority;
+
+  const CardPresentParameters({
+    this.captureMethod,
+    this.requestExtendedAuthorization,
+    this.requestIncrementalAuthorizationSupport,
+    this.requestedPriority,
+  });
+}
+
+enum CardPresentRouting {
+  domestic,
+  international,
+}

@@ -467,6 +467,12 @@ CardPresentDetails _$deserializeCardPresentDetails(List<Object?> serialized) => 
         serialized[9] != null ? IncrementalAuthorizationStatus.values[serialized[9] as int] : null,
     networks: serialized[10] != null ? _$deserializeCardNetworks(serialized[10] as List) : null,
     receipt: serialized[11] != null ? _$deserializeReceiptDetails(serialized[11] as List) : null);
+List<Object?> _$serializeCardPresentParameters(CardPresentParameters deserialized) => [
+      deserialized.captureMethod?.index,
+      deserialized.requestExtendedAuthorization,
+      deserialized.requestIncrementalAuthorizationSupport,
+      deserialized.requestedPriority?.index
+    ];
 List<Object?> _$serializeCart(Cart deserialized) => [
       deserialized.currency,
       deserialized.tax,
@@ -546,7 +552,21 @@ List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deseria
       deserialized.amount,
       deserialized.currency,
       deserialized.captureMethod.index,
-      deserialized.paymentMethodTypes.map((e) => e.index).toList()
+      deserialized.paymentMethodTypes.map((e) => e.index).toList(),
+      deserialized.metadata.map((k, v) => MapEntry(k, v)),
+      deserialized.description,
+      deserialized.statementDescriptor,
+      deserialized.statementDescriptorSuffix,
+      deserialized.receiptEmail,
+      deserialized.customerId,
+      deserialized.applicationFeeAmount,
+      deserialized.transferDataDestination,
+      deserialized.transferGroup,
+      deserialized.onBehalfOf,
+      deserialized.setupFutureUsage,
+      deserialized.paymentMethodOptionsParameters != null
+          ? _$serializePaymentMethodOptionsParameters(deserialized.paymentMethodOptionsParameters!)
+          : null
     ];
 PaymentMethodDetails _$deserializePaymentMethodDetails(List<Object?> serialized) =>
     PaymentMethodDetails(
@@ -554,6 +574,9 @@ PaymentMethodDetails _$deserializePaymentMethodDetails(List<Object?> serialized)
             serialized[0] != null ? _$deserializeCardPresentDetails(serialized[0] as List) : null,
         interacPresent:
             serialized[1] != null ? _$deserializeCardPresentDetails(serialized[1] as List) : null);
+List<Object?> _$serializePaymentMethodOptionsParameters(
+        PaymentMethodOptionsParameters deserialized) =>
+    [_$serializeCardPresentParameters(deserialized.cardPresentParameters)];
 Reader _$deserializeReader(List<Object?> serialized) => Reader(
     locationStatus: serialized[0] != null ? LocationStatus.values[serialized[0] as int] : null,
     deviceType: serialized[1] != null ? DeviceType.values[serialized[1] as int] : null,

@@ -291,26 +291,14 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         parameters: PaymentIntentParametersApi
     ) {
         _terminal.createPaymentIntent(
-            PaymentIntentParameters.Builder(
-                amount = parameters.amount,
-                currency = parameters.currency,
-                captureMethod = when (parameters.captureMethod) {
-                    CaptureMethodApi.MANUAL -> CaptureMethod.Manual
-                    CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
-                },
-                allowedPaymentMethodTypes = parameters.paymentMethodTypes.map {
-                    when (it) {
-                        PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
-                        PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
-                        PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
-                    }
-                },
-            ).build(), object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+            params = parameters.toHost(),
+            callback = object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     _paymentIntents[paymentIntent.id!!] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
-            })
+            }
+        )
     }
 
     override fun onRetrievePaymentIntent(

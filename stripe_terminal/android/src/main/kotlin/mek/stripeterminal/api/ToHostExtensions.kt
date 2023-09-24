@@ -9,15 +9,18 @@ fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
             isSimulated = isSimulated,
             timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
         )
+
         is BluetoothProximityDiscoveryConfigurationApi -> null
         is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.HandoffDiscoveryConfiguration()
         is InternetDiscoveryConfigurationApi -> DiscoveryConfiguration.InternetDiscoveryConfiguration(
             isSimulated = isSimulated,
             location = locationId,
         )
+
         is LocalMobileDiscoveryConfigurationApi -> DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
             isSimulated = isSimulated,
         )
+
         is UsbDiscoveryConfigurationApi -> DiscoveryConfiguration.UsbDiscoveryConfiguration(
             isSimulated = isSimulated,
             timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
@@ -59,6 +62,65 @@ fun CartLineItemApi.toHost(): CartLineItem {
         quantity = quantity.toInt(),
         amount = amount
     ).build()
+}
+
+fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
+    val b = PaymentIntentParameters.Builder(
+        amount = amount,
+        currency = currency,
+        captureMethod = when (captureMethod) {
+            CaptureMethodApi.MANUAL -> CaptureMethod.Manual
+            CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
+        },
+        allowedPaymentMethodTypes = paymentMethodTypes.map {
+            when (it) {
+                PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
+                PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
+                PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
+            }
+        },
+    )
+    b.setMetadata(metadata)
+    description?.let(b::setDescription)
+    statementDescriptor?.let(b::setStatementDescriptor)
+    statementDescriptorSuffix?.let(b::setStatementDescriptorSuffix)
+    receiptEmail?.let(b::setReceiptEmail)
+    customerId?.let(b::setCustomer)
+    applicationFeeAmount?.let(b::setApplicationFeeAmount)
+    transferDataDestination?.let(b::setTransferDataDestination)
+    transferGroup?.let(b::setTransferGroup)
+    onBehalfOf?.let(b::setOnBehalfOf)
+    setupFutureUsage?.let(b::setSetupFutureUsage)
+    paymentMethodOptionsParameters?.let { b.setPaymentMethodOptionsParameters(it.toHost()) }
+    return b.build()
+}
+
+fun PaymentMethodOptionsParametersApi.toHost(): PaymentMethodOptionsParameters {
+    return PaymentMethodOptionsParameters.Builder()
+        .setCardPresentParameters(cardPresentParameters.toHost())
+        .build()
+}
+
+fun CardPresentParametersApi.toHost(): CardPresentParameters {
+    val b = CardPresentParameters.Builder()
+    captureMethod?.let { b.setCaptureMethod(it.toHost()) }
+    requestExtendedAuthorization?.let { b.setRequestExtendedAuthorization(it) }
+    requestIncrementalAuthorizationSupport?.let { b.setRequestIncrementalAuthorizationSupport(it) }
+    requestedPriority?.let { b.setRouting(CardPresentRoutingOptionParameters(it.toHost())) }
+    return b.build()
+}
+
+fun CardPresentCaptureMethodApi.toHost(): CardPresentCaptureMethod {
+    return when (this) {
+        CardPresentCaptureMethodApi.MANUAL_PREFERRED -> CardPresentCaptureMethod.ManualPreferred
+    }
+}
+
+fun CardPresentRoutingApi.toHost(): RoutingPriority {
+    return when (this) {
+        CardPresentRoutingApi.DOMESTIC -> RoutingPriority.DOMESTIC
+        CardPresentRoutingApi.INTERNATIONAL -> RoutingPriority.INTERNATIONAL
+    }
 }
 
 fun SetupIntentUsageApi.toHost(): String {

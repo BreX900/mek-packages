@@ -383,7 +383,7 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "createSetupIntent":
                 runAsync {
-                    let res = try await hostApi.onCreateSetupIntent(args[0] as? String, args[1] != nil ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[2] as? String, args[3] as? String, args[4] != nil ? SetupIntentUsageApi(rawValue: args[4] as! Int)! : nil)
+                    let res = try await hostApi.onCreateSetupIntent(args[0] as? String, !(args[1] is NSNull) ? Dictionary(uniqueKeysWithValues: (args[1] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[2] as? String, args[3] as? String, !(args[4] is NSNull) ? SetupIntentUsageApi(rawValue: args[4] as! Int)! : nil)
                     return res.serialize()
                 }
             case "retrieveSetupIntent":
@@ -411,7 +411,7 @@ func setStripeTerminalPlatformApiHandler(
                 }
             case "startCollectRefundPaymentMethod":
                 let res = Result<Void>(result) { nil }
-                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, args[4] != nil ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool, args[7] as? Bool)
+                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, !(args[4] is NSNull) ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool, args[7] as? Bool)
             case "stopCollectRefundPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectRefundPaymentMethod(args[0] as! Int)
@@ -626,6 +626,10 @@ struct CardNetworksApi {
     }
 }
 
+enum CardPresentCaptureMethodApi: Int {
+    case manualPreferred
+}
+
 struct CardPresentDetailsApi {
     let brand: CardBrandApi?
     let country: String?
@@ -656,6 +660,29 @@ struct CardPresentDetailsApi {
             receipt?.serialize(),
         ]
     }
+}
+
+struct CardPresentParametersApi {
+    let captureMethod: CardPresentCaptureMethodApi?
+    let requestExtendedAuthorization: Bool?
+    let requestIncrementalAuthorizationSupport: Bool?
+    let requestedPriority: CardPresentRoutingApi?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> CardPresentParametersApi {
+        return CardPresentParametersApi(
+            captureMethod: !(serialized[0] is NSNull) ? CardPresentCaptureMethodApi(rawValue: serialized[0] as! Int)! : nil,
+            requestExtendedAuthorization: serialized[1] as? Bool,
+            requestIncrementalAuthorizationSupport: serialized[2] as? Bool,
+            requestedPriority: !(serialized[3] is NSNull) ? CardPresentRoutingApi(rawValue: serialized[3] as! Int)! : nil
+        )
+    }
+}
+
+enum CardPresentRoutingApi: Int {
+    case domestic
+    case international
 }
 
 struct CartApi {
@@ -909,6 +936,18 @@ struct PaymentIntentParametersApi {
     let currency: String
     let captureMethod: CaptureMethodApi
     let paymentMethodTypes: [PaymentMethodTypeApi]
+    let metadata: [String: String]
+    let description: String?
+    let statementDescriptor: String?
+    let statementDescriptorSuffix: String?
+    let receiptEmail: String?
+    let customerId: String?
+    let applicationFeeAmount: Int?
+    let transferDataDestination: String?
+    let transferGroup: String?
+    let onBehalfOf: String?
+    let setupFutureUsage: String?
+    let paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?
 
     static func deserialize(
         _ serialized: [Any?]
@@ -917,7 +956,19 @@ struct PaymentIntentParametersApi {
             amount: serialized[0] as! Int,
             currency: serialized[1] as! String,
             captureMethod: CaptureMethodApi(rawValue: serialized[2] as! Int)!,
-            paymentMethodTypes: (serialized[3] as! [Any?]).map { PaymentMethodTypeApi(rawValue: $0 as! Int)! }
+            paymentMethodTypes: (serialized[3] as! [Any?]).map { PaymentMethodTypeApi(rawValue: $0 as! Int)! },
+            metadata: Dictionary(uniqueKeysWithValues: (serialized[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }),
+            description: serialized[5] as? String,
+            statementDescriptor: serialized[6] as? String,
+            statementDescriptorSuffix: serialized[7] as? String,
+            receiptEmail: serialized[8] as? String,
+            customerId: serialized[9] as? String,
+            applicationFeeAmount: serialized[10] as? Int,
+            transferDataDestination: serialized[11] as? String,
+            transferGroup: serialized[12] as? String,
+            onBehalfOf: serialized[13] as? String,
+            setupFutureUsage: serialized[14] as? String,
+            paymentMethodOptionsParameters: !(serialized[15] is NSNull) ? PaymentMethodOptionsParametersApi.deserialize(serialized[15] as! [Any?]) : nil
         )
     }
 }
@@ -940,6 +991,18 @@ struct PaymentMethodDetailsApi {
             cardPresent?.serialize(),
             interacPresent?.serialize(),
         ]
+    }
+}
+
+struct PaymentMethodOptionsParametersApi {
+    let cardPresentParameters: CardPresentParametersApi
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> PaymentMethodOptionsParametersApi {
+        return PaymentMethodOptionsParametersApi(
+            cardPresentParameters: CardPresentParametersApi.deserialize(serialized[0] as! [Any?])
+        )
     }
 }
 

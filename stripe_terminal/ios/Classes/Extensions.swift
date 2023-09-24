@@ -17,3 +17,9 @@ extension Dictionary where Value: Equatable {
         return self.first(where: { k, v in v == value})?.key
     }
 }
+
+extension Int {
+    func toNSNumber() -> NSNumber {
+        return NSNumber(value: self)
+    }
+}

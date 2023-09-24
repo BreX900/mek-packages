@@ -48,11 +48,11 @@ class SwiftApiCodes extends HostApiCodecs {
       final typesArgs = type.doubleTypeArgs;
       final deserializer = 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable?: Any?])'
           '.map { k, v in (${encodeDeserialization(typesArgs.$1, 'k')}, ${encodeDeserialization(typesArgs.$2, 'v')}) })';
-      return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
+      return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
     }
     if (type.isDartCoreEnum || type.element is EnumElement) {
       final deserializer = '${encodeName(type.displayName)}(rawValue: $varAccess as! Int)!';
-      return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
+      return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
     }
 
     final codec = findCodec(type);
@@ -60,7 +60,7 @@ class SwiftApiCodes extends HostApiCodecs {
       if (!type.isNullable || codec.hasNullSafeDeserialization) {
         return codec.encodeDeserialization(this, type, varAccess);
       } else {
-        return '$varAccess != nil ? ${codec.encodeDeserialization(this, type, varAccess)} : nil';
+        return '!($varAccess is NSNull) ? ${codec.encodeDeserialization(this, type, varAccess)} : nil';
       }
     }
 
@@ -70,7 +70,7 @@ class SwiftApiCodes extends HostApiCodecs {
         ? 'deserialize${encodeName(type.displayName)}'
         : '${encodeName(type.displayName)}.deserialize';
     final deserializer = '$deserializerMethod($varAccess as! [Any?])';
-    return type.isNullable ? '$varAccess != nil ? $deserializer : nil' : deserializer;
+    return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
   }
 
   @override

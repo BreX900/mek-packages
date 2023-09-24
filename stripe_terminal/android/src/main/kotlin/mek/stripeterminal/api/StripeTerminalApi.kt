@@ -582,6 +582,10 @@ data class CardNetworksApi(
     }
 }
 
+enum class CardPresentCaptureMethodApi {
+    MANUAL_PREFERRED;
+}
+
 data class CardPresentDetailsApi(
     val brand: CardBrandApi?,
     val country: String?,
@@ -612,6 +616,30 @@ data class CardPresentDetailsApi(
             receipt?.serialize(),
         )
     }
+}
+
+data class CardPresentParametersApi(
+    val captureMethod: CardPresentCaptureMethodApi?,
+    val requestExtendedAuthorization: Boolean?,
+    val requestIncrementalAuthorizationSupport: Boolean?,
+    val requestedPriority: CardPresentRoutingApi?,
+) {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): CardPresentParametersApi {
+            return CardPresentParametersApi(
+                captureMethod = (serialized[0] as Int?)?.let { CardPresentCaptureMethodApi.values()[it] },
+                requestExtendedAuthorization = serialized[1] as Boolean?,
+                requestIncrementalAuthorizationSupport = serialized[2] as Boolean?,
+                requestedPriority = (serialized[3] as Int?)?.let { CardPresentRoutingApi.values()[it] },
+            )
+        }
+    }
+}
+
+enum class CardPresentRoutingApi {
+    DOMESTIC, INTERNATIONAL;
 }
 
 data class CartApi(
@@ -858,6 +886,18 @@ data class PaymentIntentParametersApi(
     val currency: String,
     val captureMethod: CaptureMethodApi,
     val paymentMethodTypes: List<PaymentMethodTypeApi>,
+    val metadata: HashMap<String, String>,
+    val description: String?,
+    val statementDescriptor: String?,
+    val statementDescriptorSuffix: String?,
+    val receiptEmail: String?,
+    val customerId: String?,
+    val applicationFeeAmount: Long?,
+    val transferDataDestination: String?,
+    val transferGroup: String?,
+    val onBehalfOf: String?,
+    val setupFutureUsage: String?,
+    val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
 ) {
     companion object {
         fun deserialize(
@@ -868,6 +908,18 @@ data class PaymentIntentParametersApi(
                 currency = serialized[1] as String,
                 captureMethod = (serialized[2] as Int).let { CaptureMethodApi.values()[it] },
                 paymentMethodTypes = (serialized[3] as List<*>).map { (it as Int).let { PaymentMethodTypeApi.values()[it] } },
+                metadata = hashMapOf(*(serialized[4] as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()),
+                description = serialized[5] as String?,
+                statementDescriptor = serialized[6] as String?,
+                statementDescriptorSuffix = serialized[7] as String?,
+                receiptEmail = serialized[8] as String?,
+                customerId = serialized[9] as String?,
+                applicationFeeAmount = (serialized[10] as? Number)?.toLong(),
+                transferDataDestination = serialized[11] as String?,
+                transferGroup = serialized[12] as String?,
+                onBehalfOf = serialized[13] as String?,
+                setupFutureUsage = serialized[14] as String?,
+                paymentMethodOptionsParameters = (serialized[15] as List<Any?>?)?.let { PaymentMethodOptionsParametersApi.deserialize(it) },
             )
         }
     }
@@ -886,6 +938,20 @@ data class PaymentMethodDetailsApi(
             cardPresent?.serialize(),
             interacPresent?.serialize(),
         )
+    }
+}
+
+data class PaymentMethodOptionsParametersApi(
+    val cardPresentParameters: CardPresentParametersApi,
+) {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): PaymentMethodOptionsParametersApi {
+            return PaymentMethodOptionsParametersApi(
+                cardPresentParameters = (serialized[0] as List<Any?>).let { CardPresentParametersApi.deserialize(it) },
+            )
+        }
     }
 }
 

@@ -125,3 +125,35 @@ mixin _$ReceiptDetails {
         ..add('terminalVerificationResults', _self.terminalVerificationResults))
       .toString();
 }
+
+mixin _$CardPresentParameters {
+  CardPresentParameters get _self => this as CardPresentParameters;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CardPresentParameters &&
+          runtimeType == other.runtimeType &&
+          _self.captureMethod == other.captureMethod &&
+          _self.requestExtendedAuthorization == other.requestExtendedAuthorization &&
+          _self.requestIncrementalAuthorizationSupport ==
+              other.requestIncrementalAuthorizationSupport &&
+          _self.requestedPriority == other.requestedPriority;
+  @override
+  int get hashCode {
+    var hashCode = 0;
+    hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
+    hashCode = $hashCombine(hashCode, _self.requestExtendedAuthorization.hashCode);
+    hashCode = $hashCombine(hashCode, _self.requestIncrementalAuthorizationSupport.hashCode);
+    hashCode = $hashCombine(hashCode, _self.requestedPriority.hashCode);
+    return $hashFinish(hashCode);
+  }
+
+  @override
+  String toString() => (ClassToString('CardPresentParameters')
+        ..add('captureMethod', _self.captureMethod)
+        ..add('requestExtendedAuthorization', _self.requestExtendedAuthorization)
+        ..add(
+            'requestIncrementalAuthorizationSupport', _self.requestIncrementalAuthorizationSupport)
+        ..add('requestedPriority', _self.requestedPriority))
+      .toString();
+}

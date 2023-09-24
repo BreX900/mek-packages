@@ -198,7 +198,6 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     func onCreatePaymentIntent(_ parameters: PaymentIntentParametersApi) async throws -> PaymentIntentApi {
         do {
-            
             let paymentIntent = try await Terminal.shared.createPaymentIntent(parameters.toHost())
             _paymentIntents[paymentIntent.stripeId!] = paymentIntent
             return paymentIntent.toApi()

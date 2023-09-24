@@ -1,0 +1,34 @@
+name: Integration OneForAllGenerator
+
+on:
+  pull_request:
+    paths: [ 'one_for_all/**', 'one_for_all_generator/**' ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: one_for_all_generator
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Resolve dependencies
+        run: dart pub get
+        timeout-minutes: 2
+
+      - name: Check code formatting
+        run: >-
+          dart format --line-length 100 --set-exit-if-changed --output none
+          $(find . ! -path "./.dart_tool/**" ! -path "./build/**" -name "*.dart" ! -name "*.g.dart")
+
+      - name: Analyze code
+        run: dart analyze

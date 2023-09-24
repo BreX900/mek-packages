@@ -115,7 +115,19 @@ mixin _$PaymentIntentParameters {
           _self.amount == other.amount &&
           _self.currency == other.currency &&
           _self.captureMethod == other.captureMethod &&
-          $listEquality.equals(_self.paymentMethodTypes, other.paymentMethodTypes);
+          $listEquality.equals(_self.paymentMethodTypes, other.paymentMethodTypes) &&
+          $mapEquality.equals(_self.metadata, other.metadata) &&
+          _self.description == other.description &&
+          _self.statementDescriptor == other.statementDescriptor &&
+          _self.statementDescriptorSuffix == other.statementDescriptorSuffix &&
+          _self.receiptEmail == other.receiptEmail &&
+          _self.customerId == other.customerId &&
+          _self.applicationFeeAmount == other.applicationFeeAmount &&
+          _self.transferDataDestination == other.transferDataDestination &&
+          _self.transferGroup == other.transferGroup &&
+          _self.onBehalfOf == other.onBehalfOf &&
+          _self.setupFutureUsage == other.setupFutureUsage &&
+          _self.paymentMethodOptionsParameters == other.paymentMethodOptionsParameters;
   @override
   int get hashCode {
     var hashCode = 0;
@@ -123,6 +135,18 @@ mixin _$PaymentIntentParameters {
     hashCode = $hashCombine(hashCode, _self.currency.hashCode);
     hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
     hashCode = $hashCombine(hashCode, $listEquality.hash(_self.paymentMethodTypes));
+    hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
+    hashCode = $hashCombine(hashCode, _self.description.hashCode);
+    hashCode = $hashCombine(hashCode, _self.statementDescriptor.hashCode);
+    hashCode = $hashCombine(hashCode, _self.statementDescriptorSuffix.hashCode);
+    hashCode = $hashCombine(hashCode, _self.receiptEmail.hashCode);
+    hashCode = $hashCombine(hashCode, _self.customerId.hashCode);
+    hashCode = $hashCombine(hashCode, _self.applicationFeeAmount.hashCode);
+    hashCode = $hashCombine(hashCode, _self.transferDataDestination.hashCode);
+    hashCode = $hashCombine(hashCode, _self.transferGroup.hashCode);
+    hashCode = $hashCombine(hashCode, _self.onBehalfOf.hashCode);
+    hashCode = $hashCombine(hashCode, _self.setupFutureUsage.hashCode);
+    hashCode = $hashCombine(hashCode, _self.paymentMethodOptionsParameters.hashCode);
     return $hashFinish(hashCode);
   }
 
@@ -131,6 +155,39 @@ mixin _$PaymentIntentParameters {
         ..add('amount', _self.amount)
         ..add('currency', _self.currency)
         ..add('captureMethod', _self.captureMethod)
-        ..add('paymentMethodTypes', _self.paymentMethodTypes))
+        ..add('paymentMethodTypes', _self.paymentMethodTypes)
+        ..add('metadata', _self.metadata)
+        ..add('description', _self.description)
+        ..add('statementDescriptor', _self.statementDescriptor)
+        ..add('statementDescriptorSuffix', _self.statementDescriptorSuffix)
+        ..add('receiptEmail', _self.receiptEmail)
+        ..add('customerId', _self.customerId)
+        ..add('applicationFeeAmount', _self.applicationFeeAmount)
+        ..add('transferDataDestination', _self.transferDataDestination)
+        ..add('transferGroup', _self.transferGroup)
+        ..add('onBehalfOf', _self.onBehalfOf)
+        ..add('setupFutureUsage', _self.setupFutureUsage)
+        ..add('paymentMethodOptionsParameters', _self.paymentMethodOptionsParameters))
+      .toString();
+}
+
+mixin _$PaymentMethodOptionsParameters {
+  PaymentMethodOptionsParameters get _self => this as PaymentMethodOptionsParameters;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PaymentMethodOptionsParameters &&
+          runtimeType == other.runtimeType &&
+          _self.cardPresentParameters == other.cardPresentParameters;
+  @override
+  int get hashCode {
+    var hashCode = 0;
+    hashCode = $hashCombine(hashCode, _self.cardPresentParameters.hashCode);
+    return $hashFinish(hashCode);
+  }
+
+  @override
+  String toString() => (ClassToString('PaymentMethodOptionsParameters')
+        ..add('cardPresentParameters', _self.cardPresentParameters))
       .toString();
 }

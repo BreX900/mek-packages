@@ -1,6 +1,6 @@
 name: mek_stripe_terminal
 description: A StripeTerminal plugin to discover readers, connect to them and process payments.
-version: 2.1.4
+version: 3.0.0-dev
 repository: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 topics:
   - stripe-terminal

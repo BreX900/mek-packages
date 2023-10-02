@@ -349,12 +349,21 @@ class StripeTerminal {
 
 //region Saving payment details for later use
 
+  /// Creates a new [SetupIntent] with the given parameters.
+  ///
+  /// - [customerId] If present, the SetupIntent’s payment method will be attached to the Customer on
+  ///   successful setup. Payment methods attached to other Customers cannot be used with this SetupIntent.
+  /// - [metadata] Set of key-value pairs that you can attach to an object. This can be useful for
+  ///   storing additional information about the object in a structured format.
+  /// - [onBehalfOf] Connect Only:** The Stripe account ID for which this SetupIntent is created.
+  /// - [description] An arbitrary string attached to the object. Often useful for displaying to users.
+  /// - [usage] Indicates how the payment method is intended to be used in the future-
   Future<SetupIntent> createSetupIntent({
-    required String? customerId,
+    String? customerId,
     Map<String, String>? metadata,
     String? onBehalfOf,
     String? description,
-    SetupIntentUsage? usage,
+    SetupIntentUsage usage = SetupIntentUsage.offSession,
   }) async {
     return await _platform.createSetupIntent(
       customerId: customerId,
@@ -365,9 +374,34 @@ class StripeTerminal {
     );
   }
 
+  /// Retrieves an [SetupIntent] with a client secret.
+  ///
+  /// If you’ve created a SetupIntent on your backend, you must retrieve it in the Stripe Terminal
+  /// SDK before calling [collectSetupIntentPaymentMethod].
   Future<SetupIntent> retrieveSetupIntent(String clientSecret) async =>
       await _platform.retrieveSetupIntent(clientSecret);
 
+  /// Collects a payment method for the given [SetupIntent].
+  ///
+  /// This method does not update the [SetupIntent] API object. All updates are local to the SDK
+  /// and only persisted in memory. You must confirm the [SetupIntent] to create a PaymentMethod
+  /// API object and (optionally) attach that PaymentMethod to a customer.
+  ///
+  /// After resolving the error, you may call [collectSetupIntentPaymentMethod] again to either
+  /// try the same card again, or try a different card.
+  ///
+  /// If collecting a payment method succeeds returns with a [SetupIntent] with status
+  /// [SetupIntentStatus.requiresConfirmation], indicating that you should call [confirmSetupIntent]
+  /// to finish the payment.
+  ///
+  /// Note that if [collectSetupIntentPaymentMethod] is canceled returns Canceled error.
+  ///
+  /// Collecting cardholder consent
+  ///   Card networks require that you collect consent from the customer before saving and reusing
+  ///   their card information. The SetupIntent confirmation API method normally takes a mandate_data hash that lets you specify details about the customer’s consent. The Stripe Terminal SDK will fill in the mandate_data hash with relevant information, but in order for it to do so, you must specify whether you have gathered consent from the cardholder to collect their payment information in this method’s second parameter.
+  ///
+  ///   The payment method will not be collected without the cardholder’s consent.
+  ///
   /// - [isCustomerCancellationEnabled] Only available on Android
   CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
     SetupIntent setupIntent, {
@@ -384,9 +418,26 @@ class StripeTerminal {
     });
   }
 
+  /// Confirms a [SetupIntent] after the payment method has been successfully collected.
+  ///
+  /// Handling failures
+  ///   When confirmSetupIntent fails, the SDK returns an error that includes the updated [SetupIntent].
+  ///   Your app should inspect the updated [SetupIntent] to decide how to proceed.
+  ///   1. If the updated [SetupIntent] is null, the request to Stripe’s servers timed out and the
+  ///     [SetupIntent]’s status is null. We recommend that you retry [confirmSetupIntent] with
+  ///     the original [SetupIntent].
+  ///   2. If the updated [SetupIntent]’s status is still [SetupIntentStatus.requiresConfirmation]
+  ///     (e.g., the request failed because your app is not connected to the internet), you can call
+  ///     [confirmSetupIntent] again with the updated [SetupIntent] to retry the request.
+  ///   3. If the updated [SetupIntent]’s status is [SetupIntentStatus.requiresAction], there might
+  ///     be authentication the cardholder must perform offline before the saved PaymentMethod can be used.
   Future<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) async =>
       await _platform.confirmSetupIntent(setupIntent.id);
 
+  /// Cancels an [SetupIntent].
+  ///
+  /// If the cancel request succeeds returns the updated [SetupIntent] object with status
+  /// [SetupIntentStatus.cancelled].
   Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
       await _platform.cancelSetupIntent(setupIntent.id);
 
@@ -394,6 +445,40 @@ class StripeTerminal {
 
 //region Card-present refunds
 
+  /// Initiates an in-person refund by collecting the payment method that is to be refunded.
+  ///
+  /// Some payment methods, like Interac Debit payments, require that in-person payments
+  /// also be refunded while the cardholder is present. The cardholder must present
+  /// the Interac card to the card reader; these payments cannot be refunded via the dashboard or the API.
+  ///
+  /// For payment methods that don’t require the cardholder be present,
+  /// see https://stripe.com/docs/terminal/payments/refunds
+  ///
+  /// This method, along with confirmRefund, allow you to design an in-person refund flow into your app.
+  ///
+  /// After resolving with the error, you may call [collectRefundPaymentMethod] again to either
+  /// try the same card again, or try a different card.
+  ///
+  /// If collecting a payment method collected, you can call [confirmRefund] to finish refunding
+  /// the payment method.
+  ///
+  /// Calling any other SDK methods between [collectRefundPaymentMethod] and [confirmRefund]
+  /// will result in undefined behavior.
+  ///
+  /// Note that if [collectRefundPaymentMethod] is canceled, this method throw a Canceled error.
+  ///
+  /// - [chargeId] The ID of the charge to be refunded.
+  /// - [amount] The amount of the refund, provided in the currency’s smallest unit.
+  /// - [currency] Three-letter ISO currency code. Must be a supported currency.
+  /// - [metadata] Set of key-value pairs that you can attach to an object. This can be useful
+  ///   for storing additional information about the object in a structured format.
+  /// - [reverseTransfer] Connect only: Nullable boolean indicating whether the transfer should
+  ///   be reversed when refunding this charge. The transfer will be reversed proportionally to
+  ///   the amount being refunded (either the entire or partial amount).
+  /// - [refundApplicationFee] Connect only: Nullable boolean indicating whether the application
+  ///   fee should be refunded when refunding this charge. If a full charge refund is given,
+  ///   the full application fee will be refunded. Otherwise, the application fee will be refunded
+  ///   in an amount proportional to the amount of the charge refunded.
   /// - [isCustomerCancellationEnabled] Only available on Android
   CancelableFuture<void> collectRefundPaymentMethod({
     required String chargeId,
@@ -418,6 +503,17 @@ class StripeTerminal {
     });
   }
 
+  /// Confirms an in-person refund after the refund payment method has been collected.
+  ///
+  /// When [confirmRefund] fails, the SDK returns an error that either includes the failed [Refund].
+  ///
+  /// 1. If the refund property is null, the request to Stripe’s servers timed out and the refund’s
+  ///   status is null. We recommend that you retry [confirmRefund] with the original parameters.
+  /// 2. If the ConfirmRefundError has a failure_reason, the refund was declined. We recommend
+  ///   that you take action based on the decline code you received.
+  ///
+  /// Note: collectRefundPaymentMethod:completion and confirmRefund are only available for payment
+  ///   methods that require in-person refunds. For all other refunds, use the Stripe Dashboard or the Stripe API.
   Future<Refund> confirmRefund() async => await _platform.confirmRefund();
 //endregion
 
@@ -425,9 +521,13 @@ class StripeTerminal {
   /// Updates the reader display with transaction information. This method is for display purposes
   /// only and has no correlation with what the customer is actually charged. Tax and total
   /// are also not automatically calculated and must be set in [Cart].
+  ///
+  /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
   Future<void> setReaderDisplay(Cart cart) async => await _platform.setReaderDisplay(cart);
 
-  /// Clears the reader display and resets it to the splash screen
+  /// Clears the reader display and resets it to the splash screen.
+  ///
+  /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
   Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
 //endregion
 

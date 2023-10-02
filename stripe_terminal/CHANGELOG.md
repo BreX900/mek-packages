@@ -1,3 +1,9 @@
+## 3.0.0-dev.1
+- docs: Added docs to `PaymentIntent` and `PaymentIntentParams` classes and all daughter classes
+- docs: Added docs to `SetupIntent` class and all daughter classes
+- docs: Added docs to all `Saving payment details for later use` methods on `StripeTerminal` class
+- docs: Added docs to all `Display information to customers` methods on `StripeTerminal` class
+
 ## 3.0.0-dev
 - fix(ios): Fixes incorrect checking `null` values from flutter
 - feat: added more parameters to `PaymentIntentParams` class

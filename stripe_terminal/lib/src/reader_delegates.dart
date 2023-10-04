@@ -7,11 +7,11 @@ import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 typedef Cancellable = Future<void> Function();
 
 sealed class ReaderDelegate {
-  FutureOr<void> Function(ReaderEvent event)? onReportReaderEvent;
+  FutureOr<void> Function(ReaderEvent event)? onReportReaderEventFn;
   
   FutureOr<void> onReportReaderEvent(ReaderEvent event) {
     if (onReportReaderEventFn != null) {
-      return onReportReaderEventFn(event);
+      return onReportReaderEventFn!(event);
     }
   }
 }

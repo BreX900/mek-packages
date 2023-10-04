@@ -7,32 +7,72 @@ import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 typedef Cancellable = Future<void> Function();
 
 sealed class ReaderDelegate {
-  FutureOr<void> onReportReaderEvent(ReaderEvent event) {}
+  FutureOr<void> Function(ReaderEvent event)? onReportReaderEvent;
+  
+  FutureOr<void> onReportReaderEvent(ReaderEvent event) {
+    if (onReportReaderEventFn != null) {
+      return onReportReaderEventFn(event);
+    }
+  }
 }
 
 sealed class PhysicalReaderDelegate extends ReaderDelegate {
-  FutureOr<void> onRequestReaderDisplayMessage(ReaderDisplayMessage message) {}
+  FutureOr<void> Function(ReaderDisplayMessage message)? onRequestReaderDisplayMessageFn;
+  FutureOr<void> Function(List<ReaderInputOption> options)? onRequestReaderInputFn;
+  FutureOr<void> Function(double batteryLevel, BatteryStatus? batteryStatus, bool isCharging)? onReportBatteryLevelUpdateFn;
+  FutureOr<void> Function()? onReportLowBatteryWarningFn;
+  FutureOr<void> Function(ReaderSoftwareUpdate update)? onReportAvailableUpdateFn;
+  FutureOr<void> Function(ReaderSoftwareUpdate update, Cancellable cancelUpdate)? onStartInstallingUpdateFn;
+  FutureOr<void> Function(double progress)? onReportReaderSoftwareUpdateProgressFn;
+  FutureOr<void> Function(ReaderSoftwareUpdate? update, TerminalException? exception)? onFinishInstallingUpdateFn;
 
-  FutureOr<void> onRequestReaderInput(List<ReaderInputOption> options) {}
+  FutureOr<void> onRequestReaderDisplayMessage(ReaderDisplayMessage message) {
+    if (onRequestReaderDisplayMessageFn != null) {
+      return onRequestReaderDisplayMessageFn!(message);
+    }
+  }
 
-  FutureOr<void> onReportBatteryLevelUpdate(
-    double batteryLevel,
-    BatteryStatus? batteryStatus,
-    bool isCharging,
-  ) {}
+  FutureOr<void> onRequestReaderInput(List<ReaderInputOption> options) {
+    if (onRequestReaderInputFn != null) {
+      return onRequestReaderInputFn!(options);
+    }
+  }
 
-  FutureOr<void> onReportLowBatteryWarning() {}
+  FutureOr<void> onReportBatteryLevelUpdate(double batteryLevel, BatteryStatus? batteryStatus, bool isCharging) {
+    if (onReportBatteryLevelUpdateFn != null) {
+      return onReportBatteryLevelUpdateFn!(batteryLevel, batteryStatus, isCharging);
+    }
+  }
 
-  FutureOr<void> onReportAvailableUpdate(ReaderSoftwareUpdate update) {}
+  FutureOr<void> onReportLowBatteryWarning() {
+    if (onReportLowBatteryWarningFn != null) {
+      return onReportLowBatteryWarningFn!();
+    }
+  }
 
-  FutureOr<void> onStartInstallingUpdate(ReaderSoftwareUpdate update, Cancellable cancelUpdate) {}
+  FutureOr<void> onReportAvailableUpdate(ReaderSoftwareUpdate update) {
+    if (onReportAvailableUpdateFn != null) {
+      return onReportAvailableUpdateFn!(update);
+    }
+  }
 
-  FutureOr<void> onReportReaderSoftwareUpdateProgress(double progress) {}
+  FutureOr<void> onStartInstallingUpdate(ReaderSoftwareUpdate update, Cancellable cancelUpdate) {
+    if (onStartInstallingUpdateFn != null) {
+      return onStartInstallingUpdateFn!(update, cancelUpdate);
+    }
+  }
 
-  FutureOr<void> onFinishInstallingUpdate(
-    ReaderSoftwareUpdate? update,
-    TerminalException? exception,
-  ) {}
+  FutureOr<void> onReportReaderSoftwareUpdateProgress(double progress) {
+    if (onReportReaderSoftwareUpdateProgressFn != null) {
+      return onReportReaderSoftwareUpdateProgressFn!(progress);
+    }
+  }
+
+  FutureOr<void> onFinishInstallingUpdate(ReaderSoftwareUpdate? update, TerminalException? exception) {
+    if (onFinishInstallingUpdateFn != null) {
+      return onFinishInstallingUpdateFn!(update, exception);
+    }
+  }
 }
 
 class HandoffReaderDelegate extends ReaderDelegate {}

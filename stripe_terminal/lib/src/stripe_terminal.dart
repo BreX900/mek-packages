@@ -144,19 +144,19 @@ class StripeTerminal {
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
     assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
     final connectedReader = await _platform.connectBluetoothReader(
       reader.serialNumber,
       locationId: locationId,
       autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
     );
-    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
     return connectedReader;
   }
 
   /// Attempts to connect to the given Handoff reader with a given connection configuration.
   Future<Reader> connectHandoffReader(Reader reader, {HandoffReaderDelegate? delegate}) async {
-    final connectedReader = await _platform.connectHandoffReader(reader.serialNumber);
     _handlers.attachReaderDelegates(delegate, null);
+    final connectedReader = await _platform.connectHandoffReader(reader.serialNumber);
     return connectedReader;
   }
 
@@ -184,11 +184,11 @@ class StripeTerminal {
     required String locationId,
     LocalMobileReaderDelegate? delegate,
   }) async {
+    _handlers.attachReaderDelegates(delegate, null);
     final connectedReader = await _platform.connectMobileReader(
       reader.serialNumber,
       locationId: locationId,
     );
-    _handlers.attachReaderDelegates(delegate, null);
     return connectedReader;
   }
 
@@ -201,12 +201,12 @@ class StripeTerminal {
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
     assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
     final connectedReader = await _platform.connectUsbReader(
       reader.serialNumber,
       locationId: locationId,
       autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
     );
-    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
     return connectedReader;
   }
 

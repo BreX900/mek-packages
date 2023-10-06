@@ -160,8 +160,8 @@ class TerminalException {
 
   TerminalException({
     required this.rawCode,
-    required this.message,
-    required this.details,
+    this.message,
+    this.details,
   });
 
   @override

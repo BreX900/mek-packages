@@ -84,13 +84,11 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
 
     func reader(_: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error e: Error?) {
         cancellableUpdate = nil
-        let exception = e?.toApi()
+        let exception = (e as? NSError)?.toApi()
         DispatchQueue.main.async {
             self._handlers.readerFinishInstallingUpdate(
                 update: update?.toApi(),
-                exception: exception != nil
-                ? TerminalExceptionApi(rawCode: exception!.code, message: exception!.message, details: "\(exception!.details ?? "")")
-                    : nil
+                exception: exception
             )
         }
     }

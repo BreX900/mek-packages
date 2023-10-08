@@ -1246,20 +1246,25 @@ enum SetupIntentUsageApi: Int {
 }
 
 struct TerminalExceptionApi {
-    let rawCode: String
-    let message: String?
-    let details: String?
+    let code: TerminalExceptionCodeApi
+    let message: String
+    let stackTrace: String?
+    let paymentIntent: PaymentIntentApi?
+    let apiError: Any?
 
     func serialize() -> [Any?] {
         return [
-            rawCode,
+            code.rawValue,
             message,
-            details,
+            stackTrace,
+            paymentIntent?.serialize(),
+            apiError,
         ]
     }
 }
 
-enum TerminalExceptionCodeApi: String {
+enum TerminalExceptionCodeApi: Int {
+    case unknown
     case readerNotRecovered
     case paymentIntentNotRecovered
     case setupIntentNotRecovered

@@ -1,3 +1,10 @@
+- docs: Added docs to all `TerminalExceptionCode` enum values
+- feat: Added to `TerminalException` class a updated `PaymentIntent` and `ApiError`
+- feat: Mapped all Android and IOS sdk errors to `TerminalExceptionCode` enum
+
+*BREAKING CHANGES*
+- refactor: Removed `TerminalException.rawCode` in favour of `TerminalException.code` enum field
+
 ## 3.0.0-dev.1
 - docs: Added docs to `PaymentIntent` and `PaymentIntentParams` classes and all daughter classes
 - docs: Added docs to `SetupIntent` class and all daughter classes

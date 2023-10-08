@@ -70,7 +70,7 @@ class OneForAll {
 
   Future<void> build() async {
     print('Scanning...');
-
+    // TODO: Check if file exists
     final apiAbsolutePaths = [options.apiFile, ...options.extraApiFiles]
         .map((e) => path_.absolute(path_.normalize(e)))
         .toList();

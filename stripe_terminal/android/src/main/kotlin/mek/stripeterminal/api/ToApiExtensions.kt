@@ -3,16 +3,36 @@ package mek.stripeterminal.api
 import mek.stripeterminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
 import com.stripe.stripeterminal.external.models.TerminalException.TerminalErrorCode
+import mek.stripeterminal.createApiException
 
-fun TerminalException.toApi(): TerminalExceptionApi {
-    return TerminalExceptionApi(
-        rawCode = errorCode.toApi().name,
-        message = errorMessage,
-        details = "$this"
+fun TerminalException.toPlatformError(): PlatformException {
+    return toApi().toPlatformError()
+}
+
+fun TerminalExceptionApi.toPlatformError(): PlatformException {
+    return PlatformException(
+        code = "mek_stripe_terminal",
+        message = null,
+        details = serialize()
     )
 }
 
-fun TerminalErrorCode.toApi(): TerminalExceptionCodeApi {
+fun TerminalException.toApi(): TerminalExceptionApi {
+    val code = errorCode.toApiCode()
+        ?: return createApiException(
+            TerminalExceptionCodeApi.UNKNOWN,
+            "Unsupported Terminal exception code: $errorCode"
+        )
+    return TerminalExceptionApi(
+            code = code,
+            message = errorMessage,
+            stackTrace  = stackTraceToString(),
+            paymentIntent = paymentIntent?.toApi(),
+            apiError = apiError?.toString(),
+        )
+}
+
+private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
     return when (this) {
         TerminalErrorCode.CANCEL_FAILED -> TerminalExceptionCodeApi.CANCEL_FAILED
         TerminalErrorCode.NOT_CONNECTED_TO_READER -> TerminalExceptionCodeApi.NOT_CONNECTED_TO_READER
@@ -27,7 +47,7 @@ fun TerminalErrorCode.toApi(): TerminalExceptionCodeApi {
         TerminalErrorCode.MISSING_REQUIRED_PARAMETER -> TerminalExceptionCodeApi.INVALID_PARAMETER
         TerminalErrorCode.INVALID_REQUIRED_PARAMETER -> TerminalExceptionCodeApi.INVALID_REQUIRED_PARAMETER
         TerminalErrorCode.INVALID_TIP_PARAMETER -> TerminalExceptionCodeApi.INVALID_TIP_PARAMETER
-        TerminalErrorCode.LOCAL_MOBILE_LIBRARY_NOT_INCLUDED -> throw PlatformException("", "Unsupported Terminal exception code:  ${TerminalErrorCode.LOCAL_MOBILE_LIBRARY_NOT_INCLUDED}")
+        TerminalErrorCode.LOCAL_MOBILE_LIBRARY_NOT_INCLUDED -> null
         TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_DEVICE -> TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_DEVICE
         TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_ANDROID_VERSION -> TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION
         TerminalErrorCode.LOCAL_MOBILE_DEVICE_TAMPERED -> TerminalExceptionCodeApi.LOCAL_MOBILE_DEVICE_TAMPERED

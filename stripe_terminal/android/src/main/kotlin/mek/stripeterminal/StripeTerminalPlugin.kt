@@ -1,7 +1,6 @@
 package mek.stripeterminal
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
@@ -15,15 +14,11 @@ import com.stripe.stripeterminal.external.callable.PaymentIntentCallback
 import com.stripe.stripeterminal.external.callable.ReaderCallback
 import com.stripe.stripeterminal.external.callable.RefundCallback
 import com.stripe.stripeterminal.external.callable.SetupIntentCallback
-import com.stripe.stripeterminal.external.models.CaptureMethod
 import com.stripe.stripeterminal.external.models.CollectConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
-import com.stripe.stripeterminal.external.models.PaymentIntentParameters
-import com.stripe.stripeterminal.external.models.PaymentMethod
-import com.stripe.stripeterminal.external.models.PaymentMethodType
 import com.stripe.stripeterminal.external.models.Reader
 import com.stripe.stripeterminal.external.models.Refund
 import com.stripe.stripeterminal.external.models.RefundConfiguration
@@ -54,10 +49,8 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
-import mek.stripeterminal.api.CaptureMethodApi
 import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.PaymentIntentParametersApi
-import mek.stripeterminal.api.PaymentMethodTypeApi
 import mek.stripeterminal.api.PaymentStatusApi
 import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
@@ -150,7 +143,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         locationId: String,
         autoReconnectOnUnexpectedDisconnect: Boolean,
     ) {
-        val reader = findActiveReader(result, serialNumber) ?: return
+        val reader = findActiveReader(serialNumber)
 
         _terminal.connectBluetoothReader(reader,
             ConnectionConfiguration.BluetoothConnectionConfiguration(
@@ -169,7 +162,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         result: Result<ReaderApi>,
         serialNumber: String,
     ) {
-        val reader = findActiveReader(result, serialNumber) ?: return
+        val reader = findActiveReader(serialNumber)
 
         _terminal.connectHandoffReader(reader,
             ConnectionConfiguration.HandoffConnectionConfiguration(),
@@ -185,7 +178,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         serialNumber: String,
         failIfInUse: Boolean
     ) {
-        val reader = findActiveReader(result, serialNumber) ?: return
+        val reader = findActiveReader(serialNumber)
 
         _terminal.connectInternetReader(reader,
             ConnectionConfiguration.InternetConnectionConfiguration(
@@ -201,7 +194,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         serialNumber: String,
         locationId: String,
     ) {
-        val reader = findActiveReader(result, serialNumber) ?: return
+        val reader = findActiveReader(serialNumber)
 
         val config = ConnectionConfiguration.LocalMobileConnectionConfiguration(
             locationId = locationId,
@@ -218,7 +211,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         locationId: String,
         autoReconnectOnUnexpectedDisconnect: Boolean,
     ) {
-        val reader = findActiveReader(result, serialNumber) ?: return
+        val reader = findActiveReader(serialNumber)
 
         _terminal.connectUsbReader(reader,
             ConnectionConfiguration.UsbConnectionConfiguration(
@@ -358,7 +351,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         result: Result<PaymentIntentApi>,
         paymentIntentId: String,
     ) {
-        val paymentIntent = findPaymentIntent(result, paymentIntentId) ?: return
+        val paymentIntent = findPaymentIntent(paymentIntentId)
         _terminal.confirmPaymentIntent(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
@@ -370,7 +363,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     }
 
     override fun onCancelPaymentIntent(result: Result<PaymentIntentApi>, paymentIntentId: String) {
-        val paymentIntent = findPaymentIntent(result, paymentIntentId) ?: return
+        val paymentIntent = findPaymentIntent(paymentIntentId)
         _terminal.cancelPaymentIntent(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
@@ -429,7 +422,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         customerConsentCollected: Boolean,
         isCustomerCancellationEnabled: Boolean?,
     ) {
-        val setupIntent = findSetupIntent(result, setupIntentId) ?: return
+        val setupIntent = findSetupIntent(setupIntentId)
 
         val config = SetupIntentConfiguration.Builder();
         isCustomerCancellationEnabled?.let(config::setEnableCustomerCancellation)
@@ -461,7 +454,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     }
 
     override fun onConfirmSetupIntent(result: Result<SetupIntentApi>, setupIntentId: String) {
-        val setupIntent = findSetupIntent(result, setupIntentId) ?: return
+        val setupIntent = findSetupIntent(setupIntentId)
         _terminal.confirmSetupIntent(
             setupIntent,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
@@ -473,7 +466,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
     }
 
     override fun onCancelSetupIntent(result: Result<SetupIntentApi>, setupIntentId: String) {
-        val setupIntent = findSetupIntent(result, setupIntentId) ?: return
+        val setupIntent = findSetupIntent(setupIntentId)
         _terminal.cancelSetupIntent(
             setupIntent,
             SetupIntentCancellationParameters.Builder().build(),
@@ -592,40 +585,19 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     // ======================== INTERNAL METHODS
 
-    private fun findActiveReader(result: Result<*>, serialNumber: String): Reader? {
+    private fun findActiveReader(serialNumber: String): Reader {
         val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
-        if (reader == null) {
-            result.error(
-                TerminalException.TerminalErrorCode.READER_CONNECTED_TO_ANOTHER_DEVICE.name,
-                "Reader with provided serial number no longer exists",
-                null
-            )
-        }
-        return reader
+        return reader ?: throw PlatformException(TerminalExceptionCodeApi.READER_NOT_RECOVERED.name, null)
     }
 
-    private fun findPaymentIntent(result: Result<*>, paymentIntentId: String): PaymentIntent? {
+    private fun findPaymentIntent(paymentIntentId: String): PaymentIntent {
         val paymentIntent = _paymentIntents[paymentIntentId]
-        if (paymentIntent == null) {
-            result.error(
-                TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RETRIEVED.name,
-                null,
-                null
-            )
-        }
-        return paymentIntent
+        return paymentIntent ?: throw PlatformException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED.name, null)
     }
 
-    private fun findSetupIntent(result: Result<*>, setupIntentId: String): SetupIntent? {
+    private fun findSetupIntent(setupIntentId: String): SetupIntent {
         val setupIntent = _setupIntents[setupIntentId]
-        if (setupIntent == null) {
-            result.error(
-                TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RETRIEVED.name,
-                null,
-                null
-            )
-        }
-        return setupIntent
+        return setupIntent ?: throw PlatformException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED.name, null)
     }
 
     private fun clean() {

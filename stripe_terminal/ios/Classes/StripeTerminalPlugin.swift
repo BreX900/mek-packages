@@ -252,7 +252,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             let (intent, error) = await Terminal.shared.confirmPaymentIntent(paymentIntent)
             if let error {
-                throw PlatformError(error.declineCode!, error.localizedDescription)
+                throw error.toApi()
             }
             return intent!.toApi()
         } catch let error as NSError {
@@ -340,7 +340,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         let setupIntent = try _findSetupIntent(setupIntentId)
         let (newSetupIntent, error) = await Terminal.shared.confirmSetupIntent(setupIntent)
         if let error {
-            throw PlatformError(error.declineCode!, error.localizedDescription)
+            throw error.toApi()
         }
         _setupIntents[newSetupIntent!.stripeId] = newSetupIntent!
         return newSetupIntent!.toApi()
@@ -396,7 +396,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             let (refund, error) = await Terminal.shared.confirmRefund()
             if let error {
-                throw PlatformError("\(error.code)", error.localizedDescription)
+                throw error.toApi()
             }
             return refund!.toApi()
         } catch let error as NSError {
@@ -445,10 +445,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
 
     private func _findReader(_ serialNumber: String) throws -> Reader {
         guard let reader = _readers.first(where: { $0.serialNumber == serialNumber }) else {
-            throw PlatformError(
-                TerminalExceptionCodeApi.readerCommunicationError.rawValue,
-                "Reader with provided serial number no longer exists"
-            )
+            throw PlatformError(TerminalExceptionCodeApi.readerNotRecovered.rawValue, nil)
         }
         return reader
     }
@@ -456,7 +453,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func _findPaymentIntent(_ paymentIntentId: String) throws -> PaymentIntent {
         let paymentIntent = _paymentIntents[paymentIntentId]
         guard let paymentIntent else {
-            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
+            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRecovered.rawValue, nil, nil)
         }
         return paymentIntent
     }
@@ -464,7 +461,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func _findSetupIntent(_ setupIntentId: String) throws -> SetupIntent {
         let setupIntent = _setupIntents[setupIntentId]
         guard let setupIntent else {
-            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRetrieved.rawValue, nil, nil)
+            throw PlatformError(TerminalExceptionCodeApi.setupIntentNotRecovered.rawValue, nil, nil)
         }
         return setupIntent
     }

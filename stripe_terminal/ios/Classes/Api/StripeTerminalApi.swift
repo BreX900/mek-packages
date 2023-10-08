@@ -1260,44 +1260,70 @@ struct TerminalExceptionApi {
 }
 
 enum TerminalExceptionCodeApi: String {
-    case paymentIntentNotRetrieved
+    case readerNotRecovered
+    case paymentIntentNotRecovered
+    case setupIntentNotRecovered
     case cancelFailed
     case notConnectedToReader
     case alreadyConnectedToReader
+    case bluetoothDisabled
     case bluetoothPermissionDenied
-    case processInvalidPaymentIntent
+    case confirmInvalidPaymentIntent
     case invalidClientSecret
+    case invalidReaderForUpdate
     case unsupportedOperation
     case unexpectedOperation
     case unsupportedSdk
+    case featureNotAvailableWithConnectedReader
     case usbPermissionDenied
-    case missingRequiredParameter
+    case usbDiscoveryTimedOut
+    case invalidParameter
     case invalidRequiredParameter
     case invalidTipParameter
-    case localMobileLibraryNotIncluded
     case localMobileUnsupportedDevice
-    case localMobileUnsupportedAndroidVersion
+    case localMobileUnsupportedOperatingSystemVersion
     case localMobileDeviceTampered
     case localMobileDebugNotSupported
-    case offlineModeUnsupportedAndroidVersion
+    case offlineModeUnsupportedOperatingSystemVersion
     case canceled
     case locationServicesDisabled
     case bluetoothScanTimedOut
     case bluetoothLowEnergyUnsupported
     case readerSoftwareUpdateFailedBatteryLow
     case readerSoftwareUpdateFailedInterrupted
+    case readerSoftwareUpdateFailedExpiredUpdate
+    case bluetoothConnectionFailedBatteryCriticallyLow
     case cardInsertNotRead
     case cardSwipeNotRead
     case cardReadTimedOut
     case cardRemoved
     case customerConsentRequired
     case cardLeftInReader
-    case usbDiscoveryTimedOut
     case featureNotEnabledOnAccount
+    case passcodeNotEnabled
+    case commandNotAllowedDuringCall
+    case invalidAmount
+    case invalidCurrency
+    case appleBuiltInReaderTOSAcceptanceRequiresiCloudSignIn
+    case appleBuiltInReaderTOSAcceptanceCanceled
+    case appleBuiltInReaderFailedToPrepare
+    case appleBuiltInReaderDeviceBanned
+    case appleBuiltInReaderTOSNotYetAccepted
+    case appleBuiltInReaderTOSAcceptanceFailed
+    case appleBuiltInReaderMerchantBlocked
+    case appleBuiltInReaderInvalidMerchant
     case readerBusy
+    case incompatibleReader
     case readerCommunicationError
+    case unknownReaderIpAddress
+    case internetConnectTimeOut
+    case connectFailedReaderIsInUse
+    case readerNotAccessibleInBackground
     case bluetoothError
+    case bluetoothConnectTimedOut
     case bluetoothDisconnected
+    case bluetoothPeerRemovedPairingInformation
+    case bluetoothAlreadyPairedWithAnotherDevice
     case bluetoothReconnectStarted
     case usbDisconnected
     case usbReconnectStarted
@@ -1305,38 +1331,50 @@ enum TerminalExceptionCodeApi: String {
     case readerSoftwareUpdateFailed
     case readerSoftwareUpdateFailedReaderError
     case readerSoftwareUpdateFailedServerError
-    case localMobileNfcDisabled
+    case nfcDisabled
     case unsupportedReaderVersion
     case unexpectedSdkError
+    case unexpectedReaderError
     case declinedByStripeApi
     case declinedByReader
+    case notConnectedToInternet
     case requestTimedOut
     case stripeApiConnectionError
     case stripeApiError
     case stripeApiResponseDecodingError
+    case internalNetworkError
     case connectionTokenProviderError
     case sessionExpired
-    case androidApiLevelError
+    case unsupportedMobileDeviceConfiguration
+    case commandNotAllowed
     case amountExceedsMaxOfflineAmount
     case offlinePaymentsDatabaseTooLarge
     case readerConnectionNotAvailableOffline
     case readerConnectionOfflineLocationMismatch
+    case locationConnectionNotAvailableOffline
     case noLastSeenAccount
     case invalidOfflineCurrency
+    case refundFailed
     case cardSwipeNotAvailable
     case interacNotSupportedOffline
     case onlinePinNotSupportedOffline
     case offlineAndCardExpired
     case offlineTransactionDeclined
-    case offlineCollectAndProcessMismatch
-    case offlineTestmodePaymentInLivemode
-    case offlineLivemodePaymentInTestmode
+    case offlineCollectAndConfirmMismatch
+    case forwardingTestModePaymentInLiveMode
+    case forwardingLiveModePaymentInTestMode
     case offlinePaymentIntentNotFound
+    case updatePaymentIntentUnavailableWhileOffline
+    case updatePaymentIntentUnavailableWhileOfflineModeEnabled
     case missingEmvData
     case connectionTokenProviderErrorWhileForwarding
+    case connectionTokenProviderTimedOut
     case accountIdMismatchWhileForwarding
-    case forceOfflineWithFeatureDisabled
-    case notConnectedToInternetAndRequireOnlineSet
+    case offlineBehaviorForceOfflineWithFeatureDisabled
+    case notConnectedToInternetAndOfflineBehaviorRequireOnline
+    case testCardInLiveMode
+    case collectInputsApplicationError
+    case collectInputsTimedOut
 }
 
 enum UpdateComponentApi: Int {

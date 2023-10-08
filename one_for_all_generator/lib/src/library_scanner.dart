@@ -42,12 +42,12 @@ class LibraryScanner {
     final serializableClassElements =
         libraryReader.classes.whereHasAnnotation(serializableClassChecker.firstAnnotationOf);
     for (final AnnotatedWithElement(:element) in serializableClassElements) {
-      scanSerializable(element.thisType, flutterToHost: true, hostToFlutter: true);
+      scanSerializable(element.thisType);
     }
     final serializableEnumElements =
         libraryReader.enums.whereHasAnnotation(serializableEnumChecker.firstAnnotationOf);
     for (final AnnotatedWithElement(:element) in serializableEnumElements) {
-      scanSerializable(element.thisType, flutterToHost: true, hostToFlutter: true);
+      scanSerializable(element.thisType);
     }
 
     _hostApiHandles.addAll(

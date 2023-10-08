@@ -651,6 +651,8 @@ SetupIntent _$deserializeSetupIntent(List<Object?> serialized) => SetupIntent(
     status: SetupIntentStatus.values[serialized[5] as int],
     latestAttempt: serialized[6] != null ? _$deserializeSetupAttempt(serialized[6] as List) : null);
 TerminalException _$deserializeTerminalException(List<Object?> serialized) => TerminalException(
-    rawCode: serialized[0] as String,
-    message: serialized[1] as String?,
-    details: serialized[2] as String?);
+    code: TerminalExceptionCode.values[serialized[0] as int],
+    message: serialized[1] as String,
+    stackTrace: serialized[2] as String?,
+    paymentIntent: serialized[3] != null ? _$deserializePaymentIntent(serialized[3] as List) : null,
+    apiError: serialized[4]);

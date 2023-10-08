@@ -16,6 +16,8 @@ class PlatformError: Error {
         self.message = message
         self.details = details
     }
+
+    func toFlutterError() -> FlutterError { FlutterError(code: code, message: message, details: details) }
 }
 
 class Result<T> {
@@ -35,11 +37,9 @@ class Result<T> {
     ) { result(serializer(data)) }
 
     func error(
-        _ code: String,
-        _ message: String? = nil,
-        _ details: Any? = nil
+        _ error: PlatformError
     ) {
-        result(FlutterError(code: code, message: message, details: details))
+        result(error.toFlutterError())
     }
 }
 
@@ -60,23 +60,21 @@ class ControllerSink<T> {
     ) { sink(serializer(data)) }
 
     func error(
-        _ code: String,
-        _ message: String? = nil,
-        _ details: Any? = nil
+        _ error: PlatformError
     ) {
-        sink(FlutterError(code: code, message: message, details: details))
+        sink(error.toFlutterError())
     }
 
     func endOfStream() { sink(FlutterEndOfEventStream) }
 }
 
 class ControllerHandler: NSObject, FlutterStreamHandler {
-    private let _onListen: (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?
-    private let _onCancel: (_ arguments: Any?) -> FlutterError?
+    private let _onListen: (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> PlatformError?
+    private let _onCancel: (_ arguments: Any?) -> PlatformError?
 
     init(
-        _ _onListen: @escaping (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?,
-        _ _onCancel: @escaping (_ arguments: Any?) -> FlutterError?
+        _ _onListen: @escaping (_ arguments: Any?, _ events: @escaping FlutterEventSink) -> PlatformError?,
+        _ _onCancel: @escaping (_ arguments: Any?) -> PlatformError?
     ) {
         self._onListen = _onListen
         self._onCancel = _onCancel
@@ -85,11 +83,11 @@ class ControllerHandler: NSObject, FlutterStreamHandler {
     func onListen(
         withArguments arguments: Any?,
         eventSink events: @escaping FlutterEventSink
-    ) -> FlutterError? { _onListen(arguments, events) }
+    ) -> FlutterError? { _onListen(arguments, events)?.toFlutterError() }
 
     func onCancel(
         withArguments arguments: Any?
-    ) -> FlutterError? { _onCancel(arguments) }
+    ) -> FlutterError? { _onCancel(arguments)?.toFlutterError() }
 }
 
 protocol StripeTerminalPlatformApi {
@@ -244,8 +242,8 @@ class DiscoverReadersControllerApi {
     }
 
     func setHandler(
-        _ onListen: @escaping (_ sink: ControllerSink<[ReaderApi]>, _ configuration: DiscoveryConfigurationApi) -> FlutterError?,
-        _ onCancel: @escaping (_ configuration: DiscoveryConfigurationApi) -> FlutterError?
+        _ onListen: @escaping (_ sink: ControllerSink<[ReaderApi]>, _ configuration: DiscoveryConfigurationApi) -> PlatformError?,
+        _ onCancel: @escaping (_ configuration: DiscoveryConfigurationApi) -> PlatformError?
     ) {
         channel.setStreamHandler(ControllerHandler({ arguments, events in
             let args = arguments as! [Any?]
@@ -274,7 +272,7 @@ func setStripeTerminalPlatformApiHandler(
                     let res = try await function()
                     DispatchQueue.main.async { result(res) }
                 } catch let error as PlatformError {
-                    DispatchQueue.main.async { result(FlutterError(code: error.code, message: error.message, details: error.details)) }
+                    DispatchQueue.main.async { result(error.toFlutterError()) }
                 } catch {
                     DispatchQueue.main.async { result(FlutterError(code: "", message: error.localizedDescription, details: nil)) }
                 }
@@ -436,7 +434,7 @@ func setStripeTerminalPlatformApiHandler(
                 result(FlutterMethodNotImplemented)
             }
         } catch let error as PlatformError {
-            result(FlutterError(code: error.code, message: error.message, details: error.details))
+            result(error.toFlutterError())
         } catch {
             result(FlutterError(code: "", message: error.localizedDescription, details: nil))
         }

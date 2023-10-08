@@ -26,13 +26,15 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
     func onListen(
         _ sink: ControllerSink<[ReaderApi]>,
         _ configuration: DiscoveryConfigurationApi
-    ) -> FlutterError? {
+    ) -> PlatformError? {
         self._cancel()
         
         let configurationHost = try! configuration.toHost()
         guard let configurationHost else {
-            let exception = createApiException(TerminalExceptionCodeApi.unknown, "DiscoveryConfiguration not supported").toPlatformError()
-            return FlutterError(code: exception.code, message: exception.message, details: exception.details)
+            return createApiException(
+                TerminalExceptionCodeApi.unknown,
+                "DiscoveryConfiguration not supported"
+            ).toPlatformError()
         }
          
         self._cancelable = Terminal.shared.discoverReaders(
@@ -42,8 +44,7 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
             self._cancelable = nil
             DispatchQueue.main.async {
                 if let error = error as? NSError {
-                    let platformError = error.toPlatformError()
-                    self._sink?.error(platformError.code, platformError.message, platformError.details)
+                    self._sink?.error(error.toPlatformError())
                 }
                 
                 self._sink?.endOfStream()
@@ -54,7 +55,7 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
         return nil
     }
     
-    func onCancel(_ configuration: DiscoveryConfigurationApi) -> FlutterError? {
+    func onCancel(_ configuration: DiscoveryConfigurationApi) -> PlatformError? {
         self._cancel()
         return nil
     }

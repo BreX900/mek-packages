@@ -16,7 +16,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PlatformException(
+class PlatformError(
     val code: String,
     message: String?,
     val details: Any? = null,
@@ -32,11 +32,9 @@ class Result<T>(
     ) = result.success(serializer(data))
 
     fun error(
-        code: String,
-        message: String?,
-        details: Any? = null,
+        error: PlatformError,
     ) {
-        result.error(code, message, details)
+        result.error(error.code, error.message, error.details)
     }
 }
 
@@ -49,10 +47,8 @@ class ControllerSink<T>(
     ) = sink.success(serializer(data))
 
     fun error(
-        code: String,
-        message: String?,
-        details: Any?,
-    ) = sink.error(code, message, details)
+        error: PlatformError,
+    ) = sink.error(error.code, error.message, error.details)
 
     fun endOfStream() = sink.endOfStream()
 }
@@ -372,7 +368,7 @@ interface StripeTerminalPlatformApi {
                     onClearReaderDisplay(res)
                 }
             }
-        } catch (e: PlatformException) {
+        } catch (e: PlatformError) {
             result.error(e.code, e.message, e.details)
         }
     }
@@ -426,7 +422,7 @@ class StripeTerminalHandlersApi(
     private val channel: MethodChannel = MethodChannel(binaryMessenger, "StripeTerminalHandlers")
 
     fun requestConnectionToken(
-        onError: (code: String, message: String?, details: Any?) -> Unit,
+        onError: (error: PlatformError) -> Unit,
         onSuccess: (data: String) -> Unit,
     ) {
         channel.invokeMethod(
@@ -435,7 +431,7 @@ class StripeTerminalHandlersApi(
             object : MethodChannel.Result {
                 override fun notImplemented() {}
                 override fun error(code: String, message: String?, details: Any?) = 
-                    onError(code, message, details)
+                    onError(PlatformError(code, message, details))
                 override fun success(result: Any?) =
                     onSuccess(result as String)
             }

@@ -2,12 +2,13 @@ package mek.stripeterminal.plugin
 
 import com.stripe.stripeterminal.external.callable.ErrorCallback
 import com.stripe.stripeterminal.external.models.TerminalException
+import mek.stripeterminal.api.PlatformError
 import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.runOnMainThread
 
-abstract class TerminalErrorHandler(private val handler: (c: String, m: String?, d: Any?) -> Unit) : ErrorCallback {
+abstract class TerminalErrorHandler(private val handler: (error: PlatformError) -> Unit) : ErrorCallback {
     override fun onFailure(e: TerminalException) {
-        val exception = e.toPlatformError()
-        runOnMainThread { handler(exception.code, exception.message, exception.details) }
+        val error = e.toPlatformError()
+        runOnMainThread { handler(error) }
     }
 }

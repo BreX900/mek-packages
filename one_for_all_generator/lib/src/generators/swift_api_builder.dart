@@ -38,6 +38,14 @@ class SwiftApiBuilder extends ApiBuilder {
               .map((e) => e.toInitParameter(label: '_', defaultTo: 'nil')),
         ],
       ),
+      methods: [
+        SwiftMethod(
+          name: 'toFlutterError',
+          returns: 'FlutterError',
+          lambda: true,
+          body: 'FlutterError(code: code, message: message, details: details)',
+        )
+      ],
     ));
 
     final resultFields = [
@@ -71,11 +79,9 @@ class SwiftApiBuilder extends ApiBuilder {
         SwiftMethod(
           name: 'error',
           parameters: [
-            SwiftParameter(label: '_', name: 'code', type: 'String'),
-            SwiftParameter(label: '_', name: 'message', type: 'String?', defaultTo: 'nil'),
-            SwiftParameter(label: '_', name: 'details', type: 'Any?', defaultTo: 'nil'),
+            SwiftParameter(label: '_', name: 'error', type: 'PlatformError'),
           ],
-          body: 'result(FlutterError(code: code, message: message, details: details))',
+          body: 'result(error.toFlutterError())',
         ),
       ],
     ));
@@ -112,11 +118,9 @@ class SwiftApiBuilder extends ApiBuilder {
         SwiftMethod(
           name: 'error',
           parameters: [
-            SwiftParameter(label: '_', name: 'code', type: 'String'),
-            SwiftParameter(label: '_', name: 'message', type: 'String?', defaultTo: 'nil'),
-            SwiftParameter(label: '_', name: 'details', type: 'Any?', defaultTo: 'nil'),
+            SwiftParameter(label: '_', name: 'error', type: 'PlatformError'),
           ],
-          body: 'sink(FlutterError(code: code, message: message, details: details))',
+          body: 'sink(error.toFlutterError())',
         ),
         SwiftMethod(
           name: 'endOfStream',
@@ -130,12 +134,12 @@ class SwiftApiBuilder extends ApiBuilder {
       SwiftField(
         visibility: SwiftVisibility.private,
         name: '_onListen',
-        type: '(_ arguments: Any?, _ events: @escaping FlutterEventSink) -> FlutterError?',
+        type: '(_ arguments: Any?, _ events: @escaping FlutterEventSink) -> PlatformError?',
       ),
       SwiftField(
         visibility: SwiftVisibility.private,
         name: '_onCancel',
-        type: '(_ arguments: Any?) -> FlutterError?',
+        type: '(_ arguments: Any?) -> PlatformError?',
       ),
     ];
     _specs.add(SwiftClass(
@@ -161,14 +165,14 @@ class SwiftApiBuilder extends ApiBuilder {
           ],
           returns: 'FlutterError?',
           lambda: true,
-          body: '_onListen(arguments, events)',
+          body: '_onListen(arguments, events)?.toFlutterError()',
         ),
         SwiftMethod(
           name: 'onCancel',
           parameters: [SwiftParameter(label: 'withArguments', name: 'arguments', type: 'Any?')],
           returns: 'FlutterError?',
           lambda: true,
-          body: '_onCancel(arguments)',
+          body: '_onCancel(arguments)?.toFlutterError()',
         ),
       ],
     ));
@@ -240,13 +244,13 @@ class SwiftApiBuilder extends ApiBuilder {
                 type: '(${[
                   '_ sink: ControllerSink<${codecs.encodeType(returnType)}>',
                   ...parametersType
-                ].join(', ')}) -> FlutterError?',
+                ].join(', ')}) -> PlatformError?',
               ),
               SwiftParameter(
                 label: '_',
                 name: 'onCancel',
                 annotation: 'escaping',
-                type: '(${parametersType.join(', ')}) -> FlutterError?',
+                type: '(${parametersType.join(', ')}) -> PlatformError?',
               ),
             ],
             body: '''
@@ -291,7 +295,7 @@ $channelVarAccess!.setMethodCallHandler { call, result in
                 let res = try await function()
                 DispatchQueue.main.async { result(res) }
             } catch let error as PlatformError {
-                DispatchQueue.main.async { result(FlutterError(code: error.code, message: error.message, details: error.details)) }
+                DispatchQueue.main.async { result(error.toFlutterError()) }
             } catch {
                 DispatchQueue.main.async { result(FlutterError(code: "", message: error.localizedDescription, details: nil)) }
             }
@@ -329,7 +333,7 @@ ${switch (methodType) {
             result(FlutterMethodNotImplemented)
         }
     } catch let error as PlatformError {
-        result(FlutterError(code: error.code, message: error.message, details: error.details))
+        result(error.toFlutterError())
     } catch {
         result(FlutterError(code: "", message: error.localizedDescription, details: nil))
     }

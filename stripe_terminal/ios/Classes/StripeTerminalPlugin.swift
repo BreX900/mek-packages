@@ -230,8 +230,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
             self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
             if let error = error as? NSError {
-                let platformError = error.toPlatformError()
-                result.error(platformError.code, platformError.message, platformError.details)
+                result.error(error.toPlatformError())
                 return
             }
             self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
@@ -325,8 +324,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             completion: { setupIntent, error in
                 self._cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
-                    let platformError = error.toPlatformError()
-                    result.error(platformError.code, platformError.message, platformError.details)
+                    result.error(error.toPlatformError())
                     return
                 }
                 self._setupIntents[setupIntent!.stripeId] = setupIntent!
@@ -382,8 +380,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             completion: { error in
                 self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
-                    let platformError = error.toPlatformError()
-                    result.error(platformError.code, platformError.message, platformError.details)
+                    result.error(error.toPlatformError())
                     return
                 }
                 result.success(())

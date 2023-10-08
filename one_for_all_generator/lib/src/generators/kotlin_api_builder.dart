@@ -23,7 +23,7 @@ class KotlinApiBuilder extends ApiBuilder {
 
   KotlinApiBuilder(super.pluginOptions, this.options, this.codecs) {
     _specs.add(KotlinClass(
-      name: 'PlatformException',
+      name: 'PlatformError',
       initializers: [
         KotlinField(name: 'code', type: 'String'),
         KotlinParameter(name: 'message', type: 'String?'),
@@ -55,11 +55,9 @@ class KotlinApiBuilder extends ApiBuilder {
         KotlinMethod(
           name: 'error',
           parameters: [
-            KotlinParameter(name: 'code', type: 'String'),
-            KotlinParameter(name: 'message', type: 'String?'),
-            KotlinParameter(name: 'details', type: 'Any?', defaultTo: 'null'),
+            KotlinParameter(name: 'error', type: 'PlatformError'),
           ],
-          body: 'result.error(code, message, details)',
+          body: 'result.error(error.code, error.message, error.details)',
         ),
       ],
     ));
@@ -87,12 +85,10 @@ class KotlinApiBuilder extends ApiBuilder {
         KotlinMethod(
           name: 'error',
           parameters: [
-            KotlinParameter(name: 'code', type: 'String'),
-            KotlinParameter(name: 'message', type: 'String?'),
-            KotlinParameter(name: 'details', type: 'Any?'),
+            KotlinParameter(name: 'error', type: 'PlatformError'),
           ],
           lambda: true,
-          body: 'sink.error(code, message, details)',
+          body: 'sink.error(error.code, error.message, error.details)',
         ),
         KotlinMethod(
           name: 'endOfStream',
@@ -182,7 +178,7 @@ ${methods.map((_) {
             }}''';
           }).join('\n')}
     }
-} catch (e: PlatformException) {
+} catch (e: PlatformError) {
     result.error(e.code, e.message, e.details)
 }''',
         ),
@@ -326,7 +322,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
             if (methodType == MethodApiType.callbacks) ...[
               KotlinParameter(
                 name: 'onError',
-                type: '(code: String, message: String?, details: Any?) -> Unit',
+                type: '(error: PlatformError) -> Unit',
               ),
               KotlinParameter(
                 name: 'onSuccess',
@@ -345,7 +341,7 @@ channel.invokeMethod(
     object : MethodChannel.Result {
         override fun notImplemented() {}
         override fun error(code: String, message: String?, details: Any?) = 
-            onError(code, message, details)
+            onError(PlatformError(code, message, details))
         override fun success(result: Any?) =
             onSuccess(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
     }
@@ -360,7 +356,7 @@ return suspendCoroutine { continuation ->
         object : MethodChannel.Result {
             override fun notImplemented() {}
             override fun error(code: String, message: String?, details: Any?) =
-                continuation.resumeWithException(PlatformException(code, message, details))
+                continuation.resumeWithException(PlatformError(code, message, details))
             override fun success(result: Any?) =
                 continuation.resume(${returnType is VoidType ? 'Unit' : codecs.encodeDeserialization(returnType, 'result')})
         }

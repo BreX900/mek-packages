@@ -247,9 +247,8 @@ class _MyAppState extends State<MyApp> {
       _showSnackBar('Payment method collected!');
     } on TerminalException catch (exception) {
       setState(() => _collectingPaymentMethod = null);
-      switch (exception.rawCode) {
-        // TODO: map error codes from swift/android and unify them for dart
-        case '2020' || 'cancelled':
+      switch (exception.code) {
+        case TerminalExceptionCode.canceled:
           _showSnackBar('Collecting Payment method is cancelled!');
         default:
           rethrow;

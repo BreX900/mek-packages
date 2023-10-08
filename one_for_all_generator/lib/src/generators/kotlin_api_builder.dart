@@ -27,7 +27,7 @@ class KotlinApiBuilder extends ApiBuilder {
       initializers: [
         KotlinField(name: 'code', type: 'String'),
         KotlinParameter(name: 'message', type: 'String?'),
-        KotlinField(name: 'details', type: 'Any?'),
+        KotlinField(name: 'details', type: 'Any?', assignment: 'null'),
       ],
       implements: ['RuntimeException(message ?: code)'],
     ));

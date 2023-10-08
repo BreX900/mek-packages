@@ -195,11 +195,8 @@ class StripeTerminalPlatform extends _$StripeTerminalPlatform {
 //endregion
 
   static void _throwIfIsHostException(PlatformException exception) {
-    if (exception.code.isEmpty) return;
-    throw TerminalException(
-      rawCode: exception.code,
-      message: exception.message,
-      details: exception.details,
-    );
+    if (exception.code != 'mek_stripe_terminal') return;
+
+    throw _$deserializeTerminalException(exception.details);
   }
 }

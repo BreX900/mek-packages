@@ -5,7 +5,7 @@ void main() async {
     options: const OneForAllOptions(
       apiFile: 'lib/src/platform/stripe_terminal_platform.dart',
       extraApiFiles: [
-        'lib/src/stripe_terminal_exception.dart',
+        'lib/src/terminal_exception.dart',
       ],
       hostClassSuffix: 'Api',
       codecs: ApiPlatformCodec.values,

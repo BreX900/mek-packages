@@ -110,7 +110,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -127,7 +127,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -144,7 +144,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             )
             return reader.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -168,7 +168,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             return try await Terminal.shared.listLocations(parameters: params.build()).0.map { $0.toApi() }
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -184,7 +184,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             try await Terminal.shared.disconnectReader()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -202,7 +202,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _paymentIntents[paymentIntent.stripeId!] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -214,7 +214,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _paymentIntents[paymentIntent.stripeId!] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -230,7 +230,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
             self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
             if let error = error as? NSError {
-                let platformError = error.toApi()
+                let platformError = error.toPlatformError()
                 result.error(platformError.code, platformError.message, platformError.details)
                 return
             }
@@ -252,11 +252,14 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             let (intent, error) = await Terminal.shared.confirmPaymentIntent(paymentIntent)
             if let error {
-                throw error.toApi()
+                if let paymentIntent = error.paymentIntent {
+                    _paymentIntents[paymentIntent.stripeId!] = paymentIntent
+                }
+                throw error.toPlatformError(apiError: error.requestError, paymentIntent: error.paymentIntent)
             }
             return intent!.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -267,7 +270,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _paymentIntents.removeValue(forKey: paymentIntentId)
             return newPaymentIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -294,7 +297,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _setupIntents[setupIntent.stripeId] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -304,7 +307,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _setupIntents[setupIntent.stripeId] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -322,7 +325,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             completion: { setupIntent, error in
                 self._cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
-                    let platformError = error.toApi()
+                    let platformError = error.toPlatformError()
                     result.error(platformError.code, platformError.message, platformError.details)
                     return
                 }
@@ -340,7 +343,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         let setupIntent = try _findSetupIntent(setupIntentId)
         let (newSetupIntent, error) = await Terminal.shared.confirmSetupIntent(setupIntent)
         if let error {
-            throw error.toApi()
+            throw error.toPlatformError(apiError: error.requestError)
         }
         _setupIntents[newSetupIntent!.stripeId] = newSetupIntent!
         return newSetupIntent!.toApi()
@@ -353,7 +356,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             _setupIntents.removeValue(forKey: setupIntentId)
             return newSetupIntent.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 // MARK: - Card-present refunds
@@ -379,7 +382,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
             completion: { error in
                 self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
-                    let platformError = error.toApi()
+                    let platformError = error.toPlatformError()
                     result.error(platformError.code, platformError.message, platformError.details)
                     return
                 }
@@ -396,11 +399,11 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             let (refund, error) = await Terminal.shared.confirmRefund()
             if let error {
-                throw error.toApi()
+                throw error.toPlatformError(apiError: error.requestError)
             }
             return refund!.toApi()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -412,7 +415,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             try await Terminal.shared.setReaderDisplay(cart.toHost())
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
 
@@ -420,7 +423,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
         do {
             try await Terminal.shared.clearReaderDisplay()
         } catch let error as NSError {
-            throw error.toApi()
+            throw error.toPlatformError()
         }
     }
     
@@ -445,7 +448,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
 
     private func _findReader(_ serialNumber: String) throws -> Reader {
         guard let reader = _readers.first(where: { $0.serialNumber == serialNumber }) else {
-            throw PlatformError(TerminalExceptionCodeApi.readerNotRecovered.rawValue, nil)
+            throw createApiException(TerminalExceptionCodeApi.readerNotRecovered).toPlatformError()
         }
         return reader
     }
@@ -453,7 +456,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func _findPaymentIntent(_ paymentIntentId: String) throws -> PaymentIntent {
         let paymentIntent = _paymentIntents[paymentIntentId]
         guard let paymentIntent else {
-            throw PlatformError(TerminalExceptionCodeApi.paymentIntentNotRecovered.rawValue, nil, nil)
+            throw createApiException(TerminalExceptionCodeApi.paymentIntentNotRecovered).toPlatformError()
         }
         return paymentIntent
     }
@@ -461,7 +464,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     private func _findSetupIntent(_ setupIntentId: String) throws -> SetupIntent {
         let setupIntent = _setupIntents[setupIntentId]
         guard let setupIntent else {
-            throw PlatformError(TerminalExceptionCodeApi.setupIntentNotRecovered.rawValue, nil, nil)
+            throw createApiException(TerminalExceptionCodeApi.setupIntentNotRecovered).toPlatformError()
         }
         return setupIntent
     }

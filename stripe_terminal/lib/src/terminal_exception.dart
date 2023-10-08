@@ -1,22 +1,23 @@
-import 'package:collection/collection.dart';
-import 'package:meta/meta.dart';
+import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:one_for_all/one_for_all.dart';
-import 'package:recase/recase.dart';
 
-@experimental
-@SerializableEnum(
-  type: SerializableEnumType.string,
-  languages: {LanguageApi.swift},
-  hostToFlutter: true,
-)
+@SerializableEnum(hostToFlutter: true)
 enum TerminalExceptionCode {
   // Flutter Plugin
 
+  /// See te message in [TerminalException]
+  unknown,
+
+  /// See [message] field
   readerNotRecovered(
       'Call this method with the [Reader] returned from the [StripeTerminal.discoverReaders] method.'),
+
+  /// See [message] field
   paymentIntentNotRecovered(
       'Call this method with the [PaymentIntent] returned from the [StripeTerminal.createPaymentIntent] '
       'or [StripeTerminal.retrievePaymentIntent] methods.'),
+
+  /// See [message] field
   setupIntentNotRecovered(
       'Call this method with the [SetupIntent] returned from the [StripeTerminal.createSetupIntent] '
       'or [StripeTerminal.retrieveSetupIntent] methods.'),
@@ -470,23 +471,28 @@ enum TerminalExceptionCode {
   const TerminalExceptionCode([this.message]);
 }
 
+@SerializableClass(hostToFlutter: true)
 class TerminalException {
-  final String rawCode;
-  final String? message;
-  final String? details;
-
-  late final _rawCode = rawCode.camelCase;
-  @experimental
-  late final TerminalExceptionCode? code =
-      TerminalExceptionCode.values.firstWhereOrNull((e) => e.name == _rawCode);
+  final TerminalExceptionCode code;
+  final String message;
+  final String? stackTrace;
+  final PaymentIntent? paymentIntent;
+  final Object? apiError;
 
   TerminalException({
-    required this.rawCode,
-    required this.message,
-    required this.details,
-  });
+    required this.code,
+    required String message,
+    required this.stackTrace,
+    required this.paymentIntent,
+    required this.apiError,
+  }) : message = (message.isEmpty ? null : code.message) ?? '';
 
   @override
-  String toString() =>
-      ['$runtimeType: $rawCode', code?.message, message, details].nonNulls.join('\n');
+  String toString() => [
+        '$runtimeType: ${code.name}',
+        message,
+        paymentIntent,
+        apiError,
+        stackTrace,
+      ].nonNulls.join('\n');
 }

@@ -22,7 +22,7 @@ class DiscoverReadersSubject {
     val readers: List<Reader> get() = _readers
 
     fun clear() {
-        _cancel()
+        cancel()
         _readers = arrayListOf()
     }
 
@@ -36,7 +36,7 @@ class DiscoverReadersSubject {
         }
 
         // Ignore error, the previous stream can no longer receive events
-        _cancel()
+        cancel()
 
         _cancelable = Terminal.getInstance().discoverReaders(
             config = hostConfiguration,
@@ -59,9 +59,9 @@ class DiscoverReadersSubject {
         )
     }
 
-    fun onCancel() = _cancel()
+    fun onCancel() = cancel()
 
-    private fun _cancel() {
+    private fun cancel() {
         val cancelable = _cancelable
         _cancelable = null
         // Ignore error, flutter stream already closed

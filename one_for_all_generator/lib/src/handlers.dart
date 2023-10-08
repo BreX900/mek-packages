@@ -158,8 +158,8 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
       element: element,
       kotlinGeneration: annotation.peek('kotlinGeneration')?.boolValue ?? true,
       swiftGeneration: annotation.peek('swiftGeneration')?.boolValue ?? true,
-      flutterToHost: false,
-      hostToFlutter: false,
+      flutterToHost: annotation.find('flutterToHost')?.boolValue ?? false,
+      hostToFlutter: annotation.find('hostToFlutter')?.boolValue ?? false,
       children: children,
     );
   }
@@ -205,8 +205,8 @@ class SerializableEnumHandler extends SerializableHandler {
           SerializableEnumType.int,
       kotlinGeneration: annotation.peek('kotlinGeneration')?.boolValue ?? true,
       swiftGeneration: annotation.peek('swiftGeneration')?.boolValue ?? true,
-      flutterToHost: false,
-      hostToFlutter: false,
+      flutterToHost: annotation.find('flutterToHost')?.boolValue ?? false,
+      hostToFlutter: annotation.find('hostToFlutter')?.boolValue ?? false,
     );
   }
 
@@ -234,6 +234,13 @@ extension NoUndescoreString on String {
 }
 
 extension on ConstantReader {
+  ConstantReader? find(String field) {
+    if (isNull) return null;
+    final reader = objectValue.getField(field);
+    if (reader == null) return read(field);
+    return reader.isNull ? null : ConstantReader(reader);
+  }
+
   T reviveEnum<T extends Enum>(List<T> values) {
     final revivable = revive();
     final name = revivable.accessor.split('.')[1];

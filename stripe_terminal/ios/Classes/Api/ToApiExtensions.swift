@@ -547,59 +547,64 @@ extension RefundStatus {
     }
 }
 
-
-
-extension Error {
-    func toApi() -> PlatformError {
-        return (self as NSError).toApi()
+extension TerminalExceptionApi {
+    func toPlatformError() -> PlatformError {
+        return PlatformError("mek_stripe_terminal", nil, serialize())
     }
 }
 
 extension NSError {
-    func toApi() -> PlatformError {
+    func toPlatformError(apiError: Error? = nil, paymentIntent: PaymentIntent? = nil) -> PlatformError {
         if (self.domain != "com.stripe-terminal") {
             return PlatformError("\(self.domain):\(self.code)", self.localizedDescription, "\(self)")
         }
-        do {
-            return PlatformError(try self.toApiCode().rawValue, self.localizedDescription, "\(self)")
-        } catch let error {
-            return error as! PlatformError
-        }
+        let apiException = toApi(apiError: apiError, paymentIntent: paymentIntent)
+        return apiException.toPlatformError()
     }
     
-    private func toApiCode() throws -> TerminalExceptionCodeApi {
-        let xCode = ErrorCode(_nsError: self)
-        
-        func throwUnsupportedCodePlataformException() throws -> Never {
-            throw PlatformError("", "Unsupported Terminal exception code: \(code)")
+    func toApi(apiError: Error? = nil, paymentIntent: PaymentIntent? = nil) -> TerminalExceptionApi {
+        let code = self.toApiCode();
+        if let code {
+            return TerminalExceptionApi(
+                code: code,
+                message: localizedDescription,
+                stackTrace: nil,
+                paymentIntent: paymentIntent?.toApi(),
+                apiError: apiError?.localizedDescription
+            )
         }
+        return createApiException(TerminalExceptionCodeApi.unknown, "Unsupported Terminal exception code: \(self.code)")
+    }
+    
+    private func toApiCode() -> TerminalExceptionCodeApi? {
+        let error = ErrorCode(_nsError: self)
         
-        switch xCode.code {
+        switch error.code {
         case .cancelFailedAlreadyCompleted:
             // Ignore this error, the plugin does not allow you to undo an operation more than once
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .notConnectedToReader:
             return .notConnectedToReader
         case .alreadyConnectedToReader:
             return .alreadyConnectedToReader
         case .connectionTokenProviderCompletedWithNothing:
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .connectionTokenProviderCompletedWithNothingWhileForwarding:
             return .connectionTokenProviderErrorWhileForwarding
         case .confirmInvalidPaymentIntent:
             return .confirmInvalidPaymentIntent
         case .nilPaymentIntent:
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .nilSetupIntent:
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .nilRefundPaymentMethod:
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .invalidRefundParameters:
             return .invalidParameter
         case .invalidClientSecret:
             return .invalidClientSecret
         case .invalidDiscoveryConfiguration:
-            try throwUnsupportedCodePlataformException()
+            return nil
         case .invalidReaderForUpdate:
             return .invalidReaderForUpdate
         case .unsupportedSDK:

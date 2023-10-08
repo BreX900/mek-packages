@@ -56,6 +56,7 @@ import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
+import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
 
@@ -355,6 +356,13 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         _terminal.confirmPaymentIntent(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+                override fun onFailure(e: TerminalException) {
+                    val paymentIntentUpdated = e.paymentIntent;
+                    if (paymentIntentUpdated != null) {
+                        _paymentIntents[paymentIntentUpdated.id!!] = paymentIntentUpdated
+                    }
+                    super.onFailure(e)
+                }
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     result.success(paymentIntent.toApi())
                     _paymentIntents.remove(paymentIntent.id)
@@ -587,17 +595,17 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     private fun findActiveReader(serialNumber: String): Reader {
         val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
-        return reader ?: throw PlatformException(TerminalExceptionCodeApi.READER_NOT_RECOVERED.name, null)
+        return reader ?: throw createApiException(TerminalExceptionCodeApi.READER_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findPaymentIntent(paymentIntentId: String): PaymentIntent {
         val paymentIntent = _paymentIntents[paymentIntentId]
-        return paymentIntent ?: throw PlatformException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED.name, null)
+        return paymentIntent ?: throw createApiException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findSetupIntent(setupIntentId: String): SetupIntent {
         val setupIntent = _setupIntents[setupIntentId]
-        return setupIntent ?: throw PlatformException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED.name, null)
+        return setupIntent ?: throw createApiException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun clean() {

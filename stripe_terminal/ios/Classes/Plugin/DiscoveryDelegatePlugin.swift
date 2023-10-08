@@ -31,7 +31,8 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
         
         let configurationHost = try! configuration.toHost()
         guard let configurationHost else {
-            return FlutterError(code: "", message: "DiscoveryConfiguration not supported", details: nil)
+            let exception = createApiException(TerminalExceptionCodeApi.unknown, "DiscoveryConfiguration not supported").toPlatformError()
+            return FlutterError(code: exception.code, message: exception.message, details: exception.details)
         }
          
         self._cancelable = Terminal.shared.discoverReaders(
@@ -40,8 +41,8 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
         ) { error in
             self._cancelable = nil
             DispatchQueue.main.async {
-                if let error = error {
-                    let platformError = error.toApi()
+                if let error = error as? NSError {
+                    let platformError = error.toPlatformError()
                     self._sink?.error(platformError.code, platformError.message, platformError.details)
                 }
                 

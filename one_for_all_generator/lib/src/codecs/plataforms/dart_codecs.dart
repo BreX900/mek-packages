@@ -19,6 +19,7 @@ class DartApiCodes extends ApiCodecs {
 
     final questionOrEmpty = type.isNullable ? '?' : '';
 
+    if (type.isNullable && type.isDartCoreObject) return varAccess;
     if (type.isPrimitive) return '$varAccess as ${type.displayNameNullable}';
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;

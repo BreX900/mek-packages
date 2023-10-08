@@ -123,7 +123,7 @@ Example backend code to get the connection token written on node.js:
 1. Discover the devices nearby and show it to the user. [Stripe Docs](https://stripe.com/docs/terminal/payments/connect-reader?terminal-sdk-platform=android)
     ```dart
     stripeTerminal
-        .discoverReaders(simulated: true)
+        .discoverReaders(BluetoothProximityDiscoveryConfiguration(isSimulated: true))
         .listen((List<StripeReader> readers) {
             setState(() => _readers = readers);
         });
@@ -131,12 +131,12 @@ Example backend code to get the connection token written on node.js:
 2. Connect to a reader
    - Bluetooth reader
       ```dart
-      await stripeTerminal.connectBluetoothReader(readers[0].serialNumber);
+      await stripeTerminal.connectBluetoothReader(readers[0].serialNumber, locationId: locationId);
       print("Connected to a device");
       ``` 
    - TapToPay
       ```dart
-      await stripeTerminal.connectBluetoothReader(readers[0].serialNumber);
+      await stripeTerminal.connectMobileReader(readers[0].serialNumber, locationId: locationId);
       print("Connected to a device");
       ```
 
@@ -157,7 +157,7 @@ Example backend code to get the connection token written on node.js:
     ```
 4. Collect payment method
     ```dart
-    final capturablePaymentIntent = await stripeTerminal.processPayment(processablePaymentIntent)
+    final capturablePaymentIntent = await stripeTerminal.confirmPaymentIntent(processablePaymentIntent)
     print("A payment intent has captured a payment method, send this payment intent to you backend to capture the payment");
     ```
 

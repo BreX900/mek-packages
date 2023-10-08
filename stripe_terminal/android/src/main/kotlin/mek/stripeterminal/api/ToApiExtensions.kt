@@ -3,14 +3,14 @@ package mek.stripeterminal.api
 import mek.stripeterminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
 import com.stripe.stripeterminal.external.models.TerminalException.TerminalErrorCode
-import mek.stripeterminal.createApiException
+import mek.stripeterminal.createApiError
 
-fun TerminalException.toPlatformError(): PlatformException {
+fun TerminalException.toPlatformError(): PlatformError {
     return toApi().toPlatformError()
 }
 
-fun TerminalExceptionApi.toPlatformError(): PlatformException {
-    return PlatformException(
+fun TerminalExceptionApi.toPlatformError(): PlatformError {
+    return PlatformError(
         code = "mek_stripe_terminal",
         message = null,
         details = serialize()
@@ -19,7 +19,7 @@ fun TerminalExceptionApi.toPlatformError(): PlatformException {
 
 fun TerminalException.toApi(): TerminalExceptionApi {
     val code = errorCode.toApiCode()
-        ?: return createApiException(
+        ?: return createApiError(
             TerminalExceptionCodeApi.UNKNOWN,
             "Unsupported Terminal exception code: $errorCode"
         )

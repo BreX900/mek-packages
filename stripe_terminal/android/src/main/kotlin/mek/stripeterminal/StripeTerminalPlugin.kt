@@ -35,7 +35,6 @@ import mek.stripeterminal.api.DeviceTypeApi
 import mek.stripeterminal.api.DiscoverReadersControllerApi
 import mek.stripeterminal.api.LocationApi
 import mek.stripeterminal.api.PaymentIntentApi
-import mek.stripeterminal.api.PlatformException
 import mek.stripeterminal.api.ReaderApi
 import mek.stripeterminal.api.Result
 import mek.stripeterminal.api.StripeTerminalHandlersApi
@@ -83,11 +82,9 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         }
 
         if (permissionStatus.contains(PackageManager.PERMISSION_DENIED)) {
-            throw PlatformException(
-                "stripeTerminal#permissionDeclinedPermanenty",
+            throw createApiError(TerminalExceptionCodeApi.UNKNOWN,
                 "You have declined the necessary permission, please allow from settings to continue.",
-                null
-            )
+            ).toPlatformError()
         }
 
         // If a hot restart is performed in flutter the terminal is already initialized but we need to clean it up
@@ -316,11 +313,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         paymentIntentId: String,
         skipTipping: Boolean,
     ) {
-        val paymentIntent = _paymentIntents[paymentIntentId]
-        if (paymentIntent == null) {
-            result.error("", "")
-            return
-        }
+        val paymentIntent = findPaymentIntent(paymentIntentId)
+
         _cancelablesCollectPaymentMethod[operationId] = _terminal.collectPaymentMethod(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
@@ -595,17 +589,17 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     private fun findActiveReader(serialNumber: String): Reader {
         val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
-        return reader ?: throw createApiException(TerminalExceptionCodeApi.READER_NOT_RECOVERED).toPlatformError()
+        return reader ?: throw createApiError(TerminalExceptionCodeApi.READER_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findPaymentIntent(paymentIntentId: String): PaymentIntent {
         val paymentIntent = _paymentIntents[paymentIntentId]
-        return paymentIntent ?: throw createApiException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError()
+        return paymentIntent ?: throw createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findSetupIntent(setupIntentId: String): SetupIntent {
         val setupIntent = _setupIntents[setupIntentId]
-        return setupIntent ?: throw createApiException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError()
+        return setupIntent ?: throw createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun clean() {

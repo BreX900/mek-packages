@@ -7,7 +7,6 @@ import com.stripe.stripeterminal.external.models.ConnectionStatus
 import com.stripe.stripeterminal.external.models.ConnectionTokenException
 import com.stripe.stripeterminal.external.models.PaymentStatus
 import com.stripe.stripeterminal.external.models.Reader
-import mek.stripeterminal.api.PlatformException
 import mek.stripeterminal.api.StripeTerminalHandlersApi
 import mek.stripeterminal.api.toApi
 import mek.stripeterminal.runOnMainThread
@@ -17,9 +16,8 @@ class TerminalDelegatePlugin(
 ) : ConnectionTokenProvider, TerminalListener {
 
     override fun fetchConnectionToken(callback: ConnectionTokenCallback) = runOnMainThread {
-        _handlers.requestConnectionToken({ code, message, details ->
-            val exception = PlatformException(code, message, details)
-            callback.onFailure(ConnectionTokenException("", exception))
+        _handlers.requestConnectionToken({ error ->
+            callback.onFailure(ConnectionTokenException(error.message ?: "", error))
         }, { token ->
             callback.onSuccess(token)
         })

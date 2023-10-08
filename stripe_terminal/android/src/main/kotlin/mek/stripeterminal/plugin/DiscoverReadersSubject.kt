@@ -11,8 +11,11 @@ import mek.stripeterminal.EmptyCallback
 import mek.stripeterminal.api.ControllerSink
 import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.ReaderApi
+import mek.stripeterminal.api.TerminalExceptionCodeApi
 import mek.stripeterminal.api.toApi
 import mek.stripeterminal.api.toHost
+import mek.stripeterminal.api.toPlatformError
+import mek.stripeterminal.createApiError
 import mek.stripeterminal.runOnMainThread
 
 class DiscoverReadersSubject {
@@ -30,7 +33,7 @@ class DiscoverReadersSubject {
     fun onListen(sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) {
         val hostConfiguration = configuration.toHost()
         if (hostConfiguration == null) {
-            sink.error("", "Discovery method not supported", null)
+            sink.error(createApiError(TerminalExceptionCodeApi.UNKNOWN, "Discovery method not supported").toPlatformError())
             sink.endOfStream()
             return
         }

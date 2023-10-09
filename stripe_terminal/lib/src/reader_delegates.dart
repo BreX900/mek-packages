@@ -6,11 +6,14 @@ import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 
 typedef Cancellable = Future<void> Function();
 
-sealed class ReaderDelegate {
+mixin class ReaderDelegate {
   FutureOr<void> onReportReaderEvent(ReaderEvent event) {}
 }
 
-sealed class PhysicalReaderDelegate extends ReaderDelegate {
+mixin class PhysicalReaderDelegate implements ReaderDelegate {
+  @override
+  FutureOr<void> onReportReaderEvent(ReaderEvent event) {}
+
   FutureOr<void> onRequestReaderDisplayMessage(ReaderDisplayMessage message) {}
 
   FutureOr<void> onRequestReaderInput(List<ReaderInputOption> options) {}
@@ -35,15 +38,7 @@ sealed class PhysicalReaderDelegate extends ReaderDelegate {
   ) {}
 }
 
-class HandoffReaderDelegate extends ReaderDelegate {}
-
-class LocalMobileReaderDelegate extends PhysicalReaderDelegate {}
-
-class BluetoothReaderDelegate extends PhysicalReaderDelegate {}
-
-class UsbReaderDelegate extends PhysicalReaderDelegate {}
-
-abstract class ReaderReconnectionDelegate {
+abstract interface class ReaderReconnectionDelegate {
   FutureOr<void> onReaderReconnectFailed(Reader reader);
 
   FutureOr<void> onReaderReconnectStarted(Reader reader, Cancellable cancelReconnect);

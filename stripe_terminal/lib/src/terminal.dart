@@ -143,24 +143,24 @@ class Terminal {
     Reader reader, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
-    BluetoothReaderDelegate? delegate,
+    PhysicalReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
     assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    final connectedReader = await _platform.connectBluetoothReader(
-      reader.serialNumber,
-      locationId: locationId,
-      autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-    );
-    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
-    return connectedReader;
+    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
+      return await _platform.connectBluetoothReader(
+        reader.serialNumber,
+        locationId: locationId,
+        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+      );
+    });
   }
 
   /// Attempts to connect to the given Handoff reader with a given connection configuration.
-  Future<Reader> connectHandoffReader(Reader reader, {HandoffReaderDelegate? delegate}) async {
-    final connectedReader = await _platform.connectHandoffReader(reader.serialNumber);
-    _handlers.attachReaderDelegates(delegate, null);
-    return connectedReader;
+  Future<Reader> connectHandoffReader(Reader reader, {PhysicalReaderDelegate? delegate}) async {
+    return await _handleReaderConnection(delegate, null, () async {
+      return await _platform.connectHandoffReader(reader.serialNumber);
+    });
   }
 
   /// Attempts to connect to the given Internet reader with a given connection configuration.
@@ -185,14 +185,14 @@ class Terminal {
   Future<Reader> connectMobileReader(
     Reader reader, {
     required String locationId,
-    LocalMobileReaderDelegate? delegate,
+    PhysicalReaderDelegate? delegate,
   }) async {
-    final connectedReader = await _platform.connectMobileReader(
-      reader.serialNumber,
-      locationId: locationId,
-    );
-    _handlers.attachReaderDelegates(delegate, null);
-    return connectedReader;
+    return await _handleReaderConnection(delegate, null, () async {
+      return await _platform.connectMobileReader(
+        reader.serialNumber,
+        locationId: locationId,
+      );
+    });
   }
 
   /// Attempts to connect to the given Usb reader with a given connection configuration.
@@ -204,13 +204,13 @@ class Terminal {
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
     assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    final connectedReader = await _platform.connectUsbReader(
-      reader.serialNumber,
-      locationId: locationId,
-      autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-    );
-    _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
-    return connectedReader;
+    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
+      return await _platform.connectUsbReader(
+        reader.serialNumber,
+        locationId: locationId,
+        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+      );
+    });
   }
 
   /// Information about the connected SCPReader, or `null` if no reader is connected.
@@ -257,10 +257,7 @@ class Terminal {
   Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
 
   /// Attempts to disconnect from the currently connected reader.
-  Future<void> disconnectReader() async {
-    await _platform.disconnectReader();
-    _handlers.detachReaderDelegates();
-  }
+  Future<void> disconnectReader() async => await _platform.disconnectReader();
 //endregion
 
 //region Taking payments
@@ -550,5 +547,19 @@ class Terminal {
     };
     newController.onCancel = () async => await subscription.cancel();
     return newController;
+  }
+
+  Future<Reader> _handleReaderConnection(
+    ReaderDelegate? delegate,
+    ReaderReconnectionDelegate? reconnectionDelegate,
+    Future<Reader> Function() connector,
+  ) async {
+    try {
+      _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
+      return await connector();
+    } catch (_) {
+      _handlers.detachReaderDelegates();
+      rethrow;
+    }
   }
 }

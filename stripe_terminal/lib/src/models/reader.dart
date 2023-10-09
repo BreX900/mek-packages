@@ -51,7 +51,7 @@ class Reader with _$Reader {
   /// Bluetooth and Apple Built-In readers are designed to be more mobile and must be registered
   /// to a location upon each connection. This field represents the last location that the reader
   /// was registered to. If the reader has not been used before, this field will be `null`. If you
-  /// associate the reader to a different location while calling [StripeTerminal.connectBluetoothReader],
+  /// associate the reader to a different location while calling [Terminal.connectBluetoothReader],
   /// this field will update to that new location’s id.
   final String? locationId;
 
@@ -69,9 +69,9 @@ class Reader with _$Reader {
   /// The available update for this reader, or nil if no update is available. This update will also
   /// have been announced via [PhysicalReaderDelegate.onReportAvailableUpdate]
   ///
-  /// Install this update with [StripeTerminal.installAvailableUpdate]
+  /// Install this update with [Terminal.installAvailableUpdate]
   ///
-  /// calls to [StripeTerminal.installAvailableUpdate] when availableUpdate is `null` will result in
+  /// calls to [Terminal.installAvailableUpdate] when availableUpdate is `null` will result in
   /// [PhysicalReaderDelegate.onFinishInstallingUpdate] called immediately with a `null` update and `null` error.
   final bool availableUpdate;
 

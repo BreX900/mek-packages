@@ -16,7 +16,7 @@ import org.mockito.Mockito
 internal class StripeTerminalPluginTest {
   @Test
   fun onMethodCall_getPlatformVersion_returnsExpectedValue() {
-    val plugin = StripeTerminalPlugin()
+    val plugin = TerminalPlugin()
 
     val call = MethodCall("getPlatformVersion", null)
     val mockResult: MethodChannel.Result = Mockito.mock(MethodChannel.Result::class.java)

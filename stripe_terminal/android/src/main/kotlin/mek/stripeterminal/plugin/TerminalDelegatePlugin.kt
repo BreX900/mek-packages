@@ -7,12 +7,12 @@ import com.stripe.stripeterminal.external.models.ConnectionStatus
 import com.stripe.stripeterminal.external.models.ConnectionTokenException
 import com.stripe.stripeterminal.external.models.PaymentStatus
 import com.stripe.stripeterminal.external.models.Reader
-import mek.stripeterminal.api.StripeTerminalHandlersApi
+import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.api.toApi
 import mek.stripeterminal.runOnMainThread
 
 class TerminalDelegatePlugin(
-    private val _handlers: StripeTerminalHandlersApi
+    private val _handlers: TerminalHandlersApi
 ) : ConnectionTokenProvider, TerminalListener {
 
     override fun fetchConnectionToken(callback: ConnectionTokenCallback) = runOnMainThread {

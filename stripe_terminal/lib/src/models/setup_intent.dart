@@ -85,6 +85,7 @@ class SetupAttempt with _$SetupAttempt {
   final String? customerId;
 
   /// (Connect) The account (if any) for which the setup is intended.
+  // TODO: Rename to onBehalfOf
   final String? onBehalfOfId;
 
   /// ID of the payment method used with this SetupAttempt.

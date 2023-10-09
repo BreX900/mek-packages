@@ -90,7 +90,7 @@ class ControllerHandler: NSObject, FlutterStreamHandler {
     ) -> FlutterError? { _onCancel(arguments)?.toFlutterError() }
 }
 
-protocol StripeTerminalPlatformApi {
+protocol TerminalPlatformApi {
     func onInit(
         _ shouldPrintLogs: Bool
     ) async throws -> Void
@@ -238,7 +238,7 @@ class DiscoverReadersControllerApi {
     init(
         binaryMessenger: FlutterBinaryMessenger
     ) {
-        channel = FlutterEventChannel(name: "StripeTerminalPlatform#discoverReaders", binaryMessenger: binaryMessenger)
+        channel = FlutterEventChannel(name: "mek_stripe_terminal#TerminalPlatform#discoverReaders", binaryMessenger: binaryMessenger)
     }
 
     func setHandler(
@@ -258,14 +258,14 @@ class DiscoverReadersControllerApi {
     func removeHandler() { channel.setStreamHandler(nil) }
 }
 
-private var channelStripeTerminalPlatformApi: FlutterMethodChannel? = nil
+private var channelTerminalPlatformApi: FlutterMethodChannel? = nil
 
-func setStripeTerminalPlatformApiHandler(
+func setTerminalPlatformApiHandler(
     _ binaryMessenger: FlutterBinaryMessenger,
-    _ hostApi: StripeTerminalPlatformApi
+    _ hostApi: TerminalPlatformApi
 ) {
-    channelStripeTerminalPlatformApi = FlutterMethodChannel(name: "StripeTerminalPlatform", binaryMessenger: binaryMessenger)
-    channelStripeTerminalPlatformApi!.setMethodCallHandler { call, result in
+    channelTerminalPlatformApi = FlutterMethodChannel(name: "mek_stripe_terminal#TerminalPlatform", binaryMessenger: binaryMessenger)
+    channelTerminalPlatformApi!.setMethodCallHandler { call, result in
         let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
             Task {
                 do {
@@ -441,18 +441,18 @@ func setStripeTerminalPlatformApiHandler(
     }
 }
 
-func removeStripeTerminalPlatformApiHandler() {
-    channelStripeTerminalPlatformApi?.setMethodCallHandler(nil)
+func removeTerminalPlatformApiHandler() {
+    channelTerminalPlatformApi?.setMethodCallHandler(nil)
 }
 
-class StripeTerminalHandlersApi {
+class TerminalHandlersApi {
     let channel: FlutterMethodChannel
 
     init(
         _ binaryMessenger: FlutterBinaryMessenger
     ) {
         channel = FlutterMethodChannel(
-            name: "StripeTerminalHandlers",
+            name: "mek_stripe_terminal#TerminalHandlers",
             binaryMessenger: binaryMessenger
         )
     }

@@ -2,17 +2,17 @@ import Flutter
 import StripeTerminal
 import UIKit
 
-public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatformApi {
+public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let instance = StripeTerminalPlugin(registrar.messenger())
-        setStripeTerminalPlatformApiHandler(registrar.messenger(), instance)
+        let instance = TerminalPlugin(registrar.messenger())
+        setTerminalPlatformApiHandler(registrar.messenger(), instance)
         instance.onAttachedToEngine()
     }
     
-    private let handlers: StripeTerminalHandlersApi
+    private let handlers: TerminalHandlersApi
 
     init(_ binaryMessenger: FlutterBinaryMessenger) {
-        self.handlers = StripeTerminalHandlersApi(binaryMessenger)
+        self.handlers = TerminalHandlersApi(binaryMessenger)
         self._discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
         self._readerDelegate = ReaderDelegatePlugin(handlers)
         self._readerReconnectionDelegate = ReaderReconnectionDelegatePlugin(handlers)
@@ -24,7 +24,7 @@ public class StripeTerminalPlugin: NSObject, FlutterPlugin, StripeTerminalPlatfo
     
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
         self._discoverReadersController.removeHandler()
-        removeStripeTerminalPlatformApiHandler()
+        removeTerminalPlatformApiHandler()
         self._clean()
     }
     

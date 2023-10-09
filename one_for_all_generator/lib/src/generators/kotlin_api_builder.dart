@@ -209,7 +209,7 @@ ${methods.map((_) {
                     name: 'coroutineScope', type: 'CoroutineScope?', defaultTo: 'null'),
               ],
               body: '''
-channel = MethodChannel(binaryMessenger, "${handler.channelName()}")
+channel = MethodChannel(binaryMessenger, "${handler.methodChannelName()}")
 this.coroutineScope = coroutineScope ?: MainScope()
 channel.setMethodCallHandler(api::onMethodCall)''',
             ),
@@ -246,7 +246,7 @@ coroutineScope.cancel()''',
             visibility: KotlinVisibility.private,
             name: 'channel',
             type: 'EventChannel',
-            assignment: 'EventChannel(binaryMessenger, "${handler.controllerChannelName(e)}")',
+            assignment: 'EventChannel(binaryMessenger, "${handler.eventChannelName(e)}")',
           ),
         ],
         body: [
@@ -299,7 +299,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
           visibility: KotlinVisibility.private,
           name: 'channel',
           type: 'MethodChannel',
-          assignment: 'MethodChannel(binaryMessenger, "${handler.channelName()}")',
+          assignment: 'MethodChannel(binaryMessenger, "${handler.methodChannelName()}")',
         ),
       ],
       body: methods.map((_) {
@@ -336,7 +336,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
           body: switch (methodType) {
             MethodApiType.callbacks => '''
 channel.invokeMethod(
-    "${handler.channelName(e)}",
+    "${handler.methodChannelName(e)}",
     listOf<Any?>($parameters),
     object : MethodChannel.Result {
         override fun notImplemented() {}
@@ -347,11 +347,11 @@ channel.invokeMethod(
     }
 )''',
             MethodApiType.sync => '''
-channel.invokeMethod("${handler.channelName(e)}", listOf<Any?>($parameters))''',
+channel.invokeMethod("${handler.methodChannelName(e)}", listOf<Any?>($parameters))''',
             MethodApiType.async => '''
 return suspendCoroutine { continuation ->
     channel.invokeMethod(
-        "${handler.channelName(e)}",
+        "${handler.methodChannelName(e)}",
         listOf<Any?>($parameters),
         object : MethodChannel.Result {
             override fun notImplemented() {}

@@ -2,9 +2,9 @@ import Foundation
 import StripeTerminal
 
 class TerminalDelegatePlugin: NSObject, ConnectionTokenProvider, TerminalDelegate {
-    private let handlers: StripeTerminalHandlersApi
+    private let handlers: TerminalHandlersApi
 
-    init(_ handlers: StripeTerminalHandlersApi) {
+    init(_ handlers: TerminalHandlersApi) {
         self.handlers = handlers
     }
     

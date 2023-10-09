@@ -44,8 +44,10 @@ extension PaymentIntentStatus {
             return .canceled
         case .succeeded:
             return .succeeded
+        case .requiresAction:
+            return .requiresAction
         @unknown default:
-            fatalError("WTF")
+            fatalError("Not supported payment intent status: \(self)")
         }
     }
 }
@@ -374,17 +376,17 @@ extension PaymentIntent {
             // Only Android
             amountCapturable: nil,
             amountReceived: nil,
-            application: nil,
+            applicationId: nil,
             applicationFeeAmount: nil,
             cancellationReason: nil,
             canceledAt: nil,
             clientSecret: nil,
             confirmationMethod: nil,
-            customer: nil,
+            customerId: nil,
             description: description,
-            invoice: nil,
+            invoiceId: nil,
             onBehalfOf: nil,
-            review: nil,
+            reviewId: nil,
             receiptEmail: nil,
             setupFutureUsage: nil,
             transferGroup: nil
@@ -393,14 +395,14 @@ extension PaymentIntent {
 }
 
 extension CaptureMethod {
-    func toApi() -> String {
+    func toApi() -> CaptureMethodApi {
         switch self {
         case .manual:
-            return "manual"
+            return CaptureMethodApi.manual
         case .automatic:
-            return "automatic"
+            return CaptureMethodApi.automatic
         @unknown default:
-            fatalError("WTF")
+            fatalError("Not supported CaptureMethodApi '\(self)'")
         }
     }
 }
@@ -477,7 +479,7 @@ extension SetupAttempt {
             applicationId: application,
             created: created,
             customerId: customer,
-            onBehalfOfId: onBehalfOf,
+            onBehalfOf: onBehalfOf,
             paymentMethodId: paymentMethod,
             paymentMethodDetails: paymentMethodDetails?.toApi(),
             setupIntentId: setupIntent,

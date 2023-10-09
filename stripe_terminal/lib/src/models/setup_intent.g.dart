@@ -56,7 +56,7 @@ mixin _$SetupAttempt {
           _self.applicationId == other.applicationId &&
           _self.created == other.created &&
           _self.customerId == other.customerId &&
-          _self.onBehalfOfId == other.onBehalfOfId &&
+          _self.onBehalfOf == other.onBehalfOf &&
           _self.paymentMethodId == other.paymentMethodId &&
           _self.paymentMethodDetails == other.paymentMethodDetails &&
           _self.setupIntentId == other.setupIntentId &&
@@ -68,7 +68,7 @@ mixin _$SetupAttempt {
     hashCode = $hashCombine(hashCode, _self.applicationId.hashCode);
     hashCode = $hashCombine(hashCode, _self.created.hashCode);
     hashCode = $hashCombine(hashCode, _self.customerId.hashCode);
-    hashCode = $hashCombine(hashCode, _self.onBehalfOfId.hashCode);
+    hashCode = $hashCombine(hashCode, _self.onBehalfOf.hashCode);
     hashCode = $hashCombine(hashCode, _self.paymentMethodId.hashCode);
     hashCode = $hashCombine(hashCode, _self.paymentMethodDetails.hashCode);
     hashCode = $hashCombine(hashCode, _self.setupIntentId.hashCode);
@@ -82,7 +82,7 @@ mixin _$SetupAttempt {
         ..add('applicationId', _self.applicationId)
         ..add('created', _self.created)
         ..add('customerId', _self.customerId)
-        ..add('onBehalfOfId', _self.onBehalfOfId)
+        ..add('onBehalfOfId', _self.onBehalfOf)
         ..add('paymentMethodId', _self.paymentMethodId)
         ..add('paymentMethodDetails', _self.paymentMethodDetails)
         ..add('setupIntentId', _self.setupIntentId)

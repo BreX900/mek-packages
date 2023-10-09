@@ -4,6 +4,13 @@
 - feat: Mapped all Android and IOS sdk errors to `TerminalExceptionCode` enum
 
 *BREAKING CHANGES*
+- refactor: Now `PaymentIntent.captureMethod` is a Enum `CaptureMethod`
+- refactor: Now `PaymentIntent.confirmationMethod` is a Enum `ConfirmationMethod`
+- refactor: Now `PaymentIntent.setupFutureUsage` is a Enum `PaymentIntentUsage`
+- refactor: Renamed on `PaymentIntent`: `application` to `applicationId`, `customer` to `customerId`, `invoice` to `invoiceId`, `review` to `reviewId`
+- fix: Added support on `PaymentIntentStatus` to `requiresAction` value
+- refactor: Now `PaymentIntentParameters.setupFutureUsage` is a Enum `PaymentIntentUsage`
+- refactor: Renamed on `SetupAttempt`: `onBehalfOfId` to `onBehalfOf`
 - refactor: Removed `TerminalException.rawCode` in favour of `TerminalException.code` enum field
 
 ## 3.0.0-dev.1

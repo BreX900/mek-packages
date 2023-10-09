@@ -717,6 +717,11 @@ struct CartLineItemApi {
     }
 }
 
+enum ConfirmationMethodApi: Int {
+    case automatic
+    case manual
+}
+
 enum ConnectionStatusApi: Int {
     case notConnected
     case connected
@@ -872,7 +877,7 @@ struct PaymentIntentApi {
     let created: Date
     let status: PaymentIntentStatusApi
     let amount: Double
-    let captureMethod: String
+    let captureMethod: CaptureMethodApi
     let currency: String
     let metadata: [String: String]
     let paymentMethodId: String?
@@ -881,19 +886,19 @@ struct PaymentIntentApi {
     let statementDescriptorSuffix: String?
     let amountCapturable: Double?
     let amountReceived: Double?
-    let application: String?
+    let applicationId: String?
     let applicationFeeAmount: Double?
     let cancellationReason: String?
     let canceledAt: Date?
     let clientSecret: String?
-    let confirmationMethod: String?
-    let customer: String?
+    let confirmationMethod: ConfirmationMethodApi?
+    let customerId: String?
     let description: String?
-    let invoice: String?
+    let invoiceId: String?
     let onBehalfOf: String?
-    let review: String?
+    let reviewId: String?
     let receiptEmail: String?
-    let setupFutureUsage: String?
+    let setupFutureUsage: PaymentIntentUsageApi?
     let transferGroup: String?
 
     func serialize() -> [Any?] {
@@ -902,7 +907,7 @@ struct PaymentIntentApi {
             Int(created.timeIntervalSince1970 * 1000),
             status.rawValue,
             amount,
-            captureMethod,
+            captureMethod.rawValue,
             currency,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
             paymentMethodId,
@@ -911,19 +916,19 @@ struct PaymentIntentApi {
             statementDescriptorSuffix,
             amountCapturable,
             amountReceived,
-            application,
+            applicationId,
             applicationFeeAmount,
             cancellationReason,
             canceledAt != nil ? Int(canceledAt!.timeIntervalSince1970 * 1000) : nil,
             clientSecret,
-            confirmationMethod,
-            customer,
+            confirmationMethod?.rawValue,
+            customerId,
             description,
-            invoice,
+            invoiceId,
             onBehalfOf,
-            review,
+            reviewId,
             receiptEmail,
-            setupFutureUsage,
+            setupFutureUsage?.rawValue,
             transferGroup,
         ]
     }
@@ -944,7 +949,7 @@ struct PaymentIntentParametersApi {
     let transferDataDestination: String?
     let transferGroup: String?
     let onBehalfOf: String?
-    let setupFutureUsage: String?
+    let setupFutureUsage: PaymentIntentUsageApi?
     let paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?
 
     static func deserialize(
@@ -965,7 +970,7 @@ struct PaymentIntentParametersApi {
             transferDataDestination: serialized[11] as? String,
             transferGroup: serialized[12] as? String,
             onBehalfOf: serialized[13] as? String,
-            setupFutureUsage: serialized[14] as? String,
+            setupFutureUsage: !(serialized[14] is NSNull) ? PaymentIntentUsageApi(rawValue: serialized[14] as! Int)! : nil,
             paymentMethodOptionsParameters: !(serialized[15] is NSNull) ? PaymentMethodOptionsParametersApi.deserialize(serialized[15] as! [Any?]) : nil
         )
     }
@@ -977,7 +982,13 @@ enum PaymentIntentStatusApi: Int {
     case requiresCapture
     case requiresConfirmation
     case requiresPaymentMethod
+    case requiresAction
     case succeeded
+}
+
+enum PaymentIntentUsageApi: Int {
+    case onSession
+    case offSession
 }
 
 struct PaymentMethodDetailsApi {
@@ -1153,7 +1164,7 @@ struct SetupAttemptApi {
     let applicationId: String?
     let created: Date
     let customerId: String?
-    let onBehalfOfId: String?
+    let onBehalfOf: String?
     let paymentMethodId: String?
     let paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?
     let setupIntentId: String
@@ -1165,7 +1176,7 @@ struct SetupAttemptApi {
             applicationId,
             Int(created.timeIntervalSince1970 * 1000),
             customerId,
-            onBehalfOfId,
+            onBehalfOf,
             paymentMethodId,
             paymentMethodDetails?.serialize(),
             setupIntentId,

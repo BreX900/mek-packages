@@ -42,7 +42,7 @@ class SetupIntent with _$SetupIntent {
   });
 }
 
-/// The SetupIntent usage options tell Stripe how the payment method is intended to be used in the future.
+/// The [SetupIntent] usage options tell Stripe how the payment method is intended to be used in the future.
 /// Stripe will use the chosen option to pick the most frictionless flow for the customer.
 enum SetupIntentUsage {
   /// An on-session usage indicates to Stripe that future payments will take place while the customer
@@ -52,7 +52,7 @@ enum SetupIntentUsage {
   onSession,
 
   /// An off-session usage indicates to Stripe that future payments will take place without
-  /// the direct involvement of the customer. Creating an off-session SetupIntent might incur some
+  /// the direct involvement of the customer. Creating an off-session [SetupIntent] might incur some
   /// initial friction from additional authentication steps, but can reduce customer intervention
   /// in later off-session payments.
   offSession
@@ -85,8 +85,7 @@ class SetupAttempt with _$SetupAttempt {
   final String? customerId;
 
   /// (Connect) The account (if any) for which the setup is intended.
-  // TODO: Rename to onBehalfOf
-  final String? onBehalfOfId;
+  final String? onBehalfOf;
 
   /// ID of the payment method used with this SetupAttempt.
   final String? paymentMethodId;
@@ -106,7 +105,7 @@ class SetupAttempt with _$SetupAttempt {
     required this.applicationId,
     required this.created,
     required this.customerId,
-    required this.onBehalfOfId,
+    required this.onBehalfOf,
     required this.paymentMethodId,
     required this.paymentMethodDetails,
     required this.setupIntentId,

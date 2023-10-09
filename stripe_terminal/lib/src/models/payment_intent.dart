@@ -13,10 +13,10 @@ part 'payment_intent.g.dart';
 @DataClass()
 class PaymentIntent with _$PaymentIntent {
   /// The unique identifier for the intent.
-  //
-  // If the intent was created offline the [id] will be nil. See offlineDetails.stripeId for a unique ID to use while offline.
-  //
-  // After the payment has been forwarded the intent’s [id] will be filled in.
+  ///
+  /// If the intent was created offline the [id] will be nil. See offlineDetails.stripeId for a
+  /// unique ID to use while offline.
+  /// After the payment has been forwarded the intent’s [id] will be filled in.
   final String id;
 
   /// When the intent was created.
@@ -29,7 +29,7 @@ class PaymentIntent with _$PaymentIntent {
   final double amount;
 
   /// Controls when the funds will be captured from the customer’s account.
-  final String captureMethod;
+  final CaptureMethod captureMethod;
 
   /// The currency of the payment.
   final String currency;
@@ -55,7 +55,7 @@ class PaymentIntent with _$PaymentIntent {
   /// [statementDescriptor] on your customer’s statement when this [PaymentIntent] succeeds in creating a charge.
   final String? statementDescriptorSuffix;
 
-  /// !!! ONLY ON ANDROID !!!
+  // !!! ONLY ON ANDROID !!!
 
   /// Amount that can be captured from this [PaymentIntent].
   final double? amountCapturable;
@@ -64,8 +64,7 @@ class PaymentIntent with _$PaymentIntent {
   final double? amountReceived;
 
   /// ID of the Connect application that created the [PaymentIntent].
-  // TODO: rename to applicationId
-  final String? application;
+  final String? applicationId;
 
   /// The amount of the application fee for this [PaymentIntent].
   final double? applicationFeeAmount;
@@ -85,34 +84,30 @@ class PaymentIntent with _$PaymentIntent {
   /// One of automatic (default) or manual. When the confirmation method is automatic, a [PaymentIntent]
   /// can be confirmed using a publishable key. After next_actions are handled, no additional confirmation
   /// is required to complete the payment.
-  // TODO: Convert to [CaptureMethod] type
-  final String? confirmationMethod;
+  final ConfirmationMethod? confirmationMethod;
 
   /// ID of the Customer this PaymentIntent belongs to, if one exists. If present, payment methods
   /// used with this [PaymentIntent] can only be attached to this Customer, and payment methods
   /// attached to other Customers cannot be used with this [PaymentIntent].
-  // TODO: rename to customerId
-  final String? customer;
+  final String? customerId;
 
   /// An arbitrary string attached to the [PaymentIntent]. Often useful for displaying to users.
   final String? description;
 
   /// ID of the invoice that created this PaymentIntent, if it exists.
-  // TODO: rename to invoiceId
-  final String? invoice;
+  final String? invoiceId;
 
   /// Return the account that the PaymentIntent is on behalf of
   final String? onBehalfOf;
 
   /// ID of the review associated with this PaymentIntent, if any.
-  // TODO: rename to reviewId
-  final String? review;
+  final String? reviewId;
 
   /// Email address that the receipt for the resulting payment will be sent to.
   final String? receiptEmail;
 
   /// Value of setup_future_usage associated with this [PaymentIntent], if any.
-  final String? setupFutureUsage;
+  final PaymentIntentUsage? setupFutureUsage;
 
   /// Get the transfer group of this PaymentIntent
   final String? transferGroup;
@@ -130,19 +125,19 @@ class PaymentIntent with _$PaymentIntent {
     required this.statementDescriptor,
     required this.statementDescriptorSuffix,
     this.metadata = const {},
-    required this.application,
+    required this.applicationId,
     required this.captureMethod,
     required this.cancellationReason,
     required this.canceledAt,
     required this.clientSecret,
     required this.confirmationMethod,
     required this.currency,
-    required this.customer,
+    required this.customerId,
     required this.description,
-    required this.invoice,
+    required this.invoiceId,
     required this.onBehalfOf,
     required this.paymentMethodId,
-    required this.review,
+    required this.reviewId,
     required this.receiptEmail,
     required this.setupFutureUsage,
     required this.transferGroup,
@@ -150,6 +145,8 @@ class PaymentIntent with _$PaymentIntent {
 }
 
 /// The possible statuses for a [PaymentIntent].
+///
+/// https://stripe.com/docs/api/payment_intents/object#payment_intent_object-status
 enum PaymentIntentStatus {
   /// The [PaymentIntent] was canceled.
   canceled,
@@ -166,10 +163,13 @@ enum PaymentIntentStatus {
   /// Next step: collect a payment method by calling [Terminal.collectPaymentMethod].
   requiresPaymentMethod,
 
+  /// Next step: the payment requires additional actions, such as authenticating with 3D Secure.
+  ///
+  /// PaymentIntents collected with the Terminal SDK should not end in the requires_action status.
+  requiresAction,
+
   /// The [PaymentIntent] succeeded.
   succeeded,
-
-  // TODO: Missing `requiredAction` value
 }
 
 @DataClass()
@@ -243,12 +243,7 @@ class PaymentIntentParameters with _$PaymentIntentParameters {
   /// after the [PaymentIntent] is confirmed and any required actions from the user are complete.
   /// If no Customer was provided, the payment method can still be attached to a Customer after
   /// the transaction completes.
-  ///
-  /// Possible values: “on_session”: Use “on_session” if you intend to only reuse the payment method
-  /// when your customer is present in your checkout flow. “off_session”: Use “off_session” if your
-  /// customer may or may not be present in your checkout flow.
-  // TODO: Convert to [SetupIntentUsage] type
-  final String? setupFutureUsage;
+  final PaymentIntentUsage? setupFutureUsage;
 
   /// Specific options used during the creation of the PaymentMethod.
   final PaymentMethodOptionsParameters? paymentMethodOptionsParameters;
@@ -294,6 +289,25 @@ enum CaptureMethod {
   /// the funds until later. Will require an explicit call to capture payments.
   /// (Not all payment methods support this.)
   manual
+}
+
+enum ConfirmationMethod {
+  /// After next_actions are handled, no additional confirmation is required to complete the payment.
+  automatic,
+
+  /// All payment attempts must be made using a secret key. The PaymentIntent returns to the
+  /// requires_confirmation state after handling next_actions, and requires your server to
+  /// initiate each payment attempt with an explicit confirmation.
+  manual,
+}
+
+enum PaymentIntentUsage {
+  /// Use “on_session” if you intend to only reuse the payment method when your customer
+  /// is present in your checkout flow.
+  onSession,
+
+  /// Use “off_session” if your customer may or may not be present in your checkout flow.
+  offSession
 }
 
 /// The PaymentMethodOptionsParameters contains options for PaymentMethod creation.

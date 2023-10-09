@@ -19,7 +19,7 @@ extension PaymentIntentParametersApi {
             .setTransferDataDestination(transferDataDestination)
             .setTransferGroup(transferGroup)
             .setOnBehalfOf(onBehalfOf)
-            .setSetupFutureUsage(setupFutureUsage)
+            .setSetupFutureUsage(setupFutureUsage?.toHost())
         if let it = paymentMethodOptionsParameters { b.setPaymentMethodOptionsParameters(try it.toHost()) }
         return try b.build()
     }
@@ -85,6 +85,17 @@ extension CaptureMethodApi {
             return .automatic
         case .manual:
             return .manual
+        }
+    }
+}
+
+extension PaymentIntentUsageApi {
+    func toHost() -> String {
+        switch self {
+        case .offSession:
+            return "off_session"
+        case .onSession:
+            return "on_session"
         }
     }
 }

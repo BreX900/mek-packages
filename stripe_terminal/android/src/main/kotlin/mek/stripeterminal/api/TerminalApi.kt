@@ -676,6 +676,10 @@ data class CartLineItemApi(
     }
 }
 
+enum class ConfirmationMethodApi {
+    AUTOMATIC, MANUAL;
+}
+
 enum class ConnectionStatusApi {
     NOT_CONNECTED, CONNECTED, CONNECTING;
 }
@@ -820,7 +824,7 @@ data class PaymentIntentApi(
     val created: Long,
     val status: PaymentIntentStatusApi,
     val amount: Double,
-    val captureMethod: String,
+    val captureMethod: CaptureMethodApi,
     val currency: String,
     val metadata: HashMap<String, String>,
     val paymentMethodId: String?,
@@ -829,19 +833,19 @@ data class PaymentIntentApi(
     val statementDescriptorSuffix: String?,
     val amountCapturable: Double?,
     val amountReceived: Double?,
-    val application: String?,
+    val applicationId: String?,
     val applicationFeeAmount: Double?,
     val cancellationReason: String?,
     val canceledAt: Long?,
     val clientSecret: String?,
-    val confirmationMethod: String?,
-    val customer: String?,
+    val confirmationMethod: ConfirmationMethodApi?,
+    val customerId: String?,
     val description: String?,
-    val invoice: String?,
+    val invoiceId: String?,
     val onBehalfOf: String?,
-    val review: String?,
+    val reviewId: String?,
     val receiptEmail: String?,
-    val setupFutureUsage: String?,
+    val setupFutureUsage: PaymentIntentUsageApi?,
     val transferGroup: String?,
 ) {
     fun serialize(): List<Any?> {
@@ -850,7 +854,7 @@ data class PaymentIntentApi(
             created,
             status.ordinal,
             amount,
-            captureMethod,
+            captureMethod.ordinal,
             currency,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
             paymentMethodId,
@@ -859,19 +863,19 @@ data class PaymentIntentApi(
             statementDescriptorSuffix,
             amountCapturable,
             amountReceived,
-            application,
+            applicationId,
             applicationFeeAmount,
             cancellationReason,
             canceledAt,
             clientSecret,
-            confirmationMethod,
-            customer,
+            confirmationMethod?.ordinal,
+            customerId,
             description,
-            invoice,
+            invoiceId,
             onBehalfOf,
-            review,
+            reviewId,
             receiptEmail,
-            setupFutureUsage,
+            setupFutureUsage?.ordinal,
             transferGroup,
         )
     }
@@ -892,7 +896,7 @@ data class PaymentIntentParametersApi(
     val transferDataDestination: String?,
     val transferGroup: String?,
     val onBehalfOf: String?,
-    val setupFutureUsage: String?,
+    val setupFutureUsage: PaymentIntentUsageApi?,
     val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
 ) {
     companion object {
@@ -914,7 +918,7 @@ data class PaymentIntentParametersApi(
                 transferDataDestination = serialized[11] as String?,
                 transferGroup = serialized[12] as String?,
                 onBehalfOf = serialized[13] as String?,
-                setupFutureUsage = serialized[14] as String?,
+                setupFutureUsage = (serialized[14] as Int?)?.let { PaymentIntentUsageApi.values()[it] },
                 paymentMethodOptionsParameters = (serialized[15] as List<Any?>?)?.let { PaymentMethodOptionsParametersApi.deserialize(it) },
             )
         }
@@ -922,7 +926,11 @@ data class PaymentIntentParametersApi(
 }
 
 enum class PaymentIntentStatusApi {
-    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, SUCCEEDED;
+    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, REQUIRES_ACTION, SUCCEEDED;
+}
+
+enum class PaymentIntentUsageApi {
+    ON_SESSION, OFF_SESSION;
 }
 
 data class PaymentMethodDetailsApi(
@@ -1080,7 +1088,7 @@ data class SetupAttemptApi(
     val applicationId: String?,
     val created: Long,
     val customerId: String?,
-    val onBehalfOfId: String?,
+    val onBehalfOf: String?,
     val paymentMethodId: String?,
     val paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?,
     val setupIntentId: String,
@@ -1092,7 +1100,7 @@ data class SetupAttemptApi(
             applicationId,
             created,
             customerId,
-            onBehalfOfId,
+            onBehalfOf,
             paymentMethodId,
             paymentMethodDetails?.serialize(),
             setupIntentId,

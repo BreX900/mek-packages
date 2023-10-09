@@ -525,7 +525,7 @@ PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentInt
     created: DateTime.fromMillisecondsSinceEpoch(serialized[1] as int),
     status: PaymentIntentStatus.values[serialized[2] as int],
     amount: serialized[3] as double,
-    captureMethod: serialized[4] as String,
+    captureMethod: CaptureMethod.values[serialized[4] as int],
     currency: serialized[5] as String,
     metadata: (serialized[6] as Map).map((k, v) => MapEntry(k as String, v as String)),
     paymentMethodId: serialized[7] as String?,
@@ -534,20 +534,22 @@ PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentInt
     statementDescriptorSuffix: serialized[10] as String?,
     amountCapturable: serialized[11] as double?,
     amountReceived: serialized[12] as double?,
-    application: serialized[13] as String?,
+    applicationId: serialized[13] as String?,
     applicationFeeAmount: serialized[14] as double?,
     cancellationReason: serialized[15] as String?,
     canceledAt:
         serialized[16] != null ? DateTime.fromMillisecondsSinceEpoch(serialized[16] as int) : null,
     clientSecret: serialized[17] as String?,
-    confirmationMethod: serialized[18] as String?,
-    customer: serialized[19] as String?,
+    confirmationMethod:
+        serialized[18] != null ? ConfirmationMethod.values[serialized[18] as int] : null,
+    customerId: serialized[19] as String?,
     description: serialized[20] as String?,
-    invoice: serialized[21] as String?,
+    invoiceId: serialized[21] as String?,
     onBehalfOf: serialized[22] as String?,
-    review: serialized[23] as String?,
+    reviewId: serialized[23] as String?,
     receiptEmail: serialized[24] as String?,
-    setupFutureUsage: serialized[25] as String?,
+    setupFutureUsage:
+        serialized[25] != null ? PaymentIntentUsage.values[serialized[25] as int] : null,
     transferGroup: serialized[26] as String?);
 List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deserialized) => [
       deserialized.amount,
@@ -564,7 +566,7 @@ List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deseria
       deserialized.transferDataDestination,
       deserialized.transferGroup,
       deserialized.onBehalfOf,
-      deserialized.setupFutureUsage,
+      deserialized.setupFutureUsage?.index,
       deserialized.paymentMethodOptionsParameters != null
           ? _$serializePaymentMethodOptionsParameters(deserialized.paymentMethodOptionsParameters!)
           : null
@@ -623,7 +625,7 @@ SetupAttempt _$deserializeSetupAttempt(List<Object?> serialized) => SetupAttempt
     applicationId: serialized[1] as String?,
     created: DateTime.fromMillisecondsSinceEpoch(serialized[2] as int),
     customerId: serialized[3] as String?,
-    onBehalfOfId: serialized[4] as String?,
+    onBehalfOf: serialized[4] as String?,
     paymentMethodId: serialized[5] as String?,
     paymentMethodDetails: serialized[6] != null
         ? _$deserializeSetupAttemptPaymentMethodDetails(serialized[6] as List)

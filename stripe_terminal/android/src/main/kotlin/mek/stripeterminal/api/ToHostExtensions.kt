@@ -64,6 +64,13 @@ fun CartLineItemApi.toHost(): CartLineItem {
     ).build()
 }
 
+fun PaymentIntentUsageApi.toHost(): String {
+    return when (this) {
+        PaymentIntentUsageApi.OFF_SESSION -> "off_session"
+        PaymentIntentUsageApi.ON_SESSION -> "on_session"
+    }
+}
+
 fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
     val b = PaymentIntentParameters.Builder(
         amount = amount,
@@ -90,7 +97,7 @@ fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
     transferDataDestination?.let(b::setTransferDataDestination)
     transferGroup?.let(b::setTransferGroup)
     onBehalfOf?.let(b::setOnBehalfOf)
-    setupFutureUsage?.let(b::setSetupFutureUsage)
+    setupFutureUsage?.toHost()?.let(b::setSetupFutureUsage)
     paymentMethodOptionsParameters?.let { b.setPaymentMethodOptionsParameters(it.toHost()) }
     return b.build()
 }

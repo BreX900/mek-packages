@@ -26,17 +26,17 @@ mixin _$PaymentIntent {
           _self.statementDescriptorSuffix == other.statementDescriptorSuffix &&
           _self.amountCapturable == other.amountCapturable &&
           _self.amountReceived == other.amountReceived &&
-          _self.application == other.application &&
+          _self.applicationId == other.applicationId &&
           _self.applicationFeeAmount == other.applicationFeeAmount &&
           _self.cancellationReason == other.cancellationReason &&
           _self.canceledAt == other.canceledAt &&
           _self.clientSecret == other.clientSecret &&
           _self.confirmationMethod == other.confirmationMethod &&
-          _self.customer == other.customer &&
+          _self.customerId == other.customerId &&
           _self.description == other.description &&
-          _self.invoice == other.invoice &&
+          _self.invoiceId == other.invoiceId &&
           _self.onBehalfOf == other.onBehalfOf &&
-          _self.review == other.review &&
+          _self.reviewId == other.reviewId &&
           _self.receiptEmail == other.receiptEmail &&
           _self.setupFutureUsage == other.setupFutureUsage &&
           _self.transferGroup == other.transferGroup;
@@ -56,17 +56,17 @@ mixin _$PaymentIntent {
     hashCode = $hashCombine(hashCode, _self.statementDescriptorSuffix.hashCode);
     hashCode = $hashCombine(hashCode, _self.amountCapturable.hashCode);
     hashCode = $hashCombine(hashCode, _self.amountReceived.hashCode);
-    hashCode = $hashCombine(hashCode, _self.application.hashCode);
+    hashCode = $hashCombine(hashCode, _self.applicationId.hashCode);
     hashCode = $hashCombine(hashCode, _self.applicationFeeAmount.hashCode);
     hashCode = $hashCombine(hashCode, _self.cancellationReason.hashCode);
     hashCode = $hashCombine(hashCode, _self.canceledAt.hashCode);
     hashCode = $hashCombine(hashCode, _self.clientSecret.hashCode);
     hashCode = $hashCombine(hashCode, _self.confirmationMethod.hashCode);
-    hashCode = $hashCombine(hashCode, _self.customer.hashCode);
+    hashCode = $hashCombine(hashCode, _self.customerId.hashCode);
     hashCode = $hashCombine(hashCode, _self.description.hashCode);
-    hashCode = $hashCombine(hashCode, _self.invoice.hashCode);
+    hashCode = $hashCombine(hashCode, _self.invoiceId.hashCode);
     hashCode = $hashCombine(hashCode, _self.onBehalfOf.hashCode);
-    hashCode = $hashCombine(hashCode, _self.review.hashCode);
+    hashCode = $hashCombine(hashCode, _self.reviewId.hashCode);
     hashCode = $hashCombine(hashCode, _self.receiptEmail.hashCode);
     hashCode = $hashCombine(hashCode, _self.setupFutureUsage.hashCode);
     hashCode = $hashCombine(hashCode, _self.transferGroup.hashCode);
@@ -88,17 +88,17 @@ mixin _$PaymentIntent {
         ..add('statementDescriptorSuffix', _self.statementDescriptorSuffix)
         ..add('amountCapturable', _self.amountCapturable)
         ..add('amountReceived', _self.amountReceived)
-        ..add('application', _self.application)
+        ..add('application', _self.applicationId)
         ..add('applicationFeeAmount', _self.applicationFeeAmount)
         ..add('cancellationReason', _self.cancellationReason)
         ..add('canceledAt', _self.canceledAt)
         ..add('clientSecret', _self.clientSecret)
         ..add('confirmationMethod', _self.confirmationMethod)
-        ..add('customer', _self.customer)
+        ..add('customer', _self.customerId)
         ..add('description', _self.description)
-        ..add('invoice', _self.invoice)
+        ..add('invoice', _self.invoiceId)
         ..add('onBehalfOf', _self.onBehalfOf)
-        ..add('review', _self.review)
+        ..add('review', _self.reviewId)
         ..add('receiptEmail', _self.receiptEmail)
         ..add('setupFutureUsage', _self.setupFutureUsage)
         ..add('transferGroup', _self.transferGroup))

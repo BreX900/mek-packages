@@ -24,12 +24,12 @@ fun TerminalException.toApi(): TerminalExceptionApi {
             "Unsupported Terminal exception code: $errorCode"
         )
     return TerminalExceptionApi(
-            code = code,
-            message = errorMessage,
-            stackTrace  = stackTraceToString(),
-            paymentIntent = paymentIntent?.toApi(),
-            apiError = apiError?.toString(),
-        )
+        code = code,
+        message = errorMessage,
+        stackTrace = stackTraceToString(),
+        paymentIntent = paymentIntent?.toApi(),
+        apiError = apiError?.toString(),
+    )
 }
 
 private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
@@ -312,7 +312,11 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         created = created,
         status = status!!.toApi(),
         amount = amount.toDouble(),
-        captureMethod = captureMethod!!,
+        captureMethod = when (captureMethod!!) {
+            "automatic" -> CaptureMethodApi.AUTOMATIC
+            "manual" -> CaptureMethodApi.MANUAL
+            else -> throw IllegalArgumentException("Not supported CaptureMethod '${captureMethod}' on PaymentIntent $id")
+        },
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
         paymentMethodId = paymentMethodId,
@@ -322,20 +326,28 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         // Only Android
         amountCapturable = amountCapturable.toDouble(),
         amountReceived = amountReceived.toDouble(),
-        application = application,
+        applicationId = application,
         applicationFeeAmount = applicationFeeAmount.toDouble(),
         canceledAt = canceledAt,
         cancellationReason = cancellationReason,
         clientSecret = clientSecret,
-        confirmationMethod = confirmationMethod,
+        confirmationMethod = when (confirmationMethod) {
+            "automatic" -> ConfirmationMethodApi.AUTOMATIC
+            "manual" -> ConfirmationMethodApi.MANUAL
+            else -> null
+        },
         description = description,
-        invoice = invoice,
+        invoiceId = invoice,
         onBehalfOf = onBehalfOf,
         receiptEmail = receiptEmail,
-        review = review,
-        setupFutureUsage = setupFutureUsage,
+        reviewId = review,
+        setupFutureUsage = when (setupFutureUsage) {
+            "on_session" -> PaymentIntentUsageApi.ON_SESSION
+            "off_session" -> PaymentIntentUsageApi.OFF_SESSION
+            else -> null
+        },
         transferGroup = transferGroup,
-        customer = customer,
+        customerId = customer,
     )
 }
 
@@ -416,7 +428,7 @@ fun SetupAttempt.toApi(): SetupAttemptApi {
         applicationId = applicationId,
         created = created,
         customerId = customerId,
-        onBehalfOfId = onBehalfOfId,
+        onBehalfOf = onBehalfOfId,
         paymentMethodId = paymentMethodId,
         paymentMethodDetails = paymentMethodDetails.toApi(),
         setupIntentId = setupIntentId!!,

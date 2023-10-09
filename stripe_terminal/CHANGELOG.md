@@ -1,3 +1,4 @@
+- refactor: Renamed `StripeTerminal` class to `Terminal`. The name has been aligned with the native SDKs.
 - docs: Added docs to all `TerminalExceptionCode` enum values
 - feat: Added to `TerminalException` class a updated `PaymentIntent` and `ApiError`
 - feat: Mapped all Android and IOS sdk errors to `TerminalExceptionCode` enum

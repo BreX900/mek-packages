@@ -61,9 +61,8 @@ class HostApiHandler {
       .map((e) => MethodHandler.from(e, swiftMethod))
       .toList();
 
-  String channelName([MethodElement? e]) => e?.name ?? element.name;
-  String controllerChannelName(MethodElement? e) =>
-      '${element.name}${e != null ? '#${e.name}' : ''}';
+  String methodChannelName([MethodElement? e]) => e?.name ?? options.channelName(element.name);
+  String eventChannelName(MethodElement? e) => options.channelName(element.name, e?.name);
 }
 
 class FlutterApiHandler {
@@ -99,7 +98,7 @@ class FlutterApiHandler {
       .map((e) => MethodHandler.from(e, swiftMethod))
       .toList();
 
-  String channelName([MethodElement? e]) => e?.name ?? element.name;
+  String methodChannelName([MethodElement? e]) => e?.name ?? options.channelName(element.name);
 }
 
 sealed class SerializableHandler<T extends InterfaceElement> extends Equatable {

@@ -43,7 +43,7 @@ class PaymentIntent with _$PaymentIntent {
   /// This is only non-null in the [PaymentIntent] instance returned during collect when using
   /// updatePaymentIntent set to true in the CollectConfiguration.
   ///
-  /// After [StripeTerminal.confirmPaymentIntent] the amount will have this tip amount added
+  /// After [Terminal.confirmPaymentIntent] the amount will have this tip amount added
   /// to it and the [amountDetails] will contain the breakdown of how much of the amount was a tip.
   final double? amountTip;
 
@@ -160,10 +160,10 @@ enum PaymentIntentStatus {
   /// Next step: capture the [PaymentIntent] on your backend via the Stripe API.
   requiresCapture,
 
-  /// Next step: confirm the payment by calling [StripeTerminal.confirmPaymentIntent].
+  /// Next step: confirm the payment by calling [Terminal.confirmPaymentIntent].
   requiresConfirmation,
 
-  /// Next step: collect a payment method by calling [StripeTerminal.collectPaymentMethod].
+  /// Next step: collect a payment method by calling [Terminal.collectPaymentMethod].
   requiresPaymentMethod,
 
   /// The [PaymentIntent] succeeded.

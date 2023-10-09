@@ -37,8 +37,8 @@ import mek.stripeterminal.api.LocationApi
 import mek.stripeterminal.api.PaymentIntentApi
 import mek.stripeterminal.api.ReaderApi
 import mek.stripeterminal.api.Result
-import mek.stripeterminal.api.StripeTerminalHandlersApi
-import mek.stripeterminal.api.StripeTerminalPlatformApi
+import mek.stripeterminal.api.TerminalHandlersApi
+import mek.stripeterminal.api.TerminalPlatformApi
 import mek.stripeterminal.api.toApi
 import mek.stripeterminal.api.toHost
 import mek.stripeterminal.plugin.ReaderDelegatePlugin
@@ -59,8 +59,8 @@ import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
 
-class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatformApi {
-    private lateinit var _handlers: StripeTerminalHandlersApi
+class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
+    private lateinit var _handlers: TerminalHandlersApi
 
     private var _activity: Activity? = null
     private val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -554,8 +554,8 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         val binaryMessenger = flutterPluginBinding.binaryMessenger
-        StripeTerminalPlatformApi.setHandler(binaryMessenger, this)
-        _handlers = StripeTerminalHandlersApi(binaryMessenger)
+        TerminalPlatformApi.setHandler(binaryMessenger, this)
+        _handlers = TerminalHandlersApi(binaryMessenger)
         _readerDelegate = ReaderDelegatePlugin(_handlers)
         _readerReconnectionDelegate = ReaderReconnectionListenerPlugin(_handlers)
 
@@ -566,7 +566,7 @@ class StripeTerminalPlugin : FlutterPlugin, ActivityAware, StripeTerminalPlatfor
         clean()
 
         _discoverReadersController.removeHandler()
-        StripeTerminalPlatformApi.removeHandler()
+        TerminalPlatformApi.removeHandler()
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

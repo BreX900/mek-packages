@@ -29,7 +29,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _api = StripeApi();
-  StripeTerminal? _terminal;
+  Terminal? _terminal;
 
   var _locations = <Location>[];
   Location? _selectedLocation;
@@ -77,26 +77,26 @@ class _MyAppState extends State<MyApp> {
       if (result == PermissionStatus.denied || result == PermissionStatus.permanentlyDenied) return;
     }
 
-    final stripeTerminal = await StripeTerminal.getInstance(
+    final terminal = await Terminal.getInstance(
       shouldPrintLogs: true,
       fetchToken: _fetchConnectionToken,
     );
-    setState(() => _terminal = stripeTerminal);
-    _onConnectionStatusChangeSub = stripeTerminal.onConnectionStatusChange.listen((status) {
+    setState(() => _terminal = terminal);
+    _onConnectionStatusChangeSub = terminal.onConnectionStatusChange.listen((status) {
       print('Connection Status Changed: ${status.name}');
       setState(() => _connectionStatus = status);
     });
-    _onUnexpectedReaderDisconnectSub = stripeTerminal.onUnexpectedReaderDisconnect.listen((reader) {
+    _onUnexpectedReaderDisconnectSub = terminal.onUnexpectedReaderDisconnect.listen((reader) {
       print('Reader Unexpected Disconnected: ${reader.label}');
       setState(() => _reader = null);
     });
-    _onPaymentStatusChangeSub = stripeTerminal.onPaymentStatusChange.listen((status) {
+    _onPaymentStatusChangeSub = terminal.onPaymentStatusChange.listen((status) {
       print('Payment Status Changed: ${status.name}');
       setState(() => _paymentStatus = status);
     });
   }
 
-  void _fetchLocations(StripeTerminal terminal) async {
+  void _fetchLocations(Terminal terminal) async {
     setState(() => _locations = const []);
     final locations = await terminal.listLocations();
     setState(() => _locations = locations);
@@ -121,12 +121,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _checkStatus(StripeTerminal terminal) async {
+  void _checkStatus(Terminal terminal) async {
     final status = await terminal.getConnectionStatus();
     _showSnackBar('Connection status: ${status.name}');
   }
 
-  Future<Reader?> _tryConnectReader(StripeTerminal terminal, Reader reader) async {
+  Future<Reader?> _tryConnectReader(Terminal terminal, Reader reader) async {
     String? getLocationId() {
       final locationId = _selectedLocation?.id ?? reader.locationId;
       if (locationId == null) _showSnackBar('Missing location');
@@ -159,7 +159,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _connectReader(StripeTerminal terminal, Reader reader) async {
+  void _connectReader(Terminal terminal, Reader reader) async {
     final connectedReader = await _tryConnectReader(terminal, reader);
     if (connectedReader == null) return;
     _showSnackBar(
@@ -167,13 +167,13 @@ class _MyAppState extends State<MyApp> {
     setState(() => _reader = connectedReader);
   }
 
-  void _disconnectReader(StripeTerminal terminal) async {
+  void _disconnectReader(Terminal terminal) async {
     await terminal.disconnectReader();
     _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
     setState(() => _reader = null);
   }
 
-  void _startDiscoverReaders(StripeTerminal terminal) {
+  void _startDiscoverReaders(Terminal terminal) {
     setState(() => _readers = const []);
 
     final configuration = switch (_discoveringMethod) {
@@ -211,7 +211,7 @@ class _MyAppState extends State<MyApp> {
     setState(() => _discoverReaderSub = null);
   }
 
-  void _createPaymentIntent(StripeTerminal terminal) async {
+  void _createPaymentIntent(Terminal terminal) async {
     final paymentIntent = await terminal.createPaymentIntent(PaymentIntentParameters(
       amount: 200,
       currency: K.currency,
@@ -222,14 +222,14 @@ class _MyAppState extends State<MyApp> {
     _showSnackBar('Payment intent created!');
   }
 
-  void _createFromApiAndRetrievePaymentIntentFromSdk(StripeTerminal terminal) async {
+  void _createFromApiAndRetrievePaymentIntentFromSdk(Terminal terminal) async {
     final paymentIntentClientSecret = await _api.createPaymentIntent();
     final paymentIntent = await terminal.retrievePaymentIntent(paymentIntentClientSecret);
     setState(() => _paymentIntent = paymentIntent);
     _showSnackBar('Payment intent retrieved!');
   }
 
-  void _collectPaymentMethod(StripeTerminal terminal, PaymentIntent paymentIntent) async {
+  void _collectPaymentMethod(Terminal terminal, PaymentIntent paymentIntent) async {
     final collectingPaymentMethod = terminal.collectPaymentMethod(
       paymentIntent,
       skipTipping: true,
@@ -260,7 +260,7 @@ class _MyAppState extends State<MyApp> {
     await cancelable.cancel();
   }
 
-  void _processPayment(StripeTerminal terminal, PaymentIntent paymentIntent) async {
+  void _processPayment(Terminal terminal, PaymentIntent paymentIntent) async {
     final processedPaymentIntent = await terminal.confirmPaymentIntent(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
     _showSnackBar('Payment processed!');

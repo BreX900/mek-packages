@@ -53,7 +53,7 @@ class ControllerSink<T>(
     fun endOfStream() = sink.endOfStream()
 }
 
-interface StripeTerminalPlatformApi {
+interface TerminalPlatformApi {
     fun onInit(
         shouldPrintLogs: Boolean,
     )
@@ -379,10 +379,10 @@ interface StripeTerminalPlatformApi {
 
         fun setHandler(
             binaryMessenger: BinaryMessenger,
-            api: StripeTerminalPlatformApi,
+            api: TerminalPlatformApi,
             coroutineScope: CoroutineScope? = null,
         ) {
-            channel = MethodChannel(binaryMessenger, "StripeTerminalPlatform")
+            channel = MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform")
             this.coroutineScope = coroutineScope ?: MainScope()
             channel.setMethodCallHandler(api::onMethodCall)
         }
@@ -397,7 +397,7 @@ interface StripeTerminalPlatformApi {
 class DiscoverReadersControllerApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "StripeTerminalPlatform#discoverReaders")
+    private val channel: EventChannel = EventChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform#discoverReaders")
 
     fun setHandler(
         onListen: (sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) -> Unit,
@@ -416,10 +416,10 @@ class DiscoverReadersControllerApi(
     fun removeHandler() = channel.setStreamHandler(null)
 }
 
-class StripeTerminalHandlersApi(
+class TerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: MethodChannel = MethodChannel(binaryMessenger, "StripeTerminalHandlers")
+    private val channel: MethodChannel = MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalHandlers")
 
     fun requestConnectionToken(
         onError: (error: PlatformError) -> Unit,

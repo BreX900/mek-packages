@@ -17,15 +17,15 @@ import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
 
-part 'stripe_terminal_handlers.dart';
-part 'stripe_terminal_platform.api.dart';
+part 'terminal_handlers.dart';
+part 'terminal_platform.api.dart';
 
 @HostApi(
-  hostExceptionHandler: StripeTerminalPlatform._throwIfIsHostException,
+  hostExceptionHandler: TerminalPlatform._throwIfIsHostException,
   kotlinMethod: MethodApiType.callbacks,
   swiftMethod: MethodApiType.async,
 )
-class StripeTerminalPlatform extends _$StripeTerminalPlatform {
+class TerminalPlatform extends _$TerminalPlatform {
   @MethodApi(kotlin: MethodApiType.sync)
   @override
   Future<void> init({required bool shouldPrintLogs});

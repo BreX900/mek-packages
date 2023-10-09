@@ -2,12 +2,13 @@
 
 // ignore_for_file: unused_element
 
-part of 'stripe_terminal_platform.dart';
+part of 'terminal_platform.dart';
 
-class _$StripeTerminalPlatform {
-  static const _$channel = MethodChannel('StripeTerminalPlatform');
+class _$TerminalPlatform {
+  static const _$channel = MethodChannel('mek_stripe_terminal#TerminalPlatform');
 
-  static const _$discoverReaders = EventChannel('StripeTerminalPlatform#discoverReaders');
+  static const _$discoverReaders =
+      EventChannel('mek_stripe_terminal#TerminalPlatform#discoverReaders');
 
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration configuration) {
     return _$discoverReaders
@@ -19,7 +20,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('init', [shouldPrintLogs]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -28,7 +29,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('clearCachedCredentials', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -38,7 +39,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('getConnectionStatus', []);
       return ConnectionStatus.values[result as int];
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -52,7 +53,7 @@ class _$StripeTerminalPlatform {
           [deviceType.index, _$serializeDiscoveryConfiguration(discoveryConfiguration)]);
       return result as bool;
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -67,7 +68,7 @@ class _$StripeTerminalPlatform {
           [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -77,7 +78,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('connectHandoffReader', [serialNumber]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -91,7 +92,7 @@ class _$StripeTerminalPlatform {
           await _$channel.invokeMethod('connectInternetReader', [serialNumber, failIfInUse]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -105,7 +106,7 @@ class _$StripeTerminalPlatform {
           await _$channel.invokeMethod('connectMobileReader', [serialNumber, locationId]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -120,7 +121,7 @@ class _$StripeTerminalPlatform {
           'connectUsbReader', [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -130,7 +131,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('getConnectedReader', []);
       return result != null ? _$deserializeReader(result as List) : null;
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -139,7 +140,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('cancelReaderReconnection', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -154,7 +155,7 @@ class _$StripeTerminalPlatform {
           await _$channel.invokeMethod('listLocations', [endingBefore, limit, startingAfter]);
       return (result as List).map((e) => _$deserializeLocation(e as List)).toList();
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -163,7 +164,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('installAvailableUpdate', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -172,7 +173,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('cancelReaderUpdate', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -181,7 +182,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('disconnectReader', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -191,7 +192,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('getPaymentStatus', []);
       return PaymentStatus.values[result as int];
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -202,7 +203,7 @@ class _$StripeTerminalPlatform {
           .invokeMethod('createPaymentIntent', [_$serializePaymentIntentParameters(parameters)]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -212,7 +213,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('retrievePaymentIntent', [clientSecret]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -227,7 +228,7 @@ class _$StripeTerminalPlatform {
           .invokeMethod('startCollectPaymentMethod', [operationId, paymentIntentId, skipTipping]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -236,7 +237,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('stopCollectPaymentMethod', [operationId]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -246,7 +247,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('confirmPaymentIntent', [paymentIntentId]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -256,7 +257,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('cancelPaymentIntent', [paymentIntentId]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -278,7 +279,7 @@ class _$StripeTerminalPlatform {
       ]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -288,7 +289,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('retrieveSetupIntent', [clientSecret]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -304,7 +305,7 @@ class _$StripeTerminalPlatform {
           [operationId, setupIntentId, customerConsentCollected, isCustomerCancellationEnabled]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -313,7 +314,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('stopCollectSetupIntentPaymentMethod', [operationId]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -323,7 +324,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('confirmSetupIntent', [setupIntentId]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -333,7 +334,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('cancelSetupIntent', [setupIntentId]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -360,7 +361,7 @@ class _$StripeTerminalPlatform {
         isCustomerCancellationEnabled
       ]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -369,7 +370,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('stopCollectRefundPaymentMethod', [operationId]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -379,7 +380,7 @@ class _$StripeTerminalPlatform {
       final result = await _$channel.invokeMethod('confirmRefund', []);
       return _$deserializeRefund(result as List);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -388,7 +389,7 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('setReaderDisplay', [_$serializeCart(cart)]);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
@@ -397,14 +398,14 @@ class _$StripeTerminalPlatform {
     try {
       await _$channel.invokeMethod('clearReaderDisplay', []);
     } on PlatformException catch (exception) {
-      StripeTerminalPlatform._throwIfIsHostException(exception);
+      TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
     }
   }
 }
 
-void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
-  const channel = MethodChannel('StripeTerminalHandlers');
+void _$setupTerminalHandlers(TerminalHandlers hostApi) {
+  const channel = MethodChannel('mek_stripe_terminal#TerminalHandlers');
   channel.setMethodCallHandler((call) async {
     final args = call.arguments as List<Object?>;
     return switch (call.method) {
@@ -438,7 +439,7 @@ void _$setupStripeTerminalHandlers(StripeTerminalHandlers hostApi) {
         hostApi._onReaderReconnectStarted(_$deserializeReader(args[0] as List)),
       '_onReaderReconnectSucceeded' =>
         hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
-      _ => throw UnsupportedError('StripeTerminalHandlers#Flutter.${call.method} method'),
+      _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),
     };
   });
 }

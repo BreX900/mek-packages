@@ -1,8 +1,8 @@
-part of 'stripe_terminal_platform.dart';
+part of 'terminal_platform.dart';
 
 @FlutterApi()
-class StripeTerminalHandlers {
-  final StripeTerminalPlatform _platform;
+class TerminalHandlers {
+  final TerminalPlatform _platform;
   final Future<String> Function() _fetchToken;
 
   final _unexpectedReaderDisconnectController = StreamController<Reader>.broadcast();
@@ -18,12 +18,12 @@ class StripeTerminalHandlers {
       _connectionStatusChangeController.stream;
   Stream<PaymentStatus> get paymentStatusChangeStream => _paymentStatusChangeController.stream;
 
-  StripeTerminalHandlers({
-    required StripeTerminalPlatform platform,
+  TerminalHandlers({
+    required TerminalPlatform platform,
     required Future<String> Function() fetchToken,
   })  : _platform = platform,
         _fetchToken = fetchToken {
-    _$setupStripeTerminalHandlers(this);
+    _$setupTerminalHandlers(this);
   }
 
   void attachReaderDelegates(

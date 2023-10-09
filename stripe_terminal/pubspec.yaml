@@ -68,9 +68,9 @@ flutter:
     platforms:
       android:
         package: mek.stripeterminal
-        pluginClass: StripeTerminalPlugin
+        pluginClass: TerminalPlugin
       ios:
-        pluginClass: StripeTerminalPlugin
+        pluginClass: TerminalPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

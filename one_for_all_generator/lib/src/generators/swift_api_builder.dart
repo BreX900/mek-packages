@@ -224,7 +224,7 @@ class SwiftApiBuilder extends ApiBuilder {
         init: SwiftInit(
           parameters: [SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')],
           body:
-              'channel = FlutterEventChannel(name: "${handler.controllerChannelName(e)}", binaryMessenger: binaryMessenger)',
+              'channel = FlutterEventChannel(name: "${handler.eventChannelName(e)}", binaryMessenger: binaryMessenger)',
         ),
         fields: [
           SwiftField(
@@ -287,7 +287,7 @@ channel.setStreamHandler(ControllerHandler({ arguments, events in
         SwiftParameter(label: '_', name: 'hostApi', type: codecs.encodeName(element.name)),
       ],
       body: '''
-$channelVarAccess = FlutterMethodChannel(name: "${handler.channelName()}", binaryMessenger: binaryMessenger)
+$channelVarAccess = FlutterMethodChannel(name: "${handler.methodChannelName()}", binaryMessenger: binaryMessenger)
 $channelVarAccess!.setMethodCallHandler { call, result in
     let runAsync = { (function: @escaping () async throws -> Any?) -> Void in
         Task {
@@ -365,7 +365,7 @@ ${switch (methodType) {
         ),
       ], body: '''
 channel = FlutterMethodChannel(
-    name: "${handler.channelName()}",
+    name: "${handler.methodChannelName()}",
     binaryMessenger: binaryMessenger
 )'''),
       methods: methods.map((_) {
@@ -392,11 +392,11 @@ channel = FlutterMethodChannel(
             MethodApiType.callbacks => throw UnsupportedError(
                 'Not supported method ${MethodApiType.callbacks} on ${element.name}.${e.name}'),
             MethodApiType.sync => '''
-channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters])''',
+channel.invokeMethod("${handler.methodChannelName(e)}", arguments: [$parameters])''',
             MethodApiType.async => '''
 return try await withCheckedThrowingContinuation { continuation in
     DispatchQueue.main.async {
-        self.channel.invokeMethod("${handler.channelName(e)}", arguments: [$parameters]) { result in
+        self.channel.invokeMethod("${handler.methodChannelName(e)}", arguments: [$parameters]) { result in
             if let result = result as? FlutterError {
                 continuation.resume(throwing: PlatformError(result.code, result.message, result.details))
             } else {

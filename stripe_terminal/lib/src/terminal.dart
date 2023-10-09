@@ -11,24 +11,27 @@ import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
-import 'package:mek_stripe_terminal/src/platform/stripe_terminal_platform.dart';
+import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 
+@Deprecated('Use Terminal. The name has been aligned with the native SDKs.')
+typedef StripeTerminal = Terminal;
+
 /// Parts documented with "???" are not yet validated
-class StripeTerminal {
-  static final _platformInstance = StripeTerminalPlatform();
-  static StripeTerminalHandlers? _handlersInstance;
+class Terminal {
+  static final _platformInstance = TerminalPlatform();
+  static TerminalHandlers? _handlersInstance;
 
-  static Future<StripeTerminal>? _instance;
+  static Future<Terminal>? _instance;
 
-  final StripeTerminalPlatform _platform;
-  final StripeTerminalHandlers _handlers;
+  final TerminalPlatform _platform;
+  final TerminalHandlers _handlers;
 
   /// Creates an internal `StripeTerminal` instance
-  StripeTerminal._(this._platform, this._handlers);
+  Terminal._(this._platform, this._handlers);
 
   /// Initializes the terminal SDK
-  static Future<StripeTerminal> getInstance({
+  static Future<Terminal> getInstance({
     bool shouldPrintLogs = false,
 
     /// A callback function that returns a Future which resolves to a connection token from your backend
@@ -36,7 +39,7 @@ class StripeTerminal {
     required Future<String> Function() fetchToken,
   }) {
     final platform = _platformInstance;
-    final handlers = _handlersInstance ??= StripeTerminalHandlers(
+    final handlers = _handlersInstance ??= TerminalHandlers(
       platform: platform,
       fetchToken: fetchToken,
     );
@@ -44,7 +47,7 @@ class StripeTerminal {
     return _instance ??= (() async {
       try {
         await platform.init(shouldPrintLogs: shouldPrintLogs);
-        return StripeTerminal._(platform, handlers);
+        return Terminal._(platform, handlers);
       } catch (_) {
         _instance = null;
         rethrow;

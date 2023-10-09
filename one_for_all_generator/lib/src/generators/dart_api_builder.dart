@@ -58,13 +58,13 @@ class DartApiBuilder extends ApiBuilder {
         ..static = true
         ..modifier = FieldModifier.constant
         ..name = '_\$channel'
-        ..assignment = Code('MethodChannel(\'${handler.channelName()}\')')))
+        ..assignment = Code('MethodChannel(\'${handler.methodChannelName()}\')')))
       ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         return Field((b) => b
           ..static = true
           ..modifier = FieldModifier.constant
           ..name = '_\$${e.name.no_}'
-          ..assignment = Code('EventChannel(\'${handler.controllerChannelName(e)}\')'));
+          ..assignment = Code('EventChannel(\'${handler.eventChannelName(e)}\')'));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         final returnType = e.returnType.singleTypeArg;
@@ -86,7 +86,7 @@ class DartApiBuilder extends ApiBuilder {
 
         String parseResult() {
           final code =
-              'await _\$channel.invokeMethod(\'${handler.channelName(e)}\', [$parameters]);';
+              'await _\$channel.invokeMethod(\'${handler.methodChannelName(e)}\', [$parameters]);';
           if (returnType is VoidType) return code;
           return 'final result = $code'
               'return ${codecs.encodeDeserialization(returnType, 'result')};';
@@ -122,7 +122,7 @@ try {
         ..type = Reference(element.name)
         ..name = 'hostApi'))
       ..body = Code('''
-const channel = MethodChannel('${handler.channelName()}');
+const channel = MethodChannel('${handler.methodChannelName()}');
 channel.setMethodCallHandler((call) async {
   final args = call.arguments as List<Object?>;
   return switch (call.method) {

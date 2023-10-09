@@ -30,6 +30,7 @@ class TerminalHandlers {
     ReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   ) {
+    assert(_readerDelegate == null && _readerReconnectionDelegate == null);
     _readerDelegate = delegate;
     _readerReconnectionDelegate = reconnectionDelegate;
   }
@@ -45,8 +46,16 @@ class TerminalHandlers {
   Future<void> _onUnexpectedReaderDisconnect(Reader reader) async =>
       _unexpectedReaderDisconnectController.add(reader);
 
-  Future<void> _onConnectionStatusChange(ConnectionStatus connectionStatus) async =>
-      _connectionStatusChangeController.add(connectionStatus);
+  Future<void> _onConnectionStatusChange(ConnectionStatus connectionStatus) async {
+    _connectionStatusChangeController.add(connectionStatus);
+
+    switch (connectionStatus) {
+      case ConnectionStatus.notConnected:
+        detachReaderDelegates();
+      case ConnectionStatus.connecting || ConnectionStatus.connected:
+        break;
+    }
+  }
 
   Future<void> _onPaymentStatusChange(PaymentStatus paymentStatus) async =>
       _paymentStatusChangeController.add(paymentStatus);

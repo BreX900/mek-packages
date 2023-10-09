@@ -1,3 +1,5 @@
+
+## 3.0.0
 - fix: Attached the delegate reader before trying the connection
 - refactor: Renamed `StripeTerminal` class to `Terminal`. The name has been aligned with the native SDKs.
 - docs: Added docs to all `TerminalExceptionCode` enum values

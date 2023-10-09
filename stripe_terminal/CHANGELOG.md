@@ -1,9 +1,11 @@
+- fix: Attached the delegate reader before trying the connection
 - refactor: Renamed `StripeTerminal` class to `Terminal`. The name has been aligned with the native SDKs.
 - docs: Added docs to all `TerminalExceptionCode` enum values
 - feat: Added to `TerminalException` class a updated `PaymentIntent` and `ApiError`
 - feat: Mapped all Android and IOS sdk errors to `TerminalExceptionCode` enum
 
 *BREAKING CHANGES*
+- refactor: Removed handoff, localMobile, bluetooth and usb `*ReaderDelegate` in favour of `PhysicalReaderDelegate`
 - refactor: Now `PaymentIntent.captureMethod` is a Enum `CaptureMethod`
 - refactor: Now `PaymentIntent.confirmationMethod` is a Enum `ConfirmationMethod`
 - refactor: Now `PaymentIntent.setupFutureUsage` is a Enum `PaymentIntentUsage`

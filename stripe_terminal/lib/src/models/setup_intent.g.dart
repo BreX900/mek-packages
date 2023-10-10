@@ -82,7 +82,7 @@ mixin _$SetupAttempt {
         ..add('applicationId', _self.applicationId)
         ..add('created', _self.created)
         ..add('customerId', _self.customerId)
-        ..add('onBehalfOfId', _self.onBehalfOf)
+        ..add('onBehalfOf', _self.onBehalfOf)
         ..add('paymentMethodId', _self.paymentMethodId)
         ..add('paymentMethodDetails', _self.paymentMethodDetails)
         ..add('setupIntentId', _self.setupIntentId)

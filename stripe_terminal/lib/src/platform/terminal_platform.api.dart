@@ -222,10 +222,19 @@ class _$TerminalPlatform {
     required int operationId,
     required String paymentIntentId,
     required bool skipTipping,
+    required TippingConfiguration? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
   }) async {
     try {
-      final result = await _$channel
-          .invokeMethod('startCollectPaymentMethod', [operationId, paymentIntentId, skipTipping]);
+      final result = await _$channel.invokeMethod('startCollectPaymentMethod', [
+        operationId,
+        paymentIntentId,
+        skipTipping,
+        tippingConfiguration != null ? _$serializeTippingConfiguration(tippingConfiguration) : null,
+        shouldUpdatePaymentIntent,
+        customerCancellationEnabled
+      ]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -298,11 +307,11 @@ class _$TerminalPlatform {
     required int operationId,
     required String setupIntentId,
     required bool customerConsentCollected,
-    required bool? isCustomerCancellationEnabled,
+    required bool customerCancellationEnabled,
   }) async {
     try {
       final result = await _$channel.invokeMethod('startCollectSetupIntentPaymentMethod',
-          [operationId, setupIntentId, customerConsentCollected, isCustomerCancellationEnabled]);
+          [operationId, setupIntentId, customerConsentCollected, customerCancellationEnabled]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -347,7 +356,7 @@ class _$TerminalPlatform {
     required Map<String, String>? metadata,
     required bool? reverseTransfer,
     required bool? refundApplicationFee,
-    required bool? isCustomerCancellationEnabled,
+    required bool customerCancellationEnabled,
   }) async {
     try {
       await _$channel.invokeMethod('startCollectRefundPaymentMethod', [
@@ -358,7 +367,7 @@ class _$TerminalPlatform {
         metadata?.map((k, v) => MapEntry(k, v)),
         reverseTransfer,
         refundApplicationFee,
-        isCustomerCancellationEnabled
+        customerCancellationEnabled
       ]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -659,3 +668,5 @@ TerminalException _$deserializeTerminalException(List<Object?> serialized) => Te
     stackTrace: serialized[2] as String?,
     paymentIntent: serialized[3] != null ? _$deserializePaymentIntent(serialized[3] as List) : null,
     apiError: serialized[4]);
+List<Object?> _$serializeTippingConfiguration(TippingConfiguration deserialized) =>
+    [deserialized.eligibleAmount];

@@ -13,6 +13,7 @@ import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
+import 'package:mek_stripe_terminal/src/models/tipping.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:one_for_all/one_for_all.dart';
@@ -121,6 +122,9 @@ class TerminalPlatform extends _$TerminalPlatform {
     required int operationId,
     required String paymentIntentId,
     required bool skipTipping,
+    required TippingConfiguration? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
   });
 
   @override
@@ -152,7 +156,7 @@ class TerminalPlatform extends _$TerminalPlatform {
     required int operationId,
     required String setupIntentId,
     required bool customerConsentCollected,
-    required bool? isCustomerCancellationEnabled,
+    required bool customerCancellationEnabled,
   });
 
   @override
@@ -176,7 +180,7 @@ class TerminalPlatform extends _$TerminalPlatform {
     required Map<String, String>? metadata,
     required bool? reverseTransfer,
     required bool? refundApplicationFee,
-    required bool? isCustomerCancellationEnabled,
+    required bool customerCancellationEnabled,
   });
 
   @override

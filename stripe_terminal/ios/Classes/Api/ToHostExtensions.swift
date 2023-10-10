@@ -25,6 +25,14 @@ extension PaymentIntentParametersApi {
     }
 }
 
+extension TippingConfigurationApi {
+    func toHost() throws -> TippingConfiguration {
+        return try TippingConfigurationBuilder()
+            .setEligibleAmount(eligibleAmount)
+            .build()
+    }
+}
+
 extension PaymentMethodOptionsParametersApi {
     func toHost() throws -> PaymentMethodOptionsParameters {
         return try PaymentMethodOptionsParametersBuilder(

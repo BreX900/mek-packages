@@ -3,20 +3,24 @@ import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 /// [DiscoveryConfiguration]
 enum DiscoveryMethod {
   /// [BluetoothDiscoveryConfiguration]
-  bluetoothScan,
+  bluetoothScan(canSimulate: true),
 
   /// [BluetoothProximityDiscoveryConfiguration]
-  bluetoothProximity,
+  bluetoothProximity(canSimulate: true),
 
   /// [HandoffDiscoveryConfiguration]
-  handOff,
+  handOff(),
 
   /// [InternetDiscoveryConfiguration]
-  internet,
+  internet(canSimulate: true),
 
   /// [LocalMobileDiscoveryConfiguration]
-  localMobile,
+  localMobile(canSimulate: true),
 
   /// [UsbDiscoveryConfiguration]
-  usb,
+  usb(canSimulate: true);
+
+  final bool canSimulate;
+
+  const DiscoveryMethod({this.canSimulate = false});
 }

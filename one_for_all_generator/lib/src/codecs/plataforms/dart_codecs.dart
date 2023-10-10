@@ -54,6 +54,7 @@ class DartApiCodes extends ApiCodecs {
     if (type is VoidType) throw StateError('Void type no supported');
 
     final questionOrEmpty = type.isNullable ? '?' : '';
+    final exclamationOrEmpty = varAccess.contains('.') ? '!' : '';
 
     if (type.isPrimitive) return varAccess;
     if (type.isDartCoreList) {
@@ -75,13 +76,15 @@ class DartApiCodes extends ApiCodecs {
       if (!type.isNullable || codec.hasNullSafeSerialization) {
         return codec.encodeSerialization(this, type, varAccess);
       } else {
-        return '$varAccess != null ? ${codec.encodeSerialization(this, type, '$varAccess!')} : null';
+        return '$varAccess != null '
+            '? ${codec.encodeSerialization(this, type, '$varAccess$exclamationOrEmpty')} '
+            ': null';
       }
     }
 
     final serializer = '_\$serialize${type.displayName}';
     return type.isNullable
-        ? '$varAccess != null ? $serializer($varAccess!) : null'
+        ? '$varAccess != null ? $serializer($varAccess$exclamationOrEmpty) : null'
         : '$serializer($varAccess)';
   }
 }

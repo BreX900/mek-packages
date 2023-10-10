@@ -1,7 +1,17 @@
 
 
-## 3.0.1
+## 3.1.0
+- feat: Mapped more exception codecs: Android (`collectInputsUnsupported`), IOS (`readerConnectionOfflineNeedsUpdate`, 
+  `encryptionKeyFailure`, `encryptionKeyStillInitializing`)
+- feat: Allow to customize tipping on `Terminal.collectPaymentMethod` method
+- feat: Allow to update payment intent on `Terminal.collectPaymentMethod` method
+- feat: Beta: Allow customer-initiated cancellation for PaymentIntent, SetupIntent, and Refund payment method collection
+  with internet readers. See customerCancellationEnabled: on collectPaymentMethod, collectSetupIntentPaymentMethod, and 
+  collectRefundPaymentMethod Terminal methods. Note: This feature requires reader software version 2.17 or later to be
+  installed on your internet reader. Please contact us if you want to support customer-initiated cancellation.
 - fix(android): Fixes TapToPay error "Must have a country code to connect to reader" [#29](https://github.com/BreX900/mek-packages/issues/29)
+- feat: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#310---2023-10-10) 
+  and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#310-2023-10-10) sdks versions to `3.1.0`
 
 ## 3.0.0
 - fix: Attached the delegate reader before trying the connection

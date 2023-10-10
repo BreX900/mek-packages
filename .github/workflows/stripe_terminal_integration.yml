@@ -8,14 +8,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: stripe_terminal
+
 
 jobs:
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
+    defaults:
+      run:
+        working-directory: stripe_terminal
 
     steps:
       - uses: actions/checkout@v3
@@ -34,3 +36,31 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
+      
+  integration-example:
+    runs-on: macos-latest
+    timeout-minutes: 5
+
+    defaults:
+      run:
+        working-directory: stripe_terminal/example
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.x'
+
+      - name: Resolve dependencies
+        run: flutter pub get --enforce-lockfile
+        timeout-minutes: 2
+
+      - name: Check code formatting
+        run: >-
+          dart format --line-length 100 --set-exit-if-changed --output none
+          $(find . ! -path "./.dart_tool/**" ! -path "./build/**" -name "*.dart" ! -name "*.g.dart")
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+
+      - run: pod install --deployment --project-directory=ios

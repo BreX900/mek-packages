@@ -566,16 +566,13 @@ extension NSError {
     
     func toApi(apiError: Error? = nil, paymentIntent: PaymentIntent? = nil) -> TerminalExceptionApi {
         let code = self.toApiCode();
-        if let code {
-            return TerminalExceptionApi(
-                code: code,
-                message: localizedDescription,
-                stackTrace: nil,
-                paymentIntent: paymentIntent?.toApi(),
-                apiError: apiError?.localizedDescription
-            )
-        }
-        return createApiException(TerminalExceptionCodeApi.unknown, "Unsupported Terminal exception code: \(self.code)")
+        return TerminalExceptionApi(
+            code: code ?? TerminalExceptionCodeApi.unknown,
+            message: localizedDescription,
+            stackTrace: nil,
+            paymentIntent: paymentIntent?.toApi(),
+            apiError: apiError?.localizedDescription
+        )
     }
     
     private func toApiCode() -> TerminalExceptionCodeApi? {
@@ -621,6 +618,8 @@ extension NSError {
             return .invalidParameter
         case .invalidRequiredParameter:
             return .invalidRequiredParameter
+        case .invalidRequiredParameterOnBehalfOf:
+            return .invalidParameter
         case .accountIdMismatchWhileForwarding:
             return .accountIdMismatchWhileForwarding
         case .updatePaymentIntentUnavailableWhileOffline:
@@ -673,6 +672,8 @@ extension NSError {
             return .readerConnectionNotAvailableOffline
         case .readerConnectionOfflineLocationMismatch:
             return .readerConnectionOfflineLocationMismatch
+        case .readerConnectionOfflineNeedsUpdate:
+            return .readerConnectionOfflineNeedsUpdate
         case .noLastSeenAccount:
             return .noLastSeenAccount
         case .amountExceedsMaxOfflineAmount:
@@ -749,6 +750,10 @@ extension NSError {
             return .unexpectedSdkError
         case .unexpectedReaderError:
             return .unexpectedReaderError
+        case .encryptionKeyFailure:
+            return .encryptionKeyFailure
+        case .encryptionKeyStillInitializing:
+            return .encryptionKeyStillInitializing
         case .declinedByStripeAPI:
             return .declinedByStripeApi
         case .declinedByReader:
@@ -767,6 +772,10 @@ extension NSError {
             return .offlineTransactionDeclined
         case .offlineCollectAndConfirmMismatch:
             return .offlineCollectAndConfirmMismatch
+        case .onlinePinNotSupportedOffline:
+            return .onlinePinNotSupportedOffline
+        case .offlineTestCardInLivemode:
+            return .testCardInLiveMode
         case .notConnectedToInternet:
             return .notConnectedToInternet
         case .requestTimedOut:

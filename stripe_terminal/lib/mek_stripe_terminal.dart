@@ -13,6 +13,7 @@ export 'src/models/reader.dart';
 export 'src/models/reader_software_update.dart';
 export 'src/models/refund.dart';
 export 'src/models/setup_intent.dart';
+export 'src/models/tipping.dart';
 export 'src/reader_delegates.dart';
 export 'src/terminal.dart';
 export 'src/terminal_exception.dart';

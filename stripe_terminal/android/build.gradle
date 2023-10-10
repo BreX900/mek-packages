@@ -66,6 +66,6 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    api "com.stripe:stripeterminal-localmobile:3.0.0"
-    api "com.stripe:stripeterminal-core:3.0.0"
+    api "com.stripe:stripeterminal-localmobile:3.1.0"
+    api "com.stripe:stripeterminal-core:3.1.0"
 }

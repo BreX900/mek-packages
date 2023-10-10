@@ -1,4 +1,8 @@
 
+
+## 3.0.1
+- fix(android): Fixes TapToPay error "Must have a country code to connect to reader" [#29](https://github.com/BreX900/mek-packages/issues/29)
+
 ## 3.0.0
 - fix: Attached the delegate reader before trying the connection
 - refactor: Renamed `StripeTerminal` class to `Terminal`. The name has been aligned with the native SDKs.

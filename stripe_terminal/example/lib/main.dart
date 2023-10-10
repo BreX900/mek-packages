@@ -84,11 +84,16 @@ class _MyAppState extends State<MyApp> {
     setState(() => _terminal = terminal);
     _onConnectionStatusChangeSub = terminal.onConnectionStatusChange.listen((status) {
       print('Connection Status Changed: ${status.name}');
-      setState(() => _connectionStatus = status);
+      setState(() {
+        _connectionStatus = status;
+        if (_connectionStatus == ConnectionStatus.notConnected) {
+          _readers = const [];
+          _reader = null;
+        }
+      });
     });
     _onUnexpectedReaderDisconnectSub = terminal.onUnexpectedReaderDisconnect.listen((reader) {
       print('Reader Unexpected Disconnected: ${reader.label}');
-      setState(() => _reader = null);
     });
     _onPaymentStatusChangeSub = terminal.onPaymentStatusChange.listen((status) {
       print('Payment Status Changed: ${status.name}');
@@ -201,14 +206,20 @@ class _MyAppState extends State<MyApp> {
       _discoverReaderSub = discoverReaderStream.listen((readers) {
         setState(() => _readers = readers);
       }, onDone: () {
-        setState(() => _discoverReaderSub = null);
+        setState(() {
+          _discoverReaderSub = null;
+          _readers = const [];
+        });
       });
     });
   }
 
   void _stopDiscoverReaders() {
     unawaited(_discoverReaderSub?.cancel());
-    setState(() => _discoverReaderSub = null);
+    setState(() {
+      _discoverReaderSub = null;
+      _readers = const [];
+    });
   }
 
   void _createPaymentIntent(Terminal terminal) async {
@@ -260,7 +271,7 @@ class _MyAppState extends State<MyApp> {
     await cancelable.cancel();
   }
 
-  void _processPayment(Terminal terminal, PaymentIntent paymentIntent) async {
+  void _confirmPaymentIntent(Terminal terminal, PaymentIntent paymentIntent) async {
     final processedPaymentIntent = await terminal.confirmPaymentIntent(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
     _showSnackBar('Payment processed!');
@@ -310,11 +321,6 @@ class _MyAppState extends State<MyApp> {
         onPressed: terminal != null ? () => _checkStatus(terminal) : null,
         child: Text('Check status (${_connectionStatus.name})'),
       ),
-      ListTile(
-        onTap: _changeMode,
-        title: const Text('Scanning mode'),
-        trailing: Text(_isSimulated ? 'Simulator' : 'Real'),
-      ),
       DropdownButton<DiscoveryMethod>(
         value: _discoveringMethod,
         onChanged: _changeDiscoveryMethod,
@@ -325,6 +331,12 @@ class _MyAppState extends State<MyApp> {
           );
         }).toList(),
       ),
+      if (_discoveringMethod.canSimulate)
+        ListTile(
+          onTap: _changeMode,
+          title: const Text('Scanning mode'),
+          trailing: Text(_isSimulated ? 'Simulator' : 'Real'),
+        ),
       if (_connectionStatus != ConnectionStatus.notConnected)
         TextButton(
           onPressed: terminal != null && _connectionStatus == ConnectionStatus.connected
@@ -391,9 +403,9 @@ class _MyAppState extends State<MyApp> {
         onPressed: terminal != null &&
                 paymentIntent != null &&
                 paymentIntent.status == PaymentIntentStatus.requiresConfirmation
-            ? () => _processPayment(terminal, paymentIntent)
+            ? () => _confirmPaymentIntent(terminal, paymentIntent)
             : null,
-        child: const Text('Process Payment'),
+        child: const Text('Confirm PaymentIntent'),
       ),
       const Divider(),
       if (paymentIntent != null)

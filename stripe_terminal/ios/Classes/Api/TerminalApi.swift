@@ -160,7 +160,10 @@ protocol TerminalPlatformApi {
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
-        _ skipTipping: Bool
+        _ skipTipping: Bool,
+        _ tippingConfiguration: TippingConfigurationApi?,
+        _ shouldUpdatePaymentIntent: Bool,
+        _ customerCancellationEnabled: Bool
     ) throws
 
     func onStopCollectPaymentMethod(
@@ -192,7 +195,7 @@ protocol TerminalPlatformApi {
         _ operationId: Int,
         _ setupIntentId: String,
         _ customerConsentCollected: Bool,
-        _ isCustomerCancellationEnabled: Bool?
+        _ customerCancellationEnabled: Bool
     ) throws
 
     func onStopCollectSetupIntentPaymentMethod(
@@ -216,7 +219,7 @@ protocol TerminalPlatformApi {
         _ metadata: [String: String]?,
         _ reverseTransfer: Bool?,
         _ refundApplicationFee: Bool?,
-        _ isCustomerCancellationEnabled: Bool?
+        _ customerCancellationEnabled: Bool
     ) throws
 
     func onStopCollectRefundPaymentMethod(
@@ -363,7 +366,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool)
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, !(args[3] is NSNull) ? TippingConfigurationApi.deserialize(args[3] as! [Any?]) : nil, args[4] as! Bool, args[5] as! Bool)
             case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
@@ -391,7 +394,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectSetupIntentPaymentMethod":
                 let res = Result<SetupIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? Bool)
+                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
             case "stopCollectSetupIntentPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectSetupIntentPaymentMethod(args[0] as! Int)
@@ -409,7 +412,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectRefundPaymentMethod":
                 let res = Result<Void>(result) { nil }
-                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, !(args[4] is NSNull) ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool, args[7] as? Bool)
+                try hostApi.onStartCollectRefundPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Int, args[3] as! String, !(args[4] is NSNull) ? Dictionary(uniqueKeysWithValues: (args[4] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil, args[5] as? Bool, args[6] as? Bool, args[7] as! Bool)
             case "stopCollectRefundPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectRefundPaymentMethod(args[0] as! Int)
@@ -1349,8 +1352,11 @@ enum TerminalExceptionCodeApi: Int {
     case unsupportedReaderVersion
     case unexpectedSdkError
     case unexpectedReaderError
+    case encryptionKeyFailure
+    case encryptionKeyStillInitializing
     case declinedByStripeApi
     case declinedByReader
+    case offlineTestCardInLivemode
     case notConnectedToInternet
     case requestTimedOut
     case stripeApiConnectionError
@@ -1365,6 +1371,7 @@ enum TerminalExceptionCodeApi: Int {
     case offlinePaymentsDatabaseTooLarge
     case readerConnectionNotAvailableOffline
     case readerConnectionOfflineLocationMismatch
+    case readerConnectionOfflineNeedsUpdate
     case locationConnectionNotAvailableOffline
     case noLastSeenAccount
     case invalidOfflineCurrency
@@ -1389,6 +1396,19 @@ enum TerminalExceptionCodeApi: Int {
     case testCardInLiveMode
     case collectInputsApplicationError
     case collectInputsTimedOut
+    case collectInputsUnsupported
+}
+
+struct TippingConfigurationApi {
+    let eligibleAmount: Int
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TippingConfigurationApi {
+        return TippingConfigurationApi(
+            eligibleAmount: serialized[0] as! Int
+        )
+    }
 }
 
 enum UpdateComponentApi: Int {

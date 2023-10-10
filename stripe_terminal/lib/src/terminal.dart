@@ -11,8 +11,10 @@ import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
+import 'package:mek_stripe_terminal/src/models/tipping.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
+import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 
 @Deprecated('Use Terminal. The name has been aligned with the native SDKs.')
 typedef StripeTerminal = Terminal;
@@ -285,26 +287,38 @@ class Terminal {
 
   /// Collects a payment method for the given [PaymentIntent].
   ///
-  /// Note: [collectPaymentMethod] does not apply any changes to the [PaymentIntent] API object.
-  ///   Updates to the [PaymentIntent] are local to the SDK, and persisted in-memory.
+  /// Note: [collectPaymentMethod] does not apply any changes to the [PaymentIntent] API object. Updates
+  ///   to the [PaymentIntent] are local to the SDK, and persisted in-memory.
   ///
-  /// After resolving the error, you may call collectPaymentMethod again to either try the same card again, or try a different card.
+  /// After resolving the error, you may call [collectPaymentMethod] again to either try the same
+  /// card again, or try a different card.
   ///
   /// If collecting a payment method succeeds, the method complete with a [PaymentIntent] with status
   /// [PaymentIntentStatus.requiresConfirmation], indicating that you should call [confirmPaymentIntent] to finish the payment.
   ///
-  /// Note that if [collectPaymentMethod] is canceled, the future will be complete with a Canceled error.
+  /// Note that if [collectPaymentMethod] is canceled, the future will be complete with a [TerminalExceptionCode.canceled] error.
   ///
-  /// Only supports `swipe`, `tap` and `insert` method
+  /// - [skipTipping] Bypass tipping selection if it would have otherwise been shown.
+  /// - [tippingConfiguration] The tipping configuration for this payment collection.
+  /// - [shouldUpdatePaymentIntent] Whether or not to update the [PaymentIntent] server side during
+  ///   [collectPaymentMethod]. Attempting to collect with [shouldUpdatePaymentIntent] enabled and
+  ///   a [PaymentIntent] created while offline will error with SCPErrorUpdatePaymentIntentUnavailableWhileOffline.
+  /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<PaymentIntent> collectPaymentMethod(
     PaymentIntent paymentIntent, {
     bool skipTipping = false,
+    TippingConfiguration? tippingConfiguration,
+    bool shouldUpdatePaymentIntent = false,
+    bool customerCancellationEnabled = false,
   }) {
     return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
       return await _platform.startCollectPaymentMethod(
         operationId: id,
         paymentIntentId: paymentIntent.id,
         skipTipping: skipTipping,
+        tippingConfiguration: tippingConfiguration,
+        shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
+        customerCancellationEnabled: customerCancellationEnabled,
       );
     });
   }
@@ -394,7 +408,7 @@ class Terminal {
   /// [SetupIntentStatus.requiresConfirmation], indicating that you should call [confirmSetupIntent]
   /// to finish the payment.
   ///
-  /// Note that if [collectSetupIntentPaymentMethod] is canceled returns Canceled error.
+  /// Note that if [collectSetupIntentPaymentMethod] is canceled returns [TerminalExceptionCode.canceled] error.
   ///
   /// Collecting cardholder consent
   ///   Card networks require that you collect consent from the customer before saving and reusing
@@ -402,18 +416,19 @@ class Terminal {
   ///
   ///   The payment method will not be collected without the cardholder’s consent.
   ///
-  /// - [isCustomerCancellationEnabled] Only available on Android
+  /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
     SetupIntent setupIntent, {
     required bool customerConsentCollected,
-    bool? isCustomerCancellationEnabled,
+    bool customerCancellationEnabled = false,
+    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
         setupIntentId: setupIntent.id,
         customerConsentCollected: customerConsentCollected,
-        isCustomerCancellationEnabled: isCustomerCancellationEnabled,
+        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
       );
     });
   }
@@ -465,7 +480,7 @@ class Terminal {
   /// Calling any other SDK methods between [collectRefundPaymentMethod] and [confirmRefund]
   /// will result in undefined behavior.
   ///
-  /// Note that if [collectRefundPaymentMethod] is canceled, this method throw a Canceled error.
+  /// Note that if [collectRefundPaymentMethod] is canceled, this method throw a [TerminalExceptionCode.canceled] error.
   ///
   /// - [chargeId] The ID of the charge to be refunded.
   /// - [amount] The amount of the refund, provided in the currency’s smallest unit.
@@ -479,7 +494,7 @@ class Terminal {
   ///   fee should be refunded when refunding this charge. If a full charge refund is given,
   ///   the full application fee will be refunded. Otherwise, the application fee will be refunded
   ///   in an amount proportional to the amount of the charge refunded.
-  /// - [isCustomerCancellationEnabled] Only available on Android
+  /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<void> collectRefundPaymentMethod({
     required String chargeId,
     required int amount,
@@ -487,7 +502,8 @@ class Terminal {
     Map<String, String>? metadata,
     bool? reverseTransfer,
     bool? refundApplicationFee,
-    bool? isCustomerCancellationEnabled,
+    bool customerCancellationEnabled = false,
+    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
       return await _platform.startCollectRefundPaymentMethod(
@@ -498,7 +514,7 @@ class Terminal {
         metadata: metadata,
         reverseTransfer: reverseTransfer,
         refundApplicationFee: refundApplicationFee,
-        isCustomerCancellationEnabled: isCustomerCancellationEnabled,
+        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
       );
     });
   }

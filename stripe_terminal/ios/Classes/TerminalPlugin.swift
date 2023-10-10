@@ -224,10 +224,22 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
-        _ skipTipping: Bool
+        _ skipTipping: Bool,
+        _ tippingConfiguration: TippingConfigurationApi?,
+        _ shouldUpdatePaymentIntent: Bool,
+        _ customerCancellationEnabled: Bool
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
-        self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(paymentIntent) { paymentIntent, error in
+        let config = CollectConfigurationBuilder()
+            .setSkipTipping(skipTipping)
+            .setTippingConfiguration(try tippingConfiguration?.toHost())
+            .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
+            .setEnableCustomerCancellation(customerCancellationEnabled)
+            
+        self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(
+            paymentIntent,
+            collectConfig: try config.build(),
+            completion: { paymentIntent, error in
             self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
             if let error = error as? NSError {
                 result.error(error.toPlatformError())
@@ -235,7 +247,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             }
             self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
             result.success(paymentIntent!.toApi())
-        }
+        })
     }
 
     func onStopCollectPaymentMethod(
@@ -315,12 +327,16 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ operationId: Int,
         _ setupIntentId: String,
         _ customerConsentCollected: Bool,
-        _ isCustomerCancellationEnabled: Bool?
+        _ customerCancellationEnabled: Bool
     ) throws {
         let setupIntent = try _findSetupIntent(setupIntentId)
+        let config = SetupIntentConfigurationBuilder()
+            .setEnableCustomerCancellation(customerCancellationEnabled)
+        
         _cancelablesCollectSetupIntentPaymentMethod[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
             setupIntent,
             customerConsentCollected: customerConsentCollected,
+            setupConfig: try config.build(),
             completion: { setupIntent, error in
                 self._cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
@@ -329,8 +345,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 }
                 self._setupIntents[setupIntent!.stripeId] = setupIntent!
                 result.success(setupIntent!.toApi())
-            }
-        )
+        })
     }
     
     func onStopCollectSetupIntentPaymentMethod(_ operationId: Int) async throws {
@@ -366,17 +381,22 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ chargeId: String,
         _ amount: Int,
         _ currency: String,
-        _ metadata: [String : String]?,
+        _ metadata: [String: String]?,
         _ reverseTransfer: Bool?,
         _ refundApplicationFee: Bool?,
-        _ isCustomerCancellationEnabled: Bool?
+        _ customerCancellationEnabled: Bool
     ) throws {
         let params = RefundParametersBuilder(chargeId: chargeId, amount: UInt(amount), currency: currency)
         params.setMetadata(metadata)
         reverseTransfer.apply(params.setReverseTransfer)
         params.setMetadata(metadata)
+        
+        let config = RefundConfigurationBuilder()
+            .setEnableCustomerCancellation(customerCancellationEnabled)
+        
         _cancelablesCollectRefundPaymentMethod[operationId] = Terminal.shared.collectRefundPaymentMethod(
             try params.build(),
+            refundConfig: try config.build(),
             completion: { error in
                 self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)
                 if let error = error as? NSError {
@@ -384,8 +404,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                     return
                 }
                 result.success(())
-            }
-        )
+        })
     }
     
     func onStopCollectRefundPaymentMethod(_ operationId: Int) async throws {

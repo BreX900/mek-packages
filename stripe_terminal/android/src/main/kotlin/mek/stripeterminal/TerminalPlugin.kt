@@ -55,6 +55,7 @@ import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
+import mek.stripeterminal.api.TippingConfigurationApi
 import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
@@ -82,7 +83,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         }
 
         if (permissionStatus.contains(PackageManager.PERMISSION_DENIED)) {
-            throw createApiError(TerminalExceptionCodeApi.UNKNOWN,
+            throw createApiError(
+                TerminalExceptionCodeApi.UNKNOWN,
                 "You have declined the necessary permission, please allow from settings to continue.",
             ).toPlatformError()
         }
@@ -312,12 +314,21 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         operationId: Long,
         paymentIntentId: String,
         skipTipping: Boolean,
+        tippingConfiguration: TippingConfigurationApi?,
+        shouldUpdatePaymentIntent: Boolean,
+        customerCancellationEnabled: Boolean,
     ) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
+        val config = CollectConfiguration.Builder()
+            .skipTipping(skipTipping)
+            .setTippingConfiguration(tippingConfiguration?.toHost())
+            .updatePaymentIntent(shouldUpdatePaymentIntent)
+            .setEnableCustomerCancellation(customerCancellationEnabled)
 
         _cancelablesCollectPaymentMethod[operationId] = _terminal.collectPaymentMethod(
             paymentIntent,
-            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+            config = config.build(),
+            callback = object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onFailure(e: TerminalException) {
                     _cancelablesCollectPaymentMethod.remove(operationId)
                     super.onFailure(e)
@@ -328,11 +339,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     result.success(paymentIntent.toApi())
                     _paymentIntents[paymentIntent.id!!] = paymentIntent
                 }
-            },
-            CollectConfiguration.Builder()
-                .skipTipping(skipTipping)
-                .build(),
-        )
+            })
     }
 
     override fun onStopCollectPaymentMethod(result: Result<Unit>, operationId: Long) {
@@ -357,6 +364,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     }
                     super.onFailure(e)
                 }
+
                 override fun onSuccess(paymentIntent: PaymentIntent) {
                     result.success(paymentIntent.toApi())
                     _paymentIntents.remove(paymentIntent.id)
@@ -422,19 +430,18 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         operationId: Long,
         setupIntentId: String,
         customerConsentCollected: Boolean,
-        isCustomerCancellationEnabled: Boolean?,
+        customerCancellationEnabled: Boolean,
     ) {
         val setupIntent = findSetupIntent(setupIntentId)
-
-        val config = SetupIntentConfiguration.Builder();
-        isCustomerCancellationEnabled?.let(config::setEnableCustomerCancellation)
+        val config = SetupIntentConfiguration.Builder()
+            .setEnableCustomerCancellation(customerCancellationEnabled)
 
         _cancelablesCollectSetupIntentPaymentMethod[operationId] =
             _terminal.collectSetupIntentPaymentMethod(
                 setupIntent,
-                customerConsentCollected,
+                customerConsentCollected = customerConsentCollected,
                 config = config.build(),
-                object : TerminalErrorHandler(result::error), SetupIntentCallback {
+                callback = object : TerminalErrorHandler(result::error), SetupIntentCallback {
                     override fun onFailure(e: TerminalException) {
                         _cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
                         super.onFailure(e)
@@ -493,10 +500,10 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         metadata: HashMap<String, String>?,
         reverseTransfer: Boolean?,
         refundApplicationFee: Boolean?,
-        isCustomerCancellationEnabled: Boolean?,
+        customerCancellationEnabled: Boolean,
     ) {
         val config = RefundConfiguration.Builder()
-        isCustomerCancellationEnabled?.let(config::setEnableCustomerCancellation)
+            .setEnableCustomerCancellation(customerCancellationEnabled)
 
         _cancelablesCollectRefundPaymentMethod[operationId] = _terminal.collectRefundPaymentMethod(
             RefundParameters.Builder(
@@ -510,7 +517,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 it.build()
             },
             config = config.build(),
-            object : TerminalErrorHandler(result::error), Callback {
+            callback = object : TerminalErrorHandler(result::error), Callback {
                 override fun onFailure(e: TerminalException) {
                     _cancelablesCollectRefundPaymentMethod.remove(operationId)
                     super.onFailure(e)
@@ -589,17 +596,20 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
     private fun findActiveReader(serialNumber: String): Reader {
         val reader = _discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
-        return reader ?: throw createApiError(TerminalExceptionCodeApi.READER_NOT_RECOVERED).toPlatformError()
+        return reader
+            ?: throw createApiError(TerminalExceptionCodeApi.READER_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findPaymentIntent(paymentIntentId: String): PaymentIntent {
         val paymentIntent = _paymentIntents[paymentIntentId]
-        return paymentIntent ?: throw createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError()
+        return paymentIntent
+            ?: throw createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun findSetupIntent(setupIntentId: String): SetupIntent {
         val setupIntent = _setupIntents[setupIntentId]
-        return setupIntent ?: throw createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError()
+        return setupIntent
+            ?: throw createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError()
     }
 
     private fun clean() {

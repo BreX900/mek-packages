@@ -86,6 +86,8 @@ enum TerminalExceptionCode {
   ///   BluetoothConnectionConfiguration is required but a valid one was not provided.
   /// - InvalidLocationIdParameter: The provided location ID parameter was invalid.
   /// - ReaderConnectionConfigurationInvalid: An invalid ConnectionConfiguration was passed through connect.
+  /// - invalidRequiredParameterOnBehalfOf: The [PaymentIntent] uses on_behalf_of but the Connected
+  ///   Account ID was not set in LocalMobileConnectionConfiguration
   invalidParameter,
 
   /// A required parameter was invalid or missing.
@@ -295,6 +297,16 @@ enum TerminalExceptionCode {
   /// Only IOS. Unexpected reader error.
   unexpectedReaderError,
 
+  /// Only IOS. Encryption key failed to initialize. Offline payments not available.
+  /// The encryption key needed to decrypt the payment records is not available. This can happen if
+  /// an iOS backup that included offline payment records was restored on a new device. Those records
+  /// must be forwarded from the original device and the records must be deleted from this device.
+  /// Please contact support at https://support.stripe.com/ for more help.
+  encryptionKeyFailure,
+
+  /// Only IOS. Encryption key still initializing. Offline payments are not yet available, please try again.
+  encryptionKeyStillInitializing,
+
   /// The Stripe API declined the transaction. Inspect the error’s requestError property for more
   /// information about the decline, including the decline code.
   declinedByStripeApi,
@@ -366,6 +378,10 @@ enum TerminalExceptionCode {
   /// Only IOS. Connecting to the reader failed because the reader was most recently connected
   /// to a different location while online.
   readerConnectionOfflineLocationMismatch,
+
+  /// Only IOS. The device software version running on this reader is out of date. You must connect
+  /// to this reader while online to install required updates before this reader can be used for offline payments.
+  readerConnectionOfflineNeedsUpdate,
 
   /// Only Android. Connecting to the reader at this location failed. To connect a reader at a
   /// specified location while offline, a reader must have been connected online at that location
@@ -464,7 +480,12 @@ enum TerminalExceptionCode {
   collectInputsApplicationError,
 
   /// Error reported when a timeout occurs while processing a collect inputs operation.
-  collectInputsTimedOut;
+  collectInputsTimedOut,
+
+  /// Only Android. Error reported when the connected account does not have access to this feature,
+  /// or the reader/SDK version is not compatible with the collect inputs operation.
+  collectInputsUnsupported,
+  ;
 
   final String? message;
 

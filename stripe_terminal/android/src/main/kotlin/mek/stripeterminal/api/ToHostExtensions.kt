@@ -108,6 +108,12 @@ fun PaymentMethodOptionsParametersApi.toHost(): PaymentMethodOptionsParameters {
         .build()
 }
 
+fun TippingConfigurationApi.toHost(): TippingConfiguration {
+    return TippingConfiguration.Builder()
+        .setEligibleAmount(eligibleAmount)
+        .build()
+}
+
 fun CardPresentParametersApi.toHost(): CardPresentParameters {
     val b = CardPresentParameters.Builder()
     captureMethod?.let { b.setCaptureMethod(it.toHost()) }

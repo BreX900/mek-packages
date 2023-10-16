@@ -78,7 +78,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     final terminal = await Terminal.getInstance(
-      shouldPrintLogs: true,
+      shouldPrintLogs: false,
       fetchToken: _fetchConnectionToken,
     );
     setState(() => _terminal = terminal);
@@ -355,7 +355,10 @@ class _MyAppState extends State<MyApp> {
           child: const Text('Stop Scanning'),
         ),
       const Divider(),
-      ..._readers.map((e) {
+      ...[
+        ..._readers,
+        if (_reader != null) _reader!,
+      ].map((e) {
         return ListTile(
           selected: e.serialNumber == _reader?.serialNumber,
           enabled: terminal != null &&

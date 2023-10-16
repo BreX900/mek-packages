@@ -15,6 +15,7 @@
 - (Not exist on ios) `Reader.device` has been removed and replaced with [`Reader.bluetoothDevice`](https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-reader/bluetooth-device.html) and [`Reader.usbDevice`](https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-reader/usb-device.html).
 
 ### Ready
+- Feat: Added support to `Terminal.updateSimulatorConfiguration`
 
 ### In progress
 

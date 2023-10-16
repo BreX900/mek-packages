@@ -16,6 +16,7 @@ import com.stripe.stripeterminal.external.callable.RefundCallback
 import com.stripe.stripeterminal.external.callable.SetupIntentCallback
 import com.stripe.stripeterminal.external.models.CollectConfiguration
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
+import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
@@ -27,6 +28,9 @@ import com.stripe.stripeterminal.external.models.SetupIntent
 import com.stripe.stripeterminal.external.models.SetupIntentCancellationParameters
 import com.stripe.stripeterminal.external.models.SetupIntentConfiguration
 import com.stripe.stripeterminal.external.models.SetupIntentParameters
+import com.stripe.stripeterminal.external.models.SimulatedCard
+import com.stripe.stripeterminal.external.models.SimulatedCardType
+import com.stripe.stripeterminal.external.models.SimulatorConfiguration
 import com.stripe.stripeterminal.external.models.TerminalException
 import com.stripe.stripeterminal.log.LogLevel
 import mek.stripeterminal.api.CartApi
@@ -117,10 +121,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     override fun onGetConnectionStatus(): ConnectionStatusApi = _terminal.connectionStatus.toApi()
 
     override fun onSupportsReadersOfType(
-        deviceType: DeviceTypeApi,
+        deviceType: DeviceTypeApi?,
         discoveryConfiguration: DiscoveryConfigurationApi,
     ): Boolean {
-        val hostDeviceType = deviceType.toHost() ?: return false
+        val hostDeviceType = (if (deviceType != null) deviceType.toHost()  else DeviceType.UNKNOWN)
+            ?: return false
         val hostDiscoveryConfiguration = discoveryConfiguration.toHost() ?: return false
         val result = _terminal.supportsReadersOfType(
             deviceType = hostDeviceType,

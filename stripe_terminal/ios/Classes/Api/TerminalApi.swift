@@ -100,7 +100,7 @@ protocol TerminalPlatformApi {
     func onGetConnectionStatus() throws -> ConnectionStatusApi
 
     func onSupportsReadersOfType(
-        _ deviceType: DeviceTypeApi,
+        _ deviceType: DeviceTypeApi?,
         _ discoveryConfiguration: DiscoveryConfigurationApi
     ) throws -> Bool
 
@@ -298,7 +298,7 @@ func setTerminalPlatformApiHandler(
                 let res = try hostApi.onGetConnectionStatus()
                 result(res.rawValue)
             case "supportsReadersOfType":
-                let res = try hostApi.onSupportsReadersOfType(DeviceTypeApi(rawValue: args[0] as! Int)!, deserializeDiscoveryConfigurationApi(args[1] as! [Any?]))
+                let res = try hostApi.onSupportsReadersOfType(!(args[0] is NSNull) ? DeviceTypeApi(rawValue: args[0] as! Int)! : nil, deserializeDiscoveryConfigurationApi(args[1] as! [Any?]))
                 result(res)
             case "connectBluetoothReader":
                 runAsync {
@@ -1356,7 +1356,6 @@ enum TerminalExceptionCodeApi: Int {
     case encryptionKeyStillInitializing
     case declinedByStripeApi
     case declinedByReader
-    case offlineTestCardInLivemode
     case notConnectedToInternet
     case requestTimedOut
     case stripeApiConnectionError

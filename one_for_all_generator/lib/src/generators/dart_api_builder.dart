@@ -72,11 +72,19 @@ class DartApiBuilder extends ApiBuilder {
         final parameters =
             e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
 
+        final errorHandler = hostExceptionHandler != null
+            ? '.handleError((error, _) {'
+                '  if (error is PlatformException) ${hostExceptionHandler.accessor}(error);'
+                '  throw error;'
+                '})'
+            : '';
+
         return Method((b) => b
           ..update((b) => _updateHostApiMethod(e, b))
           ..body = Code('return _\$${e.name.no_}'
               '.receiveBroadcastStream([$parameters])'
-              '.map((e) => ${codecs.encodeDeserialization(returnType, 'e')});'));
+              '.map((e) => ${codecs.encodeDeserialization(returnType, 'e')})'
+              '$errorHandler;'));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;

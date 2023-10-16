@@ -49,11 +49,12 @@ class DiscoverReadersSubject {
                     runOnMainThread { sink.success(readers.map { it.toApi() }) }
                 }
             },
-            callback = object : TerminalErrorHandler(sink::error), Callback {
+            callback = object : Callback {
                 override fun onFailure(e: TerminalException) = runOnMainThread {
-                    if (_cancelable == null) return@runOnMainThread
+                    if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) return@runOnMainThread
+
                     _cancelable = null
-                    super.onFailure(e)
+                    sink.error(e.toPlatformError())
                     sink.endOfStream()
                 }
 

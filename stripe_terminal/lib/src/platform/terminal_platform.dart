@@ -44,7 +44,7 @@ class TerminalPlatform extends _$TerminalPlatform {
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   @override
   Future<bool> supportsReadersOfType({
-    required DeviceType deviceType,
+    required DeviceType? deviceType,
     required DiscoveryConfiguration discoveryConfiguration,
   });
 

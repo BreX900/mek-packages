@@ -91,7 +91,7 @@ class Terminal {
   ///   This makes it easy to quickly test your integration end-to-end, from pairing with
   ///   a reader to taking payments.
   Future<bool> supportsReadersOfType({
-    required DeviceType deviceType,
+    required DeviceType? deviceType,
     required DiscoveryConfiguration discoveryConfiguration,
   }) async {
     return await _platform.supportsReadersOfType(

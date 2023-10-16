@@ -13,7 +13,7 @@ dependencies:
 
   permission_handler: ^10.4.3
   mek_stripe_terminal:
-    path: ..
+    path: ./..
 
   shelf: ^1.4.1
   shelf_router: ^1.1.4
@@ -27,7 +27,7 @@ dev_dependencies:
 
 dependency_overrides:
   one_for_all:
-    path: ../../one_for_all
+    path: ./../../one_for_all
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

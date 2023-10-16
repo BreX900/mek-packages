@@ -1,4 +1,8 @@
-
+## 3.1.1
+- fix(android): Fixed `Terminal.discoverReaders` method errors not being propagated
+- fix: Fixed `Terminal.discoverReaders` method errors are not mapped to `TerminalException`
+- fix: Fixed `Terminal.supportsReadersOfType` to support deviceType to null for UNKNOWN deviceType on android
+- fix: Fixed `TerminalException.message` was not properly mapped
 
 ## 3.1.0
 - feat: Mapped more exception codecs: Android (`collectInputsUnsupported`), IOS (`readerConnectionOfflineNeedsUpdate`, 

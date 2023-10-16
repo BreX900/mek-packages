@@ -59,14 +59,14 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     func onSupportsReadersOfType(
-        _ deviceType: DeviceTypeApi,
+        _ deviceType: DeviceTypeApi?,
         _ discoveryConfiguration: DiscoveryConfigurationApi
     ) throws -> Bool {
         let hostDiscoveryMethod = discoveryConfiguration.toHostDiscoveryMethod()
         guard let hostDiscoveryMethod else {
             return false
         }
-        let hostDeviceType = deviceType.toHost()
+        let hostDeviceType = deviceType?.toHost()
         guard let hostDeviceType else {
             return false
         }

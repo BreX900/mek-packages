@@ -506,7 +506,7 @@ class TerminalException {
     required this.stackTrace,
     required this.paymentIntent,
     required this.apiError,
-  }) : message = (message.isEmpty ? null : code.message) ?? '';
+  }) : message = (message.isEmpty ? code.message : message) ?? '';
 
   @override
   String toString() => [

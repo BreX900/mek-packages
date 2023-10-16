@@ -44,7 +44,9 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
             self._cancelable = nil
             DispatchQueue.main.async {
                 if let error = error as? NSError {
-                    self._sink?.error(error.toPlatformError())
+                    let exception = error.toApi()
+                    if (exception.code == TerminalExceptionCodeApi.canceled) {return}
+                    self._sink?.error(exception.toPlatformError())
                 }
                 
                 self._sink?.endOfStream()

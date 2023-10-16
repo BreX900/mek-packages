@@ -12,8 +12,12 @@ class _$TerminalPlatform {
 
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration configuration) {
     return _$discoverReaders
-        .receiveBroadcastStream([_$serializeDiscoveryConfiguration(configuration)]).map(
-            (e) => (e as List).map((e) => _$deserializeReader(e as List)).toList());
+        .receiveBroadcastStream([_$serializeDiscoveryConfiguration(configuration)])
+        .map((e) => (e as List).map((e) => _$deserializeReader(e as List)).toList())
+        .handleError((error, _) {
+          if (error is PlatformException) TerminalPlatform._throwIfIsHostException(error);
+          throw error;
+        });
   }
 
   Future<void> init({required bool shouldPrintLogs}) async {
@@ -45,12 +49,12 @@ class _$TerminalPlatform {
   }
 
   Future<bool> supportsReadersOfType({
-    required DeviceType deviceType,
+    required DeviceType? deviceType,
     required DiscoveryConfiguration discoveryConfiguration,
   }) async {
     try {
       final result = await _$channel.invokeMethod('supportsReadersOfType',
-          [deviceType.index, _$serializeDiscoveryConfiguration(discoveryConfiguration)]);
+          [deviceType?.index, _$serializeDiscoveryConfiguration(discoveryConfiguration)]);
       return result as bool;
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);

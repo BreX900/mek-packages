@@ -23,9 +23,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
+        if (Terminal.hasTokenProvider()) { self._clean() }
+        
         self._discoverReadersController.removeHandler()
         removeTerminalPlatformApiHandler()
-        self._clean()
     }
     
     func onInit(_ shouldPrintLogs: Bool) async throws {

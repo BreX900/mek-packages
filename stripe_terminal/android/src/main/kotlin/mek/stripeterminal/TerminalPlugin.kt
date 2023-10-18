@@ -575,7 +575,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     }
 
     override fun onDetachedFromEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        clean()
+        if (Terminal.isInitialized()) clean()
 
         _discoverReadersController.removeHandler()
         TerminalPlatformApi.removeHandler()

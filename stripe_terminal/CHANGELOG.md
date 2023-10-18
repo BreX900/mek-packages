@@ -1,3 +1,6 @@
+## 3.1.2
+- fix: Fixed incorrect Terminal instance access when unmounting the plugin from the engine
+
 ## 3.1.1
 - fix(android): Fixed `Terminal.discoverReaders` method errors not being propagated
 - fix: Fixed `Terminal.discoverReaders` method errors are not mapped to `TerminalException`

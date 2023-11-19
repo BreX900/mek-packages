@@ -8,7 +8,7 @@ import com.stripe.stripeterminal.external.models.ConnectionTokenException
 import com.stripe.stripeterminal.external.models.PaymentStatus
 import com.stripe.stripeterminal.external.models.Reader
 import mek.stripeterminal.api.TerminalHandlersApi
-import mek.stripeterminal.api.toApi
+import mek.stripeterminal.mappings.toApi
 import mek.stripeterminal.runOnMainThread
 
 class TerminalDelegatePlugin(private val _handlers: TerminalHandlersApi) :

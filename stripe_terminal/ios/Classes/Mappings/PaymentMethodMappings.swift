@@ -13,3 +13,14 @@ extension PaymentMethod {
         )
     }
 }
+
+// PARAMS
+
+extension PaymentMethodOptionsParametersApi {
+    func toHost() throws -> PaymentMethodOptionsParameters {
+        return try PaymentMethodOptionsParametersBuilder(
+            cardPresentParameters: try cardPresentParameters.toHost()
+        )
+            .build()
+    }
+}

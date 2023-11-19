@@ -12,10 +12,10 @@ import mek.stripeterminal.api.ControllerSink
 import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.ReaderApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
-import mek.stripeterminal.api.toApi
-import mek.stripeterminal.api.toHost
-import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.createApiError
+import mek.stripeterminal.mappings.toApi
+import mek.stripeterminal.mappings.toHost
+import mek.stripeterminal.mappings.toPlatformError
 import mek.stripeterminal.runOnMainThread
 
 class DiscoverReadersSubject {

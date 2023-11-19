@@ -10,7 +10,7 @@ import com.stripe.stripeterminal.external.models.ReaderInputOptions
 import com.stripe.stripeterminal.external.models.ReaderSoftwareUpdate
 import com.stripe.stripeterminal.external.models.TerminalException
 import mek.stripeterminal.api.TerminalHandlersApi
-import mek.stripeterminal.api.toApi
+import mek.stripeterminal.mappings.toApi
 import mek.stripeterminal.runOnMainThread
 
 class ReaderDelegatePlugin(private val _handlers: TerminalHandlersApi) :

@@ -586,6 +586,16 @@ struct AddressApi {
     }
 }
 
+struct AmountDetailsApi {
+    let tip: TipApi?
+
+    func serialize() -> [Any?] {
+        return [
+            tip?.serialize(),
+        ]
+    }
+}
+
 enum BatteryStatusApi: Int {
     case critical
     case low
@@ -607,6 +617,26 @@ enum CardBrandApi: Int {
     case visa
     case interac
     case eftposAu
+}
+
+struct CardDetailsApi {
+    let brand: CardBrandApi?
+    let country: String?
+    let expMonth: Int
+    let expYear: Int
+    let funding: CardFundingTypeApi?
+    let last4: String?
+
+    func serialize() -> [Any?] {
+        return [
+            brand?.rawValue,
+            country,
+            expMonth,
+            expYear,
+            funding?.rawValue,
+            last4,
+        ]
+    }
 }
 
 enum CardFundingTypeApi: Int {
@@ -718,6 +748,40 @@ struct CartLineItemApi {
             amount: serialized[2] as! Int
         )
     }
+}
+
+struct ChargeApi {
+    let amount: Int
+    let currency: String
+    let status: ChargeStatusApi
+    let paymentMethodDetails: PaymentMethodDetailsApi?
+    let description: String
+    let id: String
+    let metadata: [String: String]
+    let statementDescriptorSuffix: String?
+    let calculatedStatementDescriptor: String?
+    let authorizationCode: String?
+
+    func serialize() -> [Any?] {
+        return [
+            amount,
+            currency,
+            status.rawValue,
+            paymentMethodDetails?.serialize(),
+            description,
+            id,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            statementDescriptorSuffix,
+            calculatedStatementDescriptor,
+            authorizationCode,
+        ]
+    }
+}
+
+enum ChargeStatusApi: Int {
+    case succeeded
+    case pending
+    case failed
 }
 
 enum ConfirmationMethodApi: Int {
@@ -883,7 +947,10 @@ struct PaymentIntentApi {
     let captureMethod: CaptureMethodApi
     let currency: String
     let metadata: [String: String]
+    let charges: [ChargeApi]
+    let paymentMethod: PaymentMethodApi?
     let paymentMethodId: String?
+    let amountDetails: AmountDetailsApi?
     let amountTip: Double?
     let statementDescriptor: String?
     let statementDescriptorSuffix: String?
@@ -913,7 +980,10 @@ struct PaymentIntentApi {
             captureMethod.rawValue,
             currency,
             metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            charges.map { $0.serialize() },
+            paymentMethod?.serialize(),
             paymentMethodId,
+            amountDetails?.serialize(),
             amountTip,
             statementDescriptor,
             statementDescriptorSuffix,
@@ -992,6 +1062,26 @@ enum PaymentIntentStatusApi: Int {
 enum PaymentIntentUsageApi: Int {
     case onSession
     case offSession
+}
+
+struct PaymentMethodApi {
+    let id: String
+    let card: CardDetailsApi?
+    let cardPresent: CardPresentDetailsApi?
+    let interacPresent: CardPresentDetailsApi?
+    let customerId: String?
+    let metadata: [String: String]
+
+    func serialize() -> [Any?] {
+        return [
+            id,
+            card?.serialize(),
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
+            customerId,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+        ]
+    }
 }
 
 struct PaymentMethodDetailsApi {
@@ -1396,6 +1486,16 @@ enum TerminalExceptionCodeApi: Int {
     case collectInputsApplicationError
     case collectInputsTimedOut
     case collectInputsUnsupported
+}
+
+struct TipApi {
+    let amount: Int?
+
+    func serialize() -> [Any?] {
+        return [
+            amount,
+        ]
+    }
 }
 
 struct TippingConfigurationApi {

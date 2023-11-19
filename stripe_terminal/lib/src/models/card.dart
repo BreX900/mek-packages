@@ -21,6 +21,25 @@ enum CardBrand {
 enum CardFundingType { credit, debit, prepaid }
 
 @DataClass()
+class CardDetails with _$CardDetails {
+  final CardBrand? brand;
+  final String? country;
+  final int expMonth;
+  final int expYear;
+  final CardFundingType? funding;
+  final String? last4;
+
+  const CardDetails({
+    required this.brand,
+    required this.country,
+    required this.expMonth,
+    required this.expYear,
+    required this.funding,
+    required this.last4,
+  });
+}
+
+@DataClass()
 class CardPresentDetails with _$CardPresentDetails {
   final CardBrand? brand;
   final String? country;

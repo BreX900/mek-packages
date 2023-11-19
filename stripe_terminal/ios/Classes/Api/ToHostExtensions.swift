@@ -15,7 +15,7 @@ extension PaymentIntentParametersApi {
             .setStatementDescriptorSuffix(statementDescriptorSuffix)
             .setReceiptEmail(receiptEmail)
             .setCustomer(customerId)
-            .setApplicationFeeAmount(applicationFeeAmount?.toNSNumber())
+            .setApplicationFeeAmount(applicationFeeAmount?.nsNumberValue)
             .setTransferDataDestination(transferDataDestination)
             .setTransferGroup(transferGroup)
             .setOnBehalfOf(onBehalfOf)

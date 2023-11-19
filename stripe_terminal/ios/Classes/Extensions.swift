@@ -19,7 +19,13 @@ extension Dictionary where Value: Equatable {
 }
 
 extension Int {
-    func toNSNumber() -> NSNumber {
+    var nsNumberValue: NSNumber { get {
         return NSNumber(value: self)
-    }
+    } }
+}
+
+extension UInt {
+    var intValue: Int { get {
+        return Int(self)
+    } }
 }

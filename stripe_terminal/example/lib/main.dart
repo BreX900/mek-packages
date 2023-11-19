@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:example/models/discovery_method.dart';
 import 'package:example/models/k.dart';
 import 'package:example/stripe_api.dart';
+import 'package:example/utils/permission_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -15,19 +17,35 @@ void main() async {
 
   print('Stripe Secret Key: ${StripeApi.secretKey.isNotEmpty}');
 
-  runApp(const MaterialApp(
-    home: MyApp(),
-  ));
+  runApp(const App());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData.from(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          brightness: Brightness.dark,
+          seedColor: Colors.amber,
+        ),
+      ),
+      home: const HomeScreen(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final _api = StripeApi();
   Terminal? _terminal;
 
@@ -71,10 +89,25 @@ class _MyAppState extends State<MyApp> {
     ];
 
     for (final permission in permissions) {
-      final result = await permission.request();
-      print('$permission: $result');
+      final status = await permission.request();
+      print('$permission: $status');
 
-      if (result == PermissionStatus.denied || result == PermissionStatus.permanentlyDenied) return;
+      if (status == PermissionStatus.denied || status == PermissionStatus.permanentlyDenied) {
+        _showSnackBar('Please grant ${permission.name} permission.');
+        return;
+      }
+    }
+
+    if (kReleaseMode) {
+      for (final service in permissions.whereType<PermissionWithService>()) {
+        final status = await service.serviceStatus;
+        print('$service: $status');
+
+        if (status != ServiceStatus.enabled) {
+          _showSnackBar('Please enable ${service.name} service.');
+          return;
+        }
+      }
     }
 
     final terminal = await Terminal.getInstance(
@@ -286,6 +319,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+
     final terminal = _terminal;
     final paymentIntent = _paymentIntent;
     final collectingPaymentMethod = _collectingPaymentMethod;
@@ -452,29 +487,24 @@ class _MyAppState extends State<MyApp> {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        body: Column(
-          children: [
-            Material(
-              color: Theme.of(context).colorScheme.primary,
-              child: SafeArea(
-                child: TabBar(
-                  isScrollable: true,
-                  tabs: tabs.keys.toList(),
-                ),
-              ),
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(64.0 + viewPadding.top),
+          child: Padding(
+            padding: EdgeInsets.only(top: viewPadding.top),
+            child: TabBar(
+              isScrollable: true,
+              tabs: tabs.keys.toList(),
             ),
-            Expanded(
-              child: TabBarView(
-                children: tabs.values.map((e) {
-                  return SingleChildScrollView(
-                    child: Column(
-                      children: e,
-                    ),
-                  );
-                }).toList(),
+          ),
+        ),
+        body: TabBarView(
+          children: tabs.values.map((e) {
+            return SingleChildScrollView(
+              child: Column(
+                children: e,
               ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
       ),
     );

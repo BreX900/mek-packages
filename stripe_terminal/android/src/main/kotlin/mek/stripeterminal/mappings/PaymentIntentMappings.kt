@@ -18,7 +18,6 @@ import mek.stripeterminal.api.PaymentIntentUsageApi
 import mek.stripeterminal.api.PaymentMethodOptionsParametersApi
 import mek.stripeterminal.api.PaymentMethodTypeApi
 import mek.stripeterminal.api.PaymentStatusApi
-import mek.stripeterminal.api.toHost
 import mek.stripeterminal.toHashMap
 
 fun PaymentIntent.toApi(): PaymentIntentApi {

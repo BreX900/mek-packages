@@ -2,7 +2,6 @@ package mek.stripeterminal.mappings
 
 import com.stripe.stripeterminal.external.models.PaymentMethod
 import mek.stripeterminal.api.PaymentMethodApi
-import mek.stripeterminal.api.toApi
 import mek.stripeterminal.toHashMap
 
 fun PaymentMethod.toApi(): PaymentMethodApi {

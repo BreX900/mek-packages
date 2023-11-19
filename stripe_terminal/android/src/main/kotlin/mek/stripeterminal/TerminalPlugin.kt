@@ -52,9 +52,9 @@ import mek.stripeterminal.api.TerminalExceptionCodeApi
 import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.api.TerminalPlatformApi
 import mek.stripeterminal.api.TippingConfigurationApi
-import mek.stripeterminal.api.toApi
-import mek.stripeterminal.api.toHost
-import mek.stripeterminal.api.toPlatformError
+import mek.stripeterminal.mappings.toApi
+import mek.stripeterminal.mappings.toHost
+import mek.stripeterminal.mappings.toPlatformError
 import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.ReaderDelegatePlugin
 import mek.stripeterminal.plugin.ReaderReconnectionListenerPlugin

@@ -8,3 +8,13 @@ extension SCPTip {
         )
     }
 }
+
+// PARAMS
+
+extension TippingConfigurationApi {
+    func toHost() throws -> TippingConfiguration {
+        return try TippingConfigurationBuilder()
+            .setEligibleAmount(eligibleAmount)
+            .build()
+    }
+}

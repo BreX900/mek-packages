@@ -1,30 +1,43 @@
 package mek.stripeterminal.api
 
-import com.stripe.stripeterminal.external.models.*
+import com.stripe.stripeterminal.external.models.CaptureMethod
+import com.stripe.stripeterminal.external.models.CardPresentCaptureMethod
+import com.stripe.stripeterminal.external.models.CardPresentParameters
+import com.stripe.stripeterminal.external.models.CardPresentRoutingOptionParameters
+import com.stripe.stripeterminal.external.models.Cart
+import com.stripe.stripeterminal.external.models.CartLineItem
+import com.stripe.stripeterminal.external.models.DeviceType
+import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
+import com.stripe.stripeterminal.external.models.PaymentIntentParameters
+import com.stripe.stripeterminal.external.models.PaymentMethodOptionsParameters
+import com.stripe.stripeterminal.external.models.PaymentMethodType
+import com.stripe.stripeterminal.external.models.RoutingPriority
+import com.stripe.stripeterminal.external.models.TippingConfiguration
 import mek.stripeterminal.microsecondsToSeconds
 
 fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
     return when (this) {
-        is BluetoothDiscoveryConfigurationApi -> DiscoveryConfiguration.BluetoothDiscoveryConfiguration(
-            isSimulated = isSimulated,
-            timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
-        )
-
+        is BluetoothDiscoveryConfigurationApi ->
+            DiscoveryConfiguration.BluetoothDiscoveryConfiguration(
+                isSimulated = isSimulated,
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+            )
         is BluetoothProximityDiscoveryConfigurationApi -> null
         is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.HandoffDiscoveryConfiguration()
-        is InternetDiscoveryConfigurationApi -> DiscoveryConfiguration.InternetDiscoveryConfiguration(
-            isSimulated = isSimulated,
-            location = locationId,
-        )
-
-        is LocalMobileDiscoveryConfigurationApi -> DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
-            isSimulated = isSimulated,
-        )
-
-        is UsbDiscoveryConfigurationApi -> DiscoveryConfiguration.UsbDiscoveryConfiguration(
-            isSimulated = isSimulated,
-            timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
-        )
+        is InternetDiscoveryConfigurationApi ->
+            DiscoveryConfiguration.InternetDiscoveryConfiguration(
+                isSimulated = isSimulated,
+                location = locationId,
+            )
+        is LocalMobileDiscoveryConfigurationApi ->
+            DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
+                isSimulated = isSimulated,
+            )
+        is UsbDiscoveryConfigurationApi ->
+            DiscoveryConfiguration.UsbDiscoveryConfiguration(
+                isSimulated = isSimulated,
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+            )
     }
 }
 
@@ -52,16 +65,18 @@ fun CartApi.toHost(): Cart {
         currency = currency,
         tax = tax,
         total = total,
-        lineItems = lineItems.map { it.toHost() }
-    ).build()
+        lineItems = lineItems.map { it.toHost() },
+    )
+        .build()
 }
 
 fun CartLineItemApi.toHost(): CartLineItem {
     return CartLineItem.Builder(
         description = description,
         quantity = quantity.toInt(),
-        amount = amount
-    ).build()
+        amount = amount,
+    )
+        .build()
 }
 
 fun PaymentIntentUsageApi.toHost(): String {
@@ -72,21 +87,24 @@ fun PaymentIntentUsageApi.toHost(): String {
 }
 
 fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
-    val b = PaymentIntentParameters.Builder(
-        amount = amount,
-        currency = currency,
-        captureMethod = when (captureMethod) {
-            CaptureMethodApi.MANUAL -> CaptureMethod.Manual
-            CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
-        },
-        allowedPaymentMethodTypes = paymentMethodTypes.map {
-            when (it) {
-                PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
-                PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
-                PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
-            }
-        },
-    )
+    val b =
+        PaymentIntentParameters.Builder(
+            amount = amount,
+            currency = currency,
+            captureMethod =
+                when (captureMethod) {
+                    CaptureMethodApi.MANUAL -> CaptureMethod.Manual
+                    CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
+                },
+            allowedPaymentMethodTypes =
+                paymentMethodTypes.map {
+                    when (it) {
+                        PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
+                        PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
+                        PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
+                    }
+                },
+        )
     b.setMetadata(metadata)
     description?.let(b::setDescription)
     statementDescriptor?.let(b::setStatementDescriptor)
@@ -109,9 +127,7 @@ fun PaymentMethodOptionsParametersApi.toHost(): PaymentMethodOptionsParameters {
 }
 
 fun TippingConfigurationApi.toHost(): TippingConfiguration {
-    return TippingConfiguration.Builder()
-        .setEligibleAmount(eligibleAmount)
-        .build()
+    return TippingConfiguration.Builder().setEligibleAmount(eligibleAmount).build()
 }
 
 fun CardPresentParametersApi.toHost(): CardPresentParameters {

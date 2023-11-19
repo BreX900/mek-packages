@@ -10,12 +10,13 @@ fun Charge.toApi(): ChargeApi {
     return ChargeApi(
         amount = amount,
         currency = currency!!,
-        status = when (status) {
-            "pending" -> ChargeStatusApi.PENDING
-            "failed" -> ChargeStatusApi.FAILED
-            "succeeded" -> ChargeStatusApi.SUCCEEDED
-            else -> throw Error("Unsupported $status")
-        },
+        status =
+            when (status) {
+                "pending" -> ChargeStatusApi.PENDING
+                "failed" -> ChargeStatusApi.FAILED
+                "succeeded" -> ChargeStatusApi.SUCCEEDED
+                else -> throw Error("Unsupported $status")
+            },
         paymentMethodDetails = paymentMethodDetails?.toApi(),
         description = description!!,
         id = id,

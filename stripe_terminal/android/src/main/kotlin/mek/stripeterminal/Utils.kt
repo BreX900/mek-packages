@@ -15,7 +15,10 @@ fun microsecondsToSeconds(value: Long): Int {
     return (value * 1000000).toInt()
 }
 
-fun createApiError(code: TerminalExceptionCodeApi, message: String? = null): TerminalExceptionApi {
+fun createApiError(
+    code: TerminalExceptionCodeApi,
+    message: String? = null,
+): TerminalExceptionApi {
     return TerminalExceptionApi(
         code = code,
         message = message ?: "",

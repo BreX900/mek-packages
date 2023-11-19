@@ -169,3 +169,6 @@ Much code in this plugin is auto generated:
 - [one_for_all](https://pub.dev/packages/one_for_all) is used to generate the code for communication between platforms.
   Run this [script](tool/generate_api.dart)
 - [index_generator](https://pub.dev/packages/index_generator) is used to generate library exports
+
+### Android
+Format code with `./gradlew spotlessApply`

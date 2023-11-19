@@ -34,6 +34,14 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
+
+      # Android
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+      - run: ./gradlew spotlessCheck
+        working-directory: stripe_terminal/android
       
   integration-example:
     runs-on: macos-latest
@@ -45,10 +53,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: setup-cocoapods
-        uses: maxim-lobanov/setup-cocoapods@v1
-        with:
-          podfile-path: stripe_terminal/example/ios/Podfile.lock
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.x'
@@ -64,5 +68,10 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
+
+      # IOS
+      - uses: maxim-lobanov/setup-cocoapods@v1
+        with:
+          podfile-path: stripe_terminal/example/ios/Podfile.lock
 
       - run: pod install --deployment --project-directory=ios

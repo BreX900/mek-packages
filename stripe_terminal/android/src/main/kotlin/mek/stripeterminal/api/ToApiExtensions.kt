@@ -1,21 +1,43 @@
 package mek.stripeterminal.api
 
-import mek.stripeterminal.toHashMap
-import com.stripe.stripeterminal.external.models.*
+import com.stripe.stripeterminal.external.models.Address
+import com.stripe.stripeterminal.external.models.BatteryStatus
+import com.stripe.stripeterminal.external.models.CardNetworks
+import com.stripe.stripeterminal.external.models.CardPresentDetails
+import com.stripe.stripeterminal.external.models.ConnectionStatus
+import com.stripe.stripeterminal.external.models.DeviceType
+import com.stripe.stripeterminal.external.models.IncrementalAuthorizationStatus
+import com.stripe.stripeterminal.external.models.Location
+import com.stripe.stripeterminal.external.models.LocationStatus
+import com.stripe.stripeterminal.external.models.PaymentIntent
+import com.stripe.stripeterminal.external.models.PaymentIntentStatus
+import com.stripe.stripeterminal.external.models.PaymentMethodDetails
+import com.stripe.stripeterminal.external.models.PaymentStatus
+import com.stripe.stripeterminal.external.models.Reader
+import com.stripe.stripeterminal.external.models.ReaderDisplayMessage
+import com.stripe.stripeterminal.external.models.ReaderEvent
+import com.stripe.stripeterminal.external.models.ReaderInputOptions
+import com.stripe.stripeterminal.external.models.ReaderSoftwareUpdate
+import com.stripe.stripeterminal.external.models.ReceiptDetails
+import com.stripe.stripeterminal.external.models.Refund
+import com.stripe.stripeterminal.external.models.SetupAttempt
+import com.stripe.stripeterminal.external.models.SetupAttemptStatus
+import com.stripe.stripeterminal.external.models.SetupIntent
+import com.stripe.stripeterminal.external.models.SetupIntentCardPresentDetails
+import com.stripe.stripeterminal.external.models.SetupIntentPaymentMethodDetails
+import com.stripe.stripeterminal.external.models.SetupIntentStatus
+import com.stripe.stripeterminal.external.models.SetupIntentUsage
+import com.stripe.stripeterminal.external.models.TerminalException
 import com.stripe.stripeterminal.external.models.TerminalException.TerminalErrorCode
-import mek.stripeterminal.createApiError
 import mek.stripeterminal.mappings.toApi
+import mek.stripeterminal.toHashMap
 
 fun TerminalException.toPlatformError(): PlatformError {
     return toApi().toPlatformError()
 }
 
 fun TerminalExceptionApi.toPlatformError(): PlatformError {
-    return PlatformError(
-        code = "mek_stripe_terminal",
-        message = null,
-        details = serialize()
-    )
+    return PlatformError(code = "mek_stripe_terminal", message = null, details = serialize())
 }
 
 fun TerminalException.toApi(): TerminalExceptionApi {
@@ -33,9 +55,12 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
     return when (this) {
         TerminalErrorCode.CANCEL_FAILED -> TerminalExceptionCodeApi.CANCEL_FAILED
         TerminalErrorCode.NOT_CONNECTED_TO_READER -> TerminalExceptionCodeApi.NOT_CONNECTED_TO_READER
-        TerminalErrorCode.ALREADY_CONNECTED_TO_READER -> TerminalExceptionCodeApi.ALREADY_CONNECTED_TO_READER
-        TerminalErrorCode.BLUETOOTH_PERMISSION_DENIED -> TerminalExceptionCodeApi.BLUETOOTH_PERMISSION_DENIED
-        TerminalErrorCode.CONFIRM_INVALID_PAYMENT_INTENT -> TerminalExceptionCodeApi.CONFIRM_INVALID_PAYMENT_INTENT
+        TerminalErrorCode.ALREADY_CONNECTED_TO_READER ->
+            TerminalExceptionCodeApi.ALREADY_CONNECTED_TO_READER
+        TerminalErrorCode.BLUETOOTH_PERMISSION_DENIED ->
+            TerminalExceptionCodeApi.BLUETOOTH_PERMISSION_DENIED
+        TerminalErrorCode.CONFIRM_INVALID_PAYMENT_INTENT ->
+            TerminalExceptionCodeApi.CONFIRM_INVALID_PAYMENT_INTENT
         TerminalErrorCode.INVALID_CLIENT_SECRET -> TerminalExceptionCodeApi.INVALID_CLIENT_SECRET
         TerminalErrorCode.UNSUPPORTED_OPERATION -> TerminalExceptionCodeApi.UNSUPPORTED_OPERATION
         TerminalErrorCode.UNEXPECTED_OPERATION -> TerminalExceptionCodeApi.UNEXPECTED_OPERATION
@@ -43,76 +68,116 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.USB_PERMISSION_DENIED -> TerminalExceptionCodeApi.USB_PERMISSION_DENIED
         TerminalErrorCode.MISSING_PREREQUISITE -> null
         TerminalErrorCode.MISSING_REQUIRED_PARAMETER -> TerminalExceptionCodeApi.INVALID_PARAMETER
-        TerminalErrorCode.INVALID_REQUIRED_PARAMETER -> TerminalExceptionCodeApi.INVALID_REQUIRED_PARAMETER
+        TerminalErrorCode.INVALID_REQUIRED_PARAMETER ->
+            TerminalExceptionCodeApi.INVALID_REQUIRED_PARAMETER
         TerminalErrorCode.INVALID_TIP_PARAMETER -> TerminalExceptionCodeApi.INVALID_TIP_PARAMETER
         TerminalErrorCode.LOCAL_MOBILE_LIBRARY_NOT_INCLUDED -> null
-        TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_DEVICE -> TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_DEVICE
-        TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_ANDROID_VERSION -> TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION
-        TerminalErrorCode.LOCAL_MOBILE_DEVICE_TAMPERED -> TerminalExceptionCodeApi.LOCAL_MOBILE_DEVICE_TAMPERED
-        TerminalErrorCode.LOCAL_MOBILE_DEBUG_NOT_SUPPORTED -> TerminalExceptionCodeApi.LOCAL_MOBILE_DEBUG_NOT_SUPPORTED
-        TerminalErrorCode.OFFLINE_MODE_UNSUPPORTED_ANDROID_VERSION -> TerminalExceptionCodeApi.OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION
+        TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_DEVICE ->
+            TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_DEVICE
+        TerminalErrorCode.LOCAL_MOBILE_UNSUPPORTED_ANDROID_VERSION ->
+            TerminalExceptionCodeApi.LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION
+        TerminalErrorCode.LOCAL_MOBILE_DEVICE_TAMPERED ->
+            TerminalExceptionCodeApi.LOCAL_MOBILE_DEVICE_TAMPERED
+        TerminalErrorCode.LOCAL_MOBILE_DEBUG_NOT_SUPPORTED ->
+            TerminalExceptionCodeApi.LOCAL_MOBILE_DEBUG_NOT_SUPPORTED
+        TerminalErrorCode.OFFLINE_MODE_UNSUPPORTED_ANDROID_VERSION ->
+            TerminalExceptionCodeApi.OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION
         TerminalErrorCode.CANCELED -> TerminalExceptionCodeApi.CANCELED
-        TerminalErrorCode.LOCATION_SERVICES_DISABLED -> TerminalExceptionCodeApi.LOCATION_SERVICES_DISABLED
+        TerminalErrorCode.LOCATION_SERVICES_DISABLED ->
+            TerminalExceptionCodeApi.LOCATION_SERVICES_DISABLED
         TerminalErrorCode.BLUETOOTH_SCAN_TIMED_OUT -> TerminalExceptionCodeApi.BLUETOOTH_SCAN_TIMED_OUT
-        TerminalErrorCode.BLUETOOTH_LOW_ENERGY_UNSUPPORTED -> TerminalExceptionCodeApi.BLUETOOTH_LOW_ENERGY_UNSUPPORTED
-        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW -> TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW
-        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED -> TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED
+        TerminalErrorCode.BLUETOOTH_LOW_ENERGY_UNSUPPORTED ->
+            TerminalExceptionCodeApi.BLUETOOTH_LOW_ENERGY_UNSUPPORTED
+        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW ->
+            TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW
+        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED ->
+            TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED
         TerminalErrorCode.CARD_INSERT_NOT_READ -> TerminalExceptionCodeApi.CARD_INSERT_NOT_READ
         TerminalErrorCode.CARD_SWIPE_NOT_READ -> TerminalExceptionCodeApi.CARD_SWIPE_NOT_READ
         TerminalErrorCode.CARD_READ_TIMED_OUT -> TerminalExceptionCodeApi.CARD_READ_TIMED_OUT
         TerminalErrorCode.CARD_REMOVED -> TerminalExceptionCodeApi.CARD_REMOVED
-        TerminalErrorCode.CUSTOMER_CONSENT_REQUIRED -> TerminalExceptionCodeApi.CUSTOMER_CONSENT_REQUIRED
+        TerminalErrorCode.CUSTOMER_CONSENT_REQUIRED ->
+            TerminalExceptionCodeApi.CUSTOMER_CONSENT_REQUIRED
         TerminalErrorCode.CARD_LEFT_IN_READER -> TerminalExceptionCodeApi.CARD_LEFT_IN_READER
         TerminalErrorCode.USB_DISCOVERY_TIMED_OUT -> TerminalExceptionCodeApi.USB_DISCOVERY_TIMED_OUT
-        TerminalErrorCode.FEATURE_NOT_ENABLED_ON_ACCOUNT -> TerminalExceptionCodeApi.FEATURE_NOT_ENABLED_ON_ACCOUNT
+        TerminalErrorCode.FEATURE_NOT_ENABLED_ON_ACCOUNT ->
+            TerminalExceptionCodeApi.FEATURE_NOT_ENABLED_ON_ACCOUNT
         TerminalErrorCode.READER_BUSY -> TerminalExceptionCodeApi.READER_BUSY
-        TerminalErrorCode.READER_COMMUNICATION_ERROR -> TerminalExceptionCodeApi.READER_COMMUNICATION_ERROR
+        TerminalErrorCode.READER_COMMUNICATION_ERROR ->
+            TerminalExceptionCodeApi.READER_COMMUNICATION_ERROR
         TerminalErrorCode.BLUETOOTH_ERROR -> TerminalExceptionCodeApi.BLUETOOTH_ERROR
         TerminalErrorCode.BLUETOOTH_DISCONNECTED -> TerminalExceptionCodeApi.BLUETOOTH_DISCONNECTED
-        TerminalErrorCode.BLUETOOTH_RECONNECT_STARTED -> TerminalExceptionCodeApi.BLUETOOTH_RECONNECT_STARTED
+        TerminalErrorCode.BLUETOOTH_RECONNECT_STARTED ->
+            TerminalExceptionCodeApi.BLUETOOTH_RECONNECT_STARTED
         TerminalErrorCode.USB_DISCONNECTED -> TerminalExceptionCodeApi.USB_DISCONNECTED
         TerminalErrorCode.USB_RECONNECT_STARTED -> TerminalExceptionCodeApi.USB_RECONNECT_STARTED
-        TerminalErrorCode.READER_CONNECTED_TO_ANOTHER_DEVICE -> TerminalExceptionCodeApi.READER_CONNECTED_TO_ANOTHER_DEVICE
-        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED -> TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED
-        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_READER_ERROR -> TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_READER_ERROR
-        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR -> TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR
+        TerminalErrorCode.READER_CONNECTED_TO_ANOTHER_DEVICE ->
+            TerminalExceptionCodeApi.READER_CONNECTED_TO_ANOTHER_DEVICE
+        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED ->
+            TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED
+        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_READER_ERROR ->
+            TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_READER_ERROR
+        TerminalErrorCode.READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR ->
+            TerminalExceptionCodeApi.READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR
         TerminalErrorCode.LOCAL_MOBILE_NFC_DISABLED -> TerminalExceptionCodeApi.NFC_DISABLED
-        TerminalErrorCode.UNSUPPORTED_READER_VERSION -> TerminalExceptionCodeApi.UNSUPPORTED_READER_VERSION
+        TerminalErrorCode.UNSUPPORTED_READER_VERSION ->
+            TerminalExceptionCodeApi.UNSUPPORTED_READER_VERSION
         TerminalErrorCode.UNEXPECTED_SDK_ERROR -> TerminalExceptionCodeApi.UNEXPECTED_SDK_ERROR
         TerminalErrorCode.DECLINED_BY_STRIPE_API -> TerminalExceptionCodeApi.DECLINED_BY_STRIPE_API
         TerminalErrorCode.DECLINED_BY_READER -> TerminalExceptionCodeApi.DECLINED_BY_READER
         TerminalErrorCode.REQUEST_TIMED_OUT -> TerminalExceptionCodeApi.REQUEST_TIMED_OUT
-        TerminalErrorCode.STRIPE_API_CONNECTION_ERROR -> TerminalExceptionCodeApi.STRIPE_API_CONNECTION_ERROR
+        TerminalErrorCode.STRIPE_API_CONNECTION_ERROR ->
+            TerminalExceptionCodeApi.STRIPE_API_CONNECTION_ERROR
         TerminalErrorCode.STRIPE_API_ERROR -> TerminalExceptionCodeApi.STRIPE_API_ERROR
-        TerminalErrorCode.STRIPE_API_RESPONSE_DECODING_ERROR -> TerminalExceptionCodeApi.STRIPE_API_RESPONSE_DECODING_ERROR
-        TerminalErrorCode.CONNECTION_TOKEN_PROVIDER_ERROR -> TerminalExceptionCodeApi.CONNECTION_TOKEN_PROVIDER_ERROR
+        TerminalErrorCode.STRIPE_API_RESPONSE_DECODING_ERROR ->
+            TerminalExceptionCodeApi.STRIPE_API_RESPONSE_DECODING_ERROR
+        TerminalErrorCode.CONNECTION_TOKEN_PROVIDER_ERROR ->
+            TerminalExceptionCodeApi.CONNECTION_TOKEN_PROVIDER_ERROR
         TerminalErrorCode.SESSION_EXPIRED -> TerminalExceptionCodeApi.SESSION_EXPIRED
-        TerminalErrorCode.ANDROID_API_LEVEL_ERROR -> TerminalExceptionCodeApi.UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION
-        TerminalErrorCode.AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT -> TerminalExceptionCodeApi.AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT
-        TerminalErrorCode.OFFLINE_PAYMENTS_DATABASE_TOO_LARGE -> TerminalExceptionCodeApi.OFFLINE_PAYMENTS_DATABASE_TOO_LARGE
-        TerminalErrorCode.READER_CONNECTION_NOT_AVAILABLE_OFFLINE -> TerminalExceptionCodeApi.READER_CONNECTION_NOT_AVAILABLE_OFFLINE
-        TerminalErrorCode.LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE -> TerminalExceptionCodeApi.LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE
+        TerminalErrorCode.ANDROID_API_LEVEL_ERROR ->
+            TerminalExceptionCodeApi.UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION
+        TerminalErrorCode.AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT ->
+            TerminalExceptionCodeApi.AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT
+        TerminalErrorCode.OFFLINE_PAYMENTS_DATABASE_TOO_LARGE ->
+            TerminalExceptionCodeApi.OFFLINE_PAYMENTS_DATABASE_TOO_LARGE
+        TerminalErrorCode.READER_CONNECTION_NOT_AVAILABLE_OFFLINE ->
+            TerminalExceptionCodeApi.READER_CONNECTION_NOT_AVAILABLE_OFFLINE
+        TerminalErrorCode.LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE ->
+            TerminalExceptionCodeApi.LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE
         TerminalErrorCode.NO_LAST_SEEN_ACCOUNT -> TerminalExceptionCodeApi.NO_LAST_SEEN_ACCOUNT
         TerminalErrorCode.INVALID_OFFLINE_CURRENCY -> TerminalExceptionCodeApi.INVALID_OFFLINE_CURRENCY
         TerminalErrorCode.CARD_SWIPE_NOT_AVAILABLE -> TerminalExceptionCodeApi.CARD_SWIPE_NOT_AVAILABLE
-        TerminalErrorCode.INTERAC_NOT_SUPPORTED_OFFLINE -> TerminalExceptionCodeApi.INTERAC_NOT_SUPPORTED_OFFLINE
-        TerminalErrorCode.ONLINE_PIN_NOT_SUPPORTED_OFFLINE -> TerminalExceptionCodeApi.ONLINE_PIN_NOT_SUPPORTED_OFFLINE
+        TerminalErrorCode.INTERAC_NOT_SUPPORTED_OFFLINE ->
+            TerminalExceptionCodeApi.INTERAC_NOT_SUPPORTED_OFFLINE
+        TerminalErrorCode.ONLINE_PIN_NOT_SUPPORTED_OFFLINE ->
+            TerminalExceptionCodeApi.ONLINE_PIN_NOT_SUPPORTED_OFFLINE
         TerminalErrorCode.OFFLINE_AND_CARD_EXPIRED -> TerminalExceptionCodeApi.OFFLINE_AND_CARD_EXPIRED
-        TerminalErrorCode.OFFLINE_TRANSACTION_DECLINED -> TerminalExceptionCodeApi.OFFLINE_TRANSACTION_DECLINED
-        TerminalErrorCode.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH -> TerminalExceptionCodeApi.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH
-        TerminalErrorCode.OFFLINE_TESTMODE_PAYMENT_IN_LIVEMODE -> TerminalExceptionCodeApi.FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE
-        TerminalErrorCode.OFFLINE_LIVEMODE_PAYMENT_IN_TESTMODE -> TerminalExceptionCodeApi.FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE
-        TerminalErrorCode.OFFLINE_PAYMENT_INTENT_NOT_FOUND -> TerminalExceptionCodeApi.OFFLINE_PAYMENT_INTENT_NOT_FOUND
+        TerminalErrorCode.OFFLINE_TRANSACTION_DECLINED ->
+            TerminalExceptionCodeApi.OFFLINE_TRANSACTION_DECLINED
+        TerminalErrorCode.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH ->
+            TerminalExceptionCodeApi.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH
+        TerminalErrorCode.OFFLINE_TESTMODE_PAYMENT_IN_LIVEMODE ->
+            TerminalExceptionCodeApi.FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE
+        TerminalErrorCode.OFFLINE_LIVEMODE_PAYMENT_IN_TESTMODE ->
+            TerminalExceptionCodeApi.FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE
+        TerminalErrorCode.OFFLINE_PAYMENT_INTENT_NOT_FOUND ->
+            TerminalExceptionCodeApi.OFFLINE_PAYMENT_INTENT_NOT_FOUND
         TerminalErrorCode.MISSING_EMV_DATA -> TerminalExceptionCodeApi.MISSING_EMV_DATA
-        TerminalErrorCode.CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING -> TerminalExceptionCodeApi.CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING
-        TerminalErrorCode.ACCOUNT_ID_MISMATCH_WHILE_FORWARDING -> TerminalExceptionCodeApi.ACCOUNT_ID_MISMATCH_WHILE_FORWARDING
-        TerminalErrorCode.FORCE_OFFLINE_WITH_FEATURE_DISABLED -> TerminalExceptionCodeApi.OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED
-        TerminalErrorCode.NOT_CONNECTED_TO_INTERNET_AND_REQUIRE_ONLINE_SET -> TerminalExceptionCodeApi.NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE
+        TerminalErrorCode.CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING ->
+            TerminalExceptionCodeApi.CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING
+        TerminalErrorCode.ACCOUNT_ID_MISMATCH_WHILE_FORWARDING ->
+            TerminalExceptionCodeApi.ACCOUNT_ID_MISMATCH_WHILE_FORWARDING
+        TerminalErrorCode.FORCE_OFFLINE_WITH_FEATURE_DISABLED ->
+            TerminalExceptionCodeApi.OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED
+        TerminalErrorCode.NOT_CONNECTED_TO_INTERNET_AND_REQUIRE_ONLINE_SET ->
+            TerminalExceptionCodeApi.NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE
         TerminalErrorCode.TEST_CARD_IN_LIVEMODE -> TerminalExceptionCodeApi.TEST_CARD_IN_LIVE_MODE
-        TerminalErrorCode.COLLECT_INPUTS_APPLICATION_ERROR -> TerminalExceptionCodeApi.COLLECT_INPUTS_APPLICATION_ERROR
+        TerminalErrorCode.COLLECT_INPUTS_APPLICATION_ERROR ->
+            TerminalExceptionCodeApi.COLLECT_INPUTS_APPLICATION_ERROR
         TerminalErrorCode.COLLECT_INPUTS_TIMED_OUT -> TerminalExceptionCodeApi.COLLECT_INPUTS_TIMED_OUT
         TerminalErrorCode.COLLECT_INPUTS_INVALID_PARAMETER -> TerminalExceptionCodeApi.INVALID_PARAMETER
-        TerminalErrorCode.COLLECT_INPUTS_UNSUPPORTED -> TerminalExceptionCodeApi.COLLECT_INPUTS_UNSUPPORTED
+        TerminalErrorCode.COLLECT_INPUTS_UNSUPPORTED ->
+            TerminalExceptionCodeApi.COLLECT_INPUTS_UNSUPPORTED
     }
 }
 
@@ -180,7 +245,8 @@ fun ReaderDisplayMessage.toApi(): ReaderDisplayMessageApi {
         ReaderDisplayMessage.INSERT_OR_SWIPE_CARD -> ReaderDisplayMessageApi.INSERT_OR_SWIPE_CARD
         ReaderDisplayMessage.SWIPE_CARD -> ReaderDisplayMessageApi.SWIPE_CARD
         ReaderDisplayMessage.REMOVE_CARD -> ReaderDisplayMessageApi.REMOVE_CARD
-        ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED -> ReaderDisplayMessageApi.MULTIPLE_CONTACTLESS_CARDS_DETECTED
+        ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED ->
+            ReaderDisplayMessageApi.MULTIPLE_CONTACTLESS_CARDS_DETECTED
         ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD -> ReaderDisplayMessageApi.TRY_ANOTHER_READ_METHOD
         ReaderDisplayMessage.TRY_ANOTHER_CARD -> ReaderDisplayMessageApi.TRY_ANOTHER_CARD
         ReaderDisplayMessage.CARD_REMOVED_TOO_EARLY -> ReaderDisplayMessageApi.CARD_REMOVED_TOO_EARLY
@@ -229,10 +295,14 @@ fun ReaderSoftwareUpdate.UpdateComponent.toApi(): UpdateComponentApi {
 
 fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
     return when (this) {
-        ReaderSoftwareUpdate.UpdateTimeEstimate.LESS_THAN_ONE_MINUTE -> UpdateTimeEstimateApi.LESS_THAN_ONE_MINUTE
-        ReaderSoftwareUpdate.UpdateTimeEstimate.ONE_TO_TWO_MINUTES -> UpdateTimeEstimateApi.ONE_TO_TWO_MINUTES
-        ReaderSoftwareUpdate.UpdateTimeEstimate.TWO_TO_FIVE_MINUTES -> UpdateTimeEstimateApi.TWO_TO_FIVE_MINUTES
-        ReaderSoftwareUpdate.UpdateTimeEstimate.FIVE_TO_FIFTEEN_MINUTES -> UpdateTimeEstimateApi.FIVE_TO_FIFTEEN_MINUTES
+        ReaderSoftwareUpdate.UpdateTimeEstimate.LESS_THAN_ONE_MINUTE ->
+            UpdateTimeEstimateApi.LESS_THAN_ONE_MINUTE
+        ReaderSoftwareUpdate.UpdateTimeEstimate.ONE_TO_TWO_MINUTES ->
+            UpdateTimeEstimateApi.ONE_TO_TWO_MINUTES
+        ReaderSoftwareUpdate.UpdateTimeEstimate.TWO_TO_FIVE_MINUTES ->
+            UpdateTimeEstimateApi.TWO_TO_FIVE_MINUTES
+        ReaderSoftwareUpdate.UpdateTimeEstimate.FIVE_TO_FIFTEEN_MINUTES ->
+            UpdateTimeEstimateApi.FIVE_TO_FIFTEEN_MINUTES
     }
 }
 
@@ -292,8 +362,11 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
 
 fun CardNetworks.toApi(): CardNetworksApi {
     return CardNetworksApi(
-        available = available.map { cardBrandToApi(it)!! },
-        preferred = preferred
+        available =
+            available.map {
+                cardBrandToApi(it)!!
+            },
+        preferred = preferred,
     )
 }
 
@@ -311,11 +384,15 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         created = created,
         status = status!!.toApi(),
         amount = amount.toDouble(),
-        captureMethod = when (captureMethod!!) {
-            "automatic" -> CaptureMethodApi.AUTOMATIC
-            "manual" -> CaptureMethodApi.MANUAL
-            else -> throw IllegalArgumentException("Not supported CaptureMethod '${captureMethod}' on PaymentIntent $id")
-        },
+        captureMethod =
+            when (captureMethod!!) {
+                "automatic" -> CaptureMethodApi.AUTOMATIC
+                "manual" -> CaptureMethodApi.MANUAL
+                else ->
+                    throw IllegalArgumentException(
+                        "Not supported CaptureMethod '$captureMethod' on PaymentIntent $id",
+                    )
+            },
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
         charges = getCharges().map { it.toApi() },
@@ -333,21 +410,23 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         canceledAt = canceledAt,
         cancellationReason = cancellationReason,
         clientSecret = clientSecret,
-        confirmationMethod = when (confirmationMethod) {
-            "automatic" -> ConfirmationMethodApi.AUTOMATIC
-            "manual" -> ConfirmationMethodApi.MANUAL
-            else -> null
-        },
+        confirmationMethod =
+            when (confirmationMethod) {
+                "automatic" -> ConfirmationMethodApi.AUTOMATIC
+                "manual" -> ConfirmationMethodApi.MANUAL
+                else -> null
+            },
         description = description,
         invoiceId = invoice,
         onBehalfOf = onBehalfOf,
         receiptEmail = receiptEmail,
         reviewId = review,
-        setupFutureUsage = when (setupFutureUsage) {
-            "on_session" -> PaymentIntentUsageApi.ON_SESSION
-            "off_session" -> PaymentIntentUsageApi.OFF_SESSION
-            else -> null
-        },
+        setupFutureUsage =
+            when (setupFutureUsage) {
+                "on_session" -> PaymentIntentUsageApi.ON_SESSION
+                "off_session" -> PaymentIntentUsageApi.OFF_SESSION
+                else -> null
+            },
         transferGroup = transferGroup,
         customerId = customer,
     )
@@ -452,7 +531,7 @@ fun SetupAttemptStatus.toApi(): SetupAttemptStatusApi {
 fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi {
     return SetupAttemptPaymentMethodDetailsApi(
         cardPresent = cardPresentDetails?.toApi(),
-        interacPresent = interacPresentDetails?.toApi()
+        interacPresent = interacPresentDetails?.toApi(),
     )
 }
 
@@ -472,12 +551,13 @@ fun Refund.toApi(): RefundApi {
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: HashMap(),
         reason = reason,
-        status = when (status) {
-            "succeeded" -> RefundStatusApi.SUCCEEDED
-            "pending" -> RefundStatusApi.PENDING
-            "failed" -> RefundStatusApi.FAILED
-            else -> null
-        },
+        status =
+            when (status) {
+                "succeeded" -> RefundStatusApi.SUCCEEDED
+                "pending" -> RefundStatusApi.PENDING
+                "failed" -> RefundStatusApi.FAILED
+                else -> null
+            },
         paymentMethodDetails = paymentMethodDetails?.toApi(),
         failureReason = failureReason,
     )
@@ -486,6 +566,6 @@ fun Refund.toApi(): RefundApi {
 fun PaymentMethodDetails.toApi(): PaymentMethodDetailsApi {
     return PaymentMethodDetailsApi(
         cardPresent = cardPresentDetails?.toApi(),
-        interacPresent = interacPresentDetails?.toApi()
+        interacPresent = interacPresentDetails?.toApi(),
     )
 }

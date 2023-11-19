@@ -5,7 +5,6 @@ import com.stripe.stripeterminal.external.models.PaymentMethodDetails
 import mek.stripeterminal.api.ChargeApi
 import mek.stripeterminal.api.ChargeStatusApi
 import mek.stripeterminal.api.PaymentMethodDetailsApi
-import mek.stripeterminal.api.toApi
 import mek.stripeterminal.toHashMap
 
 fun Charge.toApi(): ChargeApi {

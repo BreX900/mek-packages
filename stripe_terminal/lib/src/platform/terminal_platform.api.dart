@@ -464,6 +464,15 @@ Address _$deserializeAddress(List<Object?> serialized) => Address(
     line2: serialized[3] as String?,
     postalCode: serialized[4] as String?,
     state: serialized[5] as String?);
+AmountDetails _$deserializeAmountDetails(List<Object?> serialized) =>
+    AmountDetails(tip: serialized[0] != null ? _$deserializeTip(serialized[0] as List) : null);
+CardDetails _$deserializeCardDetails(List<Object?> serialized) => CardDetails(
+    brand: serialized[0] != null ? CardBrand.values[serialized[0] as int] : null,
+    country: serialized[1] as String?,
+    expMonth: serialized[2] as int,
+    expYear: serialized[3] as int,
+    funding: serialized[4] != null ? CardFundingType.values[serialized[4] as int] : null,
+    last4: serialized[5] as String?);
 CardNetworks _$deserializeCardNetworks(List<Object?> serialized) => CardNetworks(
     available: (serialized[0] as List).map((e) => CardBrand.values[e as int]).toList(),
     preferred: serialized[1] as String?);
@@ -495,6 +504,18 @@ List<Object?> _$serializeCart(Cart deserialized) => [
     ];
 List<Object?> _$serializeCartLineItem(CartLineItem deserialized) =>
     [deserialized.description, deserialized.quantity, deserialized.amount];
+Charge _$deserializeCharge(List<Object?> serialized) => Charge(
+    amount: serialized[0] as int,
+    currency: serialized[1] as String,
+    status: ChargeStatus.values[serialized[2] as int],
+    paymentMethodDetails:
+        serialized[3] != null ? _$deserializePaymentMethodDetails(serialized[3] as List) : null,
+    description: serialized[4] as String,
+    id: serialized[5] as String,
+    metadata: (serialized[6] as Map).map((k, v) => MapEntry(k as String, v as String)),
+    statementDescriptorSuffix: serialized[7] as String?,
+    calculatedStatementDescriptor: serialized[8] as String?,
+    authorizationCode: serialized[9] as String?);
 List<Object?> _$serializeDiscoveryConfiguration(DiscoveryConfiguration deserialized) =>
     switch (deserialized) {
       BluetoothDiscoveryConfiguration() => _$serializeBluetoothDiscoveryConfiguration(deserialized),
@@ -541,29 +562,33 @@ PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentInt
     captureMethod: CaptureMethod.values[serialized[4] as int],
     currency: serialized[5] as String,
     metadata: (serialized[6] as Map).map((k, v) => MapEntry(k as String, v as String)),
-    paymentMethodId: serialized[7] as String?,
-    amountTip: serialized[8] as double?,
-    statementDescriptor: serialized[9] as String?,
-    statementDescriptorSuffix: serialized[10] as String?,
-    amountCapturable: serialized[11] as double?,
-    amountReceived: serialized[12] as double?,
-    applicationId: serialized[13] as String?,
-    applicationFeeAmount: serialized[14] as double?,
-    cancellationReason: serialized[15] as String?,
+    charges: (serialized[7] as List).map((e) => _$deserializeCharge(e as List)).toList(),
+    paymentMethod: serialized[8] != null ? _$deserializePaymentMethod(serialized[8] as List) : null,
+    paymentMethodId: serialized[9] as String?,
+    amountDetails:
+        serialized[10] != null ? _$deserializeAmountDetails(serialized[10] as List) : null,
+    amountTip: serialized[11] as double?,
+    statementDescriptor: serialized[12] as String?,
+    statementDescriptorSuffix: serialized[13] as String?,
+    amountCapturable: serialized[14] as double?,
+    amountReceived: serialized[15] as double?,
+    applicationId: serialized[16] as String?,
+    applicationFeeAmount: serialized[17] as double?,
+    cancellationReason: serialized[18] as String?,
     canceledAt:
-        serialized[16] != null ? DateTime.fromMillisecondsSinceEpoch(serialized[16] as int) : null,
-    clientSecret: serialized[17] as String?,
+        serialized[19] != null ? DateTime.fromMillisecondsSinceEpoch(serialized[19] as int) : null,
+    clientSecret: serialized[20] as String?,
     confirmationMethod:
-        serialized[18] != null ? ConfirmationMethod.values[serialized[18] as int] : null,
-    customerId: serialized[19] as String?,
-    description: serialized[20] as String?,
-    invoiceId: serialized[21] as String?,
-    onBehalfOf: serialized[22] as String?,
-    reviewId: serialized[23] as String?,
-    receiptEmail: serialized[24] as String?,
+        serialized[21] != null ? ConfirmationMethod.values[serialized[21] as int] : null,
+    customerId: serialized[22] as String?,
+    description: serialized[23] as String?,
+    invoiceId: serialized[24] as String?,
+    onBehalfOf: serialized[25] as String?,
+    reviewId: serialized[26] as String?,
+    receiptEmail: serialized[27] as String?,
     setupFutureUsage:
-        serialized[25] != null ? PaymentIntentUsage.values[serialized[25] as int] : null,
-    transferGroup: serialized[26] as String?);
+        serialized[28] != null ? PaymentIntentUsage.values[serialized[28] as int] : null,
+    transferGroup: serialized[29] as String?);
 List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deserialized) => [
       deserialized.amount,
       deserialized.currency,
@@ -584,6 +609,15 @@ List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deseria
           ? _$serializePaymentMethodOptionsParameters(deserialized.paymentMethodOptionsParameters!)
           : null
     ];
+PaymentMethod _$deserializePaymentMethod(List<Object?> serialized) => PaymentMethod(
+    id: serialized[0] as String,
+    card: serialized[1] != null ? _$deserializeCardDetails(serialized[1] as List) : null,
+    cardPresent:
+        serialized[2] != null ? _$deserializeCardPresentDetails(serialized[2] as List) : null,
+    interacPresent:
+        serialized[3] != null ? _$deserializeCardPresentDetails(serialized[3] as List) : null,
+    customerId: serialized[4] as String?,
+    metadata: (serialized[5] as Map).map((k, v) => MapEntry(k as String, v as String)));
 PaymentMethodDetails _$deserializePaymentMethodDetails(List<Object?> serialized) =>
     PaymentMethodDetails(
         cardPresent:
@@ -672,5 +706,6 @@ TerminalException _$deserializeTerminalException(List<Object?> serialized) => Te
     stackTrace: serialized[2] as String?,
     paymentIntent: serialized[3] != null ? _$deserializePaymentIntent(serialized[3] as List) : null,
     apiError: serialized[4]);
+Tip _$deserializeTip(List<Object?> serialized) => Tip(amount: serialized[0] as int?);
 List<Object?> _$serializeTippingConfiguration(TippingConfiguration deserialized) =>
     [deserialized.eligibleAmount];

@@ -553,6 +553,16 @@ data class AddressApi(
     }
 }
 
+data class AmountDetailsApi(
+    val tip: TipApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            tip?.serialize(),
+        )
+    }
+}
+
 enum class BatteryStatusApi {
     CRITICAL, LOW, NOMINAL;
 }
@@ -563,6 +573,26 @@ enum class CaptureMethodApi {
 
 enum class CardBrandApi {
     AMEX, DINERS_CLUB, DISCOVER, JCB, MASTER_CARD, UNION_PAY, VISA, INTERAC, EFTPOS_AU;
+}
+
+data class CardDetailsApi(
+    val brand: CardBrandApi?,
+    val country: String?,
+    val expMonth: Long,
+    val expYear: Long,
+    val funding: CardFundingTypeApi?,
+    val last4: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            brand?.ordinal,
+            country,
+            expMonth,
+            expYear,
+            funding?.ordinal,
+            last4,
+        )
+    }
 }
 
 enum class CardFundingTypeApi {
@@ -677,6 +707,38 @@ data class CartLineItemApi(
             )
         }
     }
+}
+
+data class ChargeApi(
+    val amount: Long,
+    val currency: String,
+    val status: ChargeStatusApi,
+    val paymentMethodDetails: PaymentMethodDetailsApi?,
+    val description: String,
+    val id: String,
+    val metadata: HashMap<String, String>,
+    val statementDescriptorSuffix: String?,
+    val calculatedStatementDescriptor: String?,
+    val authorizationCode: String?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            amount,
+            currency,
+            status.ordinal,
+            paymentMethodDetails?.serialize(),
+            description,
+            id,
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            statementDescriptorSuffix,
+            calculatedStatementDescriptor,
+            authorizationCode,
+        )
+    }
+}
+
+enum class ChargeStatusApi {
+    SUCCEEDED, PENDING, FAILED;
 }
 
 enum class ConfirmationMethodApi {
@@ -830,7 +892,10 @@ data class PaymentIntentApi(
     val captureMethod: CaptureMethodApi,
     val currency: String,
     val metadata: HashMap<String, String>,
+    val charges: List<ChargeApi>,
+    val paymentMethod: PaymentMethodApi?,
     val paymentMethodId: String?,
+    val amountDetails: AmountDetailsApi?,
     val amountTip: Double?,
     val statementDescriptor: String?,
     val statementDescriptorSuffix: String?,
@@ -860,7 +925,10 @@ data class PaymentIntentApi(
             captureMethod.ordinal,
             currency,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            charges.map { it.serialize()} ,
+            paymentMethod?.serialize(),
             paymentMethodId,
+            amountDetails?.serialize(),
             amountTip,
             statementDescriptor,
             statementDescriptorSuffix,
@@ -934,6 +1002,26 @@ enum class PaymentIntentStatusApi {
 
 enum class PaymentIntentUsageApi {
     ON_SESSION, OFF_SESSION;
+}
+
+data class PaymentMethodApi(
+    val id: String,
+    val card: CardDetailsApi?,
+    val cardPresent: CardPresentDetailsApi?,
+    val interacPresent: CardPresentDetailsApi?,
+    val customerId: String?,
+    val metadata: HashMap<String, String>,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            id,
+            card?.serialize(),
+            cardPresent?.serialize(),
+            interacPresent?.serialize(),
+            customerId,
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+        )
+    }
 }
 
 data class PaymentMethodDetailsApi(
@@ -1190,6 +1278,16 @@ data class TerminalExceptionApi(
 
 enum class TerminalExceptionCodeApi {
     UNKNOWN, READER_NOT_RECOVERED, PAYMENT_INTENT_NOT_RECOVERED, SETUP_INTENT_NOT_RECOVERED, CANCEL_FAILED, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_DISABLED, BLUETOOTH_PERMISSION_DENIED, CONFIRM_INVALID_PAYMENT_INTENT, INVALID_CLIENT_SECRET, INVALID_READER_FOR_UPDATE, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, FEATURE_NOT_AVAILABLE_WITH_CONNECTED_READER, USB_PERMISSION_DENIED, USB_DISCOVERY_TIMED_OUT, INVALID_PARAMETER, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, LOCAL_MOBILE_UNSUPPORTED_DEVICE, LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, LOCAL_MOBILE_DEVICE_TAMPERED, LOCAL_MOBILE_DEBUG_NOT_SUPPORTED, OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, READER_SOFTWARE_UPDATE_FAILED_EXPIRED_UPDATE, BLUETOOTH_CONNECTION_FAILED_BATTERY_CRITICALLY_LOW, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, FEATURE_NOT_ENABLED_ON_ACCOUNT, PASSCODE_NOT_ENABLED, COMMAND_NOT_ALLOWED_DURING_CALL, INVALID_AMOUNT, INVALID_CURRENCY, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_REQUIRESI_CLOUD_SIGN_IN, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_CANCELED, APPLE_BUILT_IN_READER_FAILED_TO_PREPARE, APPLE_BUILT_IN_READER_DEVICE_BANNED, APPLE_BUILT_IN_READER_T_O_S_NOT_YET_ACCEPTED, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_FAILED, APPLE_BUILT_IN_READER_MERCHANT_BLOCKED, APPLE_BUILT_IN_READER_INVALID_MERCHANT, READER_BUSY, INCOMPATIBLE_READER, READER_COMMUNICATION_ERROR, UNKNOWN_READER_IP_ADDRESS, INTERNET_CONNECT_TIME_OUT, CONNECT_FAILED_READER_IS_IN_USE, READER_NOT_ACCESSIBLE_IN_BACKGROUND, BLUETOOTH_ERROR, BLUETOOTH_CONNECT_TIMED_OUT, BLUETOOTH_DISCONNECTED, BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION, BLUETOOTH_ALREADY_PAIRED_WITH_ANOTHER_DEVICE, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, UNEXPECTED_READER_ERROR, ENCRYPTION_KEY_FAILURE, ENCRYPTION_KEY_STILL_INITIALIZING, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, NOT_CONNECTED_TO_INTERNET, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, INTERNAL_NETWORK_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION, COMMAND_NOT_ALLOWED, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, READER_CONNECTION_OFFLINE_NEEDS_UPDATE, LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, REFUND_FAILED, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_CONFIRM_MISMATCH, FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE, FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE_MODE_ENABLED, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, CONNECTION_TOKEN_PROVIDER_TIMED_OUT, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE, TEST_CARD_IN_LIVE_MODE, COLLECT_INPUTS_APPLICATION_ERROR, COLLECT_INPUTS_TIMED_OUT, COLLECT_INPUTS_UNSUPPORTED;
+}
+
+data class TipApi(
+    val amount: Long?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            amount,
+        )
+    }
 }
 
 data class TippingConfigurationApi(

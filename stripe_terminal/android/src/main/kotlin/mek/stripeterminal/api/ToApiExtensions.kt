@@ -4,6 +4,7 @@ import mek.stripeterminal.toHashMap
 import com.stripe.stripeterminal.external.models.*
 import com.stripe.stripeterminal.external.models.TerminalException.TerminalErrorCode
 import mek.stripeterminal.createApiError
+import mek.stripeterminal.mappings.toApi
 
 fun TerminalException.toPlatformError(): PlatformError {
     return toApi().toPlatformError()
@@ -317,6 +318,9 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         },
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
+        charges = getCharges().map { it.toApi() },
+        paymentMethod = paymentMethod?.toApi(),
+        amountDetails = amountDetails?.toApi(),
         paymentMethodId = paymentMethodId,
         amountTip = amountTip?.toDouble(),
         statementDescriptor = statementDescriptor,

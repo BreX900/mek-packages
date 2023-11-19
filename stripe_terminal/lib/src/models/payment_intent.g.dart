@@ -20,7 +20,10 @@ mixin _$PaymentIntent {
           _self.captureMethod == other.captureMethod &&
           _self.currency == other.currency &&
           $mapEquality.equals(_self.metadata, other.metadata) &&
+          $listEquality.equals(_self.charges, other.charges) &&
+          _self.paymentMethod == other.paymentMethod &&
           _self.paymentMethodId == other.paymentMethodId &&
+          _self.amountDetails == other.amountDetails &&
           _self.amountTip == other.amountTip &&
           _self.statementDescriptor == other.statementDescriptor &&
           _self.statementDescriptorSuffix == other.statementDescriptorSuffix &&
@@ -50,7 +53,10 @@ mixin _$PaymentIntent {
     hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
     hashCode = $hashCombine(hashCode, _self.currency.hashCode);
     hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
+    hashCode = $hashCombine(hashCode, $listEquality.hash(_self.charges));
+    hashCode = $hashCombine(hashCode, _self.paymentMethod.hashCode);
     hashCode = $hashCombine(hashCode, _self.paymentMethodId.hashCode);
+    hashCode = $hashCombine(hashCode, _self.amountDetails.hashCode);
     hashCode = $hashCombine(hashCode, _self.amountTip.hashCode);
     hashCode = $hashCombine(hashCode, _self.statementDescriptor.hashCode);
     hashCode = $hashCombine(hashCode, _self.statementDescriptorSuffix.hashCode);
@@ -82,7 +88,10 @@ mixin _$PaymentIntent {
         ..add('captureMethod', _self.captureMethod)
         ..add('currency', _self.currency)
         ..add('metadata', _self.metadata)
+        ..add('charges', _self.charges)
+        ..add('paymentMethod', _self.paymentMethod)
         ..add('paymentMethodId', _self.paymentMethodId)
+        ..add('amountDetails', _self.amountDetails)
         ..add('amountTip', _self.amountTip)
         ..add('statementDescriptor', _self.statementDescriptor)
         ..add('statementDescriptorSuffix', _self.statementDescriptorSuffix)

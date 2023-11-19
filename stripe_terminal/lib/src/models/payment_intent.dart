@@ -1,5 +1,8 @@
 import 'package:mek_data_class/mek_data_class.dart';
-import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
+import 'package:mek_stripe_terminal/src/models/card.dart';
+import 'package:mek_stripe_terminal/src/models/charge.dart';
+import 'package:mek_stripe_terminal/src/models/payment_method.dart';
+import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:meta/meta.dart';
 
 part 'payment_intent.g.dart';
@@ -36,8 +39,18 @@ class PaymentIntent with _$PaymentIntent {
 
   /// Set of key-value pairs attached to the object.
   final Map<String, String> metadata;
-  // TODO: charges, paymentMethod, amountDetails
+
+  /// Charges that were created by this PaymentIntent, if any.
+  final List<Charge> charges;
+
+  /// The payment method to be used in this PaymentIntent. Only valid in the intent returned during collectPaymentMethod when using the updatePaymentIntent option in the SCPCollectConfiguration.
+  final PaymentMethod? paymentMethod;
+
+  /// ID of the payment method used in this PaymentIntent.
   final String? paymentMethodId;
+
+  /// Details about items included in the amount after confirmation.
+  final AmountDetails? amountDetails;
 
   /// Indicates how much the user intends to tip in addition to the amount by at confirmation time.
   /// This is only non-null in the [PaymentIntent] instance returned during collect when using
@@ -125,6 +138,9 @@ class PaymentIntent with _$PaymentIntent {
     required this.statementDescriptor,
     required this.statementDescriptorSuffix,
     this.metadata = const {},
+    required this.charges,
+    required this.paymentMethod,
+    required this.amountDetails,
     required this.applicationId,
     required this.captureMethod,
     required this.cancellationReason,
@@ -171,6 +187,19 @@ enum PaymentIntentStatus {
   /// The [PaymentIntent] succeeded.
   succeeded,
 }
+
+/// Contains details about items included in the [PaymentIntent] amount
+class AmountDetails {
+  /// Details about the tip
+  final Tip? tip;
+
+  @internal
+  const AmountDetails({
+    required this.tip,
+  });
+}
+
+// PARAMETERS
 
 @DataClass()
 class PaymentIntentParameters with _$PaymentIntentParameters {
@@ -266,18 +295,6 @@ class PaymentIntentParameters with _$PaymentIntentParameters {
     this.setupFutureUsage,
     this.paymentMethodOptionsParameters,
   });
-}
-
-/// An enum representing the type of payment method being handled.
-enum PaymentMethodType {
-  /// A card present payment method.
-  cardPresent,
-
-  /// A card payment method.
-  card,
-
-  /// An Interac Present payment method.
-  interactPresent
 }
 
 /// Controls when the funds will be captured from the customer’s account.

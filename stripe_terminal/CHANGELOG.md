@@ -1,3 +1,9 @@
+- chore(android): Replaced `compileSdkVersion` with `compileSdk` and bumped version to `34`
+- chore(android): Bumped tools gradle version to `8.1.3`
+- feat: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#320---2023-11-15)
+  and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#320-2023-11-17) sdks versions to `3.2.0`
+- feat: Added to `PaymentIntent` class `charges`, `paymentMethod`, `amountDetails` properties
+
 ## 3.1.2
 - fix: Fixed incorrect Terminal instance access when unmounting the plugin from the engine
 

@@ -6,7 +6,8 @@ import mek.stripeterminal.api.PlatformError
 import mek.stripeterminal.api.toPlatformError
 import mek.stripeterminal.runOnMainThread
 
-abstract class TerminalErrorHandler(private val handler: (error: PlatformError) -> Unit) : ErrorCallback {
+abstract class TerminalErrorHandler(private val handler: (error: PlatformError) -> Unit) :
+    ErrorCallback {
     override fun onFailure(e: TerminalException) {
         val error = e.toPlatformError()
         runOnMainThread { handler(error) }

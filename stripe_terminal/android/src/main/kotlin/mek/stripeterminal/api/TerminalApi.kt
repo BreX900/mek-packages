@@ -7,9 +7,6 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -20,20 +17,15 @@ class PlatformError(
     val code: String,
     message: String?,
     val details: Any? = null,
-): RuntimeException(message ?: code)
-
+) : RuntimeException(message ?: code)
 
 class Result<T>(
     private val result: MethodChannel.Result,
     private val serializer: (data: T) -> Any?,
 ) {
-    fun success(
-        data: T,
-    ) = result.success(serializer(data))
+    fun success(data: T) = result.success(serializer(data))
 
-    fun error(
-        error: PlatformError,
-    ) {
+    fun error(error: PlatformError) {
         result.error(error.code, error.message, error.details)
     }
 }
@@ -42,21 +34,15 @@ class ControllerSink<T>(
     private val sink: EventChannel.EventSink,
     private val serializer: (data: T) -> Any?,
 ) {
-    fun success(
-        data: T,
-    ) = sink.success(serializer(data))
+    fun success(data: T) = sink.success(serializer(data))
 
-    fun error(
-        error: PlatformError,
-    ) = sink.error(error.code, error.message, error.details)
+    fun error(error: PlatformError) = sink.error(error.code, error.message, error.details)
 
     fun endOfStream() = sink.endOfStream()
 }
 
 interface TerminalPlatformApi {
-    fun onInit(
-        shouldPrintLogs: Boolean,
-    )
+    fun onInit(shouldPrintLogs: Boolean)
 
     fun onClearCachedCredentials()
 
@@ -100,9 +86,7 @@ interface TerminalPlatformApi {
 
     fun onGetConnectedReader(): ReaderApi?
 
-    fun onCancelReaderReconnection(
-        result: Result<Unit>,
-    )
+    fun onCancelReaderReconnection(result: Result<Unit>)
 
     fun onListLocations(
         result: Result<List<LocationApi>>,
@@ -113,13 +97,9 @@ interface TerminalPlatformApi {
 
     fun onInstallAvailableUpdate()
 
-    fun onCancelReaderUpdate(
-        result: Result<Unit>,
-    )
+    fun onCancelReaderUpdate(result: Result<Unit>)
 
-    fun onDisconnectReader(
-        result: Result<Unit>,
-    )
+    fun onDisconnectReader(result: Result<Unit>)
 
     fun onGetPaymentStatus(): PaymentStatusApi
 
@@ -212,18 +192,14 @@ interface TerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onConfirmRefund(
-        result: Result<RefundApi>,
-    )
+    fun onConfirmRefund(result: Result<RefundApi>)
 
     fun onSetReaderDisplay(
         result: Result<Unit>,
         cart: CartApi,
     )
 
-    fun onClearReaderDisplay(
-        result: Result<Unit>,
-    )
+    fun onClearReaderDisplay(result: Result<Unit>)
 
     private fun onMethodCall(
         call: MethodCall,
@@ -231,6 +207,7 @@ interface TerminalPlatformApi {
     ) {
         try {
             val args = call.arguments<List<Any?>>()!!
+
             fun runAsync(callback: suspend () -> Any?) {
                 coroutineScope.launch {
                     val res = callback()
@@ -251,7 +228,11 @@ interface TerminalPlatformApi {
                     result.success(res.ordinal)
                 }
                 "supportsReadersOfType" -> {
-                    val res = onSupportsReadersOfType((args[0] as Int?)?.let { DeviceTypeApi.values()[it] }, (args[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
+                    val res =
+                        onSupportsReadersOfType(
+                            (args[0] as Int?)?.let { DeviceTypeApi.values()[it] },
+                            (args[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) },
+                        )
                     result.success(res)
                 }
                 "connectBluetoothReader" -> {
@@ -283,8 +264,13 @@ interface TerminalPlatformApi {
                     onCancelReaderReconnection(res)
                 }
                 "listLocations" -> {
-                    val res = Result<List<LocationApi>>(result) { it.map { it.serialize()}  }
-                    onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
+                    val res = Result<List<LocationApi>>(result) { it.map { it.serialize() } }
+                    onListLocations(
+                        res,
+                        args[0] as String?,
+                        (args[1] as? Number)?.toLong(),
+                        args[2] as String?,
+                    )
                 }
                 "installAvailableUpdate" -> {
                     onInstallAvailableUpdate()
@@ -304,7 +290,10 @@ interface TerminalPlatformApi {
                 }
                 "createPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onCreatePaymentIntent(res, (args[0] as List<Any?>).let { PaymentIntentParametersApi.deserialize(it) })
+                    onCreatePaymentIntent(
+                        res,
+                        (args[0] as List<Any?>).let { PaymentIntentParametersApi.deserialize(it) },
+                    )
                 }
                 "retrievePaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
@@ -312,7 +301,15 @@ interface TerminalPlatformApi {
                 }
                 "startCollectPaymentMethod" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, (args[3] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) }, args[4] as Boolean, args[5] as Boolean)
+                    onStartCollectPaymentMethod(
+                        res,
+                        (args[0] as Number).toLong(),
+                        args[1] as String,
+                        args[2] as Boolean,
+                        (args[3] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) },
+                        args[4] as Boolean,
+                        args[5] as Boolean,
+                    )
                 }
                 "stopCollectPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
@@ -328,7 +325,20 @@ interface TerminalPlatformApi {
                 }
                 "createSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onCreateSetupIntent(res, args[0] as String?, args[1]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[2] as String?, args[3] as String?, (args[4] as Int?)?.let { SetupIntentUsageApi.values()[it] })
+                    onCreateSetupIntent(
+                        res,
+                        args[0] as String?,
+                        args[1]?.let {
+                            hashMapOf(
+                                *(it as HashMap<*, *>)
+                                    .map { (k, v) -> k as String to v as String }
+                                    .toTypedArray(),
+                            )
+                        },
+                        args[2] as String?,
+                        args[3] as String?,
+                        (args[4] as Int?)?.let { SetupIntentUsageApi.values()[it] },
+                    )
                 }
                 "retrieveSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
@@ -336,7 +346,13 @@ interface TerminalPlatformApi {
                 }
                 "startCollectSetupIntentPaymentMethod" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
+                    onStartCollectSetupIntentPaymentMethod(
+                        res,
+                        (args[0] as Number).toLong(),
+                        args[1] as String,
+                        args[2] as Boolean,
+                        args[3] as Boolean,
+                    )
                 }
                 "stopCollectSetupIntentPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
@@ -352,7 +368,23 @@ interface TerminalPlatformApi {
                 }
                 "startCollectRefundPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
-                    onStartCollectRefundPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String, args[4]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[5] as Boolean?, args[6] as Boolean?, args[7] as Boolean)
+                    onStartCollectRefundPaymentMethod(
+                        res,
+                        (args[0] as Number).toLong(),
+                        args[1] as String,
+                        (args[2] as Number).toLong(),
+                        args[3] as String,
+                        args[4]?.let {
+                            hashMapOf(
+                                *(it as HashMap<*, *>)
+                                    .map { (k, v) -> k as String to v as String }
+                                    .toTypedArray(),
+                            )
+                        },
+                        args[5] as Boolean?,
+                        args[6] as Boolean?,
+                        args[7] as Boolean,
+                    )
                 }
                 "stopCollectRefundPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
@@ -400,20 +432,30 @@ interface TerminalPlatformApi {
 class DiscoverReadersControllerApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: EventChannel = EventChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform#discoverReaders")
+    private val channel: EventChannel =
+        EventChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform#discoverReaders")
 
     fun setHandler(
         onListen: (sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) -> Unit,
         onCancel: () -> Unit,
     ) {
-        channel.setStreamHandler(object : EventChannel.StreamHandler {
-            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
-                val args = arguments as List<Any?>
-                val sink = ControllerSink<List<ReaderApi>>(events) {it.map { it.serialize()} }
-                onListen(sink, (args[0] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
-            }
-            override fun onCancel(arguments: Any?) = onCancel()
-        })
+        channel.setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(
+                    arguments: Any?,
+                    events: EventChannel.EventSink,
+                ) {
+                    val args = arguments as List<Any?>
+                    val sink = ControllerSink<List<ReaderApi>>(events) { it.map { it.serialize() } }
+                    onListen(
+                        sink,
+                        (args[0] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) },
+                    )
+                }
+
+                override fun onCancel(arguments: Any?) = onCancel()
+            },
+        )
     }
 
     fun removeHandler() = channel.setStreamHandler(null)
@@ -422,7 +464,8 @@ class DiscoverReadersControllerApi(
 class TerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: MethodChannel = MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalHandlers")
+    private val channel: MethodChannel =
+        MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalHandlers")
 
     fun requestConnectionToken(
         onError: (error: PlatformError) -> Unit,
@@ -433,48 +476,40 @@ class TerminalHandlersApi(
             listOf<Any?>(),
             object : MethodChannel.Result {
                 override fun notImplemented() {}
-                override fun error(code: String, message: String?, details: Any?) = 
-                    onError(PlatformError(code, message, details))
-                override fun success(result: Any?) =
-                    onSuccess(result as String)
-            }
+
+                override fun error(
+                    code: String,
+                    message: String?,
+                    details: Any?,
+                ) = onError(PlatformError(code, message, details))
+
+                override fun success(result: Any?) = onSuccess(result as String)
+            },
         )
     }
 
-    fun unexpectedReaderDisconnect(
-        reader: ReaderApi,
-    ) {
+    fun unexpectedReaderDisconnect(reader: ReaderApi) {
         channel.invokeMethod("_onUnexpectedReaderDisconnect", listOf<Any?>(reader.serialize()))
     }
 
-    fun connectionStatusChange(
-        connectionStatus: ConnectionStatusApi,
-    ) {
+    fun connectionStatusChange(connectionStatus: ConnectionStatusApi) {
         channel.invokeMethod("_onConnectionStatusChange", listOf<Any?>(connectionStatus.ordinal))
     }
 
-    fun paymentStatusChange(
-        paymentStatus: PaymentStatusApi,
-    ) {
+    fun paymentStatusChange(paymentStatus: PaymentStatusApi) {
         channel.invokeMethod("_onPaymentStatusChange", listOf<Any?>(paymentStatus.ordinal))
     }
 
-    fun readerReportEvent(
-        event: ReaderEventApi,
-    ) {
+    fun readerReportEvent(event: ReaderEventApi) {
         channel.invokeMethod("_onReaderReportEvent", listOf<Any?>(event.ordinal))
     }
 
-    fun readerRequestDisplayMessage(
-        message: ReaderDisplayMessageApi,
-    ) {
+    fun readerRequestDisplayMessage(message: ReaderDisplayMessageApi) {
         channel.invokeMethod("_onReaderRequestDisplayMessage", listOf<Any?>(message.ordinal))
     }
 
-    fun readerRequestInput(
-        options: List<ReaderInputOptionApi>,
-    ) {
-        channel.invokeMethod("_onReaderRequestInput", listOf<Any?>(options.map { it.ordinal} ))
+    fun readerRequestInput(options: List<ReaderInputOptionApi>) {
+        channel.invokeMethod("_onReaderRequestInput", listOf<Any?>(options.map { it.ordinal }))
     }
 
     fun readerBatteryLevelUpdate(
@@ -482,28 +517,25 @@ class TerminalHandlersApi(
         batteryStatus: BatteryStatusApi?,
         isCharging: Boolean,
     ) {
-        channel.invokeMethod("_onReaderBatteryLevelUpdate", listOf<Any?>(batteryLevel, batteryStatus?.ordinal, isCharging))
+        channel.invokeMethod(
+            "_onReaderBatteryLevelUpdate",
+            listOf<Any?>(batteryLevel, batteryStatus?.ordinal, isCharging),
+        )
     }
 
     fun readerReportLowBatteryWarning() {
         channel.invokeMethod("_onReaderReportLowBatteryWarning", listOf<Any?>())
     }
 
-    fun readerReportAvailableUpdate(
-        update: ReaderSoftwareUpdateApi,
-    ) {
+    fun readerReportAvailableUpdate(update: ReaderSoftwareUpdateApi) {
         channel.invokeMethod("_onReaderReportAvailableUpdate", listOf<Any?>(update.serialize()))
     }
 
-    fun readerStartInstallingUpdate(
-        update: ReaderSoftwareUpdateApi,
-    ) {
+    fun readerStartInstallingUpdate(update: ReaderSoftwareUpdateApi) {
         channel.invokeMethod("_onReaderStartInstallingUpdate", listOf<Any?>(update.serialize()))
     }
 
-    fun readerReportSoftwareUpdateProgress(
-        progress: Double,
-    ) {
+    fun readerReportSoftwareUpdateProgress(progress: Double) {
         channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", listOf<Any?>(progress))
     }
 
@@ -511,24 +543,21 @@ class TerminalHandlersApi(
         update: ReaderSoftwareUpdateApi?,
         exception: TerminalExceptionApi?,
     ) {
-        channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
+        channel.invokeMethod(
+            "_onReaderFinishInstallingUpdate",
+            listOf<Any?>(update?.serialize(), exception?.serialize()),
+        )
     }
 
-    fun readerReconnectFailed(
-        reader: ReaderApi,
-    ) {
+    fun readerReconnectFailed(reader: ReaderApi) {
         channel.invokeMethod("_onReaderReconnectFailed", listOf<Any?>(reader.serialize()))
     }
 
-    fun readerReconnectStarted(
-        reader: ReaderApi,
-    ) {
+    fun readerReconnectStarted(reader: ReaderApi) {
         channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize()))
     }
 
-    fun readerReconnectSucceeded(
-        reader: ReaderApi,
-    ) {
+    fun readerReconnectSucceeded(reader: ReaderApi) {
         channel.invokeMethod("_onReaderReconnectSucceeded", listOf<Any?>(reader.serialize()))
     }
 }
@@ -564,15 +593,26 @@ data class AmountDetailsApi(
 }
 
 enum class BatteryStatusApi {
-    CRITICAL, LOW, NOMINAL;
+    CRITICAL,
+    LOW,
+    NOMINAL,
 }
 
 enum class CaptureMethodApi {
-    AUTOMATIC, MANUAL;
+    AUTOMATIC,
+    MANUAL,
 }
 
 enum class CardBrandApi {
-    AMEX, DINERS_CLUB, DISCOVER, JCB, MASTER_CARD, UNION_PAY, VISA, INTERAC, EFTPOS_AU;
+    AMEX,
+    DINERS_CLUB,
+    DISCOVER,
+    JCB,
+    MASTER_CARD,
+    UNION_PAY,
+    VISA,
+    INTERAC,
+    EFTPOS_AU,
 }
 
 data class CardDetailsApi(
@@ -596,7 +636,9 @@ data class CardDetailsApi(
 }
 
 enum class CardFundingTypeApi {
-    CREDIT, DEBIT, PREPAID;
+    CREDIT,
+    DEBIT,
+    PREPAID,
 }
 
 data class CardNetworksApi(
@@ -605,14 +647,14 @@ data class CardNetworksApi(
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            available.map { it.ordinal} ,
+            available.map { it.ordinal },
             preferred,
         )
     }
 }
 
 enum class CardPresentCaptureMethodApi {
-    MANUAL_PREFERRED;
+    MANUAL_PREFERRED,
 }
 
 data class CardPresentDetailsApi(
@@ -654,9 +696,7 @@ data class CardPresentParametersApi(
     val requestedPriority: CardPresentRoutingApi?,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): CardPresentParametersApi {
+        fun deserialize(serialized: List<Any?>): CardPresentParametersApi {
             return CardPresentParametersApi(
                 captureMethod = (serialized[0] as Int?)?.let { CardPresentCaptureMethodApi.values()[it] },
                 requestExtendedAuthorization = serialized[1] as Boolean?,
@@ -668,7 +708,8 @@ data class CardPresentParametersApi(
 }
 
 enum class CardPresentRoutingApi {
-    DOMESTIC, INTERNATIONAL;
+    DOMESTIC,
+    INTERNATIONAL,
 }
 
 data class CartApi(
@@ -678,14 +719,15 @@ data class CartApi(
     val lineItems: List<CartLineItemApi>,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): CartApi {
+        fun deserialize(serialized: List<Any?>): CartApi {
             return CartApi(
                 currency = serialized[0] as String,
                 tax = (serialized[1] as Number).toLong(),
                 total = (serialized[2] as Number).toLong(),
-                lineItems = (serialized[3] as List<*>).map { (it as List<Any?>).let { CartLineItemApi.deserialize(it) } },
+                lineItems =
+                    (serialized[3] as List<*>).map {
+                        (it as List<Any?>).let { CartLineItemApi.deserialize(it) }
+                    },
             )
         }
     }
@@ -697,9 +739,7 @@ data class CartLineItemApi(
     val amount: Long,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): CartLineItemApi {
+        fun deserialize(serialized: List<Any?>): CartLineItemApi {
             return CartLineItemApi(
                 description = serialized[0] as String,
                 quantity = (serialized[1] as Number).toLong(),
@@ -738,32 +778,53 @@ data class ChargeApi(
 }
 
 enum class ChargeStatusApi {
-    SUCCEEDED, PENDING, FAILED;
+    SUCCEEDED,
+    PENDING,
+    FAILED,
 }
 
 enum class ConfirmationMethodApi {
-    AUTOMATIC, MANUAL;
+    AUTOMATIC,
+    MANUAL,
 }
 
 enum class ConnectionStatusApi {
-    NOT_CONNECTED, CONNECTED, CONNECTING;
+    NOT_CONNECTED,
+    CONNECTED,
+    CONNECTING,
 }
 
 enum class DeviceTypeApi {
-    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, APPLE_BUILT_IN;
+    CHIPPER1_X,
+    CHIPPER2_X,
+    STRIPE_M2,
+    COTS_DEVICE,
+    VERIFONE_P400,
+    WISE_CUBE,
+    WISE_PAD3,
+    WISE_PAD3S,
+    WISE_POS_E,
+    WISE_POS_E_DEVKIT,
+    ETNA,
+    STRIPE_S700,
+    STRIPE_S700_DEVKIT,
+    APPLE_BUILT_IN,
 }
 
 sealed class DiscoveryConfigurationApi {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): DiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): DiscoveryConfigurationApi {
             return when (serialized[0]) {
-                "BluetoothDiscoveryConfiguration" -> BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "BluetoothProximityDiscoveryConfiguration" -> BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "HandoffDiscoveryConfiguration" -> HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "InternetDiscoveryConfiguration" -> InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "LocalMobileDiscoveryConfiguration" -> LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "BluetoothDiscoveryConfiguration" ->
+                    BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "BluetoothProximityDiscoveryConfiguration" ->
+                    BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "HandoffDiscoveryConfiguration" ->
+                    HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "InternetDiscoveryConfiguration" ->
+                    InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "LocalMobileDiscoveryConfiguration" ->
+                    LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "UsbDiscoveryConfiguration" -> UsbDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 else -> throw Error()
             }
@@ -774,11 +835,9 @@ sealed class DiscoveryConfigurationApi {
 data class BluetoothDiscoveryConfigurationApi(
     val isSimulated: Boolean,
     val timeout: Long?,
-): DiscoveryConfigurationApi() {
+) : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): BluetoothDiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): BluetoothDiscoveryConfigurationApi {
             return BluetoothDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
                 timeout = serialized[1] as Long?,
@@ -789,11 +848,9 @@ data class BluetoothDiscoveryConfigurationApi(
 
 data class BluetoothProximityDiscoveryConfigurationApi(
     val isSimulated: Boolean,
-): DiscoveryConfigurationApi() {
+) : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): BluetoothProximityDiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): BluetoothProximityDiscoveryConfigurationApi {
             return BluetoothProximityDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
             )
@@ -801,13 +858,10 @@ data class BluetoothProximityDiscoveryConfigurationApi(
     }
 }
 
-class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
+class HandoffDiscoveryConfigurationApi : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): HandoffDiscoveryConfigurationApi {
-            return HandoffDiscoveryConfigurationApi(
-            )
+        fun deserialize(serialized: List<Any?>): HandoffDiscoveryConfigurationApi {
+            return HandoffDiscoveryConfigurationApi()
         }
     }
 }
@@ -815,11 +869,9 @@ class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
 data class InternetDiscoveryConfigurationApi(
     val isSimulated: Boolean,
     val locationId: String?,
-): DiscoveryConfigurationApi() {
+) : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): InternetDiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): InternetDiscoveryConfigurationApi {
             return InternetDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
                 locationId = serialized[1] as String?,
@@ -830,11 +882,9 @@ data class InternetDiscoveryConfigurationApi(
 
 data class LocalMobileDiscoveryConfigurationApi(
     val isSimulated: Boolean,
-): DiscoveryConfigurationApi() {
+) : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): LocalMobileDiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): LocalMobileDiscoveryConfigurationApi {
             return LocalMobileDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
             )
@@ -845,11 +895,9 @@ data class LocalMobileDiscoveryConfigurationApi(
 data class UsbDiscoveryConfigurationApi(
     val isSimulated: Boolean,
     val timeout: Long?,
-): DiscoveryConfigurationApi() {
+) : DiscoveryConfigurationApi() {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): UsbDiscoveryConfigurationApi {
+        fun deserialize(serialized: List<Any?>): UsbDiscoveryConfigurationApi {
             return UsbDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
                 timeout = serialized[1] as Long?,
@@ -859,7 +907,8 @@ data class UsbDiscoveryConfigurationApi(
 }
 
 enum class IncrementalAuthorizationStatusApi {
-    NOT_SUPPORTED, SUPPORTED;
+    NOT_SUPPORTED,
+    SUPPORTED,
 }
 
 data class LocationApi(
@@ -881,7 +930,8 @@ data class LocationApi(
 }
 
 enum class LocationStatusApi {
-    SET, NOT_SET;
+    SET,
+    NOT_SET,
 }
 
 data class PaymentIntentApi(
@@ -925,7 +975,7 @@ data class PaymentIntentApi(
             captureMethod.ordinal,
             currency,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
-            charges.map { it.serialize()} ,
+            charges.map { it.serialize() },
             paymentMethod?.serialize(),
             paymentMethodId,
             amountDetails?.serialize(),
@@ -971,15 +1021,21 @@ data class PaymentIntentParametersApi(
     val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): PaymentIntentParametersApi {
+        fun deserialize(serialized: List<Any?>): PaymentIntentParametersApi {
             return PaymentIntentParametersApi(
                 amount = (serialized[0] as Number).toLong(),
                 currency = serialized[1] as String,
                 captureMethod = (serialized[2] as Int).let { CaptureMethodApi.values()[it] },
-                paymentMethodTypes = (serialized[3] as List<*>).map { (it as Int).let { PaymentMethodTypeApi.values()[it] } },
-                metadata = hashMapOf(*(serialized[4] as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()),
+                paymentMethodTypes =
+                    (serialized[3] as List<*>).map {
+                        (it as Int).let { PaymentMethodTypeApi.values()[it] }
+                    },
+                metadata =
+                    hashMapOf(
+                        *(serialized[4] as HashMap<*, *>)
+                            .map { (k, v) -> k as String to v as String }
+                            .toTypedArray(),
+                    ),
                 description = serialized[5] as String?,
                 statementDescriptor = serialized[6] as String?,
                 statementDescriptorSuffix = serialized[7] as String?,
@@ -990,18 +1046,28 @@ data class PaymentIntentParametersApi(
                 transferGroup = serialized[12] as String?,
                 onBehalfOf = serialized[13] as String?,
                 setupFutureUsage = (serialized[14] as Int?)?.let { PaymentIntentUsageApi.values()[it] },
-                paymentMethodOptionsParameters = (serialized[15] as List<Any?>?)?.let { PaymentMethodOptionsParametersApi.deserialize(it) },
+                paymentMethodOptionsParameters =
+                    (serialized[15] as List<Any?>?)?.let {
+                        PaymentMethodOptionsParametersApi.deserialize(it)
+                    },
             )
         }
     }
 }
 
 enum class PaymentIntentStatusApi {
-    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, REQUIRES_ACTION, SUCCEEDED;
+    CANCELED,
+    PROCESSING,
+    REQUIRES_CAPTURE,
+    REQUIRES_CONFIRMATION,
+    REQUIRES_PAYMENT_METHOD,
+    REQUIRES_ACTION,
+    SUCCEEDED,
 }
 
 enum class PaymentIntentUsageApi {
-    ON_SESSION, OFF_SESSION;
+    ON_SESSION,
+    OFF_SESSION,
 }
 
 data class PaymentMethodApi(
@@ -1040,22 +1106,26 @@ data class PaymentMethodOptionsParametersApi(
     val cardPresentParameters: CardPresentParametersApi,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): PaymentMethodOptionsParametersApi {
+        fun deserialize(serialized: List<Any?>): PaymentMethodOptionsParametersApi {
             return PaymentMethodOptionsParametersApi(
-                cardPresentParameters = (serialized[0] as List<Any?>).let { CardPresentParametersApi.deserialize(it) },
+                cardPresentParameters =
+                    (serialized[0] as List<Any?>).let { CardPresentParametersApi.deserialize(it) },
             )
         }
     }
 }
 
 enum class PaymentMethodTypeApi {
-    CARD_PRESENT, CARD, INTERACT_PRESENT;
+    CARD_PRESENT,
+    CARD,
+    INTERACT_PRESENT,
 }
 
 enum class PaymentStatusApi {
-    NOT_READY, READY, WAITING_FOR_INPUT, PROCESSING;
+    NOT_READY,
+    READY,
+    WAITING_FOR_INPUT,
+    PROCESSING,
 }
 
 data class ReaderApi(
@@ -1085,15 +1155,28 @@ data class ReaderApi(
 }
 
 enum class ReaderDisplayMessageApi {
-    CHECK_MOBILE_DEVICE, RETRY_CARD, INSERT_CARD, INSERT_OR_SWIPE_CARD, SWIPE_CARD, REMOVE_CARD, MULTIPLE_CONTACTLESS_CARDS_DETECTED, TRY_ANOTHER_READ_METHOD, TRY_ANOTHER_CARD, CARD_REMOVED_TOO_EARLY;
+    CHECK_MOBILE_DEVICE,
+    RETRY_CARD,
+    INSERT_CARD,
+    INSERT_OR_SWIPE_CARD,
+    SWIPE_CARD,
+    REMOVE_CARD,
+    MULTIPLE_CONTACTLESS_CARDS_DETECTED,
+    TRY_ANOTHER_READ_METHOD,
+    TRY_ANOTHER_CARD,
+    CARD_REMOVED_TOO_EARLY,
 }
 
 enum class ReaderEventApi {
-    CARD_INSERTED, CARD_REMOVED;
+    CARD_INSERTED,
+    CARD_REMOVED,
 }
 
 enum class ReaderInputOptionApi {
-    INSERT_CARD, SWIPE_CARD, TAP_CARD, MANUAL_ENTRY;
+    INSERT_CARD,
+    SWIPE_CARD,
+    TAP_CARD,
+    MANUAL_ENTRY,
 }
 
 data class ReaderSoftwareUpdateApi(
@@ -1107,7 +1190,7 @@ data class ReaderSoftwareUpdateApi(
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            components.map { it.ordinal} ,
+            components.map { it.ordinal },
             keyProfileName,
             onlyInstallRequiredUpdates,
             requiredAt,
@@ -1171,7 +1254,9 @@ data class RefundApi(
 }
 
 enum class RefundStatusApi {
-    SUCCEEDED, PENDING, FAILED;
+    SUCCEEDED,
+    PENDING,
+    FAILED,
 }
 
 data class SetupAttemptApi(
@@ -1225,7 +1310,12 @@ data class SetupAttemptPaymentMethodDetailsApi(
 }
 
 enum class SetupAttemptStatusApi {
-    REQUIRES_CONFIRMATION, REQUIRES_ACTION, PROCESSING, SUCCEEDED, FAILED, ABANDONED;
+    REQUIRES_CONFIRMATION,
+    REQUIRES_ACTION,
+    PROCESSING,
+    SUCCEEDED,
+    FAILED,
+    ABANDONED,
 }
 
 data class SetupIntentApi(
@@ -1251,11 +1341,17 @@ data class SetupIntentApi(
 }
 
 enum class SetupIntentStatusApi {
-    REQUIRES_PAYMENT_METHOD, REQUIRES_CONFIRMATION, REQUIRES_ACTION, PROCESSING, SUCCEEDED, CANCELLED;
+    REQUIRES_PAYMENT_METHOD,
+    REQUIRES_CONFIRMATION,
+    REQUIRES_ACTION,
+    PROCESSING,
+    SUCCEEDED,
+    CANCELLED,
 }
 
 enum class SetupIntentUsageApi {
-    ON_SESSION, OFF_SESSION;
+    ON_SESSION,
+    OFF_SESSION,
 }
 
 data class TerminalExceptionApi(
@@ -1277,7 +1373,126 @@ data class TerminalExceptionApi(
 }
 
 enum class TerminalExceptionCodeApi {
-    UNKNOWN, READER_NOT_RECOVERED, PAYMENT_INTENT_NOT_RECOVERED, SETUP_INTENT_NOT_RECOVERED, CANCEL_FAILED, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_DISABLED, BLUETOOTH_PERMISSION_DENIED, CONFIRM_INVALID_PAYMENT_INTENT, INVALID_CLIENT_SECRET, INVALID_READER_FOR_UPDATE, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, FEATURE_NOT_AVAILABLE_WITH_CONNECTED_READER, USB_PERMISSION_DENIED, USB_DISCOVERY_TIMED_OUT, INVALID_PARAMETER, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, LOCAL_MOBILE_UNSUPPORTED_DEVICE, LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, LOCAL_MOBILE_DEVICE_TAMPERED, LOCAL_MOBILE_DEBUG_NOT_SUPPORTED, OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, READER_SOFTWARE_UPDATE_FAILED_EXPIRED_UPDATE, BLUETOOTH_CONNECTION_FAILED_BATTERY_CRITICALLY_LOW, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, FEATURE_NOT_ENABLED_ON_ACCOUNT, PASSCODE_NOT_ENABLED, COMMAND_NOT_ALLOWED_DURING_CALL, INVALID_AMOUNT, INVALID_CURRENCY, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_REQUIRESI_CLOUD_SIGN_IN, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_CANCELED, APPLE_BUILT_IN_READER_FAILED_TO_PREPARE, APPLE_BUILT_IN_READER_DEVICE_BANNED, APPLE_BUILT_IN_READER_T_O_S_NOT_YET_ACCEPTED, APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_FAILED, APPLE_BUILT_IN_READER_MERCHANT_BLOCKED, APPLE_BUILT_IN_READER_INVALID_MERCHANT, READER_BUSY, INCOMPATIBLE_READER, READER_COMMUNICATION_ERROR, UNKNOWN_READER_IP_ADDRESS, INTERNET_CONNECT_TIME_OUT, CONNECT_FAILED_READER_IS_IN_USE, READER_NOT_ACCESSIBLE_IN_BACKGROUND, BLUETOOTH_ERROR, BLUETOOTH_CONNECT_TIMED_OUT, BLUETOOTH_DISCONNECTED, BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION, BLUETOOTH_ALREADY_PAIRED_WITH_ANOTHER_DEVICE, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, UNEXPECTED_READER_ERROR, ENCRYPTION_KEY_FAILURE, ENCRYPTION_KEY_STILL_INITIALIZING, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, NOT_CONNECTED_TO_INTERNET, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, INTERNAL_NETWORK_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION, COMMAND_NOT_ALLOWED, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, READER_CONNECTION_OFFLINE_NEEDS_UPDATE, LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, REFUND_FAILED, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_CONFIRM_MISMATCH, FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE, FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE_MODE_ENABLED, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, CONNECTION_TOKEN_PROVIDER_TIMED_OUT, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE, TEST_CARD_IN_LIVE_MODE, COLLECT_INPUTS_APPLICATION_ERROR, COLLECT_INPUTS_TIMED_OUT, COLLECT_INPUTS_UNSUPPORTED;
+    UNKNOWN,
+    READER_NOT_RECOVERED,
+    PAYMENT_INTENT_NOT_RECOVERED,
+    SETUP_INTENT_NOT_RECOVERED,
+    CANCEL_FAILED,
+    NOT_CONNECTED_TO_READER,
+    ALREADY_CONNECTED_TO_READER,
+    BLUETOOTH_DISABLED,
+    BLUETOOTH_PERMISSION_DENIED,
+    CONFIRM_INVALID_PAYMENT_INTENT,
+    INVALID_CLIENT_SECRET,
+    INVALID_READER_FOR_UPDATE,
+    UNSUPPORTED_OPERATION,
+    UNEXPECTED_OPERATION,
+    UNSUPPORTED_SDK,
+    FEATURE_NOT_AVAILABLE_WITH_CONNECTED_READER,
+    USB_PERMISSION_DENIED,
+    USB_DISCOVERY_TIMED_OUT,
+    INVALID_PARAMETER,
+    INVALID_REQUIRED_PARAMETER,
+    INVALID_TIP_PARAMETER,
+    LOCAL_MOBILE_UNSUPPORTED_DEVICE,
+    LOCAL_MOBILE_UNSUPPORTED_OPERATING_SYSTEM_VERSION,
+    LOCAL_MOBILE_DEVICE_TAMPERED,
+    LOCAL_MOBILE_DEBUG_NOT_SUPPORTED,
+    OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION,
+    CANCELED,
+    LOCATION_SERVICES_DISABLED,
+    BLUETOOTH_SCAN_TIMED_OUT,
+    BLUETOOTH_LOW_ENERGY_UNSUPPORTED,
+    READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW,
+    READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED,
+    READER_SOFTWARE_UPDATE_FAILED_EXPIRED_UPDATE,
+    BLUETOOTH_CONNECTION_FAILED_BATTERY_CRITICALLY_LOW,
+    CARD_INSERT_NOT_READ,
+    CARD_SWIPE_NOT_READ,
+    CARD_READ_TIMED_OUT,
+    CARD_REMOVED,
+    CUSTOMER_CONSENT_REQUIRED,
+    CARD_LEFT_IN_READER,
+    FEATURE_NOT_ENABLED_ON_ACCOUNT,
+    PASSCODE_NOT_ENABLED,
+    COMMAND_NOT_ALLOWED_DURING_CALL,
+    INVALID_AMOUNT,
+    INVALID_CURRENCY,
+    APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_REQUIRESI_CLOUD_SIGN_IN,
+    APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_CANCELED,
+    APPLE_BUILT_IN_READER_FAILED_TO_PREPARE,
+    APPLE_BUILT_IN_READER_DEVICE_BANNED,
+    APPLE_BUILT_IN_READER_T_O_S_NOT_YET_ACCEPTED,
+    APPLE_BUILT_IN_READER_T_O_S_ACCEPTANCE_FAILED,
+    APPLE_BUILT_IN_READER_MERCHANT_BLOCKED,
+    APPLE_BUILT_IN_READER_INVALID_MERCHANT,
+    READER_BUSY,
+    INCOMPATIBLE_READER,
+    READER_COMMUNICATION_ERROR,
+    UNKNOWN_READER_IP_ADDRESS,
+    INTERNET_CONNECT_TIME_OUT,
+    CONNECT_FAILED_READER_IS_IN_USE,
+    READER_NOT_ACCESSIBLE_IN_BACKGROUND,
+    BLUETOOTH_ERROR,
+    BLUETOOTH_CONNECT_TIMED_OUT,
+    BLUETOOTH_DISCONNECTED,
+    BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION,
+    BLUETOOTH_ALREADY_PAIRED_WITH_ANOTHER_DEVICE,
+    BLUETOOTH_RECONNECT_STARTED,
+    USB_DISCONNECTED,
+    USB_RECONNECT_STARTED,
+    READER_CONNECTED_TO_ANOTHER_DEVICE,
+    READER_SOFTWARE_UPDATE_FAILED,
+    READER_SOFTWARE_UPDATE_FAILED_READER_ERROR,
+    READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR,
+    NFC_DISABLED,
+    UNSUPPORTED_READER_VERSION,
+    UNEXPECTED_SDK_ERROR,
+    UNEXPECTED_READER_ERROR,
+    ENCRYPTION_KEY_FAILURE,
+    ENCRYPTION_KEY_STILL_INITIALIZING,
+    DECLINED_BY_STRIPE_API,
+    DECLINED_BY_READER,
+    NOT_CONNECTED_TO_INTERNET,
+    REQUEST_TIMED_OUT,
+    STRIPE_API_CONNECTION_ERROR,
+    STRIPE_API_ERROR,
+    STRIPE_API_RESPONSE_DECODING_ERROR,
+    INTERNAL_NETWORK_ERROR,
+    CONNECTION_TOKEN_PROVIDER_ERROR,
+    SESSION_EXPIRED,
+    UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION,
+    COMMAND_NOT_ALLOWED,
+    AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT,
+    OFFLINE_PAYMENTS_DATABASE_TOO_LARGE,
+    READER_CONNECTION_NOT_AVAILABLE_OFFLINE,
+    READER_CONNECTION_OFFLINE_LOCATION_MISMATCH,
+    READER_CONNECTION_OFFLINE_NEEDS_UPDATE,
+    LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE,
+    NO_LAST_SEEN_ACCOUNT,
+    INVALID_OFFLINE_CURRENCY,
+    REFUND_FAILED,
+    CARD_SWIPE_NOT_AVAILABLE,
+    INTERAC_NOT_SUPPORTED_OFFLINE,
+    ONLINE_PIN_NOT_SUPPORTED_OFFLINE,
+    OFFLINE_AND_CARD_EXPIRED,
+    OFFLINE_TRANSACTION_DECLINED,
+    OFFLINE_COLLECT_AND_CONFIRM_MISMATCH,
+    FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE,
+    FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE,
+    OFFLINE_PAYMENT_INTENT_NOT_FOUND,
+    UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE,
+    UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE_MODE_ENABLED,
+    MISSING_EMV_DATA,
+    CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING,
+    CONNECTION_TOKEN_PROVIDER_TIMED_OUT,
+    ACCOUNT_ID_MISMATCH_WHILE_FORWARDING,
+    OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED,
+    NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE,
+    TEST_CARD_IN_LIVE_MODE,
+    COLLECT_INPUTS_APPLICATION_ERROR,
+    COLLECT_INPUTS_TIMED_OUT,
+    COLLECT_INPUTS_UNSUPPORTED,
 }
 
 data class TipApi(
@@ -1294,9 +1509,7 @@ data class TippingConfigurationApi(
     val eligibleAmount: Long,
 ) {
     companion object {
-        fun deserialize(
-            serialized: List<Any?>,
-        ): TippingConfigurationApi {
+        fun deserialize(serialized: List<Any?>): TippingConfigurationApi {
             return TippingConfigurationApi(
                 eligibleAmount = (serialized[0] as Number).toLong(),
             )
@@ -1305,9 +1518,15 @@ data class TippingConfigurationApi(
 }
 
 enum class UpdateComponentApi {
-    INCREMENTAL, FIRMWARE, CONFIG, KEYS;
+    INCREMENTAL,
+    FIRMWARE,
+    CONFIG,
+    KEYS,
 }
 
 enum class UpdateTimeEstimateApi {
-    LESS_THAN_ONE_MINUTE, ONE_TO_TWO_MINUTES, TWO_TO_FIVE_MINUTES, FIVE_TO_FIFTEEN_MINUTES;
+    LESS_THAN_ONE_MINUTE,
+    ONE_TO_TWO_MINUTES,
+    TWO_TO_FIVE_MINUTES,
+    FIVE_TO_FIFTEEN_MINUTES,
 }

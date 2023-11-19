@@ -19,10 +19,11 @@ import mek.stripeterminal.createApiError
 import mek.stripeterminal.runOnMainThread
 
 class DiscoverReadersSubject {
-    private var _cancelable: Cancelable? = null
+    private var cancelable: Cancelable? = null
     private var _readers: List<Reader> = arrayListOf()
 
-    val readers: List<Reader> get() = _readers
+    val readers: List<Reader>
+        get() = _readers
 
     fun clear() {
         cancel()
@@ -30,10 +31,16 @@ class DiscoverReadersSubject {
     }
 
     @SuppressLint("MissingPermission")
-    fun onListen(sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) {
+    fun onListen(
+        sink: ControllerSink<List<ReaderApi>>,
+        configuration: DiscoveryConfigurationApi,
+    ) {
         val hostConfiguration = configuration.toHost()
         if (hostConfiguration == null) {
-            sink.error(createApiError(TerminalExceptionCodeApi.UNKNOWN, "Discovery method not supported").toPlatformError())
+            sink.error(
+                createApiError(TerminalExceptionCodeApi.UNKNOWN, "Discovery method not supported")
+                    .toPlatformError(),
+            )
             sink.endOfStream()
             return
         }
@@ -41,33 +48,40 @@ class DiscoverReadersSubject {
         // Ignore error, the previous stream can no longer receive events
         cancel()
 
-        _cancelable = Terminal.getInstance().discoverReaders(
-            config = hostConfiguration,
-            discoveryListener = object : DiscoveryListener {
-                override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
-                    _readers = readers
-                    runOnMainThread { sink.success(readers.map { it.toApi() }) }
-                }
-            },
-            callback = object : Callback {
-                override fun onFailure(e: TerminalException) = runOnMainThread {
-                    if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) return@runOnMainThread
+        cancelable =
+            Terminal.getInstance()
+                .discoverReaders(
+                    config = hostConfiguration,
+                    discoveryListener =
+                        object : DiscoveryListener {
+                            override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
+                                _readers = readers
+                                runOnMainThread { sink.success(readers.map { it.toApi() }) }
+                            }
+                        },
+                    callback =
+                        object : Callback {
+                            override fun onFailure(e: TerminalException) =
+                                runOnMainThread {
+                                    if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) {
+                                        return@runOnMainThread
+                                    }
 
-                    _cancelable = null
-                    sink.error(e.toPlatformError())
-                    sink.endOfStream()
-                }
+                                    cancelable = null
+                                    sink.error(e.toPlatformError())
+                                    sink.endOfStream()
+                                }
 
-                override fun onSuccess() = runOnMainThread { sink.endOfStream() }
-            },
-        )
+                            override fun onSuccess() = runOnMainThread { sink.endOfStream() }
+                        },
+                )
     }
 
     fun onCancel() = cancel()
 
     private fun cancel() {
-        val cancelable = _cancelable
-        _cancelable = null
+        val cancelable = cancelable
+        this.cancelable = null
         // Ignore error, flutter stream already closed
         cancelable?.cancel(EmptyCallback())
     }

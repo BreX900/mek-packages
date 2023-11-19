@@ -15,17 +15,19 @@ class ReaderReconnectionListenerPlugin(private val _handlers: TerminalHandlersAp
         reader: Reader,
         cancelReconnect: Cancelable,
     ) = runOnMainThread {
-        this.cancelReconnect = cancelReconnect;
+        this.cancelReconnect = cancelReconnect
         _handlers.readerReconnectStarted(reader.toApi())
     }
 
-    override fun onReaderReconnectFailed(reader: Reader) = runOnMainThread {
-        cancelReconnect = null
-        _handlers.readerReconnectFailed(reader.toApi())
-    }
+    override fun onReaderReconnectFailed(reader: Reader) =
+        runOnMainThread {
+            cancelReconnect = null
+            _handlers.readerReconnectFailed(reader.toApi())
+        }
 
-    override fun onReaderReconnectSucceeded(reader: Reader) = runOnMainThread {
-        cancelReconnect = null
-        _handlers.readerReconnectSucceeded(reader.toApi())
-    }
+    override fun onReaderReconnectSucceeded(reader: Reader) =
+        runOnMainThread {
+            cancelReconnect = null
+            _handlers.readerReconnectSucceeded(reader.toApi())
+        }
 }

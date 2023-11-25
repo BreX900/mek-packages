@@ -27,7 +27,7 @@ fun CardDetails.toApi(): CardDetailsApi {
         expMonth = expMonth.toLong(),
         expYear = expYear.toLong(),
         funding = fundingToApi(funding),
-        last4 = last4,
+        last4 = last4
     )
 }
 
@@ -68,7 +68,7 @@ fun CardPresentDetails.toApi(): CardPresentDetailsApi {
         receipt = receiptDetails?.toApi(),
         emvAuthData = emvAuthData,
         networks = networks?.toApi(),
-        incrementalAuthorizationStatus = incrementalAuthorizationStatus.toApi(),
+        incrementalAuthorizationStatus = incrementalAuthorizationStatus.toApi()
     )
 }
 
@@ -81,17 +81,15 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
         applicationCryptogram = applicationCryptogram,
         dedicatedFileName = dedicatedFileName,
         transactionStatusInformation = tsi,
-        terminalVerificationResults = tvr,
+        terminalVerificationResults = tvr
     )
 }
 
 fun CardNetworks.toApi(): CardNetworksApi {
     return CardNetworksApi(
         available =
-            available.map {
-                cardBrandToApi(it)!!
-            },
-        preferred = preferred,
+        available.map { cardBrandToApi(it)!! },
+        preferred = preferred
     )
 }
 

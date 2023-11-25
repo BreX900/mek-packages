@@ -11,6 +11,6 @@ fun PaymentMethod.toApi(): PaymentMethodApi {
         cardPresent = cardPresentDetails?.toApi(),
         interacPresent = interacPresentDetails?.toApi(),
         customerId = customer,
-        metadata = metadata?.toHashMap() ?: hashMapOf(),
+        metadata = metadata?.toHashMap() ?: hashMapOf()
     )
 }

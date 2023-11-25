@@ -70,11 +70,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.BLUETOOTH_ADMIN
             )
         } else {
             arrayOf(
-                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.BLUETOOTH_ADMIN
             )
         }
 
@@ -86,7 +86,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         if (permissionStatus.contains(PackageManager.PERMISSION_DENIED)) {
             throw createApiError(
                 TerminalExceptionCodeApi.UNKNOWN,
-                "You have declined the necessary permission, please allow from settings to continue.",
+                "You have declined the necessary permission, " +
+                    "please allow from settings to continue."
             )
                 .toPlatformError()
         }
@@ -104,7 +105,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             activity!!.applicationContext,
             if (shouldPrintLogs) LogLevel.VERBOSE else LogLevel.NONE,
             delegate,
-            delegate,
+            delegate
         )
     }
 
@@ -123,7 +124,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
     override fun onSupportsReadersOfType(
         deviceType: DeviceTypeApi?,
-        discoveryConfiguration: DiscoveryConfigurationApi,
+        discoveryConfiguration: DiscoveryConfigurationApi
     ): Boolean {
         val hostDeviceType =
             (if (deviceType != null) deviceType.toHost() else DeviceType.UNKNOWN) ?: return false
@@ -131,7 +132,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         val result =
             terminal.supportsReadersOfType(
                 deviceType = hostDeviceType,
-                discoveryConfiguration = hostDiscoveryConfiguration,
+                discoveryConfiguration = hostDiscoveryConfiguration
             )
         return result.isSupported
     }
@@ -140,7 +141,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
         discoverReadersController.setHandler(
             discoverReadersSubject::onListen,
-            discoverReadersSubject::onCancel,
+            discoverReadersSubject::onCancel
         )
     }
 
@@ -148,7 +149,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
+        autoReconnectOnUnexpectedDisconnect: Boolean
     ) {
         val reader = findActiveReader(serialNumber)
 
@@ -157,19 +158,16 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             ConnectionConfiguration.BluetoothConnectionConfiguration(
                 locationId = locationId,
                 autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-                bluetoothReaderReconnectionListener = readerReconnectionDelegate,
+                bluetoothReaderReconnectionListener = readerReconnectionDelegate
             ),
             readerDelegate,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            },
+            }
         )
     }
 
-    override fun onConnectHandoffReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-    ) {
+    override fun onConnectHandoffReader(result: Result<ReaderApi>, serialNumber: String) {
         val reader = findActiveReader(serialNumber)
 
         terminal.connectHandoffReader(
@@ -178,45 +176,45 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             readerDelegate,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            },
+            }
         )
     }
 
     override fun onConnectInternetReader(
         result: Result<ReaderApi>,
         serialNumber: String,
-        failIfInUse: Boolean,
+        failIfInUse: Boolean
     ) {
         val reader = findActiveReader(serialNumber)
 
         terminal.connectInternetReader(
             reader,
             ConnectionConfiguration.InternetConnectionConfiguration(
-                failIfInUse = failIfInUse,
+                failIfInUse = failIfInUse
             ),
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            },
+            }
         )
     }
 
     override fun onConnectMobileReader(
         result: Result<ReaderApi>,
         serialNumber: String,
-        locationId: String,
+        locationId: String
     ) {
         val reader = findActiveReader(serialNumber)
 
         val config =
             ConnectionConfiguration.LocalMobileConnectionConfiguration(
-                locationId = locationId,
+                locationId = locationId
             )
         terminal.connectLocalMobileReader(
             reader,
             config,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            },
+            }
         )
     }
 
@@ -224,7 +222,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
+        autoReconnectOnUnexpectedDisconnect: Boolean
     ) {
         val reader = findActiveReader(serialNumber)
 
@@ -233,12 +231,12 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             ConnectionConfiguration.UsbConnectionConfiguration(
                 locationId = locationId,
                 autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-                usbReaderReconnectionListener = readerReconnectionDelegate,
+                usbReaderReconnectionListener = readerReconnectionDelegate
             ),
             readerDelegate,
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            },
+            }
         )
     }
 
@@ -251,7 +249,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         readerReconnectionDelegate.cancelReconnect?.cancel(
             object : Callback, TerminalErrorHandler(result::error) {
                 override fun onSuccess() = result.success(Unit)
-            },
+            }
         )
     }
 
@@ -259,7 +257,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<List<LocationApi>>,
         endingBefore: String?,
         limit: Long?,
-        startingAfter: String?,
+        startingAfter: String?
     ) {
         val params = ListLocationsParameters.Builder()
         params.endingBefore = endingBefore
@@ -268,11 +266,9 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         terminal.listLocations(
             params.build(),
             object : TerminalErrorHandler(result::error), LocationListCallback {
-                override fun onSuccess(
-                    locations: List<Location>,
-                    hasMore: Boolean,
-                ) = result.success(locations.map { it.toApi() })
-            },
+                override fun onSuccess(locations: List<Location>, hasMore: Boolean) =
+                    result.success(locations.map { it.toApi() })
+            }
         )
     }
 
@@ -285,7 +281,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         readerDelegate.cancelUpdate?.cancel(
             object : Callback, TerminalErrorHandler(result::error) {
                 override fun onSuccess() = result.success(Unit)
-            },
+            }
         )
     }
 
@@ -293,7 +289,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         terminal.disconnectReader(
             object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
-            },
+            }
         )
     }
 
@@ -309,24 +305,21 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
     override fun onCreatePaymentIntent(
         result: Result<PaymentIntentApi>,
-        parameters: PaymentIntentParametersApi,
+        parameters: PaymentIntentParametersApi
     ) {
         terminal.createPaymentIntent(
             params = parameters.toHost(),
             callback =
-                object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                    override fun onSuccess(paymentIntent: PaymentIntent) {
-                        paymentIntents[paymentIntent.id!!] = paymentIntent
-                        result.success(paymentIntent.toApi())
-                    }
-                },
+            object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+                override fun onSuccess(paymentIntent: PaymentIntent) {
+                    paymentIntents[paymentIntent.id!!] = paymentIntent
+                    result.success(paymentIntent.toApi())
+                }
+            }
         )
     }
 
-    override fun onRetrievePaymentIntent(
-        result: Result<PaymentIntentApi>,
-        clientSecret: String,
-    ) {
+    override fun onRetrievePaymentIntent(result: Result<PaymentIntentApi>, clientSecret: String) {
         terminal.retrievePaymentIntent(
             clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
@@ -334,7 +327,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     paymentIntents[paymentIntent.id!!] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
-            },
+            }
         )
     }
 
@@ -347,7 +340,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         skipTipping: Boolean,
         tippingConfiguration: TippingConfigurationApi?,
         shouldUpdatePaymentIntent: Boolean,
-        customerCancellationEnabled: Boolean,
+        customerCancellationEnabled: Boolean
     ) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
         val config =
@@ -362,38 +355,32 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 paymentIntent,
                 config = config.build(),
                 callback =
-                    object : TerminalErrorHandler(result::error), PaymentIntentCallback {
-                        override fun onFailure(e: TerminalException) {
-                            cancelablesCollectPaymentMethod.remove(operationId)
-                            super.onFailure(e)
-                        }
+                object : TerminalErrorHandler(result::error), PaymentIntentCallback {
+                    override fun onFailure(e: TerminalException) {
+                        cancelablesCollectPaymentMethod.remove(operationId)
+                        super.onFailure(e)
+                    }
 
-                        override fun onSuccess(paymentIntent: PaymentIntent) {
-                            cancelablesCollectPaymentMethod.remove(operationId)
-                            result.success(paymentIntent.toApi())
-                            paymentIntents[paymentIntent.id!!] = paymentIntent
-                        }
-                    },
+                    override fun onSuccess(paymentIntent: PaymentIntent) {
+                        cancelablesCollectPaymentMethod.remove(operationId)
+                        result.success(paymentIntent.toApi())
+                        paymentIntents[paymentIntent.id!!] = paymentIntent
+                    }
+                }
             )
     }
 
-    override fun onStopCollectPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    ) {
+    override fun onStopCollectPaymentMethod(result: Result<Unit>, operationId: Long) {
         cancelablesCollectPaymentMethod
             .remove(operationId)
             ?.cancel(
                 object : TerminalErrorHandler(result::error), Callback {
                     override fun onSuccess() = result.success(Unit)
-                },
+                }
             )
     }
 
-    override fun onConfirmPaymentIntent(
-        result: Result<PaymentIntentApi>,
-        paymentIntentId: String,
-    ) {
+    override fun onConfirmPaymentIntent(result: Result<PaymentIntentApi>, paymentIntentId: String) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
         terminal.confirmPaymentIntent(
             paymentIntent,
@@ -410,14 +397,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     paymentIntents.remove(paymentIntent.id)
                     result.success(paymentIntent.toApi())
                 }
-            },
+            }
         )
     }
 
-    override fun onCancelPaymentIntent(
-        result: Result<PaymentIntentApi>,
-        paymentIntentId: String,
-    ) {
+    override fun onCancelPaymentIntent(result: Result<PaymentIntentApi>, paymentIntentId: String) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
         terminal.cancelPaymentIntent(
             paymentIntent,
@@ -426,7 +410,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     paymentIntents.remove(paymentIntentId)
                     result.success(paymentIntent.toApi())
                 }
-            },
+            }
         )
     }
     // endregion
@@ -441,7 +425,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         metadata: HashMap<String, String>?,
         onBehalfOf: String?,
         description: String?,
-        usage: SetupIntentUsageApi?,
+        usage: SetupIntentUsageApi?
     ) {
         terminal.createSetupIntent(
             SetupIntentParameters.Builder()
@@ -456,14 +440,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     setupIntents[setupIntent.id] = setupIntent
                     result.success(setupIntent.toApi())
                 }
-            },
+            }
         )
     }
 
-    override fun onRetrieveSetupIntent(
-        result: Result<SetupIntentApi>,
-        clientSecret: String,
-    ) {
+    override fun onRetrieveSetupIntent(result: Result<SetupIntentApi>, clientSecret: String) {
         terminal.retrieveSetupIntent(
             clientSecret,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
@@ -471,7 +452,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     setupIntents[setupIntent.id] = setupIntent
                     result.success(setupIntent.toApi())
                 }
-            },
+            }
         )
     }
 
@@ -480,7 +461,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         operationId: Long,
         setupIntentId: String,
         customerConsentCollected: Boolean,
-        customerCancellationEnabled: Boolean,
+        customerCancellationEnabled: Boolean
     ) {
         val setupIntent = findSetupIntent(setupIntentId)
         val config =
@@ -493,38 +474,32 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 customerConsentCollected = customerConsentCollected,
                 config = config.build(),
                 callback =
-                    object : TerminalErrorHandler(result::error), SetupIntentCallback {
-                        override fun onFailure(e: TerminalException) {
-                            cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
-                            super.onFailure(e)
-                        }
+                object : TerminalErrorHandler(result::error), SetupIntentCallback {
+                    override fun onFailure(e: TerminalException) {
+                        cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
+                        super.onFailure(e)
+                    }
 
-                        override fun onSuccess(setupIntent: SetupIntent) {
-                            cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
-                            setupIntents[setupIntent.id] = setupIntent
-                            result.success(setupIntent.toApi())
-                        }
-                    },
+                    override fun onSuccess(setupIntent: SetupIntent) {
+                        cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
+                        setupIntents[setupIntent.id] = setupIntent
+                        result.success(setupIntent.toApi())
+                    }
+                }
             )
     }
 
-    override fun onStopCollectSetupIntentPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    ) {
+    override fun onStopCollectSetupIntentPaymentMethod(result: Result<Unit>, operationId: Long) {
         cancelablesCollectSetupIntentPaymentMethod
             .remove(operationId)
             ?.cancel(
                 object : TerminalErrorHandler(result::error), Callback {
                     override fun onSuccess() = result.success(Unit)
-                },
+                }
             )
     }
 
-    override fun onConfirmSetupIntent(
-        result: Result<SetupIntentApi>,
-        setupIntentId: String,
-    ) {
+    override fun onConfirmSetupIntent(result: Result<SetupIntentApi>, setupIntentId: String) {
         val setupIntent = findSetupIntent(setupIntentId)
         terminal.confirmSetupIntent(
             setupIntent,
@@ -533,14 +508,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     setupIntents[setupIntent.id] = setupIntent
                     result.success(setupIntent.toApi())
                 }
-            },
+            }
         )
     }
 
-    override fun onCancelSetupIntent(
-        result: Result<SetupIntentApi>,
-        setupIntentId: String,
-    ) {
+    override fun onCancelSetupIntent(result: Result<SetupIntentApi>, setupIntentId: String) {
         val setupIntent = findSetupIntent(setupIntentId)
         terminal.cancelSetupIntent(
             setupIntent,
@@ -550,7 +522,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     setupIntents.remove(setupIntent.id)
                     result.success(setupIntent.toApi())
                 }
-            },
+            }
         )
     }
     // endregion
@@ -567,7 +539,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         metadata: HashMap<String, String>?,
         reverseTransfer: Boolean?,
         refundApplicationFee: Boolean?,
-        customerCancellationEnabled: Boolean,
+        customerCancellationEnabled: Boolean
     ) {
         val config =
             RefundConfiguration.Builder().setEnableCustomerCancellation(customerCancellationEnabled)
@@ -577,7 +549,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 RefundParameters.Builder(
                     chargeId = chargeId,
                     amount = amount,
-                    currency = currency,
+                    currency = currency
                 )
                     .let {
                         metadata?.let(it::setMetadata)
@@ -585,32 +557,30 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                         refundApplicationFee?.let(it::setRefundApplicationFee)
                         it.build()
                     },
+
                 config = config.build(),
                 callback =
-                    object : TerminalErrorHandler(result::error), Callback {
-                        override fun onFailure(e: TerminalException) {
-                            cancelablesCollectRefundPaymentMethod.remove(operationId)
-                            super.onFailure(e)
-                        }
+                object : TerminalErrorHandler(result::error), Callback {
+                    override fun onFailure(e: TerminalException) {
+                        cancelablesCollectRefundPaymentMethod.remove(operationId)
+                        super.onFailure(e)
+                    }
 
-                        override fun onSuccess() {
-                            cancelablesCollectRefundPaymentMethod.remove(operationId)
-                            result.success(Unit)
-                        }
-                    },
+                    override fun onSuccess() {
+                        cancelablesCollectRefundPaymentMethod.remove(operationId)
+                        result.success(Unit)
+                    }
+                }
             )
     }
 
-    override fun onStopCollectRefundPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    ) {
+    override fun onStopCollectRefundPaymentMethod(result: Result<Unit>, operationId: Long) {
         cancelablesCollectRefundPaymentMethod
             .remove(operationId)
             ?.cancel(
                 object : TerminalErrorHandler(result::error), Callback {
                     override fun onSuccess() = result.success(Unit)
-                },
+                }
             )
     }
 
@@ -618,21 +588,18 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         terminal.confirmRefund(
             object : TerminalErrorHandler(result::error), RefundCallback {
                 override fun onSuccess(refund: Refund) = result.success(refund.toApi())
-            },
+            }
         )
     }
     // endregion
 
     // region Display information to customers
-    override fun onSetReaderDisplay(
-        result: Result<Unit>,
-        cart: CartApi,
-    ) {
+    override fun onSetReaderDisplay(result: Result<Unit>, cart: CartApi) {
         terminal.setReaderDisplay(
             cart.toHost(),
             object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
-            },
+            }
         )
     }
 
@@ -640,7 +607,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         terminal.clearReaderDisplay(
             object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
-            },
+            }
         )
     }
     // endregion

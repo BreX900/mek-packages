@@ -26,15 +26,14 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         created = created,
         status = status!!.toApi(),
         amount = amount.toDouble(),
-        captureMethod =
-            when (captureMethod!!) {
-                "automatic" -> CaptureMethodApi.AUTOMATIC
-                "manual" -> CaptureMethodApi.MANUAL
-                else ->
-                    throw IllegalArgumentException(
-                        "Not supported CaptureMethod '$captureMethod' on PaymentIntent $id",
-                    )
-            },
+        captureMethod = when (captureMethod!!) {
+            "automatic" -> CaptureMethodApi.AUTOMATIC
+            "manual" -> CaptureMethodApi.MANUAL
+            else ->
+                throw IllegalArgumentException(
+                    "Not supported CaptureMethod '$captureMethod' on PaymentIntent $id"
+                )
+        },
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
         charges = getCharges().map { it.toApi() },
@@ -52,25 +51,23 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         canceledAt = canceledAt,
         cancellationReason = cancellationReason,
         clientSecret = clientSecret,
-        confirmationMethod =
-            when (confirmationMethod) {
-                "automatic" -> ConfirmationMethodApi.AUTOMATIC
-                "manual" -> ConfirmationMethodApi.MANUAL
-                else -> null
-            },
+        confirmationMethod = when (confirmationMethod) {
+            "automatic" -> ConfirmationMethodApi.AUTOMATIC
+            "manual" -> ConfirmationMethodApi.MANUAL
+            else -> null
+        },
         description = description,
         invoiceId = invoice,
         onBehalfOf = onBehalfOf,
         receiptEmail = receiptEmail,
         reviewId = review,
-        setupFutureUsage =
-            when (setupFutureUsage) {
-                "on_session" -> PaymentIntentUsageApi.ON_SESSION
-                "off_session" -> PaymentIntentUsageApi.OFF_SESSION
-                else -> null
-            },
+        setupFutureUsage = when (setupFutureUsage) {
+            "on_session" -> PaymentIntentUsageApi.ON_SESSION
+            "off_session" -> PaymentIntentUsageApi.OFF_SESSION
+            else -> null
+        },
         transferGroup = transferGroup,
-        customerId = customer,
+        customerId = customer
     )
 }
 
@@ -87,7 +84,7 @@ fun PaymentIntentStatus.toApi(): PaymentIntentStatusApi {
 
 fun AmountDetails.toApi(): AmountDetailsApi {
     return AmountDetailsApi(
-        tip = tip?.toApi(),
+        tip = tip?.toApi()
     )
 }
 
@@ -105,19 +102,18 @@ fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
         PaymentIntentParameters.Builder(
             amount = amount,
             currency = currency,
-            captureMethod =
-                when (captureMethod) {
-                    CaptureMethodApi.MANUAL -> CaptureMethod.Manual
-                    CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
-                },
+            captureMethod = when (captureMethod) {
+                CaptureMethodApi.MANUAL -> CaptureMethod.Manual
+                CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
+            },
             allowedPaymentMethodTypes =
-                paymentMethodTypes.map {
-                    when (it) {
-                        PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
-                        PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
-                        PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
-                    }
-                },
+            paymentMethodTypes.map {
+                when (it) {
+                    PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
+                    PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD
+                    PaymentMethodTypeApi.INTERACT_PRESENT -> PaymentMethodType.INTERAC_PRESENT
+                }
+            }
         )
     b.setMetadata(metadata)
     description?.let(b::setDescription)

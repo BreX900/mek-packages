@@ -14,14 +14,13 @@ fun Refund.toApi(): RefundApi {
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: HashMap(),
         reason = reason,
-        status =
-            when (status) {
-                "succeeded" -> RefundStatusApi.SUCCEEDED
-                "pending" -> RefundStatusApi.PENDING
-                "failed" -> RefundStatusApi.FAILED
-                else -> null
-            },
+        status = when (status) {
+            "succeeded" -> RefundStatusApi.SUCCEEDED
+            "pending" -> RefundStatusApi.PENDING
+            "failed" -> RefundStatusApi.FAILED
+            else -> null
+        },
         paymentMethodDetails = paymentMethodDetails?.toApi(),
-        failureReason = failureReason,
+        failureReason = failureReason
     )
 }

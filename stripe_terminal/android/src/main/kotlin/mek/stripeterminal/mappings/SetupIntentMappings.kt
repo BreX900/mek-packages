@@ -24,7 +24,7 @@ fun SetupIntent.toApi(): SetupIntentApi {
         metadata = metadata.toHashMap(),
         usage = usage!!.toApi(),
         status = status!!.toApi(),
-        latestAttempt = latestAttempt?.toApi(),
+        latestAttempt = latestAttempt?.toApi()
     )
 }
 
@@ -56,7 +56,7 @@ fun SetupAttempt.toApi(): SetupAttemptApi {
         paymentMethodId = paymentMethodId,
         paymentMethodDetails = paymentMethodDetails.toApi(),
         setupIntentId = setupIntentId!!,
-        status = status.toApi(),
+        status = status.toApi()
     )
 }
 
@@ -74,14 +74,14 @@ fun SetupAttemptStatus.toApi(): SetupAttemptStatusApi {
 fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi {
     return SetupAttemptPaymentMethodDetailsApi(
         cardPresent = cardPresentDetails?.toApi(),
-        interacPresent = interacPresentDetails?.toApi(),
+        interacPresent = interacPresentDetails?.toApi()
     )
 }
 
 fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
     return SetupAttemptCardPresentDetailsApi(
         emvAuthData = emvAuthData!!,
-        generatedCard = generatedCard!!,
+        generatedCard = generatedCard!!
     )
 }
 

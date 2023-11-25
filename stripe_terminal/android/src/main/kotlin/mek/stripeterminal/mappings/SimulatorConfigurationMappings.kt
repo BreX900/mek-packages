@@ -13,7 +13,7 @@ fun SimulatorConfigurationApi.toHost(): SimulatorConfiguration {
     return SimulatorConfiguration(
         update = update.toHost(),
         simulatedCard = simulatedCard.toHost(),
-        simulatedTipAmount = simulatedTipAmount,
+        simulatedTipAmount = simulatedTipAmount
     )
 }
 

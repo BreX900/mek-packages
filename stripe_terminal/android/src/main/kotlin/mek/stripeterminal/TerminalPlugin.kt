@@ -48,6 +48,7 @@ import mek.stripeterminal.api.RefundApi
 import mek.stripeterminal.api.Result
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
+import mek.stripeterminal.api.SimulatorConfigurationApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
 import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.api.TerminalPlatformApi
@@ -295,6 +296,10 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             },
         )
     }
+
+    override fun onSetSimulatorConfiguration(configuration: SimulatorConfigurationApi) {
+        Terminal.getInstance().simulatorConfiguration = configuration.toHost()
+    }
     // endregion
 
     // region Taking Payment
@@ -402,8 +407,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 }
 
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    result.success(paymentIntent.toApi())
                     paymentIntents.remove(paymentIntent.id)
+                    result.success(paymentIntent.toApi())
                 }
             },
         )

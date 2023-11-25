@@ -1,4 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:one_for_all/one_for_all.dart';
 import 'package:one_for_all_generator/one_for_all_generator.dart';
@@ -131,7 +133,7 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
 
   final List<SerializableClassHandler>? children;
 
-  const SerializableClassHandler({
+  SerializableClassHandler({
     required super.element,
     required super.kotlinGeneration,
     required super.swiftGeneration,
@@ -163,6 +165,13 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
     );
   }
 
+  late final List<SerializableParamHandler> params = (flutterToHost
+          ? element.fields
+              .where((e) => !e.isStatic && e.isFinal && !e.hasInitializer)
+              .map(SerializableParamHandler.fromField)
+          : element.unnamedConstructor!.parameters.map(SerializableParamHandler.fromParameter))
+      .sortedBy((e) => e.name);
+
   @override
   SerializableClassHandler apply({
     bool flutterToHost = false,
@@ -179,6 +188,22 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
           .toList(),
     );
   }
+}
+
+class SerializableParamHandler {
+  final DartType type;
+  final String name;
+  final String? defaultValueCode;
+
+  SerializableParamHandler.fromParameter(ParameterElement element)
+      : type = element.type,
+        name = element.name,
+        defaultValueCode = element.defaultValueCode;
+
+  SerializableParamHandler.fromField(FieldElement element)
+      : type = element.type,
+        name = element.name,
+        defaultValueCode = null;
 }
 
 class SerializableEnumHandler extends SerializableHandler {

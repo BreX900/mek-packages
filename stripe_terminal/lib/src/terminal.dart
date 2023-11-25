@@ -11,6 +11,7 @@ import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
+import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
@@ -260,6 +261,11 @@ class Terminal {
 
   /// Attempts to disconnect from the currently connected reader.
   Future<void> disconnectReader() async => await _platform.disconnectReader();
+
+  /// The simulator configuration settings that will be used when connecting to and creating payments
+  /// with a simulated reader.
+  Future<void> setSimulatorConfiguration(SimulatorConfiguration configuration) async =>
+      await _platform.setSimulatorConfiguration(configuration);
 //endregion
 
 //region Taking payments

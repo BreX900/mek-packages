@@ -15,6 +15,7 @@ import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
+import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
@@ -28,54 +29,46 @@ part 'terminal_platform.api.dart';
   kotlinMethod: MethodApiType.callbacks,
   swiftMethod: MethodApiType.async,
 )
-class TerminalPlatform extends _$TerminalPlatform {
+abstract class TerminalPlatform {
+  factory TerminalPlatform() = _$TerminalPlatform;
+
   @MethodApi(kotlin: MethodApiType.sync)
-  @override
   Future<void> init({required bool shouldPrintLogs});
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<void> clearCachedCredentials();
 
 //region Reader discovery, connection and updates
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<ConnectionStatus> getConnectionStatus();
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<bool> supportsReadersOfType({
     required DeviceType? deviceType,
     required DiscoveryConfiguration discoveryConfiguration,
   });
 
-  @override
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration configuration);
 
-  @override
   Future<Reader> connectBluetoothReader(
     String serialNumber, {
     required String locationId,
     required bool autoReconnectOnUnexpectedDisconnect,
   });
 
-  @override
   Future<Reader> connectHandoffReader(String serialNumber);
 
-  @override
   Future<Reader> connectInternetReader(
     String serialNumber, {
     required bool failIfInUse,
   });
 
-  @override
   Future<Reader> connectMobileReader(
     String serialNumber, {
     required String locationId,
   });
 
-  @override
   Future<Reader> connectUsbReader(
     String serialNumber, {
     required String locationId,
@@ -83,13 +76,10 @@ class TerminalPlatform extends _$TerminalPlatform {
   });
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<Reader?> getConnectedReader();
 
-  @override
   Future<void> cancelReaderReconnection();
 
-  @override
   Future<List<Location>> listLocations({
     required String? endingBefore,
     required int? limit,
@@ -97,29 +87,25 @@ class TerminalPlatform extends _$TerminalPlatform {
   });
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<void> installAvailableUpdate();
 
-  @override
   Future<void> cancelReaderUpdate();
 
-  @override
   Future<void> disconnectReader();
+
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
+  Future<void> setSimulatorConfiguration(SimulatorConfiguration configuration);
 //endregion
 
 //region Taking payments
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  @override
   Future<PaymentStatus> getPaymentStatus();
 
-  @override
   Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters);
 
-  @override
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret);
 
   @MethodApi(swift: MethodApiType.callbacks)
-  @override
   Future<PaymentIntent> startCollectPaymentMethod({
     required int operationId,
     required String paymentIntentId,
@@ -129,18 +115,15 @@ class TerminalPlatform extends _$TerminalPlatform {
     required bool customerCancellationEnabled,
   });
 
-  @override
   Future<void> stopCollectPaymentMethod(int operationId);
 
-  @override
   Future<PaymentIntent> confirmPaymentIntent(String paymentIntentId);
 
-  @override
   Future<PaymentIntent> cancelPaymentIntent(String paymentIntentId);
 //endregion
 
 //region Saving payment details for later use
-  @override
+
   Future<SetupIntent> createSetupIntent({
     required String? customerId,
     required Map<String, String>? metadata,
@@ -149,11 +132,9 @@ class TerminalPlatform extends _$TerminalPlatform {
     required SetupIntentUsage? usage,
   });
 
-  @override
   Future<SetupIntent> retrieveSetupIntent(String clientSecret);
 
   @MethodApi(swift: MethodApiType.callbacks)
-  @override
   Future<SetupIntent> startCollectSetupIntentPaymentMethod({
     required int operationId,
     required String setupIntentId,
@@ -161,18 +142,15 @@ class TerminalPlatform extends _$TerminalPlatform {
     required bool customerCancellationEnabled,
   });
 
-  @override
   Future<void> stopCollectSetupIntentPaymentMethod(int operationId);
 
-  @override
   Future<SetupIntent> confirmSetupIntent(String setupIntentId);
 
-  @override
   Future<SetupIntent> cancelSetupIntent(String setupIntentId);
 //endregion
 
 //region Card-present refunds
-  @override
+
   @MethodApi(swift: MethodApiType.callbacks)
   Future<void> startCollectRefundPaymentMethod({
     required int operationId,
@@ -185,18 +163,15 @@ class TerminalPlatform extends _$TerminalPlatform {
     required bool customerCancellationEnabled,
   });
 
-  @override
   Future<void> stopCollectRefundPaymentMethod(int operationId);
 
-  @override
   Future<Refund> confirmRefund();
 //endregion
 
 //region Display information to customers
-  @override
+
   Future<void> setReaderDisplay(Cart cart);
 
-  @override
   Future<void> clearReaderDisplay();
 //endregion
 

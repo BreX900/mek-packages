@@ -1,3 +1,6 @@
+
+## 3.2.0
+- feat: Added to `Terminal.setSimulatorConfiguration` method
 - chore(android): Replaced `compileSdkVersion` with `compileSdk` and bumped version to `34`
 - chore(android): Bumped tools gradle version to `8.1.3`
 - feat: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#320---2023-11-15)

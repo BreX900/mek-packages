@@ -34,6 +34,7 @@ class DartApiBuilder extends ApiBuilder {
 
   void _updateHostApiMethod(MethodElement e, MethodBuilder b) {
     b
+      ..annotations.add(CodeExpression(Code('override')))
       ..returns = Reference('${e.returnType}')
       ..name = e.name
       ..requiredParameters.addAll(e.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
@@ -54,6 +55,7 @@ class DartApiBuilder extends ApiBuilder {
 
     _library.body.add(Class((b) => b
       ..name = '_\$${codecs.encodeName(element.name)}'
+      ..implements.add(Reference(element.name))
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
@@ -147,8 +149,8 @@ channel.setMethodCallHandler((call) async {
 
   @override
   void writeSerializableClass(SerializableClassHandler handler, {bool withName = false}) {
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
-    final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
+        handler;
 
     final serializedRef = const Reference('List<Object?>');
     final deserializedRef = Reference(element.name);
@@ -184,7 +186,7 @@ channel.setMethodCallHandler((call) async {
         ..lambda = true
         ..body = Code('[${[
           if (withName) '\'${element.name}\'',
-          ...fields.map((e) {
+          ...params.map((e) {
             return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
           }),
         ].join(',')}]')));
@@ -198,7 +200,7 @@ channel.setMethodCallHandler((call) async {
           ..type = serializedRef
           ..name = 'serialized'))
         ..lambda = true
-        ..body = Code('${element.name}(${fields.mapIndexed((i, e) {
+        ..body = Code('${element.name}(${params.mapIndexed((i, e) {
           return '${e.name}: ${codecs.encodeDeserialization(e.type, 'serialized[$i]')}';
         }).join(',')})')));
     }

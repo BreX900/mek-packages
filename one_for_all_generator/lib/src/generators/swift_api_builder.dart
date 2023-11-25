@@ -414,8 +414,8 @@ return try await withCheckedThrowingContinuation { continuation in
   @override
   void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
     if (!handler.swiftGeneration) return;
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
-    final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
+        handler;
 
     if (children != null) {
       _specs.add(SwiftProtocol(
@@ -451,7 +451,7 @@ return try await withCheckedThrowingContinuation { continuation in
     _specs.add(SwiftStruct(
       name: codecs.encodeName(element.name),
       implements: [if (extend != null) codecs.encodeName(extend.name)],
-      fields: fields.map((e) {
+      fields: params.map((e) {
         return SwiftField(
           name: _encodeVarName(e.name),
           type: codecs.encodeType(e.type),
@@ -462,7 +462,7 @@ return try await withCheckedThrowingContinuation { continuation in
           SwiftMethod(
             name: 'serialize',
             returns: '[Any?]',
-            body: 'return [\n${fields.map((e) {
+            body: 'return [\n${params.map((e) {
               return '    ${codecs.encodeSerialization(e.type, _encodeVarName(e.name))},\n';
             }).join()}]',
           ),
@@ -478,7 +478,7 @@ return try await withCheckedThrowingContinuation { continuation in
               ),
             ],
             returns: codecs.encodeType(element.thisType),
-            body: 'return ${codecs.encodeName(element.name)}(\n${fields.mapIndexed((i, e) {
+            body: 'return ${codecs.encodeName(element.name)}(\n${params.mapIndexed((i, e) {
               return '    ${_encodeVarName(e.name)}: ${codecs.encodeDeserialization(e.type, 'serialized[$i]')}';
             }).join(',\n')}\n)',
           ),

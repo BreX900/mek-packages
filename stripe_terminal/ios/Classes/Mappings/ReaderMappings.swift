@@ -5,15 +5,15 @@ import StripeTerminal
 extension Reader {
     func toApi() -> ReaderApi {
         return ReaderApi(
-            locationStatus: locationStatus.toApi(),
-            deviceType: deviceType.toApi(),
-            simulated: simulated,
-            locationId: locationId,
-            location: location?.toApi(),
-            serialNumber: serialNumber,
             availableUpdate: availableUpdate != nil,
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
-            label: label
+            deviceType: deviceType.toApi(),
+            label: label,
+            location: location?.toApi(),
+            locationId: locationId,
+            locationStatus: locationStatus.toApi(),
+            serialNumber: serialNumber,
+            simulated: simulated
         )
     }
 }

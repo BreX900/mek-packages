@@ -75,13 +75,13 @@ fun CardPresentDetails.toApi(): CardPresentDetailsApi {
 fun ReceiptDetails.toApi(): ReceiptDetailsApi {
     return ReceiptDetailsApi(
         accountType = accountType,
-        applicationPreferredName = applicationPreferredName!!,
+        applicationPreferredName = applicationPreferredName,
         authorizationCode = authorizationCode,
         authorizationResponseCode = authorizationResponseCode!!,
-        applicationCryptogram = applicationCryptogram!!,
-        dedicatedFileName = dedicatedFileName!!,
-        transactionStatusInformation = tsi!!,
-        terminalVerificationResults = tvr!!,
+        applicationCryptogram = applicationCryptogram,
+        dedicatedFileName = dedicatedFileName,
+        transactionStatusInformation = tsi,
+        terminalVerificationResults = tvr,
     )
 }
 

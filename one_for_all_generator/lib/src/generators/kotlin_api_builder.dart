@@ -371,8 +371,8 @@ return suspendCoroutine { continuation ->
   @override
   void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
     if (!handler.kotlinGeneration) return;
-    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :children) = handler;
-    final fields = element.fields.where((e) => !e.isStatic && e.isFinal && !e.hasInitializer);
+    final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
+        handler;
 
     if (children != null) {
       _specs.add(KotlinClass(
@@ -411,10 +411,10 @@ return suspendCoroutine { continuation ->
     }
 
     _specs.add(KotlinClass(
-      modifier: fields.isNotEmpty ? KotlinClassModifier.data : null,
+      modifier: params.isNotEmpty ? KotlinClassModifier.data : null,
       name: codecs.encodeName(element.name),
       extend: extend != null ? '${codecs.encodeName(extend.name)}()' : null,
-      initializers: fields.map((e) {
+      initializers: params.map((e) {
         return KotlinField(
           name: _encodeVarName(e.name),
           type: codecs.encodeType(e.type),
@@ -425,7 +425,7 @@ return suspendCoroutine { continuation ->
           KotlinMethod(
             name: 'serialize',
             returns: 'List<Any?>',
-            body: 'return listOf(\n${fields.map((e) {
+            body: 'return listOf(\n${params.map((e) {
               return '    ${codecs.encodeSerialization(e.type, _encodeVarName(e.name))},\n';
             }).join()})',
           ),
@@ -443,7 +443,7 @@ return suspendCoroutine { continuation ->
                   ),
                 ],
                 returns: codecs.encodeType(element.thisType),
-                body: 'return ${codecs.encodeName(element.name)}(\n${fields.mapIndexed((i, e) {
+                body: 'return ${codecs.encodeName(element.name)}(\n${params.mapIndexed((i, e) {
                   return '    ${_encodeVarName(e.name)} = ${codecs.encodeDeserialization(e.type, 'serialized[$i]')},\n';
                 }).join()})',
               ),

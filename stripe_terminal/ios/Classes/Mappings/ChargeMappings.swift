@@ -20,15 +20,15 @@ extension Charge {
     func toApi() -> ChargeApi {
         return ChargeApi(
             amount: amount.intValue,
+            authorizationCode: authorizationCode,
+            calculatedStatementDescriptor: calculatedStatementDescriptor,
             currency: currency,
-            status: status.toApi(),
-            paymentMethodDetails: paymentMethodDetails?.toApi(),
             description: description,
             id: stripeId,
             metadata: metadata,
+            paymentMethodDetails: paymentMethodDetails?.toApi(),
             statementDescriptorSuffix: statementDescriptorSuffix,
-            calculatedStatementDescriptor: calculatedStatementDescriptor,
-            authorizationCode: authorizationCode
+            status: status.toApi()
         )
     }
 }

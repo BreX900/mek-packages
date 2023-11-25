@@ -34,7 +34,7 @@ class Charge with _$Charge {
   final PaymentMethodDetails? paymentMethodDetails;
 
   /// A string describing the charge, displayed in the Stripe dashboard and in email receipts.
-  final String description;
+  final String? description;
 
   /// The unique identifier for the charge.
   final String id;

@@ -19,7 +19,7 @@ fun Charge.toApi(): ChargeApi {
                 else -> throw Error("Unsupported $status")
             },
         paymentMethodDetails = paymentMethodDetails?.toApi(),
-        description = description!!,
+        description = description,
         id = id,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
         statementDescriptorSuffix = statementDescriptorSuffix,

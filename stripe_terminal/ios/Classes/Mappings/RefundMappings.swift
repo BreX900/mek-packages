@@ -4,16 +4,16 @@ import StripeTerminal
 extension Refund {
     func toApi() -> RefundApi {
         return RefundApi(
-            id: stripeId,
             amount: Int(amount),
             chargeId: charge,
             created: created,
             currency: currency,
+            failureReason: failureReason,
+            id: stripeId,
             metadata: metadata,
-            reason: reason,
-            status: status.toApi(),
             paymentMethodDetails: paymentMethodDetails?.toApi(),
-            failureReason: failureReason
+            reason: reason,
+            status: status.toApi()
         )
     }
 }

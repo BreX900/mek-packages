@@ -19,11 +19,11 @@ extension NSError {
     func toApi(apiError: Error? = nil, paymentIntent: PaymentIntent? = nil) -> TerminalExceptionApi {
         let code = self.toApiCode();
         return TerminalExceptionApi(
+            apiError: apiError?.localizedDescription,
             code: code ?? TerminalExceptionCodeApi.unknown,
             message: localizedDescription,
-            stackTrace: nil,
             paymentIntent: paymentIntent?.toApi(),
-            apiError: apiError?.localizedDescription
+            stackTrace: nil
         )
     }
     

@@ -189,6 +189,12 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         }
     }
     
+    func onSetSimulatorConfiguration(_ configuration: SimulatorConfigurationApi) throws {
+        Terminal.shared.simulatorConfiguration.availableReaderUpdate = configuration.update.toHost()
+        Terminal.shared.simulatorConfiguration.simulatedCard = configuration.simulatedCard.toHost()
+        Terminal.shared.simulatorConfiguration.simulatedTipAmount = configuration.simulatedTipAmount?.nsNumberValue
+    }
+    
 // MARK: - Taking payments
     
     private var _paymentIntents: [String: PaymentIntent] = [:]

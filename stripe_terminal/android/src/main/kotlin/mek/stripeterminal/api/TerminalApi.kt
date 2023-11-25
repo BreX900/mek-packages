@@ -101,6 +101,8 @@ interface TerminalPlatformApi {
 
     fun onDisconnectReader(result: Result<Unit>)
 
+    fun onSetSimulatorConfiguration(configuration: SimulatorConfigurationApi)
+
     fun onGetPaymentStatus(): PaymentStatusApi
 
     fun onCreatePaymentIntent(
@@ -230,7 +232,9 @@ interface TerminalPlatformApi {
                 "supportsReadersOfType" -> {
                     val res =
                         onSupportsReadersOfType(
-                            (args[0] as Int?)?.let { DeviceTypeApi.values()[it] },
+                            (args[0] as Int?)?.let {
+                                DeviceTypeApi.values()[it]
+                            },
                             (args[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) },
                         )
                     result.success(res)
@@ -265,12 +269,7 @@ interface TerminalPlatformApi {
                 }
                 "listLocations" -> {
                     val res = Result<List<LocationApi>>(result) { it.map { it.serialize() } }
-                    onListLocations(
-                        res,
-                        args[0] as String?,
-                        (args[1] as? Number)?.toLong(),
-                        args[2] as String?,
-                    )
+                    onListLocations(res, args[0] as String?, (args[1] as? Number)?.toLong(), args[2] as String?)
                 }
                 "installAvailableUpdate" -> {
                     onInstallAvailableUpdate()
@@ -284,16 +283,17 @@ interface TerminalPlatformApi {
                     val res = Result<Unit>(result) { null }
                     onDisconnectReader(res)
                 }
+                "setSimulatorConfiguration" -> {
+                    onSetSimulatorConfiguration((args[0] as List<Any?>).let { SimulatorConfigurationApi.deserialize(it) })
+                    result.success(null)
+                }
                 "getPaymentStatus" -> {
                     val res = onGetPaymentStatus()
                     result.success(res.ordinal)
                 }
                 "createPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onCreatePaymentIntent(
-                        res,
-                        (args[0] as List<Any?>).let { PaymentIntentParametersApi.deserialize(it) },
-                    )
+                    onCreatePaymentIntent(res, (args[0] as List<Any?>).let { PaymentIntentParametersApi.deserialize(it) })
                 }
                 "retrievePaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
@@ -306,7 +306,9 @@ interface TerminalPlatformApi {
                         (args[0] as Number).toLong(),
                         args[1] as String,
                         args[2] as Boolean,
-                        (args[3] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) },
+                        (args[3] as List<Any?>?)?.let {
+                            TippingConfigurationApi.deserialize(it)
+                        },
                         args[4] as Boolean,
                         args[5] as Boolean,
                     )
@@ -330,9 +332,10 @@ interface TerminalPlatformApi {
                         args[0] as String?,
                         args[1]?.let {
                             hashMapOf(
-                                *(it as HashMap<*, *>)
-                                    .map { (k, v) -> k as String to v as String }
-                                    .toTypedArray(),
+                                *(it as HashMap<*, *>).map {
+                                        (k, v) ->
+                                    k as String to v as String
+                                }.toTypedArray(),
                             )
                         },
                         args[2] as String?,
@@ -369,21 +372,16 @@ interface TerminalPlatformApi {
                 "startCollectRefundPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
                     onStartCollectRefundPaymentMethod(
-                        res,
-                        (args[0] as Number).toLong(),
-                        args[1] as String,
-                        (args[2] as Number).toLong(),
-                        args[3] as String,
+                        res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String,
                         args[4]?.let {
                             hashMapOf(
-                                *(it as HashMap<*, *>)
-                                    .map { (k, v) -> k as String to v as String }
-                                    .toTypedArray(),
+                                *(it as HashMap<*, *>).map {
+                                        (k, v) ->
+                                    k as String to v as String
+                                }.toTypedArray(),
                             )
                         },
-                        args[5] as Boolean?,
-                        args[6] as Boolean?,
-                        args[7] as Boolean,
+                        args[5] as Boolean?, args[6] as Boolean?, args[7] as Boolean,
                     )
                 }
                 "stopCollectRefundPaymentMethod" -> {
@@ -432,8 +430,7 @@ interface TerminalPlatformApi {
 class DiscoverReadersControllerApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: EventChannel =
-        EventChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform#discoverReaders")
+    private val channel: EventChannel = EventChannel(binaryMessenger, "mek_stripe_terminal#TerminalPlatform#discoverReaders")
 
     fun setHandler(
         onListen: (sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) -> Unit,
@@ -447,10 +444,7 @@ class DiscoverReadersControllerApi(
                 ) {
                     val args = arguments as List<Any?>
                     val sink = ControllerSink<List<ReaderApi>>(events) { it.map { it.serialize() } }
-                    onListen(
-                        sink,
-                        (args[0] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) },
-                    )
+                    onListen(sink, (args[0] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
                 }
 
                 override fun onCancel(arguments: Any?) = onCancel()
@@ -464,8 +458,7 @@ class DiscoverReadersControllerApi(
 class TerminalHandlersApi(
     binaryMessenger: BinaryMessenger,
 ) {
-    private val channel: MethodChannel =
-        MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalHandlers")
+    private val channel: MethodChannel = MethodChannel(binaryMessenger, "mek_stripe_terminal#TerminalHandlers")
 
     fun requestConnectionToken(
         onError: (error: PlatformError) -> Unit,
@@ -517,10 +510,7 @@ class TerminalHandlersApi(
         batteryStatus: BatteryStatusApi?,
         isCharging: Boolean,
     ) {
-        channel.invokeMethod(
-            "_onReaderBatteryLevelUpdate",
-            listOf<Any?>(batteryLevel, batteryStatus?.ordinal, isCharging),
-        )
+        channel.invokeMethod("_onReaderBatteryLevelUpdate", listOf<Any?>(batteryLevel, batteryStatus?.ordinal, isCharging))
     }
 
     fun readerReportLowBatteryWarning() {
@@ -543,10 +533,7 @@ class TerminalHandlersApi(
         update: ReaderSoftwareUpdateApi?,
         exception: TerminalExceptionApi?,
     ) {
-        channel.invokeMethod(
-            "_onReaderFinishInstallingUpdate",
-            listOf<Any?>(update?.serialize(), exception?.serialize()),
-        )
+        channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
 
     fun readerReconnectFailed(reader: ReaderApi) {
@@ -659,30 +646,30 @@ enum class CardPresentCaptureMethodApi {
 
 data class CardPresentDetailsApi(
     val brand: CardBrandApi?,
+    val cardholderName: String?,
     val country: String?,
+    val emvAuthData: String?,
     val expMonth: Long,
     val expYear: Long,
     val funding: CardFundingTypeApi?,
-    val last4: String?,
-    val cardholderName: String?,
-    val emvAuthData: String?,
     val generatedCard: String?,
     val incrementalAuthorizationStatus: IncrementalAuthorizationStatusApi?,
+    val last4: String?,
     val networks: CardNetworksApi?,
     val receipt: ReceiptDetailsApi?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
             brand?.ordinal,
+            cardholderName,
             country,
+            emvAuthData,
             expMonth,
             expYear,
             funding?.ordinal,
-            last4,
-            cardholderName,
-            emvAuthData,
             generatedCard,
             incrementalAuthorizationStatus?.ordinal,
+            last4,
             networks?.serialize(),
             receipt?.serialize(),
         )
@@ -714,36 +701,33 @@ enum class CardPresentRoutingApi {
 
 data class CartApi(
     val currency: String,
+    val lineItems: List<CartLineItemApi>,
     val tax: Long,
     val total: Long,
-    val lineItems: List<CartLineItemApi>,
 ) {
     companion object {
         fun deserialize(serialized: List<Any?>): CartApi {
             return CartApi(
                 currency = serialized[0] as String,
-                tax = (serialized[1] as Number).toLong(),
-                total = (serialized[2] as Number).toLong(),
-                lineItems =
-                    (serialized[3] as List<*>).map {
-                        (it as List<Any?>).let { CartLineItemApi.deserialize(it) }
-                    },
+                lineItems = (serialized[1] as List<*>).map { (it as List<Any?>).let { CartLineItemApi.deserialize(it) } },
+                tax = (serialized[2] as Number).toLong(),
+                total = (serialized[3] as Number).toLong(),
             )
         }
     }
 }
 
 data class CartLineItemApi(
+    val amount: Long,
     val description: String,
     val quantity: Long,
-    val amount: Long,
 ) {
     companion object {
         fun deserialize(serialized: List<Any?>): CartLineItemApi {
             return CartLineItemApi(
-                description = serialized[0] as String,
-                quantity = (serialized[1] as Number).toLong(),
-                amount = (serialized[2] as Number).toLong(),
+                amount = (serialized[0] as Number).toLong(),
+                description = serialized[1] as String,
+                quantity = (serialized[2] as Number).toLong(),
             )
         }
     }
@@ -751,28 +735,28 @@ data class CartLineItemApi(
 
 data class ChargeApi(
     val amount: Long,
+    val authorizationCode: String?,
+    val calculatedStatementDescriptor: String?,
     val currency: String,
-    val status: ChargeStatusApi,
-    val paymentMethodDetails: PaymentMethodDetailsApi?,
-    val description: String,
+    val description: String?,
     val id: String,
     val metadata: HashMap<String, String>,
+    val paymentMethodDetails: PaymentMethodDetailsApi?,
     val statementDescriptorSuffix: String?,
-    val calculatedStatementDescriptor: String?,
-    val authorizationCode: String?,
+    val status: ChargeStatusApi,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
             amount,
+            authorizationCode,
+            calculatedStatementDescriptor,
             currency,
-            status.ordinal,
-            paymentMethodDetails?.serialize(),
             description,
             id,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            paymentMethodDetails?.serialize(),
             statementDescriptorSuffix,
-            calculatedStatementDescriptor,
-            authorizationCode,
+            status.ordinal,
         )
     }
 }
@@ -815,16 +799,11 @@ sealed class DiscoveryConfigurationApi {
     companion object {
         fun deserialize(serialized: List<Any?>): DiscoveryConfigurationApi {
             return when (serialized[0]) {
-                "BluetoothDiscoveryConfiguration" ->
-                    BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "BluetoothProximityDiscoveryConfiguration" ->
-                    BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "HandoffDiscoveryConfiguration" ->
-                    HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "InternetDiscoveryConfiguration" ->
-                    InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "LocalMobileDiscoveryConfiguration" ->
-                    LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "BluetoothDiscoveryConfiguration" -> BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "BluetoothProximityDiscoveryConfiguration" -> BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "HandoffDiscoveryConfiguration" -> HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "InternetDiscoveryConfiguration" -> InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "LocalMobileDiscoveryConfiguration" -> LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "UsbDiscoveryConfiguration" -> UsbDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 else -> throw Error()
             }
@@ -935,68 +914,68 @@ enum class LocationStatusApi {
 }
 
 data class PaymentIntentApi(
-    val id: String,
-    val created: Long,
-    val status: PaymentIntentStatusApi,
     val amount: Double,
-    val captureMethod: CaptureMethodApi,
-    val currency: String,
-    val metadata: HashMap<String, String>,
-    val charges: List<ChargeApi>,
-    val paymentMethod: PaymentMethodApi?,
-    val paymentMethodId: String?,
-    val amountDetails: AmountDetailsApi?,
-    val amountTip: Double?,
-    val statementDescriptor: String?,
-    val statementDescriptorSuffix: String?,
     val amountCapturable: Double?,
+    val amountDetails: AmountDetailsApi?,
     val amountReceived: Double?,
-    val applicationId: String?,
+    val amountTip: Double?,
     val applicationFeeAmount: Double?,
-    val cancellationReason: String?,
+    val applicationId: String?,
     val canceledAt: Long?,
+    val cancellationReason: String?,
+    val captureMethod: CaptureMethodApi,
+    val charges: List<ChargeApi>,
     val clientSecret: String?,
     val confirmationMethod: ConfirmationMethodApi?,
+    val created: Long,
+    val currency: String,
     val customerId: String?,
     val description: String?,
+    val id: String,
     val invoiceId: String?,
+    val metadata: HashMap<String, String>,
     val onBehalfOf: String?,
-    val reviewId: String?,
+    val paymentMethod: PaymentMethodApi?,
+    val paymentMethodId: String?,
     val receiptEmail: String?,
+    val reviewId: String?,
     val setupFutureUsage: PaymentIntentUsageApi?,
+    val statementDescriptor: String?,
+    val statementDescriptorSuffix: String?,
+    val status: PaymentIntentStatusApi,
     val transferGroup: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            id,
-            created,
-            status.ordinal,
             amount,
-            captureMethod.ordinal,
-            currency,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
-            charges.map { it.serialize() },
-            paymentMethod?.serialize(),
-            paymentMethodId,
-            amountDetails?.serialize(),
-            amountTip,
-            statementDescriptor,
-            statementDescriptorSuffix,
             amountCapturable,
+            amountDetails?.serialize(),
             amountReceived,
-            applicationId,
+            amountTip,
             applicationFeeAmount,
-            cancellationReason,
+            applicationId,
             canceledAt,
+            cancellationReason,
+            captureMethod.ordinal,
+            charges.map { it.serialize() },
             clientSecret,
             confirmationMethod?.ordinal,
+            created,
+            currency,
             customerId,
             description,
+            id,
             invoiceId,
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
             onBehalfOf,
-            reviewId,
+            paymentMethod?.serialize(),
+            paymentMethodId,
             receiptEmail,
+            reviewId,
             setupFutureUsage?.ordinal,
+            statementDescriptor,
+            statementDescriptorSuffix,
+            status.ordinal,
             transferGroup,
         )
     }
@@ -1004,52 +983,41 @@ data class PaymentIntentApi(
 
 data class PaymentIntentParametersApi(
     val amount: Long,
-    val currency: String,
+    val applicationFeeAmount: Long?,
     val captureMethod: CaptureMethodApi,
-    val paymentMethodTypes: List<PaymentMethodTypeApi>,
-    val metadata: HashMap<String, String>,
+    val currency: String,
+    val customerId: String?,
     val description: String?,
+    val metadata: HashMap<String, String>,
+    val onBehalfOf: String?,
+    val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
+    val paymentMethodTypes: List<PaymentMethodTypeApi>,
+    val receiptEmail: String?,
+    val setupFutureUsage: PaymentIntentUsageApi?,
     val statementDescriptor: String?,
     val statementDescriptorSuffix: String?,
-    val receiptEmail: String?,
-    val customerId: String?,
-    val applicationFeeAmount: Long?,
     val transferDataDestination: String?,
     val transferGroup: String?,
-    val onBehalfOf: String?,
-    val setupFutureUsage: PaymentIntentUsageApi?,
-    val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
 ) {
     companion object {
         fun deserialize(serialized: List<Any?>): PaymentIntentParametersApi {
             return PaymentIntentParametersApi(
                 amount = (serialized[0] as Number).toLong(),
-                currency = serialized[1] as String,
+                applicationFeeAmount = (serialized[1] as? Number)?.toLong(),
                 captureMethod = (serialized[2] as Int).let { CaptureMethodApi.values()[it] },
-                paymentMethodTypes =
-                    (serialized[3] as List<*>).map {
-                        (it as Int).let { PaymentMethodTypeApi.values()[it] }
-                    },
-                metadata =
-                    hashMapOf(
-                        *(serialized[4] as HashMap<*, *>)
-                            .map { (k, v) -> k as String to v as String }
-                            .toTypedArray(),
-                    ),
+                currency = serialized[3] as String,
+                customerId = serialized[4] as String?,
                 description = serialized[5] as String?,
-                statementDescriptor = serialized[6] as String?,
-                statementDescriptorSuffix = serialized[7] as String?,
-                receiptEmail = serialized[8] as String?,
-                customerId = serialized[9] as String?,
-                applicationFeeAmount = (serialized[10] as? Number)?.toLong(),
-                transferDataDestination = serialized[11] as String?,
-                transferGroup = serialized[12] as String?,
-                onBehalfOf = serialized[13] as String?,
-                setupFutureUsage = (serialized[14] as Int?)?.let { PaymentIntentUsageApi.values()[it] },
-                paymentMethodOptionsParameters =
-                    (serialized[15] as List<Any?>?)?.let {
-                        PaymentMethodOptionsParametersApi.deserialize(it)
-                    },
+                metadata = hashMapOf(*(serialized[6] as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()),
+                onBehalfOf = serialized[7] as String?,
+                paymentMethodOptionsParameters = (serialized[8] as List<Any?>?)?.let { PaymentMethodOptionsParametersApi.deserialize(it) },
+                paymentMethodTypes = (serialized[9] as List<*>).map { (it as Int).let { PaymentMethodTypeApi.values()[it] } },
+                receiptEmail = serialized[10] as String?,
+                setupFutureUsage = (serialized[11] as Int?)?.let { PaymentIntentUsageApi.values()[it] },
+                statementDescriptor = serialized[12] as String?,
+                statementDescriptorSuffix = serialized[13] as String?,
+                transferDataDestination = serialized[14] as String?,
+                transferGroup = serialized[15] as String?,
             )
         }
     }
@@ -1071,20 +1039,20 @@ enum class PaymentIntentUsageApi {
 }
 
 data class PaymentMethodApi(
-    val id: String,
     val card: CardDetailsApi?,
     val cardPresent: CardPresentDetailsApi?,
-    val interacPresent: CardPresentDetailsApi?,
     val customerId: String?,
+    val id: String,
+    val interacPresent: CardPresentDetailsApi?,
     val metadata: HashMap<String, String>,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            id,
             card?.serialize(),
             cardPresent?.serialize(),
-            interacPresent?.serialize(),
             customerId,
+            id,
+            interacPresent?.serialize(),
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
         )
     }
@@ -1108,8 +1076,7 @@ data class PaymentMethodOptionsParametersApi(
     companion object {
         fun deserialize(serialized: List<Any?>): PaymentMethodOptionsParametersApi {
             return PaymentMethodOptionsParametersApi(
-                cardPresentParameters =
-                    (serialized[0] as List<Any?>).let { CardPresentParametersApi.deserialize(it) },
+                cardPresentParameters = (serialized[0] as List<Any?>).let { CardPresentParametersApi.deserialize(it) },
             )
         }
     }
@@ -1129,27 +1096,27 @@ enum class PaymentStatusApi {
 }
 
 data class ReaderApi(
-    val locationStatus: LocationStatusApi?,
-    val deviceType: DeviceTypeApi?,
-    val simulated: Boolean,
-    val locationId: String?,
-    val location: LocationApi?,
-    val serialNumber: String,
     val availableUpdate: Boolean,
     val batteryLevel: Double,
+    val deviceType: DeviceTypeApi?,
     val label: String?,
+    val location: LocationApi?,
+    val locationId: String?,
+    val locationStatus: LocationStatusApi?,
+    val serialNumber: String,
+    val simulated: Boolean,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            locationStatus?.ordinal,
-            deviceType?.ordinal,
-            simulated,
-            locationId,
-            location?.serialize(),
-            serialNumber,
             availableUpdate,
             batteryLevel,
+            deviceType?.ordinal,
             label,
+            location?.serialize(),
+            locationId,
+            locationStatus?.ordinal,
+            serialNumber,
+            simulated,
         )
     }
 }
@@ -1203,52 +1170,52 @@ data class ReaderSoftwareUpdateApi(
 
 data class ReceiptDetailsApi(
     val accountType: String?,
-    val applicationPreferredName: String,
+    val applicationCryptogram: String?,
+    val applicationPreferredName: String?,
     val authorizationCode: String?,
     val authorizationResponseCode: String,
-    val applicationCryptogram: String,
-    val dedicatedFileName: String,
-    val transactionStatusInformation: String,
-    val terminalVerificationResults: String,
+    val dedicatedFileName: String?,
+    val terminalVerificationResults: String?,
+    val transactionStatusInformation: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
             accountType,
+            applicationCryptogram,
             applicationPreferredName,
             authorizationCode,
             authorizationResponseCode,
-            applicationCryptogram,
             dedicatedFileName,
-            transactionStatusInformation,
             terminalVerificationResults,
+            transactionStatusInformation,
         )
     }
 }
 
 data class RefundApi(
-    val id: String,
     val amount: Long,
     val chargeId: String,
     val created: Long,
     val currency: String,
+    val failureReason: String?,
+    val id: String,
     val metadata: HashMap<String, String>,
+    val paymentMethodDetails: PaymentMethodDetailsApi?,
     val reason: String?,
     val status: RefundStatusApi?,
-    val paymentMethodDetails: PaymentMethodDetailsApi?,
-    val failureReason: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            id,
             amount,
             chargeId,
             created,
             currency,
+            failureReason,
+            id,
             hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            paymentMethodDetails?.serialize(),
             reason,
             status?.ordinal,
-            paymentMethodDetails?.serialize(),
-            failureReason,
         )
     }
 }
@@ -1260,25 +1227,25 @@ enum class RefundStatusApi {
 }
 
 data class SetupAttemptApi(
-    val id: String,
     val applicationId: String?,
     val created: Long,
     val customerId: String?,
+    val id: String,
     val onBehalfOf: String?,
-    val paymentMethodId: String?,
     val paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?,
+    val paymentMethodId: String?,
     val setupIntentId: String,
     val status: SetupAttemptStatusApi,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            id,
             applicationId,
             created,
             customerId,
+            id,
             onBehalfOf,
-            paymentMethodId,
             paymentMethodDetails?.serialize(),
+            paymentMethodId,
             setupIntentId,
             status.ordinal,
         )
@@ -1319,23 +1286,23 @@ enum class SetupAttemptStatusApi {
 }
 
 data class SetupIntentApi(
-    val id: String,
     val created: Long,
     val customerId: String?,
-    val metadata: HashMap<String, String>,
-    val usage: SetupIntentUsageApi,
-    val status: SetupIntentStatusApi,
+    val id: String,
     val latestAttempt: SetupAttemptApi?,
+    val metadata: HashMap<String, String>,
+    val status: SetupIntentStatusApi,
+    val usage: SetupIntentUsageApi,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
-            id,
             created,
             customerId,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
-            usage.ordinal,
-            status.ordinal,
+            id,
             latestAttempt?.serialize(),
+            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            status.ordinal,
+            usage.ordinal,
         )
     }
 }
@@ -1354,20 +1321,88 @@ enum class SetupIntentUsageApi {
     OFF_SESSION,
 }
 
+enum class SimulateReaderUpdateApi {
+    AVAILABLE,
+    NONE,
+    REQUIRED,
+    RANDOM,
+}
+
+data class SimulatedCardApi(
+    val testCardNumber: String?,
+    val type: SimulatedCardTypeApi?,
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): SimulatedCardApi {
+            return SimulatedCardApi(
+                testCardNumber = serialized[0] as String?,
+                type = (serialized[1] as Int?)?.let { SimulatedCardTypeApi.values()[it] },
+            )
+        }
+    }
+}
+
+enum class SimulatedCardTypeApi {
+    VISA,
+    VISA_DEBIT,
+    VISA_US_COMMON_DEBIT,
+    MASTERCARD,
+    MASTER_DEBIT,
+    MASTERCARD_PREPAID,
+    AMEX,
+    AMEX2,
+    DISCOVER,
+    DISCOVER2,
+    DINERS,
+    DINERS14_DIGIT,
+    JBC,
+    UNION_PAY,
+    INTERAC,
+    EFTPOS_AU_DEBIT,
+    EFTPOS_AU_VISA_DEBIT,
+    EFTPOS_AU_DEBIT_MASTERCARD,
+    CHARGE_DECLINED,
+    CHARGE_DECLINED_INSUFFICIENT_FUNDS,
+    CHARGE_DECLINED_LOST_CARD,
+    CHARGE_DECLINED_STOLEN_CARD,
+    CHARGE_DECLINED_EXPIRED_CARD,
+    CHARGE_DECLINED_PROCESSING_ERROR,
+    ONLINE_PIN_CVM,
+    ONLINE_PIN_SCA_RETRY,
+    OFFLINE_PIN_CVM,
+    OFFLINE_PIN_SCA_RETRY,
+}
+
+data class SimulatorConfigurationApi(
+    val simulatedCard: SimulatedCardApi,
+    val simulatedTipAmount: Long?,
+    val update: SimulateReaderUpdateApi,
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): SimulatorConfigurationApi {
+            return SimulatorConfigurationApi(
+                simulatedCard = (serialized[0] as List<Any?>).let { SimulatedCardApi.deserialize(it) },
+                simulatedTipAmount = (serialized[1] as? Number)?.toLong(),
+                update = (serialized[2] as Int).let { SimulateReaderUpdateApi.values()[it] },
+            )
+        }
+    }
+}
+
 data class TerminalExceptionApi(
+    val apiError: Any?,
     val code: TerminalExceptionCodeApi,
     val message: String,
-    val stackTrace: String?,
     val paymentIntent: PaymentIntentApi?,
-    val apiError: Any?,
+    val stackTrace: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
+            apiError,
             code.ordinal,
             message,
-            stackTrace,
             paymentIntent?.serialize(),
-            apiError,
+            stackTrace,
         )
     }
 }

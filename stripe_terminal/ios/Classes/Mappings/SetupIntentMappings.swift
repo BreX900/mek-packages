@@ -4,13 +4,13 @@ import StripeTerminal
 extension SetupIntent {
     func toApi() -> SetupIntentApi {
         return SetupIntentApi(
-            id : stripeId,
             created: created,
             customerId: customer,
+            id: stripeId,
+            latestAttempt: latestAttempt?.toApi(),
             metadata: metadata ?? [:],
-            usage: usage.toApi(),
             status: status.toApi(),
-            latestAttempt: latestAttempt?.toApi()
+            usage: usage.toApi()
         )
     }
 }
@@ -69,13 +69,13 @@ extension SetupAttempt {
             fatalError()
         }
         return SetupAttemptApi(
-            id : stripeId,
             applicationId: application,
             created: created,
             customerId: customer,
+            id : stripeId,
             onBehalfOf: onBehalfOf,
-            paymentMethodId: paymentMethod,
             paymentMethodDetails: paymentMethodDetails?.toApi(),
+            paymentMethodId: paymentMethod,
             setupIntentId: setupIntent,
             status: statusApi
         )

@@ -94,10 +94,11 @@ You can see the usage example in the [example folder](example/lib/main.dart)
     );
     ```
 
-Example backend code to get the connection token written on node.js:
-    ```
+	Example backend code to get the connection token written on node.js:
+
+	```js
     import Stripe from "stripe";
-    import express from "express"
+    import express from "express";
 
     const stripe = new Stripe("sk_test_XXXXXXXXXXXXXXXXXX", {
         apiVersion: "2020-08-27"
@@ -116,7 +117,7 @@ Example backend code to get the connection token written on node.js:
     app.listen(8000, () => {
         console.log("Server started")
     });
-    ```
+	```
 
 ## Discover and Connect Reader
 

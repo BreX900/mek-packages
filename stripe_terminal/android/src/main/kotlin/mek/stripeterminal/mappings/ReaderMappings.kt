@@ -49,7 +49,7 @@ fun Reader.toApi(): ReaderApi {
         locationId = location?.id,
         location = location?.toApi(),
         label = label,
-        serialNumber = serialNumber!!,
+        serialNumber = serialNumber!!
     )
 }
 
@@ -86,7 +86,7 @@ fun Location.toApi(): LocationApi {
         displayName = displayName,
         id = id,
         livemode = livemode,
-        metadata = metadata?.toHashMap() ?: hashMapOf(),
+        metadata = metadata?.toHashMap() ?: hashMapOf()
     )
 }
 
@@ -97,7 +97,7 @@ fun Address.toApi(): AddressApi {
         line1 = line1,
         line2 = line2,
         postalCode = postalCode,
-        state = state,
+        state = state
     )
 }
 
@@ -151,7 +151,7 @@ fun ReaderSoftwareUpdate.toApi(): ReaderSoftwareUpdateApi {
         requiredAt = requiredAt.time,
         settingsVersion = settingsVersion,
         timeEstimate = timeEstimate.toApi(),
-        version = version,
+        version = version
     )
 }
 
@@ -184,23 +184,23 @@ fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
         is BluetoothDiscoveryConfigurationApi ->
             DiscoveryConfiguration.BluetoothDiscoveryConfiguration(
                 isSimulated = isSimulated,
-                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0
             )
         is BluetoothProximityDiscoveryConfigurationApi -> null
         is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.HandoffDiscoveryConfiguration()
         is InternetDiscoveryConfigurationApi ->
             DiscoveryConfiguration.InternetDiscoveryConfiguration(
                 isSimulated = isSimulated,
-                location = locationId,
+                location = locationId
             )
         is LocalMobileDiscoveryConfigurationApi ->
             DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
-                isSimulated = isSimulated,
+                isSimulated = isSimulated
             )
         is UsbDiscoveryConfigurationApi ->
             DiscoveryConfiguration.UsbDiscoveryConfiguration(
                 isSimulated = isSimulated,
-                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0
             )
     }
 }
@@ -229,7 +229,7 @@ fun CartApi.toHost(): Cart {
         currency = currency,
         tax = tax,
         total = total,
-        lineItems = lineItems.map { it.toHost() },
+        lineItems = lineItems.map { it.toHost() }
     )
         .build()
 }
@@ -238,7 +238,7 @@ fun CartLineItemApi.toHost(): CartLineItem {
     return CartLineItem.Builder(
         description = description,
         quantity = quantity.toInt(),
-        amount = amount,
+        amount = amount
     )
         .build()
 }

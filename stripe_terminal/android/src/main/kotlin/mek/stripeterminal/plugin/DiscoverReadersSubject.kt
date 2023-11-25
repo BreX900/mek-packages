@@ -31,15 +31,12 @@ class DiscoverReadersSubject {
     }
 
     @SuppressLint("MissingPermission")
-    fun onListen(
-        sink: ControllerSink<List<ReaderApi>>,
-        configuration: DiscoveryConfigurationApi,
-    ) {
+    fun onListen(sink: ControllerSink<List<ReaderApi>>, configuration: DiscoveryConfigurationApi) {
         val hostConfiguration = configuration.toHost()
         if (hostConfiguration == null) {
             sink.error(
                 createApiError(TerminalExceptionCodeApi.UNKNOWN, "Discovery method not supported")
-                    .toPlatformError(),
+                    .toPlatformError()
             )
             sink.endOfStream()
             return
@@ -53,27 +50,26 @@ class DiscoverReadersSubject {
                 .discoverReaders(
                     config = hostConfiguration,
                     discoveryListener =
-                        object : DiscoveryListener {
-                            override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
-                                _readers = readers
-                                runOnMainThread { sink.success(readers.map { it.toApi() }) }
-                            }
-                        },
+                    object : DiscoveryListener {
+                        override fun onUpdateDiscoveredReaders(readers: List<Reader>) {
+                            _readers = readers
+                            runOnMainThread { sink.success(readers.map { it.toApi() }) }
+                        }
+                    },
                     callback =
-                        object : Callback {
-                            override fun onFailure(e: TerminalException) =
-                                runOnMainThread {
-                                    if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) {
-                                        return@runOnMainThread
-                                    }
+                    object : Callback {
+                        override fun onFailure(e: TerminalException) = runOnMainThread {
+                            if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) {
+                                return@runOnMainThread
+                            }
 
-                                    cancelable = null
-                                    sink.error(e.toPlatformError())
-                                    sink.endOfStream()
-                                }
+                            cancelable = null
+                            sink.error(e.toPlatformError())
+                            sink.endOfStream()
+                        }
 
-                            override fun onSuccess() = runOnMainThread { sink.endOfStream() }
-                        },
+                        override fun onSuccess() = runOnMainThread { sink.endOfStream() }
+                    }
                 )
     }
 

@@ -13,28 +13,28 @@ import mek.stripeterminal.runOnMainThread
 
 class TerminalDelegatePlugin(private val _handlers: TerminalHandlersApi) :
     ConnectionTokenProvider, TerminalListener {
-    override fun fetchConnectionToken(callback: ConnectionTokenCallback) =
-        runOnMainThread {
-            _handlers.requestConnectionToken(
-                { error -> callback.onFailure(ConnectionTokenException(error.message ?: "", error)) },
-                { token -> callback.onSuccess(token) },
-            )
-        }
+    override fun fetchConnectionToken(callback: ConnectionTokenCallback) = runOnMainThread {
+        _handlers.requestConnectionToken(
+            { error ->
+                callback.onFailure(
+                    ConnectionTokenException(error.message ?: "", error)
+                )
+            },
+            { token -> callback.onSuccess(token) }
+        )
+    }
 
     // region Terminal listeners
-    override fun onConnectionStatusChange(status: ConnectionStatus) =
-        runOnMainThread {
-            _handlers.connectionStatusChange(status.toApi())
-        }
+    override fun onConnectionStatusChange(status: ConnectionStatus) = runOnMainThread {
+        _handlers.connectionStatusChange(status.toApi())
+    }
 
-    override fun onUnexpectedReaderDisconnect(reader: Reader) =
-        runOnMainThread {
-            _handlers.unexpectedReaderDisconnect(reader.toApi())
-        }
+    override fun onUnexpectedReaderDisconnect(reader: Reader) = runOnMainThread {
+        _handlers.unexpectedReaderDisconnect(reader.toApi())
+    }
 
-    override fun onPaymentStatusChange(status: PaymentStatus) =
-        runOnMainThread {
-            _handlers.paymentStatusChange(status.toApi())
-        }
+    override fun onPaymentStatusChange(status: PaymentStatus) = runOnMainThread {
+        _handlers.paymentStatusChange(status.toApi())
+    }
     // endregion
 }

@@ -7,7 +7,7 @@ import mek.stripeterminal.api.TippingConfigurationApi
 
 fun Tip.toApi(): TipApi {
     return TipApi(
-        amount = amount,
+        amount = amount
     )
 }
 

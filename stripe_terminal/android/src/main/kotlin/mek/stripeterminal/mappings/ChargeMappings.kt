@@ -11,26 +11,25 @@ fun Charge.toApi(): ChargeApi {
     return ChargeApi(
         amount = amount,
         currency = currency!!,
-        status =
-            when (status) {
-                "pending" -> ChargeStatusApi.PENDING
-                "failed" -> ChargeStatusApi.FAILED
-                "succeeded" -> ChargeStatusApi.SUCCEEDED
-                else -> throw Error("Unsupported $status")
-            },
+        status = when (status) {
+            "pending" -> ChargeStatusApi.PENDING
+            "failed" -> ChargeStatusApi.FAILED
+            "succeeded" -> ChargeStatusApi.SUCCEEDED
+            else -> throw Error("Unsupported $status")
+        },
         paymentMethodDetails = paymentMethodDetails?.toApi(),
         description = description,
         id = id,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
         statementDescriptorSuffix = statementDescriptorSuffix,
         calculatedStatementDescriptor = calculatedStatementDescriptor,
-        authorizationCode = authorizationCode,
+        authorizationCode = authorizationCode
     )
 }
 
 fun PaymentMethodDetails.toApi(): PaymentMethodDetailsApi {
     return PaymentMethodDetailsApi(
         cardPresent = cardPresentDetails?.toApi(),
-        interacPresent = interacPresentDetails?.toApi(),
+        interacPresent = interacPresentDetails?.toApi()
     )
 }

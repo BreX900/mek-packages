@@ -1,4 +1,8 @@
 
+## 3.2.1
+- chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#321---2023-12-18)
+  and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#321-2023-12-18) sdks versions to `3.2.1`
+
 ## 3.2.0
 - feat: Added to `Terminal.setSimulatorConfiguration` method
 - chore(android): Replaced `compileSdkVersion` with `compileSdk` and bumped version to `34`

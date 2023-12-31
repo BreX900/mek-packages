@@ -1,11 +1,11 @@
 PODS:
   - Flutter (1.0.0)
-  - mek_stripe_terminal (3.2.0):
+  - mek_stripe_terminal (3.2.1):
     - Flutter
-    - StripeTerminal (~> 3.2.0)
+    - StripeTerminal (~> 3.2.1)
   - permission_handler_apple (9.1.1):
     - Flutter
-  - StripeTerminal (3.2.0)
+  - StripeTerminal (3.2.1)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -26,9 +26,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  mek_stripe_terminal: 8055972d50bf0f261f0f82de4cbe64db3dd53edb
+  mek_stripe_terminal: 6994276438779ae15e002b97d98f13f60ac11d7b
   permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
-  StripeTerminal: cc78f3deca49d72ffa1285609ca2a125535ac7d1
+  StripeTerminal: 420b64bada15fae3b47946662793ae099acb5ed6
 
 PODFILE CHECKSUM: cf4dc61115723a2c178f9ac6bcd06534dfb5b047
 

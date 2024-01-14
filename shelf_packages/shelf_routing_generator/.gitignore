@@ -1,0 +1,22 @@
+# IntelliJ related
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+
+# Files and directories created by pub.
+.dart_tool/
+.packages
+
+# Conventional directory for build outputs.
+build/
+
+# Avoid committing pubspec.lock for library packages; see
+# https://dart.dev/guides/libraries/private-files#pubspeclock.
+pubspec.lock

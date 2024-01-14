@@ -1,0 +1,21 @@
+name: shelf_routing
+description: Annotations for routing class methods with support for path parameters, query parameters, body and headers.
+repository: https://github.com/BreX900/mek-packages
+issue_tracker: https://github.com/BreX900/mek-packages/issues
+homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/shelf_routing
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+scripts:
+  publish: dart pub publish
+
+dependencies:
+  shelf: ^1.4.1
+  meta: ^1.10.0
+
+  shelf_router: ^1.1.4
+
+dev_dependencies:
+  mek_lints: ^4.0.0

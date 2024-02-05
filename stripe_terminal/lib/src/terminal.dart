@@ -47,7 +47,7 @@ class Terminal {
       fetchToken: fetchToken,
     );
 
-    return _instance ??= (() async {
+    return _instance ??= () async {
       try {
         await platform.init(shouldPrintLogs: shouldPrintLogs);
         return Terminal._(platform, handlers);
@@ -55,7 +55,7 @@ class Terminal {
         _instance = null;
         rethrow;
       }
-    }());
+    }();
   }
 
   Future<void> clearCachedCredentials() async => await _platform.clearCachedCredentials();
@@ -101,6 +101,7 @@ class Terminal {
     );
   }
 
+  // ignore: close_sinks
   StreamController<List<Reader>>? _controller;
 
   /// Begins discovering readers based on the given discovery configuration.

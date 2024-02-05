@@ -1,3 +1,6 @@
+## 3.3.0
+- chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#330---2024-01-30)
+  and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#330-2024-02-02) sdks versions to `3.3.0`
 
 ## 3.2.1
 - chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#321---2023-12-18)

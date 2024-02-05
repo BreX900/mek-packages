@@ -24,7 +24,12 @@ class DartApiBuilder extends ApiBuilder {
 
   DartApiBuilder(super.pluginOptions, this.options, this.codecs) {
     _library.comments.add(generatedCodeComment);
-    _library.ignoreForFile.add('unused_element');
+    _library.ignoreForFile.addAll([
+      'unused_element',
+      'cast_nullable_to_non_nullable',
+      'prefer_if_elements_to_conditional_expressions',
+      'unnecessary_lambdas',
+    ]);
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 

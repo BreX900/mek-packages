@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: unused_element
+// ignore_for_file: unused_element, unnecessary_lambdas, cast_nullable_to_non_nullable, prefer_if_elements_to_conditional_expressions
 
 part of 'terminal_platform.dart';
 

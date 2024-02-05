@@ -493,7 +493,7 @@ enum TerminalExceptionCode {
 }
 
 @SerializableClass(hostToFlutter: true)
-class TerminalException {
+class TerminalException implements Exception {
   final TerminalExceptionCode code;
   final String message;
   final String? stackTrace;
@@ -510,7 +510,7 @@ class TerminalException {
 
   @override
   String toString() => [
-        '$runtimeType: ${code.name}',
+        'TerminalException: ${code.name}',
         message,
         paymentIntent,
         apiError,

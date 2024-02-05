@@ -21,6 +21,7 @@ mixin class PhysicalReaderDelegate implements ReaderDelegate {
   FutureOr<void> onReportBatteryLevelUpdate(
     double batteryLevel,
     BatteryStatus? batteryStatus,
+    // ignore: avoid_positional_boolean_parameters
     bool isCharging,
   ) {}
 

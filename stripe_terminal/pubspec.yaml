@@ -21,7 +21,7 @@ scripts:
   # To generate *.g.dart files
   build:runner: dart run build_runner watch --delete-conflicting-outputs
 
-  #
+  # To recreate a project
   recreate-project: flutter create . --platforms=android,ios --project-name=stripe_terminal --template=plugin --org=mek
 
 dependencies:

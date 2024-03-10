@@ -60,6 +60,10 @@ You also need to authorize background modes authorization for `bluetooth-central
 	</array>
 ```
 
+## Known bugs
+
+- Android: https://github.com/stripe/stripe-terminal-android/issues/433
+
 # Usage
 
 You can see the usage example in the [example folder](example/lib/main.dart)

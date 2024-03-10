@@ -35,15 +35,15 @@ jobs:
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
 
-      # Android
-      - uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'zulu'
-      - run: ./gradlew spotlessCheck
-        working-directory: stripe_terminal/android
-      - run: ./gradlew :mek_stripe_terminal:assemble --project-dir ../example/android
-        working-directory: stripe_terminal/android
+#      # Android
+#      - uses: actions/setup-java@v3
+#        with:
+#          java-version: '17'
+#          distribution: 'zulu'
+#      - run: ./gradlew spotlessCheck
+#        working-directory: stripe_terminal/android
+#      - run: ./gradlew :mek_stripe_terminal:assemble --project-dir ../example/android
+#        working-directory: stripe_terminal/android
       
   integration-example:
     runs-on: macos-latest

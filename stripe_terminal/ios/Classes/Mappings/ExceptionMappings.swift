@@ -84,10 +84,18 @@ extension NSError {
             return .forwardingLiveModePaymentInTestMode
         case .readerConnectionConfigurationInvalid:
             return .invalidParameter
+        case .requestDynamicCurrencyConversionRequiresUpdatePaymentIntent:
+            return .requestDynamicCurrencyConversionRequiresUpdatePaymentIntent
+        case .dynamicCurrencyConversionNotAvailable:
+            return .dynamicCurrencyConversionNotAvailable
         case .readerTippingParameterInvalid:
             return .invalidTipParameter
         case .invalidLocationIdParameter:
             return .invalidParameter
+        case .collectInputsInvalidParameter:
+            return .invalidParameter
+        case .collectInputsUnsupported:
+            return .collectInputsUnsupported
         case .canceled:
             return .canceled
         case .locationServicesDisabled:
@@ -107,7 +115,7 @@ extension NSError {
         case .readerSoftwareUpdateFailedExpiredUpdate:
             return .readerSoftwareUpdateFailedExpiredUpdate
         case .bluetoothConnectionFailedBatteryCriticallyLow:
-            return .bluetoothConnectionFailedBatteryCriticallyLow
+            return .readerBatteryCriticallyLow
         case .cardInsertNotRead:
             return .cardInsertNotRead
         case .cardSwipeNotRead:
@@ -126,6 +134,8 @@ extension NSError {
             return .readerConnectionOfflineLocationMismatch
         case .readerConnectionOfflineNeedsUpdate:
             return .readerConnectionOfflineNeedsUpdate
+        case .readerConnectionOfflinePairingUnseenDisabled:
+            return .locationConnectionNotAvailableOffline
         case .noLastSeenAccount:
             return .noLastSeenAccount
         case .amountExceedsMaxOfflineAmount:
@@ -150,6 +160,8 @@ extension NSError {
             return .appleBuiltInReaderTOSAcceptanceRequiresiCloudSignIn
         case .appleBuiltInReaderTOSAcceptanceCanceled:
             return .appleBuiltInReaderTOSAcceptanceCanceled
+        case .collectInputsTimedOut:
+            return .collectInputsTimedOut
         case .readerBusy:
             return .readerBusy
         case .incompatibleReader:
@@ -198,6 +210,10 @@ extension NSError {
             return .appleBuiltInReaderMerchantBlocked
         case .appleBuiltInReaderInvalidMerchant:
             return .appleBuiltInReaderInvalidMerchant
+        case .appleBuiltInReaderAccountDeactivated:
+            return .appleBuiltInReaderAccountDeactivated
+        case .readerMissingEncryptionKeys:
+            return .readerMissingEncryptionKeys
         case .unexpectedSdkError:
             return .unexpectedSdkError
         case .unexpectedReaderError:
@@ -206,6 +222,8 @@ extension NSError {
             return .encryptionKeyFailure
         case .encryptionKeyStillInitializing:
             return .encryptionKeyStillInitializing
+        case .collectInputsApplicationError:
+            return .collectInputsApplicationError
         case .declinedByStripeAPI:
             return .declinedByStripeApi
         case .declinedByReader:

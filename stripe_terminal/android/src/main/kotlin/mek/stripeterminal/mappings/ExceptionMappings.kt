@@ -108,5 +108,8 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.COLLECT_INPUTS_TIMED_OUT -> TerminalExceptionCodeApi.COLLECT_INPUTS_TIMED_OUT
         TerminalException.TerminalErrorCode.COLLECT_INPUTS_INVALID_PARAMETER -> TerminalExceptionCodeApi.INVALID_PARAMETER
         TerminalException.TerminalErrorCode.COLLECT_INPUTS_UNSUPPORTED -> TerminalExceptionCodeApi.COLLECT_INPUTS_UNSUPPORTED
+        TerminalException.TerminalErrorCode.READER_BATTERY_CRITICALLY_LOW -> TerminalExceptionCodeApi.READER_BATTERY_CRITICALLY_LOW
+        TerminalException.TerminalErrorCode.READER_SETTINGS_ERROR -> TerminalExceptionCodeApi.READER_SETTINGS_ERROR
+        TerminalException.TerminalErrorCode.READER_MISSING_ENCRYPTION_KEYS -> TerminalExceptionCodeApi.READER_MISSING_ENCRYPTION_KEYS
     }
 }

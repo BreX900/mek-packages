@@ -1,6 +1,8 @@
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:one_for_all/one_for_all.dart';
 
+/// Android exception codes: https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-terminal-exception/-terminal-error-code/index.html
+/// IOS exception codes: https://stripe.dev/stripe-terminal-ios/docs/Enums/SCPError.html
 @SerializableEnum(hostToFlutter: true)
 enum TerminalExceptionCode {
   // Flutter Plugin
@@ -24,10 +26,12 @@ enum TerminalExceptionCode {
 
   // Android/IOS sdk
 
-  /// Only Android. Cancelling an operation failed
+  /// Cancelling an operation failed
+  /// Android(CANCEL_FAILED)
   cancelFailed,
 
   /// No reader is connected. Connect to a reader before trying again.
+  /// Android(NOT_CONNECTED_TO_READER) IOS(SCPErrorNotConnectedToReader)
   notConnectedToReader,
 
   /// Already connected to a reader.
@@ -50,7 +54,7 @@ enum TerminalExceptionCode {
   /// A [PaymentIntent] or [SetupIntent] was referenced using an invalid client secret.
   invalidClientSecret,
 
-  /// Only IOS. [StripeTerminal.installUpdate] was passed an update that is for a different reader. ù
+  /// Only IOS. [StripeTerminal.installUpdate] was passed an update that is for a different reader.
   ///   Updates can only be installed on the reader that was connected when the update was announced.
   invalidReaderForUpdate,
 
@@ -88,7 +92,18 @@ enum TerminalExceptionCode {
   /// - ReaderConnectionConfigurationInvalid: An invalid ConnectionConfiguration was passed through connect.
   /// - invalidRequiredParameterOnBehalfOf: The [PaymentIntent] uses on_behalf_of but the Connected
   ///   Account ID was not set in LocalMobileConnectionConfiguration
+  /// - SCPErrorCollectInputsInvalidParameter: An invalid parameter was used to start a collect
+  ///   inputs operation.
   invalidParameter,
+
+  /// Error reported when calling collectPaymentMethod with request dynamic currency conversion and
+  /// a CollectConfiguration with updatePaymentIntent set to false.
+  /// IOS(SCPErrorRequestDynamicCurrencyConversionRequiresUpdatePaymentIntent)
+  requestDynamicCurrencyConversionRequiresUpdatePaymentIntent,
+
+  /// Dynamic Currency Conversion is not currently available.
+  /// IOS(SCPErrorDynamicCurrencyConversionNotAvailable)
+  dynamicCurrencyConversionNotAvailable,
 
   /// A required parameter was invalid or missing.
   invalidRequiredParameter,
@@ -145,9 +160,9 @@ enum TerminalExceptionCode {
   /// Please disconnect and reconnect from the reader to retrieve a new update.
   readerSoftwareUpdateFailedExpiredUpdate,
 
-  /// Only IOS. The reader has a critically low battery and cannot connect to the device.
+  /// The reader has a critically low battery and cannot connect to the device.
   /// Charge the reader before trying again.
-  bluetoothConnectionFailedBatteryCriticallyLow,
+  readerBatteryCriticallyLow,
 
   /// The card is not a chip card.
   cardInsertNotRead,
@@ -214,6 +229,15 @@ enum TerminalExceptionCode {
 
   /// Only IOS. This merchant account cannot be used with the Apple Built-In reader as it is invalid.
   appleBuiltInReaderInvalidMerchant,
+
+  /// Only IOS. An error that indicates the linked Apple ID account has been deactivated by the merchant.
+  appleBuiltInReaderAccountDeactivated,
+
+  /// Please contact support at https://support.stripe.com/ for more help.
+  /// Android: The reader is missing encryption keys required for taking payments. Disconnect and
+  /// reconnect to the reader to attempt to re-install the keys. If the error persists, contact
+  /// Stripe support.
+  readerMissingEncryptionKeys,
 
   /// The reader is busy.
   readerBusy,
@@ -383,9 +407,10 @@ enum TerminalExceptionCode {
   /// to this reader while online to install required updates before this reader can be used for offline payments.
   readerConnectionOfflineNeedsUpdate,
 
-  /// Only Android. Connecting to the reader at this location failed. To connect a reader at a
+  /// Connecting to the reader at this location failed. To connect a reader at a
   /// specified location while offline, a reader must have been connected online at that location
   /// within the last several weeks.
+  /// Android(LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE) IOS(SCPErrorReaderConnectionOfflinePairingUnseenDisabled)
   locationConnectionNotAvailableOffline,
 
   /// The SDK has not activated a reader online yet, meaning there is no account with which
@@ -482,9 +507,12 @@ enum TerminalExceptionCode {
   /// Error reported when a timeout occurs while processing a collect inputs operation.
   collectInputsTimedOut,
 
-  /// Only Android. Error reported when the connected account does not have access to this feature,
+  /// Error reported when the connected account does not have access to this feature,
   /// or the reader/SDK version is not compatible with the collect inputs operation.
   collectInputsUnsupported,
+
+  /// Only Android. Error reported when an attempt to get or set reader settings has failed.
+  readerSettingsError,
   ;
 
   final String? message;
@@ -512,8 +540,8 @@ class TerminalException implements Exception {
   String toString() => [
         'TerminalException: ${code.name}',
         message,
-        paymentIntent,
-        apiError,
-        stackTrace,
-      ].nonNulls.join('\n');
+        if (paymentIntent != null) paymentIntent,
+        if (apiError != null) apiError,
+        if (stackTrace != null) stackTrace,
+      ].join('\n');
 }

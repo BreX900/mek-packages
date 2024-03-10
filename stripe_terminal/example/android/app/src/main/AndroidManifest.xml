@@ -12,7 +12,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="stripe_terminal_example">
         <activity
-            android:name="mek.stripeterminal.example.MainActivity"
+            android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"

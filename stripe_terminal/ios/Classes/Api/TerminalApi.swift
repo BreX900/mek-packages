@@ -1460,6 +1460,8 @@ enum TerminalExceptionCodeApi: Int {
     case usbPermissionDenied
     case usbDiscoveryTimedOut
     case invalidParameter
+    case requestDynamicCurrencyConversionRequiresUpdatePaymentIntent
+    case dynamicCurrencyConversionNotAvailable
     case invalidRequiredParameter
     case invalidTipParameter
     case localMobileUnsupportedDevice
@@ -1474,7 +1476,7 @@ enum TerminalExceptionCodeApi: Int {
     case readerSoftwareUpdateFailedBatteryLow
     case readerSoftwareUpdateFailedInterrupted
     case readerSoftwareUpdateFailedExpiredUpdate
-    case bluetoothConnectionFailedBatteryCriticallyLow
+    case readerBatteryCriticallyLow
     case cardInsertNotRead
     case cardSwipeNotRead
     case cardReadTimedOut
@@ -1494,6 +1496,8 @@ enum TerminalExceptionCodeApi: Int {
     case appleBuiltInReaderTOSAcceptanceFailed
     case appleBuiltInReaderMerchantBlocked
     case appleBuiltInReaderInvalidMerchant
+    case appleBuiltInReaderAccountDeactivated
+    case readerMissingEncryptionKeys
     case readerBusy
     case incompatibleReader
     case readerCommunicationError
@@ -1561,6 +1565,7 @@ enum TerminalExceptionCodeApi: Int {
     case collectInputsApplicationError
     case collectInputsTimedOut
     case collectInputsUnsupported
+    case readerSettingsError
 }
 
 struct TipApi {

@@ -89,6 +89,7 @@ interface TerminalPlatformApi {
         result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
+        autoReconnectOnUnexpectedDisconnect: Boolean,
     )
 
     fun onConnectUsbReader(
@@ -114,6 +115,10 @@ interface TerminalPlatformApi {
     fun onInstallAvailableUpdate()
 
     fun onCancelReaderUpdate(
+        result: Result<Unit>,
+    )
+
+    fun onRebootReader(
         result: Result<Unit>,
     )
 
@@ -272,7 +277,7 @@ interface TerminalPlatformApi {
                 }
                 "connectMobileReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectMobileReader(res, args[0] as String, args[1] as String)
+                    onConnectMobileReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
                 }
                 "connectUsbReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
@@ -297,6 +302,10 @@ interface TerminalPlatformApi {
                 "cancelReaderUpdate" -> {
                     val res = Result<Unit>(result) { null }
                     onCancelReaderUpdate(res)
+                }
+                "rebootReader" -> {
+                    val res = Result<Unit>(result) { null }
+                    onRebootReader(res)
                 }
                 "disconnectReader" -> {
                     val res = Result<Unit>(result) { null }
@@ -522,6 +531,12 @@ class TerminalHandlersApi(
         channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
 
+    fun disconnect(
+        reason: DisconnectReasonApi,
+    ) {
+        channel.invokeMethod("_onDisconnect", listOf<Any?>(reason.ordinal))
+    }
+
     fun readerReconnectFailed(
         reader: ReaderApi,
     ) {
@@ -530,8 +545,9 @@ class TerminalHandlersApi(
 
     fun readerReconnectStarted(
         reader: ReaderApi,
+        reason: DisconnectReasonApi,
     ) {
-        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize()))
+        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize(), reason.ordinal))
     }
 
     fun readerReconnectSucceeded(
@@ -759,6 +775,10 @@ enum class ConnectionStatusApi {
 
 enum class DeviceTypeApi {
     CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, APPLE_BUILT_IN;
+}
+
+enum class DisconnectReasonApi {
+    UNKNOWN, DISCONNECT_REQUESTED, REBOOT_REQUESTED, SECURITY_REBOOT, CRITICALLY_LOW_BATTERY, POWERED_OFF, BLUETOOTH_DISABLED;
 }
 
 sealed class DiscoveryConfigurationApi {

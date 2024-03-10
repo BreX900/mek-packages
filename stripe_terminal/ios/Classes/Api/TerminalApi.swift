@@ -121,7 +121,8 @@ protocol TerminalPlatformApi {
 
     func onConnectMobileReader(
         _ serialNumber: String,
-        _ locationId: String
+        _ locationId: String,
+        _ autoReconnectOnUnexpectedDisconnect: Bool
     ) async throws -> ReaderApi
 
     func onConnectUsbReader(
@@ -143,6 +144,8 @@ protocol TerminalPlatformApi {
     func onInstallAvailableUpdate() throws -> Void
 
     func onCancelReaderUpdate() async throws -> Void
+
+    func onRebootReader() async throws -> Void
 
     func onDisconnectReader() async throws -> Void
 
@@ -321,7 +324,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "connectMobileReader":
                 runAsync {
-                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String)
+                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
                     return res.serialize()
                 }
             case "connectUsbReader":
@@ -348,6 +351,11 @@ func setTerminalPlatformApiHandler(
             case "cancelReaderUpdate":
                 runAsync {
                     try await hostApi.onCancelReaderUpdate()
+                    return nil
+                }
+            case "rebootReader":
+                runAsync {
+                    try await hostApi.onRebootReader()
                     return nil
                 }
             case "disconnectReader":
@@ -554,6 +562,12 @@ class TerminalHandlersApi {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
 
+    func disconnect(
+        reason: DisconnectReasonApi
+    ) {
+        channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
+    }
+
     func readerReconnectFailed(
         reader: ReaderApi
     ) {
@@ -561,9 +575,10 @@ class TerminalHandlersApi {
     }
 
     func readerReconnectStarted(
-        reader: ReaderApi
+        reader: ReaderApi,
+        reason: DisconnectReasonApi
     ) {
-        channel.invokeMethod("_onReaderReconnectStarted", arguments: [reader.serialize()])
+        channel.invokeMethod("_onReaderReconnectStarted", arguments: [reader.serialize(), reason.rawValue])
     }
 
     func readerReconnectSucceeded(
@@ -817,6 +832,16 @@ enum DeviceTypeApi: Int {
     case stripeS700
     case stripeS700Devkit
     case appleBuiltIn
+}
+
+enum DisconnectReasonApi: Int {
+    case unknown
+    case disconnectRequested
+    case rebootRequested
+    case securityReboot
+    case criticallyLowBattery
+    case poweredOff
+    case bluetoothDisabled
 }
 
 protocol DiscoveryConfigurationApi {}

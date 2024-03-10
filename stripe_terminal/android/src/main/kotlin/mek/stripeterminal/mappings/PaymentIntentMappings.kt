@@ -23,7 +23,7 @@ import mek.stripeterminal.toHashMap
 fun PaymentIntent.toApi(): PaymentIntentApi {
     return PaymentIntentApi(
         id = id!!,
-        created = created,
+        created = created * 1000,
         status = status!!.toApi(),
         amount = amount.toDouble(),
         captureMethod = when (captureMethod!!) {

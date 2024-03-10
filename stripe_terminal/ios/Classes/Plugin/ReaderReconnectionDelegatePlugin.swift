@@ -9,10 +9,10 @@ class ReaderReconnectionDelegatePlugin: NSObject, ReconnectionDelegate {
         self._handlers = handlers
     }
 
-    func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable) {
+    func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable, reason: DisconnectReason) {
         self.cancelable = cancelable
         DispatchQueue.main.async {
-            self._handlers.readerReconnectStarted(reader: reader.toApi())
+            self._handlers.readerReconnectStarted(reader: reader.toApi(), reason: reason.toApi())
         }
     }
     

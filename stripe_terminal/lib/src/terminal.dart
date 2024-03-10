@@ -72,7 +72,7 @@ class Terminal {
   /// Get the current [ConnectionStatus]
   Future<ConnectionStatus> getConnectionStatus() async => await _platform.getConnectionStatus();
 
-  /// The reader disconnected unexpectedly (that is, without your app explicitly calling disconnectReader).
+  /// The reader disconnected unexpectedly (that is, without your app explicitly calling [disconnectReader]).
   ///
   /// In your implementation of this method, you should notify your user that the reader disconnected.
   /// You may also want to call discoverReaders to begin scanning for readers. Your app can attempt
@@ -189,12 +189,16 @@ class Terminal {
   Future<Reader> connectMobileReader(
     Reader reader, {
     required String locationId,
+    bool autoReconnectOnUnexpectedDisconnect = false,
     PhysicalReaderDelegate? delegate,
+    ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
-    return await _handleReaderConnection(delegate, null, () async {
+    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
       return await _platform.connectMobileReader(
         reader.serialNumber,
         locationId: locationId,
+        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
       );
     });
   }
@@ -259,6 +263,11 @@ class Terminal {
   ///
   /// Note: It is an error to call this method when the SDK is connected to the Verifone P400 or WisePOS E readers.
   Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
+
+  /// Reboots the connected reader.
+  ///
+  /// Note: This method is only available for Bluetooth and USB readers.
+  Future<void> rebootReader() async => await _platform.rebootReader();
 
   /// Attempts to disconnect from the currently connected reader.
   Future<void> disconnectReader() async => await _platform.disconnectReader();

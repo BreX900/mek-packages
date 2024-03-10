@@ -129,6 +129,14 @@ class TerminalHandlers {
       await delegate.onFinishInstallingUpdate(update, exception);
     });
   }
+
+  void _onDisconnect(DisconnectReason reason) {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onDisconnect(reason);
+    });
+  }
+
 //endregion
 
 //region Reader reconnection delegate
@@ -138,9 +146,9 @@ class TerminalHandlers {
     });
   }
 
-  void _onReaderReconnectStarted(Reader reader) {
+  void _onReaderReconnectStarted(Reader reader, DisconnectReason reason) {
     _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectStarted(reader, _platform.cancelReaderReconnection);
+      await delegate.onReaderReconnectStarted2(reader, _platform.cancelReaderReconnection, reason);
     });
   }
 

@@ -115,10 +115,11 @@ class _$TerminalPlatform implements TerminalPlatform {
   Future<Reader> connectMobileReader(
     String serialNumber, {
     required String locationId,
+    required bool autoReconnectOnUnexpectedDisconnect,
   }) async {
     try {
-      final result =
-          await _$channel.invokeMethod('connectMobileReader', [serialNumber, locationId]);
+      final result = await _$channel.invokeMethod(
+          'connectMobileReader', [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -193,6 +194,16 @@ class _$TerminalPlatform implements TerminalPlatform {
   Future<void> cancelReaderUpdate() async {
     try {
       await _$channel.invokeMethod('cancelReaderUpdate', []);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> rebootReader() async {
+    try {
+      await _$channel.invokeMethod('rebootReader', []);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -493,10 +504,11 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
           args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
           args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
+      '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
       '_onReaderReconnectFailed' =>
         hostApi._onReaderReconnectFailed(_$deserializeReader(args[0] as List)),
-      '_onReaderReconnectStarted' =>
-        hostApi._onReaderReconnectStarted(_$deserializeReader(args[0] as List)),
+      '_onReaderReconnectStarted' => hostApi._onReaderReconnectStarted(
+          _$deserializeReader(args[0] as List), DisconnectReason.values[args[1] as int]),
       '_onReaderReconnectSucceeded' =>
         hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
       _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),

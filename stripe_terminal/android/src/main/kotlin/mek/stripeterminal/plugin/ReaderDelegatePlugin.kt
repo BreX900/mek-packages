@@ -4,6 +4,7 @@ import com.stripe.stripeterminal.external.callable.Cancelable
 import com.stripe.stripeterminal.external.callable.HandoffReaderListener
 import com.stripe.stripeterminal.external.callable.ReaderListener
 import com.stripe.stripeterminal.external.models.BatteryStatus
+import com.stripe.stripeterminal.external.models.DisconnectReason
 import com.stripe.stripeterminal.external.models.ReaderDisplayMessage
 import com.stripe.stripeterminal.external.models.ReaderEvent
 import com.stripe.stripeterminal.external.models.ReaderInputOptions
@@ -64,4 +65,8 @@ class ReaderDelegatePlugin(private val _handlers: TerminalHandlersApi) :
             cancelUpdate = null
             _handlers.readerFinishInstallingUpdate(update?.toApi(), e?.toApi())
         }
+
+    override fun onDisconnect(reason: DisconnectReason) {
+        _handlers.disconnect(reason.toApi())
+    }
 }

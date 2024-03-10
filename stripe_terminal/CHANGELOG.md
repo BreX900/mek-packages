@@ -2,6 +2,14 @@
 - chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#340---2024-03-04)
   and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#340-2024-03-04) sdks versions to `3.4.0`
 - refactor: Renamed `TerminalExceptionCode.bluetoothConnectionFailedBatteryCriticallyLow` to `TerminalExceptionCode.readerBatteryCriticallyLow`
+- feat: Added new `TerminalExceptionCode.readerMissingEncryptionKeys`. Returned in a rare condition
+  where the reader is missing the required keys to encrypt payment method data. The reader will
+  disconnect if this error is hit. Reconnecting to the reader should re-install the keys.
+- feat: Added a `DisconnectReason` to the `ReaderReconnectionDelegate.onReaderReconnectStarted2` callback.
+- build(android): Increased the minimum API version requirement to 30 (Android 11).
+- build(android): SDKs have been updated to depend on [Kotlin 1.9.10](https://github.com/JetBrains/kotlin/releases/tag/v1.9.10).
+- build(ios): The SDK now requires that a `NSBluetoothAlwaysUsageDescription` key be present in your
+  app's Info.plist instead of a `NSBluetoothPeripheralUsageDescription` key.
 
 ## 3.2.1
 - chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#321---2023-12-18)

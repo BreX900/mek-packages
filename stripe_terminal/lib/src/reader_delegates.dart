@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mek_stripe_terminal/src/models/disconnect_reason.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
@@ -37,12 +38,24 @@ mixin class PhysicalReaderDelegate implements ReaderDelegate {
     ReaderSoftwareUpdate? update,
     TerminalException? exception,
   ) {}
+
+  FutureOr<void> onDisconnect(DisconnectReason reason) {}
 }
 
-abstract interface class ReaderReconnectionDelegate {
+abstract mixin class ReaderReconnectionDelegate {
   FutureOr<void> onReaderReconnectFailed(Reader reader);
 
-  FutureOr<void> onReaderReconnectStarted(Reader reader, Cancellable cancelReconnect);
+  @Deprecated('In favour of onReaderReconnectStarted2. Removed in next major.')
+  FutureOr<void> onReaderReconnectStarted(Reader reader, Cancellable cancelReconnect) {}
+
+  FutureOr<void> onReaderReconnectStarted2(
+    Reader reader,
+    Cancellable cancelReconnect,
+    DisconnectReason reason,
+  ) {
+    // ignore: deprecated_member_use_from_same_package
+    return onReaderReconnectStarted(reader, cancelReconnect);
+  }
 
   FutureOr<void> onReaderReconnectSucceeded(Reader reader);
 }

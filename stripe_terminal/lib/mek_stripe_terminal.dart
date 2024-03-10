@@ -6,6 +6,7 @@ export 'src/cancellable_future.dart';
 export 'src/models/card.dart';
 export 'src/models/cart.dart';
 export 'src/models/charge.dart';
+export 'src/models/disconnect_reason.dart';
 export 'src/models/discovery_configuration.dart';
 export 'src/models/location.dart';
 export 'src/models/payment.dart';

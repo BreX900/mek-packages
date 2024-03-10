@@ -2,6 +2,7 @@ package mek.stripeterminal.plugin
 
 import com.stripe.stripeterminal.external.callable.Cancelable
 import com.stripe.stripeterminal.external.callable.ReaderReconnectionListener
+import com.stripe.stripeterminal.external.models.DisconnectReason
 import com.stripe.stripeterminal.external.models.Reader
 import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.mappings.toApi
@@ -11,10 +12,10 @@ class ReaderReconnectionListenerPlugin(private val _handlers: TerminalHandlersAp
     ReaderReconnectionListener {
     var cancelReconnect: Cancelable? = null
 
-    override fun onReaderReconnectStarted(reader: Reader, cancelReconnect: Cancelable) =
+    override fun onReaderReconnectStarted(reader: Reader, cancelReconnect: Cancelable, reason: DisconnectReason) =
         runOnMainThread {
             this.cancelReconnect = cancelReconnect
-            _handlers.readerReconnectStarted(reader.toApi())
+            _handlers.readerReconnectStarted(reader.toApi(), reason.toApi())
         }
 
     override fun onReaderReconnectFailed(reader: Reader) = runOnMainThread {

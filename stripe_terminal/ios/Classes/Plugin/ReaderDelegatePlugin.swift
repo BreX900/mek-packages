@@ -96,4 +96,8 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
     func localMobileReader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: Error?) {
         self.reader(reader, didFinishInstallingUpdate: update, error: error)
     }
+    
+    func reader(_ reader: Reader, didDisconnect reason: DisconnectReason) {
+        self._handlers.disconnect(reason: reason.toApi())
+    }
 }

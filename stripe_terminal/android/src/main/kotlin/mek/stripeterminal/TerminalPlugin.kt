@@ -201,13 +201,16 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     override fun onConnectMobileReader(
         result: Result<ReaderApi>,
         serialNumber: String,
-        locationId: String
+        locationId: String,
+        autoReconnectOnUnexpectedDisconnect: Boolean
     ) {
         val reader = findActiveReader(serialNumber)
 
         val config =
             ConnectionConfiguration.LocalMobileConnectionConfiguration(
-                locationId = locationId
+                locationId = locationId,
+                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
+                localMobileReaderReconnectionListener = readerReconnectionDelegate
             )
         terminal.connectLocalMobileReader(
             reader,
@@ -280,6 +283,14 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         }
         readerDelegate.cancelUpdate?.cancel(
             object : Callback, TerminalErrorHandler(result::error) {
+                override fun onSuccess() = result.success(Unit)
+            }
+        )
+    }
+
+    override fun onRebootReader(result: Result<Unit>) {
+        terminal.rebootReader(
+            object : TerminalErrorHandler(result::error), Callback {
                 override fun onSuccess() = result.success(Unit)
             }
         )

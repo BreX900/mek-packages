@@ -14,8 +14,20 @@
   - Location permissions will continue to be required for all [`DiscoveryConfigurations`](https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-discovery-configuration/index.html). Location services will also need to be enabled on the device at the time of discovery.
 - (Not exist on ios) `Reader.device` has been removed and replaced with [`Reader.bluetoothDevice`](https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-reader/bluetooth-device.html) and [`Reader.usbDevice`](https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-reader/usb-device.html).
 
+#### 3.4.0 - 2024-03-04
+
+- Update: The [`Terminal.collectInputs`](https://stripe.com/docs/terminal/features/collect-inputs) method can now display optional toggles in each form.
+
+#### 3.3.0 - 2024-01-30
+
+- Beta: Added a [`Terminal.collectInputs`](https://stripe.com/docs/terminal/features/collect-inputs) method to display forms and collect information from customers. It requires the use of a new `@OptIn` annotation; `@CollectInputs`. Note that this feature is in beta.
+  - If you are interested in joining this beta, please email stripe-terminal-betas@stripe.com
+- Beta: Added support for retrieving and updating reader settings on WisePOS E and Stripe S700 by calling [`Terminal.getReaderSettings`](https://stripe.dev/stripe-terminal-android/core/com.stripe.stripeterminal/-terminal/get-reader-settings.html) and [`Terminal.setReaderSettings`](https://stripe.dev/stripe-terminal-android/core/com.stripe.stripeterminal/-terminal/set-reader-settings.html). Accessibility settings are provided at this time, allowing text-to-speech via speakers to be turned on and off as needed.
+  - If you are interested in joining this beta, please email stripe-terminal-betas@stripe.com
+  - _Note: this feature requires [reader software version](https://stripe.com/docs/terminal/readers/bbpos-wisepos-e#reader-software-version) `2.20` or later to be installed on your reader._
+
+
 ### Ready
-- Feat: Added support to `Terminal.updateSimulatorConfiguration`
 
 ### In progress
 
@@ -27,6 +39,13 @@
 * Update: `SCPPaymentIntent.stripeId` is now nullable to support offline payments.
 * New: Private beta support for offline payments.
   * See [Collect payments while offline](https://stripe.com/docs/terminal/features/operate-offline/collect-payments) for details.
+
+#### 3.3.0 2024-02-02
+* New: Added support for retrieving and updating reader settings on WisePOS E and Stripe S700 by calling `retrieveReaderSettings` and `setReaderSettings` on `SCPTerminal`.
+  * Beta: Accessibility settings are provided at this time, allowing text-to-speech via speakers to be turned on and off as needed.
+  * Please [contact us](mailto:stripe-terminal-betas@stripe.com) if you are interested in joining this beta.
+* Beta: Added a [`collectInputs`](https://stripe.com/docs/terminal/features/collect-inputs) method to display forms and collect information from customers.
+  * If you are interested in joining this beta, please email stripe-terminal-betas@stripe.com.
 
 ### Ready
 

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/models/card.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/charge.dart';
+import 'package:mek_stripe_terminal/src/models/disconnect_reason.dart';
 import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
@@ -67,6 +68,7 @@ abstract class TerminalPlatform {
   Future<Reader> connectMobileReader(
     String serialNumber, {
     required String locationId,
+    required bool autoReconnectOnUnexpectedDisconnect,
   });
 
   Future<Reader> connectUsbReader(
@@ -90,6 +92,8 @@ abstract class TerminalPlatform {
   Future<void> installAvailableUpdate();
 
   Future<void> cancelReaderUpdate();
+
+  Future<void> rebootReader();
 
   Future<void> disconnectReader();
 

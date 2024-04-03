@@ -135,9 +135,11 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func onConnectMobileReader(
         _ serialNumber: String,
         _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
+        _ autoReconnectOnUnexpectedDisconnect: Bool,
+        _ onBehalfOf: String?
     ) async throws -> ReaderApi {
         let config = LocalMobileConnectionConfigurationBuilder(locationId: locationId)
+            .setOnBehalfOf(onBehalfOf)
             .setAutoReconnectOnUnexpectedDisconnect(autoReconnectOnUnexpectedDisconnect)
             .setAutoReconnectionDelegate(_readerReconnectionDelegate)
         do {

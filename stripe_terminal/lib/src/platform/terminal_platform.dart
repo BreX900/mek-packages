@@ -69,6 +69,7 @@ abstract class TerminalPlatform {
     String serialNumber, {
     required String locationId,
     required bool autoReconnectOnUnexpectedDisconnect,
+    String? onBehalfOf,
   });
 
   Future<Reader> connectUsbReader(

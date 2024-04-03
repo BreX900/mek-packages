@@ -90,9 +90,11 @@ class InternetDiscoveryConfiguration extends DiscoveryConfiguration {
 /// or one running an unsupported version of iOS.
 class LocalMobileDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
+  final String? onBehalfOf;
 
   const LocalMobileDiscoveryConfiguration({
     this.isSimulated = false,
+    this.onBehalfOf,
   });
 }
 

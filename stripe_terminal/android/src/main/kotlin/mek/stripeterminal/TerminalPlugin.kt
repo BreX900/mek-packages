@@ -202,7 +202,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<ReaderApi>,
         serialNumber: String,
         locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean
+        autoReconnectOnUnexpectedDisconnect: Boolean,
+        onBehalfOf: String?,
     ) {
         val reader = findActiveReader(serialNumber)
 

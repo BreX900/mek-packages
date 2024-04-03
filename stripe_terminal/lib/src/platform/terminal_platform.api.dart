@@ -116,10 +116,11 @@ class _$TerminalPlatform implements TerminalPlatform {
     String serialNumber, {
     required String locationId,
     required bool autoReconnectOnUnexpectedDisconnect,
+    String? onBehalfOf,
   }) async {
     try {
-      final result = await _$channel.invokeMethod(
-          'connectMobileReader', [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
+      final result = await _$channel.invokeMethod('connectMobileReader',
+          [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect, onBehalfOf]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -604,7 +605,7 @@ List<Object?> _$serializeInternetDiscoveryConfiguration(
     ['InternetDiscoveryConfiguration', deserialized.isSimulated, deserialized.locationId];
 List<Object?> _$serializeLocalMobileDiscoveryConfiguration(
         LocalMobileDiscoveryConfiguration deserialized) =>
-    ['LocalMobileDiscoveryConfiguration', deserialized.isSimulated];
+    ['LocalMobileDiscoveryConfiguration', deserialized.isSimulated, deserialized.onBehalfOf];
 List<Object?> _$serializeUsbDiscoveryConfiguration(UsbDiscoveryConfiguration deserialized) =>
     ['UsbDiscoveryConfiguration', deserialized.isSimulated, deserialized.timeout?.inMicroseconds];
 Location _$deserializeLocation(List<Object?> serialized) => Location(

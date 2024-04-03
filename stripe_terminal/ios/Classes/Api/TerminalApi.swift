@@ -122,7 +122,8 @@ protocol TerminalPlatformApi {
     func onConnectMobileReader(
         _ serialNumber: String,
         _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
+        _ autoReconnectOnUnexpectedDisconnect: Bool,
+        _ onBehalfOf: String?
     ) async throws -> ReaderApi
 
     func onConnectUsbReader(
@@ -324,7 +325,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "connectMobileReader":
                 runAsync {
-                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
+                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String, args[2] as! Bool, args[3] as? String)
                     return res.serialize()
                 }
             case "connectUsbReader":
@@ -919,12 +920,14 @@ struct InternetDiscoveryConfigurationApi: DiscoveryConfigurationApi {
 
 struct LocalMobileDiscoveryConfigurationApi: DiscoveryConfigurationApi {
     let isSimulated: Bool
+    let onBehalfOf: String?
 
     static func deserialize(
         _ serialized: [Any?]
     ) -> LocalMobileDiscoveryConfigurationApi {
         return LocalMobileDiscoveryConfigurationApi(
-            isSimulated: serialized[0] as! Bool
+            isSimulated: serialized[0] as! Bool,
+            onBehalfOf: serialized[1] as? String
         )
     }
 }

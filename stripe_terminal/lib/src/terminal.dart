@@ -186,10 +186,17 @@ class Terminal {
   ///
   /// Note that during connection, an update may occur to ensure that the local mobile reader has
   /// the most up to date software and configurations.
+  ///
+  /// IOS:
+  /// - If your integration is creating destination charges and using on_behalf_of,
+  ///   you must provide the connected_account_id in the [onBehalfOf] parameter. Unlike other reader
+  ///   types which require this information on a per-transaction basis, the Apple Built-In reader
+  ///   requires this on a per-connection basis as well in order to establish a reader connection.
   Future<Reader> connectMobileReader(
     Reader reader, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
+    String? onBehalfOf,
     PhysicalReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
@@ -199,6 +206,7 @@ class Terminal {
         reader.serialNumber,
         locationId: locationId,
         autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+        onBehalfOf: onBehalfOf,
       );
     });
   }

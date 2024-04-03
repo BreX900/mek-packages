@@ -90,6 +90,7 @@ interface TerminalPlatformApi {
         serialNumber: String,
         locationId: String,
         autoReconnectOnUnexpectedDisconnect: Boolean,
+        onBehalfOf: String?,
     )
 
     fun onConnectUsbReader(
@@ -277,7 +278,7 @@ interface TerminalPlatformApi {
                 }
                 "connectMobileReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectMobileReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
+                    onConnectMobileReader(res, args[0] as String, args[1] as String, args[2] as Boolean, args[3] as String?)
                 }
                 "connectUsbReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
@@ -858,6 +859,7 @@ data class InternetDiscoveryConfigurationApi(
 
 data class LocalMobileDiscoveryConfigurationApi(
     val isSimulated: Boolean,
+    val onBehalfOf: String?,
 ): DiscoveryConfigurationApi() {
     companion object {
         fun deserialize(
@@ -865,6 +867,7 @@ data class LocalMobileDiscoveryConfigurationApi(
         ): LocalMobileDiscoveryConfigurationApi {
             return LocalMobileDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
+                onBehalfOf = serialized[1] as String?,
             )
         }
     }

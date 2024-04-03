@@ -58,7 +58,8 @@ class Terminal {
     }();
   }
 
-  Future<void> clearCachedCredentials() async => await _platform.clearCachedCredentials();
+  Future<void> clearCachedCredentials() async =>
+      await _platform.clearCachedCredentials();
 
 //region Reader discovery, connection and updates
   /// The currently connected reader’s connectionStatus changed.
@@ -67,10 +68,12 @@ class Terminal {
   /// as it cannot be used to accurately distinguish between expected and unexpected disconnect events.
   /// To detect unexpect disconnects (e.g. to automatically notify your user), you should instead use
   /// the [onUnexpectedReaderDisconnect] stream.
-  Stream<ConnectionStatus> get onConnectionStatusChange => _handlers.connectionStatusChangeStream;
+  Stream<ConnectionStatus> get onConnectionStatusChange =>
+      _handlers.connectionStatusChangeStream;
 
   /// Get the current [ConnectionStatus]
-  Future<ConnectionStatus> getConnectionStatus() async => await _platform.getConnectionStatus();
+  Future<ConnectionStatus> getConnectionStatus() async =>
+      await _platform.getConnectionStatus();
 
   /// The reader disconnected unexpectedly (that is, without your app explicitly calling [disconnectReader]).
   ///
@@ -79,7 +82,8 @@ class Terminal {
   /// to automatically reconnect to the disconnected reader, or display UI for your user to re-connect to a reader.
   ///
   /// You can trigger this call in your app by powering off the connected reader.
-  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
+  Stream<Reader> get onUnexpectedReaderDisconnect =>
+      _handlers.unexpectedReaderDisconnectStream;
 
   /// Use this method to determine whether the mobile device supports a given reader type using a
   /// particular discovery method.
@@ -125,7 +129,8 @@ class Terminal {
   /// When connect* method is called, the SDK uses a connection token and the given reader information
   ///   to register the reader to your Stripe account. If the SDK does not already have a connection token,
   ///   it will call the fetchToken method which was passed as an argument in [getInstance].
-  Stream<List<Reader>> discoverReaders(DiscoveryConfiguration discoveryConfiguration) {
+  Stream<List<Reader>> discoverReaders(
+      DiscoveryConfiguration discoveryConfiguration) {
     _controller = _handleStream(_controller, () {
       return _platform.discoverReaders(discoveryConfiguration);
     });
@@ -150,18 +155,22 @@ class Terminal {
     PhysicalReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
+    assert(
+        !autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    return await _handleReaderConnection(delegate, reconnectionDelegate,
+        () async {
       return await _platform.connectBluetoothReader(
         reader.serialNumber,
         locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+        autoReconnectOnUnexpectedDisconnect:
+            autoReconnectOnUnexpectedDisconnect,
       );
     });
   }
 
   /// Attempts to connect to the given Handoff reader with a given connection configuration.
-  Future<Reader> connectHandoffReader(Reader reader, {PhysicalReaderDelegate? delegate}) async {
+  Future<Reader> connectHandoffReader(Reader reader,
+      {PhysicalReaderDelegate? delegate}) async {
     return await _handleReaderConnection(delegate, null, () async {
       return await _platform.connectHandoffReader(reader.serialNumber);
     });
@@ -172,7 +181,8 @@ class Terminal {
     Reader reader, {
     bool failIfInUse = false,
   }) async {
-    return await _platform.connectInternetReader(reader.serialNumber, failIfInUse: failIfInUse);
+    return await _platform.connectInternetReader(reader.serialNumber,
+        failIfInUse: failIfInUse);
   }
 
   /// Attempts to connect to the given Local Mobile reader with a given connection configuration.
@@ -190,15 +200,20 @@ class Terminal {
     Reader reader, {
     required String locationId,
     bool autoReconnectOnUnexpectedDisconnect = false,
+    String? onBehalfOf,
     PhysicalReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
+    assert(
+        !autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    return await _handleReaderConnection(delegate, reconnectionDelegate,
+        () async {
       return await _platform.connectMobileReader(
         reader.serialNumber,
         locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+        autoReconnectOnUnexpectedDisconnect:
+            autoReconnectOnUnexpectedDisconnect,
+        onBehalfOf: onBehalfOf,
       );
     });
   }
@@ -211,18 +226,22 @@ class Terminal {
     ReaderDelegate? delegate,
     ReaderReconnectionDelegate? reconnectionDelegate,
   }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
+    assert(
+        !autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
+    return await _handleReaderConnection(delegate, reconnectionDelegate,
+        () async {
       return await _platform.connectUsbReader(
         reader.serialNumber,
         locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
+        autoReconnectOnUnexpectedDisconnect:
+            autoReconnectOnUnexpectedDisconnect,
       );
     });
   }
 
   /// Information about the connected SCPReader, or `null` if no reader is connected.
-  Future<Reader?> getConnectedReader() async => await _platform.getConnectedReader();
+  Future<Reader?> getConnectedReader() async =>
+      await _platform.getConnectedReader();
 
   /// Retrieves a list of [Location] objects belonging to your merchant.
   ///
@@ -262,7 +281,8 @@ class Terminal {
   /// to include this functionality.
   ///
   /// Note: It is an error to call this method when the SDK is connected to the Verifone P400 or WisePOS E readers.
-  Future<void> installAvailableUpdate() async => await _platform.installAvailableUpdate();
+  Future<void> installAvailableUpdate() async =>
+      await _platform.installAvailableUpdate();
 
   /// Reboots the connected reader.
   ///
@@ -274,16 +294,19 @@ class Terminal {
 
   /// The simulator configuration settings that will be used when connecting to and creating payments
   /// with a simulated reader.
-  Future<void> setSimulatorConfiguration(SimulatorConfiguration configuration) async =>
+  Future<void> setSimulatorConfiguration(
+          SimulatorConfiguration configuration) async =>
       await _platform.setSimulatorConfiguration(configuration);
 //endregion
 
 //region Taking payments
   /// The currently connected reader’s [PaymentStatus] changed.
-  Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
+  Stream<PaymentStatus> get onPaymentStatusChange =>
+      _handlers.paymentStatusChangeStream;
 
   /// The Terminal instance’s current payment status.
-  Future<PaymentStatus> getPaymentStatus() async => await _platform.getPaymentStatus();
+  Future<PaymentStatus> getPaymentStatus() async =>
+      await _platform.getPaymentStatus();
 
   /// Creates a new [PaymentIntent] with the given parameters.
   ///
@@ -291,7 +314,8 @@ class Terminal {
   ///   you can create the [PaymentIntent] on your server and use the [retrievePaymentIntent] method
   ///   to retrieve the [PaymentIntent] in your app.
   ///   This cannot be used with the Verifone P400.
-  Future<PaymentIntent> createPaymentIntent(PaymentIntentParameters parameters) async =>
+  Future<PaymentIntent> createPaymentIntent(
+          PaymentIntentParameters parameters) async =>
       await _platform.createPaymentIntent(parameters);
 
   /// Retrieves a [PaymentIntent] with a client secret.
@@ -364,7 +388,8 @@ class Terminal {
   /// If the updated [PaymentIntent]’s status changes to [PaymentIntentStatus.requiresPaymentMethod]
   ///   (e.g., the request failed because the card was declined), call [collectPaymentMethod]
   ///   with the updated [PaymentIntent] to try charging another card.
-  Future<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) async =>
+  Future<PaymentIntent> confirmPaymentIntent(
+          PaymentIntent paymentIntent) async =>
       await _platform.confirmPaymentIntent(paymentIntent.id);
 
   /// Cancels an [PaymentIntent].
@@ -437,14 +462,17 @@ class Terminal {
     SetupIntent setupIntent, {
     required bool customerConsentCollected,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
+    @Deprecated('Please use [customerCancellationEnabled]')
+    bool? isCustomerCancellationEnabled,
   }) {
-    return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
+    return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod,
+        (id) async {
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
         setupIntentId: setupIntent.id,
         customerConsentCollected: customerConsentCollected,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        customerCancellationEnabled:
+            isCustomerCancellationEnabled ?? customerCancellationEnabled,
       );
     });
   }
@@ -519,9 +547,11 @@ class Terminal {
     bool? reverseTransfer,
     bool? refundApplicationFee,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
+    @Deprecated('Please use [customerCancellationEnabled]')
+    bool? isCustomerCancellationEnabled,
   }) {
-    return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
+    return CancelableFuture(_platform.stopCollectRefundPaymentMethod,
+        (id) async {
       return await _platform.startCollectRefundPaymentMethod(
         operationId: id,
         chargeId: chargeId,
@@ -530,7 +560,8 @@ class Terminal {
         metadata: metadata,
         reverseTransfer: reverseTransfer,
         refundApplicationFee: refundApplicationFee,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        customerCancellationEnabled:
+            isCustomerCancellationEnabled ?? customerCancellationEnabled,
       );
     });
   }
@@ -555,12 +586,14 @@ class Terminal {
   /// are also not automatically calculated and must be set in [Cart].
   ///
   /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
-  Future<void> setReaderDisplay(Cart cart) async => await _platform.setReaderDisplay(cart);
+  Future<void> setReaderDisplay(Cart cart) async =>
+      await _platform.setReaderDisplay(cart);
 
   /// Clears the reader display and resets it to the splash screen.
   ///
   /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
-  Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
+  Future<void> clearReaderDisplay() async =>
+      await _platform.clearReaderDisplay();
 //endregion
 
   StreamController<T> _handleStream<T>(

@@ -70,7 +70,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_ADMIN
+                Manifest.permission.BLUETOOTH_CONNECT
             )
         } else {
             arrayOf(

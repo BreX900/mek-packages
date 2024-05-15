@@ -79,6 +79,7 @@ fun PaymentIntentStatus.toApi(): PaymentIntentStatusApi {
         PaymentIntentStatus.REQUIRES_CONFIRMATION -> PaymentIntentStatusApi.REQUIRES_CONFIRMATION
         PaymentIntentStatus.REQUIRES_PAYMENT_METHOD -> PaymentIntentStatusApi.REQUIRES_PAYMENT_METHOD
         PaymentIntentStatus.SUCCEEDED -> PaymentIntentStatusApi.SUCCEEDED
+        PaymentIntentStatus.REQUIRES_ACTION -> PaymentIntentStatusApi.REQUIRES_ACTION
     }
 }
 

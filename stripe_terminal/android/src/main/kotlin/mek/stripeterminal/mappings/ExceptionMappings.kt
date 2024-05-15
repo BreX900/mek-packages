@@ -111,5 +111,6 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.READER_BATTERY_CRITICALLY_LOW -> TerminalExceptionCodeApi.READER_BATTERY_CRITICALLY_LOW
         TerminalException.TerminalErrorCode.READER_SETTINGS_ERROR -> TerminalExceptionCodeApi.READER_SETTINGS_ERROR
         TerminalException.TerminalErrorCode.READER_MISSING_ENCRYPTION_KEYS -> TerminalExceptionCodeApi.READER_MISSING_ENCRYPTION_KEYS
+        TerminalException.TerminalErrorCode.INVALID_SURCHARGE_PARAMETER -> TerminalExceptionCodeApi.INVALID_SURCHARGE_PARAMETER
     }
 }

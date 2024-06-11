@@ -1,3 +1,8 @@
+## 3.5.0
+- chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#350---2024-04-09)
+  and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#350-2024-04-12) sdks versions to
+  `3.5.0`. Fix [#67](https://github.com/BreX900/mek-packages/issues/67) 
+
 ## 3.4.0
 - chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#340---2024-03-04)
   and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#340-2024-03-04) sdks versions to `3.4.0`

@@ -25,5 +25,5 @@ Pod::Spec.new do |s|
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
 
-  s.dependency 'StripeTerminal', '~> 3.4.0'
+  s.dependency 'StripeTerminal', '~> 3.5.0'
 end

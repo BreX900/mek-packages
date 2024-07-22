@@ -10,7 +10,9 @@ class StripeApi {
 
   final _stripe = Stripe(secretKey);
 
-  StripeApi();
+  StripeApi() {
+    assert(secretKey.isNotEmpty, 'Must provide a STRIPE_SECRET_KEY from --dart-define arg');
+  }
 
   Future<String> createTerminalConnectionToken() async {
     try {

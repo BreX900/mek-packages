@@ -1479,6 +1479,7 @@ enum TerminalExceptionCodeApi: Int {
     case bluetoothDisabled
     case bluetoothPermissionDenied
     case confirmInvalidPaymentIntent
+    case confirmInvalidSetupIntent
     case invalidClientSecret
     case invalidReaderForUpdate
     case unsupportedOperation
@@ -1575,6 +1576,7 @@ enum TerminalExceptionCodeApi: Int {
     case cardSwipeNotAvailable
     case interacNotSupportedOffline
     case onlinePinNotSupportedOffline
+    case mobileWalletNotSupportedOnSetupIntents
     case offlineAndCardExpired
     case offlineTransactionDeclined
     case offlineCollectAndConfirmMismatch
@@ -1594,6 +1596,8 @@ enum TerminalExceptionCodeApi: Int {
     case collectInputsTimedOut
     case collectInputsUnsupported
     case readerSettingsError
+    case invalidSurchargeParameter
+    case readerCommunicationSslError
 }
 
 struct TipApi {

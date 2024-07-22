@@ -31,6 +31,7 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.ALREADY_CONNECTED_TO_READER -> TerminalExceptionCodeApi.ALREADY_CONNECTED_TO_READER
         TerminalException.TerminalErrorCode.BLUETOOTH_PERMISSION_DENIED -> TerminalExceptionCodeApi.BLUETOOTH_PERMISSION_DENIED
         TerminalException.TerminalErrorCode.CONFIRM_INVALID_PAYMENT_INTENT -> TerminalExceptionCodeApi.CONFIRM_INVALID_PAYMENT_INTENT
+        TerminalException.TerminalErrorCode.CONFIRM_INVALID_SETUP_INTENT -> TerminalExceptionCodeApi.CONFIRM_INVALID_SETUP_INTENT
         TerminalException.TerminalErrorCode.INVALID_CLIENT_SECRET -> TerminalExceptionCodeApi.INVALID_CLIENT_SECRET
         TerminalException.TerminalErrorCode.UNSUPPORTED_OPERATION -> TerminalExceptionCodeApi.UNSUPPORTED_OPERATION
         TerminalException.TerminalErrorCode.UNEXPECTED_OPERATION -> TerminalExceptionCodeApi.UNEXPECTED_OPERATION
@@ -92,6 +93,7 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.CARD_SWIPE_NOT_AVAILABLE -> TerminalExceptionCodeApi.CARD_SWIPE_NOT_AVAILABLE
         TerminalException.TerminalErrorCode.INTERAC_NOT_SUPPORTED_OFFLINE -> TerminalExceptionCodeApi.INTERAC_NOT_SUPPORTED_OFFLINE
         TerminalException.TerminalErrorCode.ONLINE_PIN_NOT_SUPPORTED_OFFLINE -> TerminalExceptionCodeApi.ONLINE_PIN_NOT_SUPPORTED_OFFLINE
+        TerminalException.TerminalErrorCode.MOBILE_WALLET_NOT_SUPPORTED_ON_SETUP_INTENTS -> TerminalExceptionCodeApi.MOBILE_WALLET_NOT_SUPPORTED_ON_SETUP_INTENTS
         TerminalException.TerminalErrorCode.OFFLINE_AND_CARD_EXPIRED -> TerminalExceptionCodeApi.OFFLINE_AND_CARD_EXPIRED
         TerminalException.TerminalErrorCode.OFFLINE_TRANSACTION_DECLINED -> TerminalExceptionCodeApi.OFFLINE_TRANSACTION_DECLINED
         TerminalException.TerminalErrorCode.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH -> TerminalExceptionCodeApi.OFFLINE_COLLECT_AND_CONFIRM_MISMATCH
@@ -112,5 +114,6 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.READER_SETTINGS_ERROR -> TerminalExceptionCodeApi.READER_SETTINGS_ERROR
         TerminalException.TerminalErrorCode.READER_MISSING_ENCRYPTION_KEYS -> TerminalExceptionCodeApi.READER_MISSING_ENCRYPTION_KEYS
         TerminalException.TerminalErrorCode.INVALID_SURCHARGE_PARAMETER -> TerminalExceptionCodeApi.INVALID_SURCHARGE_PARAMETER
+        TerminalException.TerminalErrorCode.READER_COMMUNICATION_SSL_ERROR -> TerminalExceptionCodeApi.READER_COMMUNICATION_SSL_ERROR
     }
 }

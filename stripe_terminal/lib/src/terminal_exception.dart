@@ -51,6 +51,11 @@ enum TerminalExceptionCode {
   /// may not be confirmed again.
   confirmInvalidPaymentIntent,
 
+  /// Only Android. [Terminal.confirmPaymentIntent] was called with an unknown or invalid
+  /// [PaymentIntent]. You must confirm a payment after collecting a payment method. Successfully
+  /// confirmed payments may not be confirmed again.
+  confirmInvalidSetupIntent,
+
   /// A [PaymentIntent] or [SetupIntent] was referenced using an invalid client secret.
   invalidClientSecret,
 
@@ -439,6 +444,11 @@ enum TerminalExceptionCode {
   /// presented card was authenticated with an online PIN. Retry the payment by calling collectPaymentMethod() again.
   onlinePinNotSupportedOffline,
 
+  /// Only Android. [Terminal.confirmPaymentIntent] was called with an unknown or invalid
+  /// [PaymentIntent]. You must confirm a payment after collecting a payment method. Successfully
+  /// confirmed payments may not be confirmed again.
+  mobileWalletNotSupportedOnSetupIntents,
+
   /// Confirming a payment while offline and the card was identified as being expired.
   offlineAndCardExpired,
 
@@ -513,6 +523,14 @@ enum TerminalExceptionCode {
 
   /// Only Android. Error reported when an attempt to get or set reader settings has failed.
   readerSettingsError,
+
+  /// Only Android. A surcharging parameter is misconfigured or invalid.
+  invalidSurchargeParameter,
+
+  /// Only Android. Could not communicate to the reader due to SSL handshake failures. Typically
+  /// occurs when your device is missing SSL certificates, check that you have the required SSL
+  /// certificates installed on your device. If the error persists, contact Stripe support.
+  readerCommunicationSslError,
   ;
 
   final String? message;

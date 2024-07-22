@@ -70,8 +70,8 @@ android {
 }
 
 dependencies {
-    implementation "com.stripe:stripeterminal-localmobile:3.5.0"
-    implementation "com.stripe:stripeterminal-core:3.5.0"
+    implementation "com.stripe:stripeterminal-localmobile:3.7.1"
+    implementation "com.stripe:stripeterminal-core:3.7.1"
 }
 
 spotless {

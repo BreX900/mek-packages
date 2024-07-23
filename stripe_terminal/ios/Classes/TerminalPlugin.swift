@@ -289,6 +289,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 throw error.toPlatformError(apiError: error.requestError, paymentIntent: error.paymentIntent)
             }
             return intent!.toApi()
+        } catch let error as PlatformError {
+            throw error
         } catch let error as NSError {
             throw error.toPlatformError()
         }

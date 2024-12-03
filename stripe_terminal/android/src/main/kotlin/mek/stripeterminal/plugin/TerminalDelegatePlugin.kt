@@ -29,10 +29,6 @@ class TerminalDelegatePlugin(private val _handlers: TerminalHandlersApi) :
         _handlers.connectionStatusChange(status.toApi())
     }
 
-    override fun onUnexpectedReaderDisconnect(reader: Reader) = runOnMainThread {
-        _handlers.unexpectedReaderDisconnect(reader.toApi())
-    }
-
     override fun onPaymentStatusChange(status: PaymentStatus) = runOnMainThread {
         _handlers.paymentStatusChange(status.toApi())
     }

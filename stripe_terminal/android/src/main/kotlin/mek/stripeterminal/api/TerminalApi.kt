@@ -67,37 +67,10 @@ interface TerminalPlatformApi {
         discoveryConfiguration: DiscoveryConfigurationApi,
     ): Boolean
 
-    fun onConnectBluetoothReader(
+    fun onConnectReader(
         result: Result<ReaderApi>,
         serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
-    )
-
-    fun onConnectHandoffReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-    )
-
-    fun onConnectInternetReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        failIfInUse: Boolean,
-    )
-
-    fun onConnectMobileReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
-        onBehalfOf: String?,
-    )
-
-    fun onConnectUsbReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
+        configuration: ConnectionConfigurationApi,
     )
 
     fun onGetConnectedReader(): ReaderApi?
@@ -158,9 +131,15 @@ interface TerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onConfirmPaymentIntent(
+    fun onStartConfirmPaymentIntent(
         result: Result<PaymentIntentApi>,
+        operationId: Long,
         paymentIntentId: String,
+    )
+
+    fun onStopConfirmPaymentIntent(
+        result: Result<Unit>,
+        operationId: Long,
     )
 
     fun onCancelPaymentIntent(
@@ -186,7 +165,7 @@ interface TerminalPlatformApi {
         result: Result<SetupIntentApi>,
         operationId: Long,
         setupIntentId: String,
-        customerConsentCollected: Boolean,
+        allowRedisplay: AllowRedisplayApi,
         customerCancellationEnabled: Boolean,
     )
 
@@ -195,9 +174,15 @@ interface TerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onConfirmSetupIntent(
+    fun onStartConfirmSetupIntent(
         result: Result<SetupIntentApi>,
+        operationId: Long,
         setupIntentId: String,
+    )
+
+    fun onStopConfirmSetupIntent(
+        result: Result<Unit>,
+        operationId: Long,
     )
 
     fun onCancelSetupIntent(
@@ -222,8 +207,14 @@ interface TerminalPlatformApi {
         operationId: Long,
     )
 
-    fun onConfirmRefund(
+    fun onStartConfirmRefund(
         result: Result<RefundApi>,
+        operationId: Long,
+    )
+
+    fun onStopConfirmRefund(
+        result: Result<Unit>,
+        operationId: Long,
     )
 
     fun onSetReaderDisplay(
@@ -264,25 +255,9 @@ interface TerminalPlatformApi {
                     val res = onSupportsReadersOfType((args[0] as Int?)?.let { DeviceTypeApi.values()[it] }, (args[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) })
                     result.success(res)
                 }
-                "connectBluetoothReader" -> {
+                "connectReader" -> {
                     val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectBluetoothReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
-                }
-                "connectHandoffReader" -> {
-                    val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectHandoffReader(res, args[0] as String)
-                }
-                "connectInternetReader" -> {
-                    val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectInternetReader(res, args[0] as String, args[1] as Boolean)
-                }
-                "connectMobileReader" -> {
-                    val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectMobileReader(res, args[0] as String, args[1] as String, args[2] as Boolean, args[3] as String?)
-                }
-                "connectUsbReader" -> {
-                    val res = Result<ReaderApi>(result) { it.serialize() }
-                    onConnectUsbReader(res, args[0] as String, args[1] as String, args[2] as Boolean)
+                    onConnectReader(res, args[0] as String, (args[1] as List<Any?>).let { ConnectionConfigurationApi.deserialize(it) })
                 }
                 "getConnectedReader" -> {
                     val res = onGetConnectedReader()
@@ -336,9 +311,13 @@ interface TerminalPlatformApi {
                     val res = Result<Unit>(result) { null }
                     onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
                 }
-                "confirmPaymentIntent" -> {
+                "startConfirmPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onConfirmPaymentIntent(res, args[0] as String)
+                    onStartConfirmPaymentIntent(res, (args[0] as Number).toLong(), args[1] as String)
+                }
+                "stopConfirmPaymentIntent" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopConfirmPaymentIntent(res, (args[0] as Number).toLong())
                 }
                 "cancelPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
@@ -354,15 +333,19 @@ interface TerminalPlatformApi {
                 }
                 "startCollectSetupIntentPaymentMethod" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as Boolean)
+                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Int).let { AllowRedisplayApi.values()[it] }, args[3] as Boolean)
                 }
                 "stopCollectSetupIntentPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }
                     onStopCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong())
                 }
-                "confirmSetupIntent" -> {
+                "startConfirmSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onConfirmSetupIntent(res, args[0] as String)
+                    onStartConfirmSetupIntent(res, (args[0] as Number).toLong(), args[1] as String)
+                }
+                "stopConfirmSetupIntent" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopConfirmSetupIntent(res, (args[0] as Number).toLong())
                 }
                 "cancelSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
@@ -376,9 +359,13 @@ interface TerminalPlatformApi {
                     val res = Result<Unit>(result) { null }
                     onStopCollectRefundPaymentMethod(res, (args[0] as Number).toLong())
                 }
-                "confirmRefund" -> {
+                "startConfirmRefund" -> {
                     val res = Result<RefundApi>(result) { it.serialize() }
-                    onConfirmRefund(res)
+                    onStartConfirmRefund(res, (args[0] as Number).toLong())
+                }
+                "stopConfirmRefund" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopConfirmRefund(res, (args[0] as Number).toLong())
                 }
                 "setReaderDisplay" -> {
                     val res = Result<Unit>(result) { null }
@@ -459,12 +446,6 @@ class TerminalHandlersApi(
         )
     }
 
-    fun unexpectedReaderDisconnect(
-        reader: ReaderApi,
-    ) {
-        channel.invokeMethod("_onUnexpectedReaderDisconnect", listOf<Any?>(reader.serialize()))
-    }
-
     fun connectionStatusChange(
         connectionStatus: ConnectionStatusApi,
     ) {
@@ -481,6 +462,31 @@ class TerminalHandlersApi(
         event: ReaderEventApi,
     ) {
         channel.invokeMethod("_onReaderReportEvent", listOf<Any?>(event.ordinal))
+    }
+
+    fun readerReconnectFailed(
+        reader: ReaderApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectFailed", listOf<Any?>(reader.serialize()))
+    }
+
+    fun readerReconnectStarted(
+        reader: ReaderApi,
+        reason: DisconnectReasonApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize(), reason.ordinal))
+    }
+
+    fun readerReconnectSucceeded(
+        reader: ReaderApi,
+    ) {
+        channel.invokeMethod("_onReaderReconnectSucceeded", listOf<Any?>(reader.serialize()))
+    }
+
+    fun disconnect(
+        reason: DisconnectReasonApi,
+    ) {
+        channel.invokeMethod("_onDisconnect", listOf<Any?>(reason.ordinal))
     }
 
     fun readerRequestDisplayMessage(
@@ -531,31 +537,6 @@ class TerminalHandlersApi(
     ) {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
-
-    fun disconnect(
-        reason: DisconnectReasonApi,
-    ) {
-        channel.invokeMethod("_onDisconnect", listOf<Any?>(reason.ordinal))
-    }
-
-    fun readerReconnectFailed(
-        reader: ReaderApi,
-    ) {
-        channel.invokeMethod("_onReaderReconnectFailed", listOf<Any?>(reader.serialize()))
-    }
-
-    fun readerReconnectStarted(
-        reader: ReaderApi,
-        reason: DisconnectReasonApi,
-    ) {
-        channel.invokeMethod("_onReaderReconnectStarted", listOf<Any?>(reader.serialize(), reason.ordinal))
-    }
-
-    fun readerReconnectSucceeded(
-        reader: ReaderApi,
-    ) {
-        channel.invokeMethod("_onReaderReconnectSucceeded", listOf<Any?>(reader.serialize()))
-    }
 }
 
 data class AddressApi(
@@ -576,6 +557,10 @@ data class AddressApi(
             state,
         )
     }
+}
+
+enum class AllowRedisplayApi {
+    ALWAYS, LIMITED, UNSPECIFIED;
 }
 
 data class AmountDetailsApi(
@@ -770,12 +755,102 @@ enum class ConfirmationMethodApi {
     AUTOMATIC, MANUAL;
 }
 
+sealed class ConnectionConfigurationApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): ConnectionConfigurationApi {
+            return when (serialized[0]) {
+                "BluetoothConnectionConfiguration" -> BluetoothConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "HandoffConnectionConfiguration" -> HandoffConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "InternetConnectionConfiguration" -> InternetConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "TapToPayConnectionConfiguration" -> TapToPayConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "UsbConnectionConfiguration" -> UsbConnectionConfigurationApi.deserialize(serialized.drop(1))
+                else -> throw Error()
+            }
+        }
+    }
+}
+
+data class BluetoothConnectionConfigurationApi(
+    val autoReconnectOnUnexpectedDisconnect: Boolean,
+    val locationId: String,
+): ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): BluetoothConnectionConfigurationApi {
+            return BluetoothConnectionConfigurationApi(
+                autoReconnectOnUnexpectedDisconnect = serialized[0] as Boolean,
+                locationId = serialized[1] as String,
+            )
+        }
+    }
+}
+
+class HandoffConnectionConfigurationApi: ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): HandoffConnectionConfigurationApi {
+            return HandoffConnectionConfigurationApi(
+            )
+        }
+    }
+}
+
+data class InternetConnectionConfigurationApi(
+    val failIfInUse: Boolean,
+): ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): InternetConnectionConfigurationApi {
+            return InternetConnectionConfigurationApi(
+                failIfInUse = serialized[0] as Boolean,
+            )
+        }
+    }
+}
+
+data class TapToPayConnectionConfigurationApi(
+    val autoReconnectOnUnexpectedDisconnect: Boolean,
+    val locationId: String,
+): ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayConnectionConfigurationApi {
+            return TapToPayConnectionConfigurationApi(
+                autoReconnectOnUnexpectedDisconnect = serialized[0] as Boolean,
+                locationId = serialized[1] as String,
+            )
+        }
+    }
+}
+
+data class UsbConnectionConfigurationApi(
+    val autoReconnectOnUnexpectedDisconnect: Boolean,
+    val locationId: String,
+): ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): UsbConnectionConfigurationApi {
+            return UsbConnectionConfigurationApi(
+                autoReconnectOnUnexpectedDisconnect = serialized[0] as Boolean,
+                locationId = serialized[1] as String,
+            )
+        }
+    }
+}
+
 enum class ConnectionStatusApi {
-    NOT_CONNECTED, CONNECTED, CONNECTING;
+    NOT_CONNECTED, CONNECTED, CONNECTING, DISCOVERING;
 }
 
 enum class DeviceTypeApi {
-    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, COTS_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, APPLE_BUILT_IN;
+    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, TAP_TO_PAY_DEVICE, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, STRIPE_S710, STRIPE_S710_DEVKIT, APPLE_BUILT_IN;
 }
 
 enum class DisconnectReasonApi {
@@ -792,7 +867,7 @@ sealed class DiscoveryConfigurationApi {
                 "BluetoothProximityDiscoveryConfiguration" -> BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "HandoffDiscoveryConfiguration" -> HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "InternetDiscoveryConfiguration" -> InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
-                "LocalMobileDiscoveryConfiguration" -> LocalMobileDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "TapToPayDiscoveryConfiguration" -> TapToPayDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "UsbDiscoveryConfiguration" -> UsbDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 else -> throw Error()
             }
@@ -844,6 +919,7 @@ class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
 data class InternetDiscoveryConfigurationApi(
     val isSimulated: Boolean,
     val locationId: String?,
+    val timeout: Long?,
 ): DiscoveryConfigurationApi() {
     companion object {
         fun deserialize(
@@ -852,22 +928,21 @@ data class InternetDiscoveryConfigurationApi(
             return InternetDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
                 locationId = serialized[1] as String?,
+                timeout = serialized[2] as Long?,
             )
         }
     }
 }
 
-data class LocalMobileDiscoveryConfigurationApi(
+data class TapToPayDiscoveryConfigurationApi(
     val isSimulated: Boolean,
-    val onBehalfOf: String?,
 ): DiscoveryConfigurationApi() {
     companion object {
         fun deserialize(
             serialized: List<Any?>,
-        ): LocalMobileDiscoveryConfigurationApi {
-            return LocalMobileDiscoveryConfigurationApi(
+        ): TapToPayDiscoveryConfigurationApi {
+            return TapToPayDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
-                onBehalfOf = serialized[1] as String?,
             )
         }
     }
@@ -1112,6 +1187,66 @@ data class ReaderApi(
             serialNumber,
             simulated,
         )
+    }
+}
+
+sealed class ReaderDelegateAbstractApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): ReaderDelegateAbstractApi {
+            return when (serialized[0]) {
+                "MobileReaderDelegate" -> MobileReaderDelegateApi.deserialize(serialized.drop(1))
+                "HandoffReaderDelegate" -> HandoffReaderDelegateApi.deserialize(serialized.drop(1))
+                "InternetReaderDelegate" -> InternetReaderDelegateApi.deserialize(serialized.drop(1))
+                "TapToPayReaderDelegate" -> TapToPayReaderDelegateApi.deserialize(serialized.drop(1))
+                else -> throw Error()
+            }
+        }
+    }
+}
+
+class MobileReaderDelegateApi: ReaderDelegateAbstractApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): MobileReaderDelegateApi {
+            return MobileReaderDelegateApi(
+            )
+        }
+    }
+}
+
+class HandoffReaderDelegateApi: ReaderDelegateAbstractApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): HandoffReaderDelegateApi {
+            return HandoffReaderDelegateApi(
+            )
+        }
+    }
+}
+
+class InternetReaderDelegateApi: ReaderDelegateAbstractApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): InternetReaderDelegateApi {
+            return InternetReaderDelegateApi(
+            )
+        }
+    }
+}
+
+class TapToPayReaderDelegateApi: ReaderDelegateAbstractApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayReaderDelegateApi {
+            return TapToPayReaderDelegateApi(
+            )
+        }
     }
 }
 

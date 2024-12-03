@@ -112,3 +112,18 @@ extension SetupIntentUsageApi {
         }
     }
 }
+
+extension AllowRedisplayApi {
+    func toHost() -> AllowRedisplay {
+        switch self {
+        case .always:
+            return .always
+        case .limited:
+            return .limited
+        case .unspecified:
+            return .unspecified
+        @unknown default:
+            fatalError()
+        }
+    }
+}

@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  permission_handler: ^10.4.3
+  permission_handler: ^11.3.1
   mek_stripe_terminal:
     path: ./..
 

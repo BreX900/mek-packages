@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
+import 'package:mek_stripe_terminal/src/models/connection_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
@@ -14,45 +15,39 @@ import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
-import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
-
-@Deprecated('Use Terminal. The name has been aligned with the native SDKs.')
-typedef StripeTerminal = Terminal;
 
 /// Parts documented with "???" are not yet validated
 class Terminal {
-  static final _platformInstance = TerminalPlatform();
-  static TerminalHandlers? _handlersInstance;
+  static Future<void>? _initialization;
+  static Terminal? _instance;
+  static Terminal get instance {
+    assert(_instance == null,
+        'Please before use a Terminal instance init it with [Terminal.initTerminal] static method');
+    return _instance!;
+  }
 
-  static Future<Terminal>? _instance;
+  static final TerminalPlatform _platform = TerminalPlatform();
+  static final TerminalHandlers _handlers = TerminalHandlers(_platform);
 
-  final TerminalPlatform _platform;
-  final TerminalHandlers _handlers;
-
-  /// Creates an internal `StripeTerminal` instance
-  Terminal._(this._platform, this._handlers);
+  Terminal._();
 
   /// Initializes the terminal SDK
-  static Future<Terminal> getInstance({
+  static Future<void> initTerminal({
     bool shouldPrintLogs = false,
 
     /// A callback function that returns a Future which resolves to a connection token from your backend
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
-  }) {
-    final platform = _platformInstance;
-    final handlers = _handlersInstance ??= TerminalHandlers(
-      platform: platform,
-      fetchToken: fetchToken,
-    );
+  }) async {
+    return _initialization ??= () async {
+      _handlers.fetchToken = fetchToken;
 
-    return _instance ??= () async {
       try {
-        await platform.init(shouldPrintLogs: shouldPrintLogs);
-        return Terminal._(platform, handlers);
+        await _platform.init(shouldPrintLogs: shouldPrintLogs);
+        return Terminal._();
       } catch (_) {
-        _instance = null;
+        _initialization = null;
         rethrow;
       }
     }();
@@ -71,15 +66,6 @@ class Terminal {
 
   /// Get the current [ConnectionStatus]
   Future<ConnectionStatus> getConnectionStatus() async => await _platform.getConnectionStatus();
-
-  /// The reader disconnected unexpectedly (that is, without your app explicitly calling [disconnectReader]).
-  ///
-  /// In your implementation of this method, you should notify your user that the reader disconnected.
-  /// You may also want to call discoverReaders to begin scanning for readers. Your app can attempt
-  /// to automatically reconnect to the disconnected reader, or display UI for your user to re-connect to a reader.
-  ///
-  /// You can trigger this call in your app by powering off the connected reader.
-  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
   /// Use this method to determine whether the mobile device supports a given reader type using a
   /// particular discovery method.
@@ -143,89 +129,12 @@ class Terminal {
   ///
   /// ??? If the reader’s battery is critically low the connect call will fail with
   /// SCPErrorBluetoothDisconnected. Plug your reader in to start charging and try again.
-  Future<Reader> connectBluetoothReader(
+  Future<Reader> connectReader(
     Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    PhysicalReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
+    required ConnectionConfiguration configuration,
   }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectBluetoothReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-      );
-    });
-  }
-
-  /// Attempts to connect to the given Handoff reader with a given connection configuration.
-  Future<Reader> connectHandoffReader(Reader reader, {PhysicalReaderDelegate? delegate}) async {
-    return await _handleReaderConnection(delegate, null, () async {
-      return await _platform.connectHandoffReader(reader.serialNumber);
-    });
-  }
-
-  /// Attempts to connect to the given Internet reader with a given connection configuration.
-  Future<Reader> connectInternetReader(
-    Reader reader, {
-    bool failIfInUse = false,
-  }) async {
-    return await _platform.connectInternetReader(reader.serialNumber, failIfInUse: failIfInUse);
-  }
-
-  /// Attempts to connect to the given Local Mobile reader with a given connection configuration.
-  ///
-  /// To connect to a Local Mobile reader, your app must register that reader to a Location upon connection.
-  /// You should pass a locationId to [discoverReaders] before connecting which specifies
-  /// the location to which this reader belongs.
-  ///
-  /// Throughout the lifetime of the connection, the reader will communicate with your app via the
-  /// [LocalMobileReaderDelegate] to announce transaction status, battery level, and software update information.
-  ///
-  /// Note that during connection, an update may occur to ensure that the local mobile reader has
-  /// the most up to date software and configurations.
-  ///
-  /// IOS:
-  /// - If your integration is creating destination charges and using on_behalf_of,
-  ///   you must provide the connected_account_id in the [onBehalfOf] parameter. Unlike other reader
-  ///   types which require this information on a per-transaction basis, the Apple Built-In reader
-  ///   requires this on a per-connection basis as well in order to establish a reader connection.
-  Future<Reader> connectMobileReader(
-    Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    String? onBehalfOf,
-    PhysicalReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-  }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectMobileReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-        onBehalfOf: onBehalfOf,
-      );
-    });
-  }
-
-  /// Attempts to connect to the given Usb reader with a given connection configuration.
-  Future<Reader> connectUsbReader(
-    Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    ReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-  }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectUsbReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-      );
+    return _handlers.handleReaderConnection(configuration.readerDelegate, () async {
+      return await _platform.connectReader(reader.serialNumber, configuration);
     });
   }
 
@@ -372,8 +281,11 @@ class Terminal {
   /// If the updated [PaymentIntent]’s status changes to [PaymentIntentStatus.requiresPaymentMethod]
   ///   (e.g., the request failed because the card was declined), call [collectPaymentMethod]
   ///   with the updated [PaymentIntent] to try charging another card.
-  Future<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) async =>
-      await _platform.confirmPaymentIntent(paymentIntent.id);
+  CancelableFuture<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) {
+    return CancelableFuture(_platform.stopConfirmPaymentIntent, (id) async {
+      return await _platform.startConfirmPaymentIntent(id, paymentIntent.id);
+    });
+  }
 
   /// Cancels an [PaymentIntent].
   ///
@@ -443,16 +355,15 @@ class Terminal {
   /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
     SetupIntent setupIntent, {
-    required bool customerConsentCollected,
+    required AllowRedisplay allowRedisplay,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
         setupIntentId: setupIntent.id,
-        customerConsentCollected: customerConsentCollected,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        allowRedisplay: allowRedisplay,
+        customerCancellationEnabled: customerCancellationEnabled,
       );
     });
   }
@@ -470,8 +381,11 @@ class Terminal {
   ///     [confirmSetupIntent] again with the updated [SetupIntent] to retry the request.
   ///   3. If the updated [SetupIntent]’s status is [SetupIntentStatus.requiresAction], there might
   ///     be authentication the cardholder must perform offline before the saved PaymentMethod can be used.
-  Future<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) async =>
-      await _platform.confirmSetupIntent(setupIntent.id);
+  CancelableFuture<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) {
+    return CancelableFuture(_platform.stopConfirmSetupIntent, (id) async {
+      return await _platform.startConfirmSetupIntent(id, setupIntent.id);
+    });
+  }
 
   /// Cancels an [SetupIntent].
   ///
@@ -527,7 +441,6 @@ class Terminal {
     bool? reverseTransfer,
     bool? refundApplicationFee,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
       return await _platform.startCollectRefundPaymentMethod(
@@ -538,7 +451,7 @@ class Terminal {
         metadata: metadata,
         reverseTransfer: reverseTransfer,
         refundApplicationFee: refundApplicationFee,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        customerCancellationEnabled: customerCancellationEnabled,
       );
     });
   }
@@ -554,7 +467,11 @@ class Terminal {
   ///
   /// Note: collectRefundPaymentMethod:completion and confirmRefund are only available for payment
   ///   methods that require in-person refunds. For all other refunds, use the Stripe Dashboard or the Stripe API.
-  Future<Refund> confirmRefund() async => await _platform.confirmRefund();
+  CancelableFuture<Refund> confirmRefund() {
+    return CancelableFuture(_platform.stopConfirmRefund, (id) async {
+      return await _platform.startConfirmRefund(id);
+    });
+  }
 //endregion
 
 //region Display information to customers
@@ -587,19 +504,5 @@ class Terminal {
     };
     newController.onCancel = () async => await subscription.cancel();
     return newController;
-  }
-
-  Future<Reader> _handleReaderConnection(
-    ReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-    Future<Reader> Function() connector,
-  ) async {
-    try {
-      _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
-      return await connector();
-    } catch (_) {
-      _handlers.detachReaderDelegates();
-      rethrow;
-    }
   }
 }

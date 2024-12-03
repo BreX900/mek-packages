@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:example/models/discovery_method.dart';
 import 'package:example/models/k.dart';
+import 'package:example/reader_delegates.dart';
 import 'package:example/stripe_api.dart';
 import 'package:example/utils/permission_utils.dart';
 import 'package:flutter/foundation.dart';
@@ -42,10 +43,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final _api = StripeApi();
   Terminal? _terminal;
 
@@ -55,7 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _onConnectionStatusChangeSub;
   var _connectionStatus = ConnectionStatus.notConnected;
   bool _isSimulated = true;
-  var _discoveringMethod = DiscoveryMethod.bluetoothScan;
+  DiscoveryMethod _discoveryMethod = DiscoveryMethod.bluetoothScan;
+  // DiscoveryConfiguration? _discoveryConfiguration;
   StreamSubscription? _discoverReaderSub;
   var _readers = const <Reader>[];
   StreamSubscription? _onUnexpectedReaderDisconnectSub;
@@ -93,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       print('$permission: $status');
 
       if (status == PermissionStatus.denied || status == PermissionStatus.permanentlyDenied) {
-        _showSnackBar('Please grant ${permission.name} permission.');
+        showSnackBar('Please grant ${permission.name} permission.');
         return;
       }
     }
@@ -104,17 +106,18 @@ class _HomeScreenState extends State<HomeScreen> {
         print('$service: $status');
 
         if (status != ServiceStatus.enabled) {
-          _showSnackBar('Please enable ${service.name} service.');
+          showSnackBar('Please enable ${service.name} service.');
           return;
         }
       }
     }
 
-    final terminal = await Terminal.getInstance(
+    await Terminal.initTerminal(
       shouldPrintLogs: false,
       fetchToken: _fetchConnectionToken,
     );
-    setState(() => _terminal = terminal);
+    final terminal = Terminal.instance;
+    setState(() => _terminal = Terminal.instance);
     _onConnectionStatusChangeSub = terminal.onConnectionStatusChange.listen((status) {
       print('Connection Status Changed: ${status.name}');
       setState(() {
@@ -124,9 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _reader = null;
         }
       });
-    });
-    _onUnexpectedReaderDisconnectSub = terminal.onUnexpectedReaderDisconnect.listen((reader) {
-      print('Reader Unexpected Disconnected: ${reader.label}');
     });
     _onPaymentStatusChangeSub = terminal.onPaymentStatusChange.listen((status) {
       print('Payment Status Changed: ${status.name}');
@@ -154,67 +154,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _changeDiscoveryMethod(DiscoveryMethod? method) {
     setState(() {
-      _discoveringMethod = method!;
+      _discoveryMethod = method!;
       _readers = const [];
     });
   }
 
   void _checkStatus(Terminal terminal) async {
     final status = await terminal.getConnectionStatus();
-    _showSnackBar('Connection status: ${status.name}');
+    showSnackBar('Connection status: ${status.name}');
   }
 
-  Future<Reader?> _tryConnectReader(Terminal terminal, Reader reader) async {
-    String? getLocationId() {
+  Future<void> _connectReader(Terminal terminal, Reader reader) async {
+    String getLocationId() {
       final locationId = _selectedLocation?.id ?? reader.locationId;
-      if (locationId == null) _showSnackBar('Missing location');
-      return locationId;
+      if (locationId != null) locationId;
+      throw StateError('Missing location');
     }
 
-    switch (_discoveringMethod) {
-      case DiscoveryMethod.bluetoothScan || DiscoveryMethod.bluetoothProximity:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectBluetoothReader(
-          reader,
-          locationId: locationId,
-        );
-      case DiscoveryMethod.localMobile:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectMobileReader(
-          reader,
-          locationId: locationId,
-        );
-      case DiscoveryMethod.internet:
-        return await terminal.connectInternetReader(reader);
-      case DiscoveryMethod.handOff:
-        return await terminal.connectHandoffReader(reader);
-      case DiscoveryMethod.usb:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectUsbReader(reader, locationId: locationId);
-    }
-  }
+    try {
+      final connectionConfiguration = switch (_discoveryMethod) {
+        DiscoveryMethod.bluetoothScan ||
+        DiscoveryMethod.bluetoothProximity =>
+          BluetoothConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: HomeScreenMobileReaderDelegate(this),
+          ),
+        DiscoveryMethod.tapToPay => TapToPayConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: HomeScreenTapToPayReaderDelegate(this),
+          ),
+        DiscoveryMethod.internet => InternetConnectionConfiguration(
+            readerDelegate: HomeScreenInternetReaderDelegate(this),
+          ),
+        DiscoveryMethod.handOff => HandoffConnectionConfiguration(
+            readerDelegate: HomeScreenHandoffReaderDelegate(this),
+          ),
+        DiscoveryMethod.usb => UsbConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: HomeScreenMobileReaderDelegate(this),
+          ),
+      };
 
-  void _connectReader(Terminal terminal, Reader reader) async {
-    final connectedReader = await _tryConnectReader(terminal, reader);
-    if (connectedReader == null) return;
-    _showSnackBar(
-        'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
-    setState(() => _reader = connectedReader);
+      final connectedReader =
+          await terminal.connectReader(reader, configuration: connectionConfiguration);
+
+      showSnackBar(
+          'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
+      setState(() => _reader = connectedReader);
+    } on StateError catch (error) {
+      showSnackBar(error.message);
+    }
   }
 
   void _disconnectReader(Terminal terminal) async {
     await terminal.disconnectReader();
-    _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
+    showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
     setState(() => _reader = null);
   }
 
   void _startDiscoverReaders(Terminal terminal) {
     setState(() => _readers = const []);
 
-    final configuration = switch (_discoveringMethod) {
+    final configuration = switch (_discoveryMethod) {
       DiscoveryMethod.bluetoothScan => BluetoothDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
@@ -225,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
       DiscoveryMethod.internet => InternetDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
-      DiscoveryMethod.localMobile => LocalMobileDiscoveryConfiguration(
+      DiscoveryMethod.tapToPay => TapToPayDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
       DiscoveryMethod.usb => UsbDiscoveryConfiguration(
@@ -263,14 +264,14 @@ class _HomeScreenState extends State<HomeScreen> {
       paymentMethodTypes: [PaymentMethodType.cardPresent],
     ));
     setState(() => _paymentIntent = paymentIntent);
-    _showSnackBar('Payment intent created!');
+    showSnackBar('Payment intent created!');
   }
 
   void _createFromApiAndRetrievePaymentIntentFromSdk(Terminal terminal) async {
     final paymentIntentClientSecret = await _api.createPaymentIntent();
     final paymentIntent = await terminal.retrievePaymentIntent(paymentIntentClientSecret);
     setState(() => _paymentIntent = paymentIntent);
-    _showSnackBar('Payment intent retrieved!');
+    showSnackBar('Payment intent retrieved!');
   }
 
   void _collectPaymentMethod(Terminal terminal, PaymentIntent paymentIntent) async {
@@ -288,12 +289,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _paymentIntent = paymentIntentWithPaymentMethod;
         _collectingPaymentMethod = null;
       });
-      _showSnackBar('Payment method collected!');
+      showSnackBar('Payment method collected!');
     } on TerminalException catch (exception) {
       setState(() => _collectingPaymentMethod = null);
       switch (exception.code) {
         case TerminalExceptionCode.canceled:
-          _showSnackBar('Collecting Payment method is cancelled!');
+          showSnackBar('Collecting Payment method is cancelled!');
         default:
           rethrow;
       }
@@ -307,10 +308,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _confirmPaymentIntent(Terminal terminal, PaymentIntent paymentIntent) async {
     final processedPaymentIntent = await terminal.confirmPaymentIntent(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
-    _showSnackBar('Payment processed!');
+    showSnackBar('Payment processed!');
   }
 
-  void _showSnackBar(String message) {
+  void showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -359,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text('Check status (${_connectionStatus.name})'),
       ),
       DropdownButton<DiscoveryMethod>(
-        value: _discoveringMethod,
+        value: _discoveryMethod,
         onChanged: _changeDiscoveryMethod,
         items: DiscoveryMethod.values.map((e) {
           return DropdownMenuItem(
@@ -368,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }).toList(),
       ),
-      if (_discoveringMethod.canSimulate)
+      if (_discoveryMethod.canSimulate)
         ListTile(
           onTap: _changeMode,
           title: const Text('Scanning mode'),
@@ -402,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _connectionStatus != ConnectionStatus.connecting &&
               (_reader == null || _reader!.serialNumber == e.serialNumber),
           onTap: terminal != null && _connectionStatus == ConnectionStatus.notConnected
-              ? () => _connectReader(terminal, e)
+              ? () async => _connectReader(terminal, e)
               : null,
           title: Text(e.serialNumber),
           subtitle: Text('${e.deviceType?.name ?? 'Unknown'} ${e.locationId ?? 'NoLocation'}'),

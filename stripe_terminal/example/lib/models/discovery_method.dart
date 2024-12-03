@@ -15,7 +15,7 @@ enum DiscoveryMethod {
   internet(canSimulate: true),
 
   /// [LocalMobileDiscoveryConfiguration]
-  localMobile(canSimulate: true),
+  tapToPay(canSimulate: true),
 
   /// [UsbDiscoveryConfiguration]
   usb(canSimulate: true);

@@ -1,6 +1,6 @@
 name: mek_stripe_terminal
 description: A StripeTerminal plugin to discover readers, connect to them and process payments.
-version: 3.7.0
+version: 4.0.0
 repository: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 homepage: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 topics:
@@ -15,11 +15,11 @@ scripts:
   bootstrap: dart pub global activate index_generator
 
   # To generate library dart file
-  build:library: index_generator
+  generate-library: index_generator
   # To generate code to communicate between flutter and various platforms
-  build:api: dart run tool/generate_api.dart
+  generate-api: dart run tool/generate_api.dart
   # To generate *.g.dart files
-  build:runner: dart run build_runner watch --delete-conflicting-outputs
+  generate-code: dart run build_runner watch --delete-conflicting-outputs
 
   # To recreate a project
   recreate-project: flutter create . --platforms=android,ios --project-name=stripe_terminal --template=plugin --org=mek
@@ -28,7 +28,7 @@ dependencies:
   flutter: { sdk: flutter }
 
   meta: ^1.9.1
-  collection: ^1.17.0
+  collection: ^1.18.0
   recase: ^4.1.0
 
   mek_data_class: ^1.4.0

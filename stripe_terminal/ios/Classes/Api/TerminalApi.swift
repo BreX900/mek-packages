@@ -104,32 +104,9 @@ protocol TerminalPlatformApi {
         _ discoveryConfiguration: DiscoveryConfigurationApi
     ) throws -> Bool
 
-    func onConnectBluetoothReader(
+    func onConnectReader(
         _ serialNumber: String,
-        _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
-    ) async throws -> ReaderApi
-
-    func onConnectHandoffReader(
-        _ serialNumber: String
-    ) async throws -> ReaderApi
-
-    func onConnectInternetReader(
-        _ serialNumber: String,
-        _ failIfInUse: Bool
-    ) async throws -> ReaderApi
-
-    func onConnectMobileReader(
-        _ serialNumber: String,
-        _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool,
-        _ onBehalfOf: String?
-    ) async throws -> ReaderApi
-
-    func onConnectUsbReader(
-        _ serialNumber: String,
-        _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
+        _ configuration: ConnectionConfigurationApi
     ) async throws -> ReaderApi
 
     func onGetConnectedReader() throws -> ReaderApi?
@@ -178,9 +155,15 @@ protocol TerminalPlatformApi {
         _ operationId: Int
     ) async throws -> Void
 
-    func onConfirmPaymentIntent(
+    func onStartConfirmPaymentIntent(
+        _ result: Result<PaymentIntentApi>,
+        _ operationId: Int,
         _ paymentIntentId: String
-    ) async throws -> PaymentIntentApi
+    ) throws
+
+    func onStopConfirmPaymentIntent(
+        _ operationId: Int
+    ) async throws -> Void
 
     func onCancelPaymentIntent(
         _ paymentIntentId: String
@@ -202,7 +185,7 @@ protocol TerminalPlatformApi {
         _ result: Result<SetupIntentApi>,
         _ operationId: Int,
         _ setupIntentId: String,
-        _ customerConsentCollected: Bool,
+        _ allowRedisplay: AllowRedisplayApi,
         _ customerCancellationEnabled: Bool
     ) throws
 
@@ -210,9 +193,15 @@ protocol TerminalPlatformApi {
         _ operationId: Int
     ) async throws -> Void
 
-    func onConfirmSetupIntent(
+    func onStartConfirmSetupIntent(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
         _ setupIntentId: String
-    ) async throws -> SetupIntentApi
+    ) throws
+
+    func onStopConfirmSetupIntent(
+        _ operationId: Int
+    ) async throws -> Void
 
     func onCancelSetupIntent(
         _ setupIntentId: String
@@ -234,7 +223,14 @@ protocol TerminalPlatformApi {
         _ operationId: Int
     ) async throws -> Void
 
-    func onConfirmRefund() async throws -> RefundApi
+    func onStartConfirmRefund(
+        _ result: Result<RefundApi>,
+        _ operationId: Int
+    ) throws
+
+    func onStopConfirmRefund(
+        _ operationId: Int
+    ) async throws -> Void
 
     func onSetReaderDisplay(
         _ cart: CartApi
@@ -308,29 +304,9 @@ func setTerminalPlatformApiHandler(
             case "supportsReadersOfType":
                 let res = try hostApi.onSupportsReadersOfType(!(args[0] is NSNull) ? DeviceTypeApi(rawValue: args[0] as! Int)! : nil, deserializeDiscoveryConfigurationApi(args[1] as! [Any?]))
                 result(res)
-            case "connectBluetoothReader":
+            case "connectReader":
                 runAsync {
-                    let res = try await hostApi.onConnectBluetoothReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
-                    return res.serialize()
-                }
-            case "connectHandoffReader":
-                runAsync {
-                    let res = try await hostApi.onConnectHandoffReader(args[0] as! String)
-                    return res.serialize()
-                }
-            case "connectInternetReader":
-                runAsync {
-                    let res = try await hostApi.onConnectInternetReader(args[0] as! String, args[1] as! Bool)
-                    return res.serialize()
-                }
-            case "connectMobileReader":
-                runAsync {
-                    let res = try await hostApi.onConnectMobileReader(args[0] as! String, args[1] as! String, args[2] as! Bool, args[3] as? String)
-                    return res.serialize()
-                }
-            case "connectUsbReader":
-                runAsync {
-                    let res = try await hostApi.onConnectUsbReader(args[0] as! String, args[1] as! String, args[2] as! Bool)
+                    let res = try await hostApi.onConnectReader(args[0] as! String, deserializeConnectionConfigurationApi(args[1] as! [Any?]))
                     return res.serialize()
                 }
             case "getConnectedReader":
@@ -388,10 +364,13 @@ func setTerminalPlatformApiHandler(
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "confirmPaymentIntent":
+            case "startConfirmPaymentIntent":
+                let res = Result<PaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartConfirmPaymentIntent(res, args[0] as! Int, args[1] as! String)
+            case "stopConfirmPaymentIntent":
                 runAsync {
-                    let res = try await hostApi.onConfirmPaymentIntent(args[0] as! String)
-                    return res.serialize()
+                    try await hostApi.onStopConfirmPaymentIntent(args[0] as! Int)
+                    return nil
                 }
             case "cancelPaymentIntent":
                 runAsync {
@@ -410,16 +389,19 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectSetupIntentPaymentMethod":
                 let res = Result<SetupIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as! Bool)
+                try hostApi.onStartCollectSetupIntentPaymentMethod(res, args[0] as! Int, args[1] as! String, AllowRedisplayApi(rawValue: args[2] as! Int)!, args[3] as! Bool)
             case "stopCollectSetupIntentPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectSetupIntentPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "confirmSetupIntent":
+            case "startConfirmSetupIntent":
+                let res = Result<SetupIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartConfirmSetupIntent(res, args[0] as! Int, args[1] as! String)
+            case "stopConfirmSetupIntent":
                 runAsync {
-                    let res = try await hostApi.onConfirmSetupIntent(args[0] as! String)
-                    return res.serialize()
+                    try await hostApi.onStopConfirmSetupIntent(args[0] as! Int)
+                    return nil
                 }
             case "cancelSetupIntent":
                 runAsync {
@@ -434,10 +416,13 @@ func setTerminalPlatformApiHandler(
                     try await hostApi.onStopCollectRefundPaymentMethod(args[0] as! Int)
                     return nil
                 }
-            case "confirmRefund":
+            case "startConfirmRefund":
+                let res = Result<RefundApi>(result) { $0.serialize() }
+                try hostApi.onStartConfirmRefund(res, args[0] as! Int)
+            case "stopConfirmRefund":
                 runAsync {
-                    let res = try await hostApi.onConfirmRefund()
-                    return res.serialize()
+                    try await hostApi.onStopConfirmRefund(args[0] as! Int)
+                    return nil
                 }
             case "setReaderDisplay":
                 runAsync {
@@ -490,12 +475,6 @@ class TerminalHandlersApi {
         }
     }
 
-    func unexpectedReaderDisconnect(
-        reader: ReaderApi
-    ) {
-        channel.invokeMethod("_onUnexpectedReaderDisconnect", arguments: [reader.serialize()])
-    }
-
     func connectionStatusChange(
         connectionStatus: ConnectionStatusApi
     ) {
@@ -512,6 +491,31 @@ class TerminalHandlersApi {
         event: ReaderEventApi
     ) {
         channel.invokeMethod("_onReaderReportEvent", arguments: [event.rawValue])
+    }
+
+    func readerReconnectFailed(
+        reader: ReaderApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectFailed", arguments: [reader.serialize()])
+    }
+
+    func readerReconnectStarted(
+        reader: ReaderApi,
+        reason: DisconnectReasonApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectStarted", arguments: [reader.serialize(), reason.rawValue])
+    }
+
+    func readerReconnectSucceeded(
+        reader: ReaderApi
+    ) {
+        channel.invokeMethod("_onReaderReconnectSucceeded", arguments: [reader.serialize()])
+    }
+
+    func disconnect(
+        reason: DisconnectReasonApi
+    ) {
+        channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
     }
 
     func readerRequestDisplayMessage(
@@ -562,31 +566,6 @@ class TerminalHandlersApi {
     ) {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
-
-    func disconnect(
-        reason: DisconnectReasonApi
-    ) {
-        channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
-    }
-
-    func readerReconnectFailed(
-        reader: ReaderApi
-    ) {
-        channel.invokeMethod("_onReaderReconnectFailed", arguments: [reader.serialize()])
-    }
-
-    func readerReconnectStarted(
-        reader: ReaderApi,
-        reason: DisconnectReasonApi
-    ) {
-        channel.invokeMethod("_onReaderReconnectStarted", arguments: [reader.serialize(), reason.rawValue])
-    }
-
-    func readerReconnectSucceeded(
-        reader: ReaderApi
-    ) {
-        channel.invokeMethod("_onReaderReconnectSucceeded", arguments: [reader.serialize()])
-    }
 }
 
 struct AddressApi {
@@ -607,6 +586,12 @@ struct AddressApi {
             state,
         ]
     }
+}
+
+enum AllowRedisplayApi: Int {
+    case always
+    case limited
+    case unspecified
 }
 
 struct AmountDetailsApi {
@@ -812,17 +797,103 @@ enum ConfirmationMethodApi: Int {
     case manual
 }
 
+protocol ConnectionConfigurationApi {}
+
+func deserializeConnectionConfigurationApi(
+    _ serialized: [Any?]
+) -> ConnectionConfigurationApi {
+    switch serialized[0] as! String {
+    case "BluetoothConnectionConfiguration":
+        return BluetoothConnectionConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "HandoffConnectionConfiguration":
+        return HandoffConnectionConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "InternetConnectionConfiguration":
+        return InternetConnectionConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "TapToPayConnectionConfiguration":
+        return TapToPayConnectionConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "UsbConnectionConfiguration":
+        return UsbConnectionConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    default:
+        fatalError()
+    }
+}
+
+struct BluetoothConnectionConfigurationApi: ConnectionConfigurationApi {
+    let autoReconnectOnUnexpectedDisconnect: Bool
+    let locationId: String
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> BluetoothConnectionConfigurationApi {
+        return BluetoothConnectionConfigurationApi(
+            autoReconnectOnUnexpectedDisconnect: serialized[0] as! Bool,
+            locationId: serialized[1] as! String
+        )
+    }
+}
+
+struct HandoffConnectionConfigurationApi: ConnectionConfigurationApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> HandoffConnectionConfigurationApi {
+        return HandoffConnectionConfigurationApi(
+        
+        )
+    }
+}
+
+struct InternetConnectionConfigurationApi: ConnectionConfigurationApi {
+    let failIfInUse: Bool
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> InternetConnectionConfigurationApi {
+        return InternetConnectionConfigurationApi(
+            failIfInUse: serialized[0] as! Bool
+        )
+    }
+}
+
+struct TapToPayConnectionConfigurationApi: ConnectionConfigurationApi {
+    let autoReconnectOnUnexpectedDisconnect: Bool
+    let locationId: String
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayConnectionConfigurationApi {
+        return TapToPayConnectionConfigurationApi(
+            autoReconnectOnUnexpectedDisconnect: serialized[0] as! Bool,
+            locationId: serialized[1] as! String
+        )
+    }
+}
+
+struct UsbConnectionConfigurationApi: ConnectionConfigurationApi {
+    let autoReconnectOnUnexpectedDisconnect: Bool
+    let locationId: String
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> UsbConnectionConfigurationApi {
+        return UsbConnectionConfigurationApi(
+            autoReconnectOnUnexpectedDisconnect: serialized[0] as! Bool,
+            locationId: serialized[1] as! String
+        )
+    }
+}
+
 enum ConnectionStatusApi: Int {
     case notConnected
     case connected
     case connecting
+    case discovering
 }
 
 enum DeviceTypeApi: Int {
     case chipper1X
     case chipper2X
     case stripeM2
-    case cotsDevice
+    case tapToPayDevice
     case verifoneP400
     case wiseCube
     case wisePad3
@@ -832,6 +903,8 @@ enum DeviceTypeApi: Int {
     case etna
     case stripeS700
     case stripeS700Devkit
+    case stripeS710
+    case stripeS710Devkit
     case appleBuiltIn
 }
 
@@ -859,8 +932,8 @@ func deserializeDiscoveryConfigurationApi(
         return HandoffDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
     case "InternetDiscoveryConfiguration":
         return InternetDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
-    case "LocalMobileDiscoveryConfiguration":
-        return LocalMobileDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
+    case "TapToPayDiscoveryConfiguration":
+        return TapToPayDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
     case "UsbDiscoveryConfiguration":
         return UsbDiscoveryConfigurationApi.deserialize(Array(serialized.dropFirst()))
     default:
@@ -907,27 +980,27 @@ struct HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi {
 struct InternetDiscoveryConfigurationApi: DiscoveryConfigurationApi {
     let isSimulated: Bool
     let locationId: String?
+    let timeout: Int?
 
     static func deserialize(
         _ serialized: [Any?]
     ) -> InternetDiscoveryConfigurationApi {
         return InternetDiscoveryConfigurationApi(
             isSimulated: serialized[0] as! Bool,
-            locationId: serialized[1] as? String
+            locationId: serialized[1] as? String,
+            timeout: serialized[2] as? Int
         )
     }
 }
 
-struct LocalMobileDiscoveryConfigurationApi: DiscoveryConfigurationApi {
+struct TapToPayDiscoveryConfigurationApi: DiscoveryConfigurationApi {
     let isSimulated: Bool
-    let onBehalfOf: String?
 
     static func deserialize(
         _ serialized: [Any?]
-    ) -> LocalMobileDiscoveryConfigurationApi {
-        return LocalMobileDiscoveryConfigurationApi(
-            isSimulated: serialized[0] as! Bool,
-            onBehalfOf: serialized[1] as? String
+    ) -> TapToPayDiscoveryConfigurationApi {
+        return TapToPayDiscoveryConfigurationApi(
+            isSimulated: serialized[0] as! Bool
         )
     }
 }
@@ -1179,6 +1252,65 @@ struct ReaderApi {
             serialNumber,
             simulated,
         ]
+    }
+}
+
+protocol ReaderDelegateAbstractApi {}
+
+func deserializeReaderDelegateAbstractApi(
+    _ serialized: [Any?]
+) -> ReaderDelegateAbstractApi {
+    switch serialized[0] as! String {
+    case "MobileReaderDelegate":
+        return MobileReaderDelegateApi.deserialize(Array(serialized.dropFirst()))
+    case "HandoffReaderDelegate":
+        return HandoffReaderDelegateApi.deserialize(Array(serialized.dropFirst()))
+    case "InternetReaderDelegate":
+        return InternetReaderDelegateApi.deserialize(Array(serialized.dropFirst()))
+    case "TapToPayReaderDelegate":
+        return TapToPayReaderDelegateApi.deserialize(Array(serialized.dropFirst()))
+    default:
+        fatalError()
+    }
+}
+
+struct MobileReaderDelegateApi: ReaderDelegateAbstractApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> MobileReaderDelegateApi {
+        return MobileReaderDelegateApi(
+        
+        )
+    }
+}
+
+struct HandoffReaderDelegateApi: ReaderDelegateAbstractApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> HandoffReaderDelegateApi {
+        return HandoffReaderDelegateApi(
+        
+        )
+    }
+}
+
+struct InternetReaderDelegateApi: ReaderDelegateAbstractApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> InternetReaderDelegateApi {
+        return InternetReaderDelegateApi(
+        
+        )
+    }
+}
+
+struct TapToPayReaderDelegateApi: ReaderDelegateAbstractApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayReaderDelegateApi {
+        return TapToPayReaderDelegateApi(
+        
+        )
     }
 }
 

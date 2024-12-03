@@ -1,7 +1,29 @@
 import Foundation
 import StripeTerminal
 
-class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReaderDelegate {
+class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, InternetReaderDelegate, TapToPayReaderDelegate {
+    func tapToPayReader(_ reader: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
+        <#code#>
+    }
+    
+    func tapToPayReader(_ reader: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
+        <#code#>
+    }
+    
+    func tapToPayReader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: (any Error)?) {
+        <#code#>
+    }
+    
+    func tapToPayReader(_ reader: Reader, didRequestReaderInput inputOptions: ReaderInputOptions = []) {
+        <#code#>
+    }
+    
+    func tapToPayReader(_ reader: Reader, didRequestReaderDisplayMessage displayMessage: ReaderDisplayMessage) {
+        <#code#>
+    }
+    
+    
+    
     private let _handlers: TerminalHandlersApi
     var cancellableUpdate: Cancelable?
 

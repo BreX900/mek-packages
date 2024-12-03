@@ -1,7 +1,7 @@
 import Foundation
 import StripeTerminal
 
-class ReaderReconnectionDelegatePlugin: NSObject, ReconnectionDelegate {
+class ReaderReconnectionDelegatePlugin: NSObject {
     private let _handlers: TerminalHandlersApi
     var cancelable: Cancelable?
 

@@ -107,8 +107,7 @@ fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
                 CaptureMethodApi.MANUAL -> CaptureMethod.Manual
                 CaptureMethodApi.AUTOMATIC -> CaptureMethod.Automatic
             },
-            allowedPaymentMethodTypes =
-            paymentMethodTypes.map {
+            paymentMethodTypes = paymentMethodTypes.map {
                 when (it) {
                     PaymentMethodTypeApi.CARD_PRESENT -> PaymentMethodType.CARD_PRESENT
                     PaymentMethodTypeApi.CARD -> PaymentMethodType.CARD

@@ -114,6 +114,8 @@ abstract class TerminalPlatform {
   Future<PaymentIntent> startCollectPaymentMethod({
     required int operationId,
     required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
     required bool skipTipping,
     required TippingConfiguration? tippingConfiguration,
     required bool shouldUpdatePaymentIntent,
@@ -179,6 +181,8 @@ abstract class TerminalPlatform {
 
   Future<void> clearReaderDisplay();
 //endregion
+
+  // TODO: add support to collectData and setLocalMobileUxConfiguration methods
 
   static void _throwIfIsHostException(PlatformException exception) {
     if (exception.code != 'mek_stripe_terminal') return;

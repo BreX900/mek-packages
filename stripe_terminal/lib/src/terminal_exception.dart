@@ -531,6 +531,18 @@ enum TerminalExceptionCode {
   /// occurs when your device is missing SSL certificates, check that you have the required SSL
   /// certificates installed on your device. If the error persists, contact Stripe support.
   readerCommunicationSslError,
+
+  /// Customer consent is required to set allow redisplay to ALWAYS or LIMITED for this operation.
+  allowRedisplayInvalid,
+
+  /// Only Ios. Surcharging is not currently available.
+  surchargingNotAvailable,
+
+  /// Only Ios. `surchargeNotice` was specified with a CollectConfiguration with updatePaymentIntent set to false.
+  surchargeNoticeRequiresUpdatePaymentIntent,
+
+  /// Only Ios. Surcharging was attempted while also using dynamic currency conversion.
+  surchargeUnavailableWithDynamicCurrencyConversion,
   ;
 
   final String? message;

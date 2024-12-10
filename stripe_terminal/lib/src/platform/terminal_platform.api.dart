@@ -270,6 +270,8 @@ class _$TerminalPlatform implements TerminalPlatform {
   Future<PaymentIntent> startCollectPaymentMethod({
     required int operationId,
     required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
     required bool skipTipping,
     required TippingConfiguration? tippingConfiguration,
     required bool shouldUpdatePaymentIntent,
@@ -279,6 +281,8 @@ class _$TerminalPlatform implements TerminalPlatform {
       final result = await _$channel.invokeMethod('startCollectPaymentMethod', [
         operationId,
         paymentIntentId,
+        requestDynamicCurrencyConversion,
+        surchargeNotice,
         skipTipping,
         tippingConfiguration != null ? _$serializeTippingConfiguration(tippingConfiguration) : null,
         shouldUpdatePaymentIntent,

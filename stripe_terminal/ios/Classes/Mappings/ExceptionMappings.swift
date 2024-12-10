@@ -268,6 +268,16 @@ extension NSError {
             return .notConnectedToInternetAndOfflineBehaviorRequireOnline
         case .offlineBehaviorForceOfflineWithFeatureDisabled:
             return .offlineBehaviorForceOfflineWithFeatureDisabled
+        case .surchargingNotAvailable:
+            return .surchargingNotAvailable
+        case .surchargeNoticeRequiresUpdatePaymentIntent:
+            return .surchargeNoticeRequiresUpdatePaymentIntent
+        case .surchargeUnavailableWithDynamicCurrencyConversion:
+            return .surchargeUnavailableWithDynamicCurrencyConversion
+        case .usbDiscoveryTimedOut:
+            return .usbDiscoveryTimedOut
+        case .usbDisconnected:
+            return .usbDisconnected
         @unknown default:
             fatalError()
         }

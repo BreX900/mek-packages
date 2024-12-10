@@ -24,8 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "mek.stripe_terminal_example"
-//    compileSdkVersion flutter.compileSdkVersion
-    compileSdkVersion 34
+    compileSdkVersion 35
     ndkVersion flutter.ndkVersion
 
     compileOptions {

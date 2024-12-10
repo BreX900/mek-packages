@@ -168,6 +168,8 @@ protocol TerminalPlatformApi {
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
+        _ requestDynamicCurrencyConversion: Bool,
+        _ surchargeNotice: String?,
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
@@ -382,7 +384,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, !(args[3] is NSNull) ? TippingConfigurationApi.deserialize(args[3] as! [Any?]) : nil, args[4] as! Bool, args[5] as! Bool)
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? String, args[4] as! Bool, !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil, args[6] as! Bool, args[7] as! Bool)
             case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
@@ -832,6 +834,8 @@ enum DeviceTypeApi: Int {
     case etna
     case stripeS700
     case stripeS700Devkit
+    case stripeS710
+    case stripeS710Devkit
     case appleBuiltIn
 }
 
@@ -1598,6 +1602,10 @@ enum TerminalExceptionCodeApi: Int {
     case readerSettingsError
     case invalidSurchargeParameter
     case readerCommunicationSslError
+    case allowRedisplayInvalid
+    case surchargingNotAvailable
+    case surchargeNoticeRequiresUpdatePaymentIntent
+    case surchargeUnavailableWithDynamicCurrencyConversion
 }
 
 struct TipApi {

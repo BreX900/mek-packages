@@ -31,7 +31,7 @@ android {
         namespace "mek.stripeterminal"
     }
 
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -70,8 +70,8 @@ android {
 }
 
 dependencies {
-    implementation "com.stripe:stripeterminal-localmobile:3.7.1"
-    implementation "com.stripe:stripeterminal-core:3.7.1"
+    implementation "com.stripe:stripeterminal-localmobile:3.10.1"
+    implementation "com.stripe:stripeterminal-core:3.10.1"
 }
 
 spotless {

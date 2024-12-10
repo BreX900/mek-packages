@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<String> _fetchConnectionToken() async => _api.createTerminalConnectionToken();
 
-  void _initTerminal() async {
+  Future<void> _initTerminal() async {
     final permissions = [
       Permission.locationWhenInUse,
       Permission.bluetooth,
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final terminal = await Terminal.getInstance(
-      shouldPrintLogs: false,
+      shouldPrintLogs: true,
       fetchToken: _fetchConnectionToken,
     );
     setState(() => _terminal = terminal);
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _fetchLocations(Terminal terminal) async {
+  Future<void> _fetchLocations(Terminal terminal) async {
     setState(() => _locations = const []);
     final locations = await terminal.listLocations();
     setState(() => _locations = locations);
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _checkStatus(Terminal terminal) async {
+  Future<void> _checkStatus(Terminal terminal) async {
     final status = await terminal.getConnectionStatus();
     _showSnackBar('Connection status: ${status.name}');
   }
@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _connectReader(Terminal terminal, Reader reader) async {
+  Future<void> _connectReader(Terminal terminal, Reader reader) async {
     final connectedReader = await _tryConnectReader(terminal, reader);
     if (connectedReader == null) return;
     _showSnackBar(
@@ -205,9 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _reader = connectedReader);
   }
 
-  void _disconnectReader(Terminal terminal) async {
+  Future<void> _disconnectReader(Terminal terminal, Reader reader) async {
     await terminal.disconnectReader();
-    _showSnackBar('Terminal ${_reader!.label ?? _reader!.serialNumber} disconnected');
+    _showSnackBar('Terminal ${reader.label ?? reader.serialNumber} disconnected');
     setState(() => _reader = null);
   }
 
@@ -255,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _createPaymentIntent(Terminal terminal) async {
+  Future<void> _createPaymentIntent(Terminal terminal) async {
     final paymentIntent = await terminal.createPaymentIntent(PaymentIntentParameters(
       amount: 200,
       currency: K.currency,
@@ -266,14 +266,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _showSnackBar('Payment intent created!');
   }
 
-  void _createFromApiAndRetrievePaymentIntentFromSdk(Terminal terminal) async {
+  Future<void> _createFromApiAndRetrievePaymentIntentFromSdk(Terminal terminal) async {
     final paymentIntentClientSecret = await _api.createPaymentIntent();
     final paymentIntent = await terminal.retrievePaymentIntent(paymentIntentClientSecret);
     setState(() => _paymentIntent = paymentIntent);
     _showSnackBar('Payment intent retrieved!');
   }
 
-  void _collectPaymentMethod(Terminal terminal, PaymentIntent paymentIntent) async {
+  Future<void> _collectPaymentMethod(Terminal terminal, PaymentIntent paymentIntent) async {
     final collectingPaymentMethod = terminal.collectPaymentMethod(
       paymentIntent,
       skipTipping: true,
@@ -300,11 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _cancelCollectingPaymentMethod(CancelableFuture<PaymentIntent> cancelable) async {
+  Future<void> _cancelCollectingPaymentMethod(CancelableFuture<PaymentIntent> cancelable) async {
     await cancelable.cancel();
   }
 
-  void _confirmPaymentIntent(Terminal terminal, PaymentIntent paymentIntent) async {
+  Future<void> _confirmPaymentIntent(Terminal terminal, PaymentIntent paymentIntent) async {
     final processedPaymentIntent = await terminal.confirmPaymentIntent(paymentIntent);
     setState(() => _paymentIntent = processedPaymentIntent);
     _showSnackBar('Payment processed!');
@@ -339,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     final locationTab = [
       TextButton(
-        onPressed: terminal != null ? () => _fetchLocations(terminal) : null,
+        onPressed: terminal != null ? () async => _fetchLocations(terminal) : null,
         child: const Text('Fetch Locations'),
       ),
       const Divider(),
@@ -355,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     final readersTab = [
       TextButton(
-        onPressed: terminal != null ? () => _checkStatus(terminal) : null,
+        onPressed: terminal != null ? () async => _checkStatus(terminal) : null,
         child: Text('Check status (${_connectionStatus.name})'),
       ),
       DropdownButton<DiscoveryMethod>(
@@ -377,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (_connectionStatus != ConnectionStatus.notConnected)
         TextButton(
           onPressed: terminal != null && _connectionStatus == ConnectionStatus.connected
-              ? () => _disconnectReader(terminal)
+              ? () async => _disconnectReader(terminal, _reader!)
               : null,
           child: const Text('Disconnect Reader'),
         )
@@ -402,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _connectionStatus != ConnectionStatus.connecting &&
               (_reader == null || _reader!.serialNumber == e.serialNumber),
           onTap: terminal != null && _connectionStatus == ConnectionStatus.notConnected
-              ? () => _connectReader(terminal, e)
+              ? () async => _connectReader(terminal, e)
               : null,
           title: Text(e.serialNumber),
           subtitle: Text('${e.deviceType?.name ?? 'Unknown'} ${e.locationId ?? 'NoLocation'}'),
@@ -416,12 +416,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('Payment Status: ${_paymentStatus.name}'),
       ),
       TextButton(
-        onPressed: terminal != null ? () => _createPaymentIntent(terminal) : null,
+        onPressed: terminal != null ? () async => _createPaymentIntent(terminal) : null,
         child: const Text('Create PaymentIntent via Skd'),
       ),
       TextButton(
-        onPressed:
-            terminal != null ? () => _createFromApiAndRetrievePaymentIntentFromSdk(terminal) : null,
+        onPressed: terminal != null
+            ? () async => _createFromApiAndRetrievePaymentIntentFromSdk(terminal)
+            : null,
         child: const Text('Create PaymentIntent via Api and Retrieve it via Sdk'),
       ),
       if (collectingPaymentMethod == null)
@@ -430,20 +431,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   _reader != null &&
                   paymentIntent != null &&
                   paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
-              ? () => _collectPaymentMethod(terminal, paymentIntent)
+              ? () async => _collectPaymentMethod(terminal, paymentIntent)
               : null,
           child: const Text('Collect Payment Method'),
         )
       else
         TextButton(
-          onPressed: () => _cancelCollectingPaymentMethod(collectingPaymentMethod),
+          onPressed: () async => _cancelCollectingPaymentMethod(collectingPaymentMethod),
           child: const Text('Cancel Collecting Payment Method'),
         ),
       TextButton(
         onPressed: terminal != null &&
                 paymentIntent != null &&
                 paymentIntent.status == PaymentIntentStatus.requiresConfirmation
-            ? () => _confirmPaymentIntent(terminal, paymentIntent)
+            ? () async => _confirmPaymentIntent(terminal, paymentIntent)
             : null,
         child: const Text('Confirm PaymentIntent'),
       ),

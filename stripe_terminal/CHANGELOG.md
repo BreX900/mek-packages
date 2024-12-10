@@ -1,3 +1,12 @@
+## 3.8.0
+- build: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#3101---2024-11-05)
+  sdk version to `3.10.1` and [IOS](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#3101---2024-11-05)
+  sdk version to `3.9.1`
+- feat: Added to `Terminal.collectPaymentMethod` method the `requestDynamicCurrencyConversion` and `surchargeNotice` params
+- feat: Added to `TerminalExceptionCode` enum the `allowRedisplayInvalid`, `surchargingNotAvailable`, `surchargeNoticeRequiresUpdatePaymentIntent`,
+  `surchargeUnavailableWithDynamicCurrencyConversion` values
+- build: Bumped android sdk compile version to `35` 
+
 ## 3.7.0
 - chore: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#371---2024-07-05)
   and [IOS](https://github.com/stripe/stripe-terminal-ios/blob/master/CHANGELOG.md#370-2024-06-24) sdks versions to

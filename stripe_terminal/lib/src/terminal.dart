@@ -330,6 +330,8 @@ class Terminal {
   /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<PaymentIntent> collectPaymentMethod(
     PaymentIntent paymentIntent, {
+    bool requestDynamicCurrencyConversion = false,
+    String? surchargeNotice,
     bool skipTipping = false,
     TippingConfiguration? tippingConfiguration,
     bool shouldUpdatePaymentIntent = false,
@@ -339,6 +341,8 @@ class Terminal {
       return await _platform.startCollectPaymentMethod(
         operationId: id,
         paymentIntentId: paymentIntent.id,
+        requestDynamicCurrencyConversion: requestDynamicCurrencyConversion,
+        surchargeNotice: surchargeNotice,
         skipTipping: skipTipping,
         tippingConfiguration: tippingConfiguration,
         shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,

@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  permission_handler: ^10.4.3
+  permission_handler: ^11.3.1
   mek_stripe_terminal:
     path: ./..
 
@@ -20,10 +20,10 @@ dependencies:
   stripe:
     git:
       url: https://github.com/enyo/stripe-dart
-  dio:
+  dio: ^5.7.0
 
 dev_dependencies:
-  mek_lints: ^2.0.0
+  mek_lints: ^4.0.0
 
 dependency_overrides:
   one_for_all:

@@ -153,6 +153,12 @@ enum DeviceType {
   /// Stripe Reader S700 DevKit.
   stripeS700Devkit,
 
+  /// Stripe Reader S700.
+  stripeS710,
+
+  /// Stripe Reader S700 DevKit.
+  stripeS710Devkit,
+
   /// Apple Built-In reader.
   appleBuiltIn,
 }

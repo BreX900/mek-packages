@@ -115,5 +115,6 @@ private fun TerminalException.TerminalErrorCode.toApiCode(): TerminalExceptionCo
         TerminalException.TerminalErrorCode.READER_MISSING_ENCRYPTION_KEYS -> TerminalExceptionCodeApi.READER_MISSING_ENCRYPTION_KEYS
         TerminalException.TerminalErrorCode.INVALID_SURCHARGE_PARAMETER -> TerminalExceptionCodeApi.INVALID_SURCHARGE_PARAMETER
         TerminalException.TerminalErrorCode.READER_COMMUNICATION_SSL_ERROR -> TerminalExceptionCodeApi.READER_COMMUNICATION_SSL_ERROR
+        TerminalException.TerminalErrorCode.ALLOW_REDISPLAY_INVALID -> TerminalExceptionCodeApi.ALLOW_REDISPLAY_INVALID
     }
 }

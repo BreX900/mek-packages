@@ -239,11 +239,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
 
     private var _cancelablesCollectPaymentMethod: [Int: Cancelable] = [:]
-
+    
     func onStartCollectPaymentMethod(
         _ result: Result<PaymentIntentApi>,
         _ operationId: Int,
         _ paymentIntentId: String,
+        _ requestDynamicCurrencyConversion: Bool,
+        _ surchargeNotice: String?,
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
@@ -251,6 +253,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
         let config = CollectConfigurationBuilder()
+            .setSurchargeNotice(surchargeNotice)
+            .setRequestDynamicCurrencyConversion(requestDynamicCurrencyConversion)
             .setSkipTipping(skipTipping)
             .setTippingConfiguration(try tippingConfiguration?.toHost())
             .setUpdatePaymentIntent(shouldUpdatePaymentIntent)

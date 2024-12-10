@@ -300,7 +300,7 @@ extension DeviceTypeApi {
             return .stripeS700DevKit
         case .appleBuiltIn:
             return .appleBuiltIn
-        case .cotsDevice, .wisePad3s:
+        case .stripeS710, .stripeS710Devkit, .cotsDevice, .wisePad3s:
             return nil
         }
     }

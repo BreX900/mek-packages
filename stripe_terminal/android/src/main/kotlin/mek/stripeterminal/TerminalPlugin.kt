@@ -349,6 +349,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<PaymentIntentApi>,
         operationId: Long,
         paymentIntentId: String,
+        requestDynamicCurrencyConversion: Boolean,
+        surchargeNotice: String?,
         skipTipping: Boolean,
         tippingConfiguration: TippingConfigurationApi?,
         shouldUpdatePaymentIntent: Boolean,
@@ -357,6 +359,8 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         val paymentIntent = findPaymentIntent(paymentIntentId)
         val config =
             CollectConfiguration.Builder()
+                .setSurchargeNotice(surchargeNotice)
+                .setRequestDynamicCurrencyConversion(requestDynamicCurrencyConversion)
                 .skipTipping(skipTipping)
                 .setTippingConfiguration(tippingConfiguration?.toHost())
                 .updatePaymentIntent(shouldUpdatePaymentIntent)

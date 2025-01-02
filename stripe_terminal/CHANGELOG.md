@@ -1,3 +1,6 @@
+## 3.8.1
+- doc: updated README.md file adding official documentation links
+
 ## 3.8.0
 - build: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#3101---2024-11-05)
   sdk version to `3.10.1` and [IOS](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#3101---2024-11-05)

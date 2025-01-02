@@ -19,6 +19,8 @@ All features of android and ios sdk are supported (Also the TapToPay feature)
 
 # Installation
 
+[See official doc for more details](https://docs.stripe.com/terminal/payments/setup-reader/tap-to-pay)
+
 ## Android
 
 <details>
@@ -41,7 +43,10 @@ android {
 ```
 </details>
 
+[See official doc for more details](https://docs.stripe.com/terminal/payments/setup-integration?terminal-sdk-platform=android)
+
 ## iOS
+
 You need to provide permission request strings to your `Info.plist` file. A sample content can be
 
 ```
@@ -59,6 +64,19 @@ You also need to authorize background modes authorization for `bluetooth-central
 		<string>bluetooth-central</string>
 	</array>
 ```
+
+### Tap to pay
+
+To use Tap to Pay on iPhone to accept payments, your application must request and configure the Tap to Pay on iPhone
+entitlement from [your Apple Developer account](https://developer.apple.com). Review the [instructions for requesting
+this entitlement](https://developer.apple.com/documentation/proximityreader/setting-up-the-entitlement-for-tap-to-pay-on-iphone?language=objc).
+After you add an entitlements file to your app build target, add the following:
+```.plist
+<key>com.apple.developer.proximity-reader.payment.acceptance</key>
+<true/>
+```
+
+[See official doc for more details](https://docs.stripe.com/terminal/payments/setup-integration?terminal-sdk-platform=ios)
 
 ## Known bugs
 

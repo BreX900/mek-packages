@@ -11,9 +11,7 @@ void main() async {
       packageName: 'mek_stripe_terminal',
       codecs: ApiPlatformCodec.values,
     ),
-    dartOptions: const DartOptions(
-      pageWidth: 100,
-    ),
+    dartOptions: const DartOptions(),
     kotlinOptions: const KotlinOptions(
       package: 'mek.stripeterminal.api',
       outputFile: 'android/src/main/kotlin/mek/stripeterminal/api/TerminalApi.kt',

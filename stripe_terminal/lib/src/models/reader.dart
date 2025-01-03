@@ -1,5 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
-import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
+import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:meta/meta.dart';
 
 part 'reader.g.dart';
@@ -13,7 +13,9 @@ enum ConnectionStatus {
   connected,
 
   /// The SDK is currently connecting to a reader.
-  connecting
+  connecting,
+
+  discovering,
 }
 
 /// Information about a card reader that has been discovered by or connected to the SDK.
@@ -123,8 +125,7 @@ enum DeviceType {
   /// The Stripe Reader M2 mobile reader.
   stripeM2,
 
-  /// COTS Device.
-  cotsDevice,
+  tapToPay,
 
   /// The Verifone P400 countertop reader.
   verifoneP400,
@@ -153,14 +154,11 @@ enum DeviceType {
   /// Stripe Reader S700 DevKit.
   stripeS700Devkit,
 
-  /// Stripe Reader S700.
+  /// Stripe Reader S710.
   stripeS710,
 
-  /// Stripe Reader S700 DevKit.
+  /// Stripe Reader S710 DevKit.
   stripeS710Devkit,
-
-  /// Apple Built-In reader.
-  appleBuiltIn,
 }
 
 /// A categorization of a reader’s battery charge level.

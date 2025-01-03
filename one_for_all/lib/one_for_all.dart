@@ -57,6 +57,13 @@ class SerializableClass {
   });
 }
 
+@Target({TargetKind.field, TargetKind.parameter, TargetKind.optionalParameter})
+class SerializableParam {
+  final bool isIgnored;
+
+  const SerializableParam.ignore() : isIgnored = true;
+}
+
 enum SerializableEnumType { int, string }
 
 @Target({TargetKind.enumType})

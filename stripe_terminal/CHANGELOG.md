@@ -1,3 +1,10 @@
+# 4.0.0
+- build!: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#410---2024-11-18)
+  sdk version to `4.1.0` and [IOS](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#410---2024-11-18)
+  sdk version to `4.1.0`. Please watch the official CHANGELOG.md to know the breaking changes
+- refactor!: Aligned terminal initialization with official native sdk. Now you will need to initialize the sdk by
+  calling `Terminal.initTerminal`
+
 ## 3.8.1
 - doc: updated README.md file adding official documentation links
 

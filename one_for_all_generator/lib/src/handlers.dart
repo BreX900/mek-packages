@@ -170,6 +170,7 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
               .where((e) => !e.isStatic && e.isFinal && !e.hasInitializer)
               .map(SerializableParamHandler.fromField)
           : element.unnamedConstructor!.parameters.map(SerializableParamHandler.fromParameter))
+      .nonNulls
       .sortedBy((e) => e.name);
 
   @override
@@ -191,19 +192,40 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
 }
 
 class SerializableParamHandler {
+  static const _annotationChecker = TypeChecker.fromRuntime(SerializableParam);
+
   final DartType type;
   final String name;
   final String? defaultValueCode;
 
-  SerializableParamHandler.fromParameter(ParameterElement element)
-      : type = element.type,
-        name = element.name,
-        defaultValueCode = element.defaultValueCode;
+  static SerializableParamHandler? fromParameter(ParameterElement element) {
+    return SerializableParamHandler._from(
+      element: element,
+      type: element.type,
+      name: element.name,
+      defaultValueCode: element.defaultValueCode,
+    );
+  }
 
-  SerializableParamHandler.fromField(FieldElement element)
-      : type = element.type,
-        name = element.name,
-        defaultValueCode = null;
+  static SerializableParamHandler? fromField(FieldElement element) {
+    return SerializableParamHandler._from(element: element, type: element.type, name: element.name);
+  }
+
+  static SerializableParamHandler? _from({
+    required Element element,
+    required DartType type,
+    required String name,
+    String? defaultValueCode,
+  }) {
+    final annotation = ConstantReader(_annotationChecker.firstAnnotationOf(element));
+
+    final isIgnored = annotation.peek('isIgnored')?.boolValue ?? false;
+    if (isIgnored) return null;
+
+    return SerializableParamHandler._(type: type, name: name, defaultValueCode: null);
+  }
+
+  SerializableParamHandler._({required this.type, required this.name, this.defaultValueCode});
 }
 
 class SerializableEnumHandler extends SerializableHandler {

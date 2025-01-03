@@ -11,12 +11,6 @@ class TerminalDelegatePlugin: NSObject, ConnectionTokenProvider, TerminalDelegat
     public func fetchConnectionToken() async throws -> String {
         return try await self.handlers.requestConnectionToken()
     }
-    
-    public func terminal(_: Terminal, didReportUnexpectedReaderDisconnect reader: Reader) {
-        DispatchQueue.main.async {
-            self.handlers.unexpectedReaderDisconnect(reader: reader.toApi())
-        }
-    }
 
     public func terminal(_: Terminal, didChangePaymentStatus status: PaymentStatus) {
         DispatchQueue.main.async {

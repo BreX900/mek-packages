@@ -11,8 +11,8 @@ import 'package:source_gen/source_gen.dart';
 extension IsNullableDartTypeExtension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
 
-  String get displayName => getDisplayString(withNullability: false);
-  String get displayNameNullable => getDisplayString(withNullability: true);
+  String get displayName => getDisplayString();
+  String get displayNameNullable => getDisplayString();
 }
 
 abstract class ApiCodec<T> {
@@ -98,7 +98,7 @@ abstract class HostApiCodecs extends ApiCodecs {
     final codec = findCodec(type);
     if (codec != null) return codec.encodeType(this, type);
 
-    return type.getDisplayString(withNullability: true).replaceFirstMapped(RegExp(r'\w+'), (match) {
+    return type.getDisplayString().replaceFirstMapped(RegExp(r'\w+'), (match) {
       return '${match.group(0)}${pluginOptions.hostClassSuffix}';
     });
   }

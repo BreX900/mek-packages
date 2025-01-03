@@ -107,8 +107,8 @@ class OneForAll {
     }
 
     print('Writing...');
-    await Future.wait(builders.map((builder) {
-      return File(builder.outputFile).writeAsString(builder.build());
+    await Future.wait(builders.map((builder) async {
+      await File(builder.outputFile).writeAsString(await builder.build());
     }));
   }
 }

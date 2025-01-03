@@ -110,14 +110,14 @@ extension PaymentIntentParametersApi {
 }
 
 extension PaymentMethodTypeApi {
-    func toHost() -> String {
+    func toHost() -> PaymentMethodType {
         switch (self) {
         case .cardPresent:
-            return "card_present"
+            return .cardPresent
         case .card:
-            return "card"
+            return .card
         case .interactPresent:
-            return "interact_present"
+            return .interacPresent
         }
     }
 }

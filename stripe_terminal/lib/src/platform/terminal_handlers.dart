@@ -3,81 +3,87 @@ part of 'terminal_platform.dart';
 @FlutterApi()
 class TerminalHandlers {
   final TerminalPlatform _platform;
-  final Future<String> Function() _fetchToken;
+  Future<String> Function()? fetchToken;
 
-  final _unexpectedReaderDisconnectController = StreamController<Reader>.broadcast();
   final _connectionStatusChangeController = StreamController<ConnectionStatus>.broadcast();
   final _paymentStatusChangeController = StreamController<PaymentStatus>.broadcast();
 
-  ReaderDelegate? _readerDelegate;
-  ReaderReconnectionDelegate? _readerReconnectionDelegate;
+  ReaderDelegateAbstract? _readerDelegate;
 
-  Stream<Reader> get unexpectedReaderDisconnectStream =>
-      _unexpectedReaderDisconnectController.stream;
   Stream<ConnectionStatus> get connectionStatusChangeStream =>
       _connectionStatusChangeController.stream;
   Stream<PaymentStatus> get paymentStatusChangeStream => _paymentStatusChangeController.stream;
 
-  TerminalHandlers({
-    required TerminalPlatform platform,
-    required Future<String> Function() fetchToken,
-  })  : _platform = platform,
-        _fetchToken = fetchToken {
+  TerminalHandlers(this._platform) {
     _$setupTerminalHandlers(this);
   }
 
-  void attachReaderDelegates(
-    ReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-  ) {
-    assert(_readerDelegate == null && _readerReconnectionDelegate == null);
+  Future<R> handleReaderConnection<R>(
+    ReaderDelegateAbstract? delegate,
+    Future<R> Function() body,
+  ) async {
     _readerDelegate = delegate;
-    _readerReconnectionDelegate = reconnectionDelegate;
-  }
-
-  void detachReaderDelegates() {
-    _readerDelegate = null;
-    _readerReconnectionDelegate = null;
-  }
-
-  @MethodApi(kotlin: MethodApiType.callbacks, swift: MethodApiType.async)
-  Future<String> _onRequestConnectionToken() async => await _fetchToken();
-
-  Future<void> _onUnexpectedReaderDisconnect(Reader reader) async =>
-      _unexpectedReaderDisconnectController.add(reader);
-
-  Future<void> _onConnectionStatusChange(ConnectionStatus connectionStatus) async {
-    _connectionStatusChangeController.add(connectionStatus);
-
-    switch (connectionStatus) {
-      case ConnectionStatus.notConnected:
-        detachReaderDelegates();
-      case ConnectionStatus.connecting || ConnectionStatus.connected:
-        break;
+    try {
+      return await body();
+    } catch (_) {
+      _readerDelegate = null;
+      rethrow;
     }
   }
 
-  Future<void> _onPaymentStatusChange(PaymentStatus paymentStatus) async =>
+  void handleReaderDisconnection() {
+    _readerDelegate = null;
+  }
+
+  @MethodApi(kotlin: MethodApiType.callbacks, swift: MethodApiType.async)
+  Future<String> _onRequestConnectionToken() async => await fetchToken!();
+
+  void _onConnectionStatusChange(ConnectionStatus connectionStatus) =>
+      _connectionStatusChangeController.add(connectionStatus);
+
+  void _onPaymentStatusChange(PaymentStatus paymentStatus) =>
       _paymentStatusChangeController.add(paymentStatus);
 
 //region Reader delegate
   void _onReaderReportEvent(ReaderEvent event) {
-    _runInZone(_readerDelegate, (delegate) async {
-      await delegate.onReportReaderEvent(event);
+    _runInZone<ReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onReportReaderEvent(event);
+    });
+  }
+
+  void _onReaderReconnectFailed(Reader reader) {
+    _runInZone<ReaderReconnectionDelegate>(_readerDelegate, (delegate) {
+      delegate.onReaderReconnectFailed(reader);
+    });
+  }
+
+  void _onReaderReconnectStarted(Reader reader, DisconnectReason reason) {
+    _runInZone<ReaderReconnectionDelegate>(_readerDelegate, (delegate) {
+      delegate.onReaderReconnectStarted(reader, _platform.cancelReaderReconnection, reason);
+    });
+  }
+
+  void _onReaderReconnectSucceeded(Reader reader) {
+    _runInZone<ReaderReconnectionDelegate>(_readerDelegate, (delegate) {
+      delegate.onReaderReconnectSucceeded(reader);
+    });
+  }
+
+  void _onDisconnect(DisconnectReason reason) {
+    _runInZone<ReaderDisconnectDelegate>(_readerDelegate, (delegate) {
+      delegate.onDisconnect(reason);
     });
   }
 
   void _onReaderRequestDisplayMessage(ReaderDisplayMessage message) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onRequestReaderDisplayMessage(message);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onRequestReaderDisplayMessage(message);
     });
   }
 
   void _onReaderRequestInput(List<ReaderInputOption> options) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onRequestReaderInput(options);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onRequestReaderInput(options);
     });
   }
 
@@ -86,37 +92,32 @@ class TerminalHandlers {
     BatteryStatus? batteryStatus,
     bool isCharging,
   ) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onReportBatteryLevelUpdate(batteryLevel, batteryStatus, isCharging);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onBatteryLevelUpdate(batteryLevel, batteryStatus, isCharging);
     });
   }
 
   void _onReaderReportLowBatteryWarning() {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onReportLowBatteryWarning();
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onReportLowBatteryWarning();
     });
   }
 
   void _onReaderReportAvailableUpdate(ReaderSoftwareUpdate update) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onReportAvailableUpdate(update);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onReportAvailableUpdate(update);
     });
   }
 
   void _onReaderStartInstallingUpdate(ReaderSoftwareUpdate update) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
     });
   }
 
   void _onReaderReportSoftwareUpdateProgress(double progress) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onReportReaderSoftwareUpdateProgress(progress);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onReportReaderSoftwareUpdateProgress(progress);
     });
   }
 
@@ -124,43 +125,19 @@ class TerminalHandlers {
     ReaderSoftwareUpdate? update,
     TerminalException? exception,
   ) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onFinishInstallingUpdate(update, exception);
+    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onFinishInstallingUpdate(update, exception);
     });
   }
 
-  void _onDisconnect(DisconnectReason reason) {
-    _runInZone(_readerDelegate, (delegate) async {
-      if (delegate is! PhysicalReaderDelegate) return;
-      await delegate.onDisconnect(reason);
-    });
-  }
-
-//endregion
-
-//region Reader reconnection delegate
-  void _onReaderReconnectFailed(Reader reader) {
-    _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectFailed(reader);
-    });
-  }
-
-  void _onReaderReconnectStarted(Reader reader, DisconnectReason reason) {
-    _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectStarted2(reader, _platform.cancelReaderReconnection, reason);
-    });
-  }
-
-  void _onReaderReconnectSucceeded(Reader reader) {
-    _runInZone(_readerReconnectionDelegate, (delegate) async {
-      await delegate.onReaderReconnectSucceeded(reader);
-    });
-  }
-
-  void _runInZone<T>(T? delegate, Future<void> Function(T delegate) body) {
+  void _runInZone<T>(
+    ReaderDelegateAbstract? delegate,
+    void Function(T delegate) body,
+  ) {
     if (delegate == null) return;
-    unawaited(Zone.current.runUnary(body, delegate));
+    if (delegate is! T) return;
+    Zone.current.runUnary(body, delegate as T);
   }
+
 //endregion
 }

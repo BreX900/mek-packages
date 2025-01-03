@@ -63,32 +63,32 @@ extension LocationStatus {
 extension DeviceType {
     func toApi() -> DeviceTypeApi {
         switch self {
+        case .chipper1X:
+            return .chipper1X
         case .chipper2X:
             return .chipper2X
+        case .stripeM2:
+            return .stripeM2
+        case .tapToPay:
+            return .tapToPay
         case .verifoneP400:
             return .verifoneP400
         case .wisePad3:
             return .wisePad3
-        case .stripeM2:
-            return .stripeM2
         case .wisePosE:
             return .wisePosE
         case .wisePosEDevKit:
             return .wisePosEDevkit
         case .etna:
             return .etna
-        case .chipper1X:
-            return .chipper1X
         case .wiseCube:
             return .wiseCube
         case .stripeS700:
             return .stripeS700
         case .stripeS700DevKit:
             return .stripeS700Devkit
-        case .appleBuiltIn:
-            return .appleBuiltIn
         @unknown default:
-            fatalError("WTF")
+            fatalError("DeviceType \(self) not supported.")
         }
     }
 }
@@ -101,7 +101,7 @@ extension ReaderEvent {
         case .cardRemoved:
             return .cardRemoved
         @unknown default:
-            fatalError()
+            fatalError("ReaderEvent \(self) not supported.")
         }
     }
 }
@@ -128,7 +128,7 @@ extension ReaderDisplayMessage {
         case .cardRemovedTooEarly:
             return .cardRemovedTooEarly
         @unknown default:
-            fatalError()
+            fatalError("ReaderDisplayMessage \(self) not supported.")
         }
     }
 }
@@ -155,7 +155,7 @@ extension BatteryStatus {
         case .unknown:
             return nil
         @unknown default:
-            fatalError()
+            fatalError("BatteryStatys \(self) not supported.")
         }
     }
 }
@@ -168,7 +168,7 @@ extension ReaderSoftwareUpdate {
             onlyInstallRequiredUpdates: false,
             requiredAt: requiredAt,
             settingsVersion: nil,
-            timeEstimate: estimatedUpdateTime.toApi(),
+            timeEstimate: durationEstimate.toApi(),
             version: deviceSoftwareVersion
         )
     }
@@ -197,7 +197,7 @@ extension UpdateTimeEstimate {
         case .estimate5To15Minutes:
             return .fiveToFifteenMinutes
         @unknown default:
-            fatalError("WTF")
+            fatalError("UpdateTimeEstimate \(self) not supported.")
         }
     }
 }
@@ -223,8 +223,8 @@ extension DiscoveryConfigurationApi {
                 .setSimulated(config.isSimulated)
                 .setLocationId(config.locationId)
                 .build()
-        case let config as LocalMobileDiscoveryConfigurationApi:
-            return try LocalMobileDiscoveryConfigurationBuilder()
+        case let config as TapToPayDiscoveryConfigurationApi:
+            return try TapToPayDiscoveryConfigurationBuilder()
                 .setSimulated(config.isSimulated)
                 .build()
         case _ as UsbDiscoveryConfigurationApi:
@@ -244,8 +244,8 @@ extension DiscoveryConfigurationApi {
             return nil
         case _ as InternetDiscoveryConfigurationApi:
             return .internet
-        case _ as LocalMobileDiscoveryConfigurationApi:
-            return .localMobile
+        case _ as TapToPayDiscoveryConfigurationApi:
+            return .tapToPay
         case _ as UsbDiscoveryConfigurationApi:
             return nil
         default:
@@ -263,7 +263,7 @@ extension DiscoveryConfigurationApi {
             return false
         case let config as InternetDiscoveryConfigurationApi:
             return config.isSimulated
-        case let config as LocalMobileDiscoveryConfigurationApi:
+        case let config as TapToPayDiscoveryConfigurationApi:
             return config.isSimulated
         case _ as UsbDiscoveryConfigurationApi:
             return false
@@ -298,9 +298,9 @@ extension DeviceTypeApi {
             return .stripeS700
         case .stripeS700Devkit:
             return .stripeS700DevKit
-        case .appleBuiltIn:
-            return .appleBuiltIn
-        case .stripeS710, .stripeS710Devkit, .cotsDevice, .wisePad3s:
+        case .tapToPay:
+            return .tapToPay
+        case .stripeS710, .stripeS710Devkit, .wisePad3s:
             return nil
         }
     }
@@ -333,10 +333,12 @@ extension ConnectionStatus {
         switch self {
         case .notConnected:
             return .notConnected
-        case .connected:
-            return .connected
+        case .discovering:
+            return .discovering
         case .connecting:
             return .connecting
+        case .connected:
+            return .connected
         @unknown default:
             fatalError("WTF")
         }

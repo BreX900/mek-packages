@@ -7,10 +7,12 @@ import 'package:stripe/stripe.dart';
 
 class StripeApi {
   static const String secretKey = String.fromEnvironment('STRIPE_SECRET_KEY');
+  static StripeApi instance = StripeApi._();
 
   final _stripe = Stripe(secretKey);
 
-  StripeApi() : assert(secretKey != '', 'Must provide a STRIPE_SECRET_KEY from --dart-define arg');
+  StripeApi._()
+      : assert(secretKey != '', 'Must provide a STRIPE_SECRET_KEY from --dart-define arg');
 
   Future<String> createTerminalConnectionToken() async {
     try {

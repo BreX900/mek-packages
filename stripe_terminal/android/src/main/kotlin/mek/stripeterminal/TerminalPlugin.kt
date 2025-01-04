@@ -654,7 +654,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     }
 
     private fun clean() {
-        if (terminal.connectedReader != null) terminal.disconnectReader(EmptyCallback())
+        if (terminal.connectedReader != null) {
+            runOnMainThread {
+                terminal.disconnectReader(EmptyCallback())
+            }
+        }
 
         discoverReadersSubject.clear()
 

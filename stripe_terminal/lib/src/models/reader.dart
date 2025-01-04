@@ -185,17 +185,52 @@ enum BatteryStatus {
 
 enum ReaderEvent { cardInserted, cardRemoved }
 
+/// The display messages that a reader may request be displayed by your app. Used by [MobileReaderDelegate.onRequestReaderDisplayMessage].
 enum ReaderDisplayMessage {
+  /// Check mobile device for instructions and try again.
   checkMobileDevice,
+
+  /// Retry the presented card.
   retryCard,
+
+  /// Insert the presented card.
   insertCard,
+
+  /// Insert or swipe the presented card.
   insertOrSwipeCard,
+
+  /// Swipe the presented card.
   swipeCard,
+
+  /// Remove the presented card.
   removeCard,
+
+  /// The reader detected multiple contactless cards. Make sure only one contactless card or NFC
+  /// device is near the reader.
   multipleContactlessCardsDetected,
+
+  /// The card could not be read. Try another read method on the same card, or use a different card.
   tryAnotherReadMethod,
+
+  /// The card is invalid. Try another card.
   tryAnotherCard,
+
+  /// Card removed too early, try again.
   cardRemovedTooEarly,
 }
 
-enum ReaderInputOption { insertCard, swipeCard, tapCard, manualEntry }
+/// This OptionSet represents all of the input methods available to your user when the reader begins
+/// waiting for input. Used by [MobileReaderDelegate.onRequestReaderInput].
+enum ReaderInputOption {
+  /// Insert a chip card.
+  insertCard,
+
+  /// Swipe a magstripe card.
+  swipeCard,
+
+  /// Tap a contactless card.
+  tapCard,
+
+  /// Manually enter the card information (MOTO).
+  manualEntry
+}

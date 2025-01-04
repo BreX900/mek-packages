@@ -1,5 +1,8 @@
+## 4.0.1
 
-# 4.0.0
+- docs: updated documentation
+
+## 4.0.0
 - feat: added support to [ReaderDelegate.onAcceptTermsOfService] method listener
 - fix(android): execute reader disconnect after hot restart in main thread
 - build!: Bumped [Android](https://github.com/stripe/stripe-terminal-android/blob/master/CHANGELOG.md#410---2024-11-18)

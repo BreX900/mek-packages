@@ -1,6 +1,6 @@
 name: one_for_all_generator
 description: Code generator to make communication between Flutter and the host platform easier and more secure
-version: 1.0.1
+version: 2.0.2
 repository: https://github.com/BreX900/mek-packages/tree/main/one_for_all_generator
 homepage: https://pub.dev/packages/one_for_all
 topics:
@@ -12,24 +12,27 @@ topics:
 environment:
   sdk: ^3.0.0
 
+scripts:
+  publish: dart pub publish
+
 dependencies:
   args: ^2.4.2
 
   logging: ^1.1.0
   recase: ^4.1.0
-  collection: ^1.17.1
+  collection: ^1.18.0
   pure_extensions: ^5.0.0
   equatable: ^2.0.5
 
-  analyzer: '>=5.12.0 <7.0.0'
   path: ^1.8.3
   glob: ^2.1.2
 
+  analyzer: '>=6.9.0 <8.0.0'
   code_builder: ^4.5.0
-  dart_style: ^2.3.2
-  source_gen: ^1.4.0
+  dart_style: ^3.0.0
+  source_gen: ^2.0.0
 
-  one_for_all: ^1.0.0
+  one_for_all: ^1.1.0
 
 dev_dependencies:
   mek_lints: ^2.0.0

@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
+import 'package:mek_stripe_terminal/src/models/connection_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
@@ -14,51 +15,72 @@ import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
-import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
-
-@Deprecated('Use Terminal. The name has been aligned with the native SDKs.')
-typedef StripeTerminal = Terminal;
 
 /// Parts documented with "???" are not yet validated
 class Terminal {
-  static final _platformInstance = TerminalPlatform();
-  static TerminalHandlers? _handlersInstance;
+  static Terminal? _instance;
+  static Terminal get instance {
+    assert(_instance != null,
+        'Please before use a Terminal instance init it with [Terminal.initTerminal] static method');
+    return _instance!;
+  }
 
-  static Future<Terminal>? _instance;
+  static final TerminalPlatform _platform = TerminalPlatform();
+  static final TerminalHandlers _handlers = TerminalHandlers(_platform);
 
-  final TerminalPlatform _platform;
-  final TerminalHandlers _handlers;
+  Terminal._();
 
-  /// Creates an internal `StripeTerminal` instance
-  Terminal._(this._platform, this._handlers);
+  static bool get isInitialized => _instance != null;
 
   /// Initializes the terminal SDK
-  static Future<Terminal> getInstance({
+  static Future<void> initTerminal({
     bool shouldPrintLogs = false,
 
     /// A callback function that returns a Future which resolves to a connection token from your backend
     /// Check out more at https://stripe.com/docs/terminal/payments/setup-integration#connection-token
     required Future<String> Function() fetchToken,
-  }) {
-    final platform = _platformInstance;
-    final handlers = _handlersInstance ??= TerminalHandlers(
-      platform: platform,
-      fetchToken: fetchToken,
-    );
+  }) async {
+    if (_instance != null) {
+      throw StateError('Already initialized!\n'
+          'Retrieve it with [Terminal.instance] static getter or use [Terminal.clearCachedCredentials] method to re-fetch the token.');
+    }
+    if (_handlers.fetchToken != null) {
+      throw StateError('Already initializing!\nWait a initialization!');
+    }
 
-    return _instance ??= () async {
-      try {
-        await platform.init(shouldPrintLogs: shouldPrintLogs);
-        return Terminal._(platform, handlers);
-      } catch (_) {
-        _instance = null;
-        rethrow;
-      }
-    }();
+    _handlers.fetchToken = fetchToken;
+    try {
+      await _platform.init(shouldPrintLogs: shouldPrintLogs);
+      _instance = Terminal._();
+    } catch (_) {
+      _handlers.fetchToken = null;
+      rethrow;
+    }
   }
 
-  Future<void> clearCachedCredentials() async => await _platform.clearCachedCredentials();
+  /// Clears the current connection token, saved reader sessions, and any other cached credentials.
+  /// You can use this method to switch accounts in your app, e.g. to switch between live and test
+  /// Stripe API keys on your backend.
+  ///
+  /// In order to switch accounts in your app:
+  /// - if a reader is connected, call [disconnectReader]
+  /// - call [clearCachedCredentials]
+  /// - call [discoverReaders] and [connectReader] to connect to a reader. The [connectReader] call
+  ///   will request a new connection token from your backend server.
+  ///
+  /// An overview of the lifecycle of a connection token under the hood:
+  /// - When a [Terminal] is initialized, the SDK attempts to proactively request a connection token
+  ///   from your backend server.
+  /// - When [connectReader] is called, the SDK uses the connection token and reader information to
+  ///   create a reader session.
+  /// - Subsequent calls to [connectReader] require a new connection token. If you disconnect from a
+  ///   reader, and then call [connectReader] again, the SDK will fetch another connection token.
+  Future<void> clearCachedCredentials() async {
+    await _platform.clearCachedCredentials();
+    _handlers.handleReaderDisconnection();
+    _controller = null;
+  }
 
 //region Reader discovery, connection and updates
   /// The currently connected reader’s connectionStatus changed.
@@ -71,15 +93,6 @@ class Terminal {
 
   /// Get the current [ConnectionStatus]
   Future<ConnectionStatus> getConnectionStatus() async => await _platform.getConnectionStatus();
-
-  /// The reader disconnected unexpectedly (that is, without your app explicitly calling [disconnectReader]).
-  ///
-  /// In your implementation of this method, you should notify your user that the reader disconnected.
-  /// You may also want to call discoverReaders to begin scanning for readers. Your app can attempt
-  /// to automatically reconnect to the disconnected reader, or display UI for your user to re-connect to a reader.
-  ///
-  /// You can trigger this call in your app by powering off the connected reader.
-  Stream<Reader> get onUnexpectedReaderDisconnect => _handlers.unexpectedReaderDisconnectStream;
 
   /// Use this method to determine whether the mobile device supports a given reader type using a
   /// particular discovery method.
@@ -104,27 +117,25 @@ class Terminal {
   // ignore: close_sinks
   StreamController<List<Reader>>? _controller;
 
-  /// Begins discovering readers based on the given discovery configuration.
+  /// Begins discovering readers matching the given DiscoveryConfiguration.
   ///
-  /// When discoverReaders is called, the terminal begins scanning for readers using the settings.
-  /// You must listen the stream to get notified of discovered readers and display discovery results to your user.
-  ///
-  /// You must call [connectBluetoothReader], [connectHandoffReader], [connectInternetReader],
-  /// [connectMobileReader], [connectUsbReader] while a discovery is taking place. You can only
-  /// connect to a reader that was returned from the stream.
+  /// When discoverReaders is called, the terminal begins scanning for readers using the settings in
+  /// the given [DiscoveryConfiguration]. You must listen the stream to handle displaying discovery
+  /// results to your user and connecting to a selected reader.
   ///
   /// The discovery process will stop on its own when the terminal successfully connects to a reader,
-  /// if the command is canceled, or if a discovery error occurs.
+  /// if the command is canceled, or if an error occurs. If the discovery process completes successfully,
+  /// or if an error occurs, the stream will be emit that the operation is complete.
   ///
-  /// If discoverReaders is canceled, the [StreamSubscription.onDone] listener will be called.
+  /// To end discovery after a specified time interval, set the timeout property on your [DiscoveryConfiguration].
   ///
-  /// When device is connected:
-  /// - If the connection is successful, the [onConnectionStatusChange] stream will emit [ConnectionStatus.connected].
-  /// - The SDK must be actively discovering readers in order to connect to one. The discovery process
-  ///   will stop if this connection request succeeds, otherwise the SDK will continue discovering.
-  /// When connect* method is called, the SDK uses a connection token and the given reader information
-  ///   to register the reader to your Stripe account. If the SDK does not already have a connection token,
-  ///   it will call the fetchToken method which was passed as an argument in [getInstance].
+  /// Be sure to either set a timeout, or make it possible to cancel discover in your app's UI.
+  ///
+  /// When discovering readers in our handoff integration mode, discoverReaders will only return a
+  /// reader if it has been registered. If the current reader has not been registered, discoverReaders
+  /// will return an empty list of readers.
+  ///
+  /// See https://stripe.com/docs/terminal/readers/connecting.
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration discoveryConfiguration) {
     _controller = _handleStream(_controller, () {
       return _platform.discoverReaders(discoveryConfiguration);
@@ -132,104 +143,28 @@ class Terminal {
     return _controller!.stream;
   }
 
-  /// Attempts to connect to the given Bluetooth reader with a given connection configuration.
+  /// Attempts to connect to the given reader, with the connection type dependent on config.
   ///
-  /// To connect to a Bluetooth reader, your app must register that reader to a Location upon connection.
-  /// You should use a [DiscoveryMethod.bluetoothScan] at some point before connecting which specifies
-  /// the location to which this reader belongs.
+  /// If the connect succeeds, the future will be complete with the connected reader, and the
+  /// terminal's [ConnectionStatus] will change to [ConnectionStatus.connected].
   ///
-  /// Throughout the lifetime of the connection, the reader will communicate with your app via the
-  /// [BluetoothReaderDelegate] to announce transaction status, battery level, and software update information.
+  /// If the connect fails, the future will throw an error.
   ///
-  /// ??? If the reader’s battery is critically low the connect call will fail with
-  /// SCPErrorBluetoothDisconnected. Plug your reader in to start charging and try again.
-  Future<Reader> connectBluetoothReader(
+  /// Under the hood, the SDK uses the `fetchToken` method you defined to fetch a connection token
+  /// if it does not already have one. It then uses the connection token and reader information to
+  /// create a reader session.
+  ///
+  /// See https://stripe.com/docs/terminal/readers/connecting.
+  Future<Reader> connectReader(
     Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    PhysicalReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
+    required ConnectionConfiguration configuration,
   }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectBluetoothReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-      );
+    return _handlers.handleReaderConnection(configuration.readerDelegate, () async {
+      return await _platform.connectReader(reader.serialNumber, configuration);
     });
   }
 
-  /// Attempts to connect to the given Handoff reader with a given connection configuration.
-  Future<Reader> connectHandoffReader(Reader reader, {PhysicalReaderDelegate? delegate}) async {
-    return await _handleReaderConnection(delegate, null, () async {
-      return await _platform.connectHandoffReader(reader.serialNumber);
-    });
-  }
-
-  /// Attempts to connect to the given Internet reader with a given connection configuration.
-  Future<Reader> connectInternetReader(
-    Reader reader, {
-    bool failIfInUse = false,
-  }) async {
-    return await _platform.connectInternetReader(reader.serialNumber, failIfInUse: failIfInUse);
-  }
-
-  /// Attempts to connect to the given Local Mobile reader with a given connection configuration.
-  ///
-  /// To connect to a Local Mobile reader, your app must register that reader to a Location upon connection.
-  /// You should pass a locationId to [discoverReaders] before connecting which specifies
-  /// the location to which this reader belongs.
-  ///
-  /// Throughout the lifetime of the connection, the reader will communicate with your app via the
-  /// [LocalMobileReaderDelegate] to announce transaction status, battery level, and software update information.
-  ///
-  /// Note that during connection, an update may occur to ensure that the local mobile reader has
-  /// the most up to date software and configurations.
-  ///
-  /// IOS:
-  /// - If your integration is creating destination charges and using on_behalf_of,
-  ///   you must provide the connected_account_id in the [onBehalfOf] parameter. Unlike other reader
-  ///   types which require this information on a per-transaction basis, the Apple Built-In reader
-  ///   requires this on a per-connection basis as well in order to establish a reader connection.
-  Future<Reader> connectMobileReader(
-    Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    String? onBehalfOf,
-    PhysicalReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-  }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectMobileReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-        onBehalfOf: onBehalfOf,
-      );
-    });
-  }
-
-  /// Attempts to connect to the given Usb reader with a given connection configuration.
-  Future<Reader> connectUsbReader(
-    Reader reader, {
-    required String locationId,
-    bool autoReconnectOnUnexpectedDisconnect = false,
-    ReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-  }) async {
-    assert(!autoReconnectOnUnexpectedDisconnect || reconnectionDelegate == null);
-    return await _handleReaderConnection(delegate, reconnectionDelegate, () async {
-      return await _platform.connectUsbReader(
-        reader.serialNumber,
-        locationId: locationId,
-        autoReconnectOnUnexpectedDisconnect: autoReconnectOnUnexpectedDisconnect,
-      );
-    });
-  }
-
-  /// Information about the connected SCPReader, or `null` if no reader is connected.
+  /// Information about the connected [Reader], or `null` if no reader is connected.
   Future<Reader?> getConnectedReader() async => await _platform.getConnectedReader();
 
   /// Retrieves a list of [Location] objects belonging to your merchant.
@@ -278,7 +213,10 @@ class Terminal {
   Future<void> rebootReader() async => await _platform.rebootReader();
 
   /// Attempts to disconnect from the currently connected reader.
-  Future<void> disconnectReader() async => await _platform.disconnectReader();
+  Future<void> disconnectReader() async {
+    await _platform.disconnectReader();
+    _handlers.handleReaderDisconnection();
+  }
 
   /// The simulator configuration settings that will be used when connecting to and creating payments
   /// with a simulated reader.
@@ -376,8 +314,11 @@ class Terminal {
   /// If the updated [PaymentIntent]’s status changes to [PaymentIntentStatus.requiresPaymentMethod]
   ///   (e.g., the request failed because the card was declined), call [collectPaymentMethod]
   ///   with the updated [PaymentIntent] to try charging another card.
-  Future<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) async =>
-      await _platform.confirmPaymentIntent(paymentIntent.id);
+  CancelableFuture<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) {
+    return CancelableFuture(_platform.stopConfirmPaymentIntent, (id) async {
+      return await _platform.startConfirmPaymentIntent(id, paymentIntent.id);
+    });
+  }
 
   /// Cancels an [PaymentIntent].
   ///
@@ -447,16 +388,15 @@ class Terminal {
   /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
   CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
     SetupIntent setupIntent, {
-    required bool customerConsentCollected,
+    required AllowRedisplay allowRedisplay,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
         setupIntentId: setupIntent.id,
-        customerConsentCollected: customerConsentCollected,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        allowRedisplay: allowRedisplay,
+        customerCancellationEnabled: customerCancellationEnabled,
       );
     });
   }
@@ -474,8 +414,11 @@ class Terminal {
   ///     [confirmSetupIntent] again with the updated [SetupIntent] to retry the request.
   ///   3. If the updated [SetupIntent]’s status is [SetupIntentStatus.requiresAction], there might
   ///     be authentication the cardholder must perform offline before the saved PaymentMethod can be used.
-  Future<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) async =>
-      await _platform.confirmSetupIntent(setupIntent.id);
+  CancelableFuture<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) {
+    return CancelableFuture(_platform.stopConfirmSetupIntent, (id) async {
+      return await _platform.startConfirmSetupIntent(id, setupIntent.id);
+    });
+  }
 
   /// Cancels an [SetupIntent].
   ///
@@ -531,7 +474,6 @@ class Terminal {
     bool? reverseTransfer,
     bool? refundApplicationFee,
     bool customerCancellationEnabled = false,
-    @Deprecated('Please use [customerCancellationEnabled]') bool? isCustomerCancellationEnabled,
   }) {
     return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
       return await _platform.startCollectRefundPaymentMethod(
@@ -542,7 +484,7 @@ class Terminal {
         metadata: metadata,
         reverseTransfer: reverseTransfer,
         refundApplicationFee: refundApplicationFee,
-        customerCancellationEnabled: isCustomerCancellationEnabled ?? customerCancellationEnabled,
+        customerCancellationEnabled: customerCancellationEnabled,
       );
     });
   }
@@ -558,7 +500,11 @@ class Terminal {
   ///
   /// Note: collectRefundPaymentMethod:completion and confirmRefund are only available for payment
   ///   methods that require in-person refunds. For all other refunds, use the Stripe Dashboard or the Stripe API.
-  Future<Refund> confirmRefund() async => await _platform.confirmRefund();
+  CancelableFuture<Refund> confirmRefund() {
+    return CancelableFuture(_platform.stopConfirmRefund, (id) async {
+      return await _platform.startConfirmRefund(id);
+    });
+  }
 //endregion
 
 //region Display information to customers
@@ -591,19 +537,5 @@ class Terminal {
     };
     newController.onCancel = () async => await subscription.cancel();
     return newController;
-  }
-
-  Future<Reader> _handleReaderConnection(
-    ReaderDelegate? delegate,
-    ReaderReconnectionDelegate? reconnectionDelegate,
-    Future<Reader> Function() connector,
-  ) async {
-    try {
-      _handlers.attachReaderDelegates(delegate, reconnectionDelegate);
-      return await connector();
-    } catch (_) {
-      _handlers.detachReaderDelegates();
-      rethrow;
-    }
   }
 }

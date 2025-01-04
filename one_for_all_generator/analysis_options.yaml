@@ -13,6 +13,9 @@
 
 include: package:mek_lints/dart.yaml
 
+formatter:
+  page_width: 100
+
 # Uncomment the following section to specify additional rules.
 
 # linter:

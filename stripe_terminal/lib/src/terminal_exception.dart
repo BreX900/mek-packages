@@ -30,6 +30,9 @@ enum TerminalExceptionCode {
   /// Android(CANCEL_FAILED)
   cancelFailed,
 
+  /// Only IOS. Canceling a command failed because the command cannot currently be canceled.
+  cancelFailedUnavailable,
+
   /// No reader is connected. Connect to a reader before trying again.
   /// Android(NOT_CONNECTED_TO_READER) IOS(SCPErrorNotConnectedToReader)
   notConnectedToReader,
@@ -96,7 +99,7 @@ enum TerminalExceptionCode {
   /// - InvalidLocationIdParameter: The provided location ID parameter was invalid.
   /// - ReaderConnectionConfigurationInvalid: An invalid ConnectionConfiguration was passed through connect.
   /// - invalidRequiredParameterOnBehalfOf: The [PaymentIntent] uses on_behalf_of but the Connected
-  ///   Account ID was not set in LocalMobileConnectionConfiguration
+  ///   Account ID was not set in [TapToPayConnectionConfiguration]
   /// - SCPErrorCollectInputsInvalidParameter: An invalid parameter was used to start a collect
   ///   inputs operation.
   invalidParameter,
@@ -120,20 +123,26 @@ enum TerminalExceptionCode {
   /// Reasons for this might include:
   /// - Device is missing a NFC reader
   /// - Device does not have a hardware keystore
-  localMobileUnsupportedDevice,
+  tapToPayUnsupportedDevice,
 
   /// Only Android. The SDK is running on a version of Android older
-  localMobileUnsupportedOperatingSystemVersion,
+  tapToPayUnsupportedOperatingSystemVersion,
 
   /// Only Android. The Android device the SDK is running on has been tampered. Some examples of tampering include:
   /// - unlocking the bootloader or rooting the device
   /// - replacing factory-provisioned hardware in the device (ex. the motherboard)
-  localMobileDeviceTampered,
+  tapToPayDeviceTampered,
 
   /// Only Android. The SDK is running in a debuggable application. This is not supported for
   /// security and compliance reasons. Please test the Tap to Pay on Android SDK with a simulated
   /// version of the reader by setting DiscoveryConfiguration.isSimulated to true.
-  localMobileDebugNotSupported,
+  tapToPayDebugNotSupported,
+
+  /// Only Android. The SDK is running in an insecure environment. Some examples of insecure situations include:
+  /// - Other application components are running the secure payment process
+  /// - Camera is opened by another application during payment collection
+  /// - Developer mode is enabled or screen recording is active during PIN collection
+  tapToPayInsecureEnvironment,
 
   /// Only Android. The Android device the SDK is running on does not support offline mode.
   offlineModeUnsupportedOperatingSystemVersion,
@@ -210,33 +219,33 @@ enum TerminalExceptionCode {
 
   /// Only IOS. Failed to accept reader-specific terms of service because there is no iCloud user
   /// signed in. Direct the user to sign into an appropriate iCloud account via iOS Settings and try again.
-  appleBuiltInReaderTOSAcceptanceRequiresiCloudSignIn,
+  tapToPayReaderTOSAcceptanceRequiresiCloudSignIn,
 
   /// Only IOS. The user cancelled reader-specific terms of service acceptance.
-  appleBuiltInReaderTOSAcceptanceCanceled,
+  tapToPayReaderTOSAcceptanceCanceled,
 
   /// Only IOS. Preparing the Apple Built-In reader to collect payments failed. Try connecting again.
-  appleBuiltInReaderFailedToPrepare,
+  tapToPayReaderFailedToPrepare,
 
   /// Only IOS. This device cannot be used to process using the Apple Built-In reader as it has been banned.
-  appleBuiltInReaderDeviceBanned,
+  tapToPayReaderDeviceBanned,
 
   /// Only IOS. The operation could not be completed because the reader-specific terms of service
   /// have not yet been accepted. Try connecting again.
-  appleBuiltInReaderTOSNotYetAccepted,
+  tapToPayReaderTOSNotYetAccepted,
 
   /// Only IOS. Failed to accept reader-specific terms of service using the signed-in Apple ID.
   /// Ensure the Apple ID is still active and in a good standing and try again.
-  appleBuiltInReaderTOSAcceptanceFailed,
+  tapToPayReaderTOSAcceptanceFailed,
 
   /// Only IOS. This merchant account cannot be used with Apple Built-In reader as it has been blocked.
-  appleBuiltInReaderMerchantBlocked,
+  tapToPayReaderMerchantBlocked,
 
   /// Only IOS. This merchant account cannot be used with the Apple Built-In reader as it is invalid.
-  appleBuiltInReaderInvalidMerchant,
+  tapToPayReaderInvalidMerchant,
 
   /// Only IOS. An error that indicates the linked Apple ID account has been deactivated by the merchant.
-  appleBuiltInReaderAccountDeactivated,
+  tapToPayReaderAccountDeactivated,
 
   /// Please contact support at https://support.stripe.com/ for more help.
   /// Android: The reader is missing encryption keys required for taking payments. Disconnect and
@@ -342,6 +351,9 @@ enum TerminalExceptionCode {
 
   /// The reader declined the transaction. Try another card.
   declinedByReader,
+
+  /// Only IOS. Customer consent is required to set allow redisplay to ALWAYS or LIMITED for this operation.
+  commandInvalidAllowRedisplay,
 
   /// Only IOS. The SDK is not connected to the internet.
   notConnectedToInternet,
@@ -516,6 +528,9 @@ enum TerminalExceptionCode {
 
   /// Error reported when a timeout occurs while processing a collect inputs operation.
   collectInputsTimedOut,
+
+  /// The operation was cancelled due to an integration error.
+  canceledDueToIntegrationError,
 
   /// Error reported when the connected account does not have access to this feature,
   /// or the reader/SDK version is not compatible with the collect inputs operation.

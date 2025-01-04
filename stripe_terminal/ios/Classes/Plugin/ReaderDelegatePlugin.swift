@@ -1,7 +1,8 @@
 import Foundation
 import StripeTerminal
 
-class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReaderDelegate {
+class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, InternetReaderDelegate, TapToPayReaderDelegate {
+    
     private let _handlers: TerminalHandlersApi
     var cancellableUpdate: Cancelable?
 
@@ -9,34 +10,68 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
         self._handlers = handlers
     }
     
-    func reader(_ reader: Reader, didReportReaderEvent event: ReaderEvent, info: [AnyHashable : Any]?) {
+    // ReaderDelegate methods
+    
+    func reader(_ reader: Reader, didDisconnect reason: DisconnectReason) {
+        self._handlers.disconnect(reason: reason.toApi())
+    }
+    
+    func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable, disconnectReason: DisconnectReason) {
+        self._handlers.readerReconnectStarted(reader: reader.toApi(), reason: disconnectReason.toApi())
+    }
+    
+    func readerDidSucceedReconnect(_ reader: Reader) {
+        self._handlers.readerReconnectSucceeded(reader: reader.toApi())
+    }
+    
+    // MobileReaderDelegate methods
+    
+    func reader(_ reader: Reader, didReportAvailableUpdate update: ReaderSoftwareUpdate) {
+        DispatchQueue.main.async {
+            self._handlers.readerReportAvailableUpdate(update: update.toApi())
+        }
+    }
+    
+    func reader(_ reader: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
+        cancellableUpdate = cancelable
+        DispatchQueue.main.async {
+            self._handlers.readerStartInstallingUpdate(update: update.toApi())
+        }
+    }
+    
+    func reader(_ reader: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
+        DispatchQueue.main.async {
+            self._handlers.readerReportSoftwareUpdateProgress(progress: Double(progress))
+        }
+    }
+    
+    func reader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: (any Error)?) {
+        cancellableUpdate = nil
+        let exception = (error as? NSError)?.toApi()
+        DispatchQueue.main.async {
+            self._handlers.readerFinishInstallingUpdate(
+                update: update?.toApi(),
+                exception: exception
+            )
+        }
+    }
+    
+    func reader(_ reader: Reader, didRequestReaderInput inputOptions: ReaderInputOptions = []) {
+        DispatchQueue.main.async {
+            self._handlers.readerRequestInput(options: inputOptions.toApi())
+        }
+    }
+    
+    func reader(_ reader: Reader, didRequestReaderDisplayMessage displayMessage: ReaderDisplayMessage) {
+        DispatchQueue.main.async {
+            self._handlers.readerRequestDisplayMessage(message: displayMessage.toApi())
+        }
+    }
+        
+    func reader(_ reader: Reader, didReportReaderEvent event: ReaderEvent, info: Dictionary<AnyHashable, Any>?) {
         DispatchQueue.main.async {
             self._handlers.readerReportEvent(event: event.toApi())
         }
-    }
-    
-    func localMobileReaderDidAcceptTermsOfService(_ reader: Reader) {
-        // TODO: Implement this method
-    }
-    
-    func reader(_ reader: Reader, didRequestReaderDisplayMessage message: ReaderDisplayMessage) {
-        DispatchQueue.main.async {
-            self._handlers.readerRequestDisplayMessage(message: message.toApi())
-        }
-    }
-
-    func localMobileReader(_ reader: Reader, didRequestReaderDisplayMessage message: ReaderDisplayMessage) {
-        self.reader(reader, didRequestReaderDisplayMessage: message)
-    }
-    
-    func reader(_ reader: Reader, didRequestReaderInput options: ReaderInputOptions = []) {
-        DispatchQueue.main.async {
-            self._handlers.readerRequestInput(options: options.toApi())
-        }
-    }
-    
-    func localMobileReader(_ reader: Reader, didRequestReaderInput options: ReaderInputOptions = []) {
-        self.reader(reader, didRequestReaderInput: options)
     }
     
     func reader(_ reader: Reader, didReportBatteryLevel batteryLevel: Float, status: BatteryStatus, isCharging: Bool) {
@@ -54,50 +89,30 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
             self._handlers.readerReportLowBatteryWarning()
         }
     }
-
-    func reader(_: Reader, didReportAvailableUpdate update: ReaderSoftwareUpdate) {
-        DispatchQueue.main.async {
-            self._handlers.readerReportAvailableUpdate(update: update.toApi())
-        }
-    }
-
-    func reader(_: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable c: Cancelable?) {
-        cancellableUpdate = c
-        DispatchQueue.main.async {
-            self._handlers.readerStartInstallingUpdate(update: update.toApi())
-        }
-    }
     
-    func localMobileReader(_ reader: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
+    // TapToPayReaderDelegate methods
+    
+    func tapToPayReader(_ reader: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
         self.reader(reader, didStartInstallingUpdate: update, cancelable: cancelable)
     }
-
-    func reader(_: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
-        DispatchQueue.main.async {
-            self._handlers.readerReportSoftwareUpdateProgress(progress: Double(progress))
-        }
-    }
     
-    func localMobileReader(_ reader: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
+    func tapToPayReader(_ reader: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
         self.reader(reader, didReportReaderSoftwareUpdateProgress: progress)
     }
-
-    func reader(_: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error e: Error?) {
-        cancellableUpdate = nil
-        let exception = (e as? NSError)?.toApi()
-        DispatchQueue.main.async {
-            self._handlers.readerFinishInstallingUpdate(
-                update: update?.toApi(),
-                exception: exception
-            )
-        }
-    }
-
-    func localMobileReader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: Error?) {
+    
+    func tapToPayReader(_ reader: Reader, didFinishInstallingUpdate update: ReaderSoftwareUpdate?, error: (any Error)?) {
         self.reader(reader, didFinishInstallingUpdate: update, error: error)
     }
     
-    func reader(_ reader: Reader, didDisconnect reason: DisconnectReason) {
-        self._handlers.disconnect(reason: reason.toApi())
+    func tapToPayReader(_ reader: Reader, didRequestReaderInput inputOptions: ReaderInputOptions = []) {
+        self.reader(reader, didRequestReaderInput: inputOptions)
+    }
+    
+    func tapToPayReader(_ reader: Reader, didRequestReaderDisplayMessage displayMessage: ReaderDisplayMessage) {
+        self.reader(reader, didRequestReaderDisplayMessage: displayMessage)
+    }
+    
+    func tapToPayReaderDidAcceptTermsOfService(_ reader: Reader) {
+        // TODO: Implement this method
     }
 }

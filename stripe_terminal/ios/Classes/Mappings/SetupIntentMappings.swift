@@ -6,7 +6,7 @@ extension SetupIntent {
         return SetupIntentApi(
             created: created,
             customerId: customer,
-            id: stripeId,
+            id: stripeId!,
             latestAttempt: latestAttempt?.toApi(),
             metadata: metadata ?? [:],
             status: status.toApi(),
@@ -109,6 +109,21 @@ extension SetupIntentUsageApi {
             return .offSession
         case .onSession:
             return .onSession
+        }
+    }
+}
+
+extension AllowRedisplayApi {
+    func toHost() -> AllowRedisplay {
+        switch self {
+        case .always:
+            return .always
+        case .limited:
+            return .limited
+        case .unspecified:
+            return .unspecified
+        @unknown default:
+            fatalError()
         }
     }
 }

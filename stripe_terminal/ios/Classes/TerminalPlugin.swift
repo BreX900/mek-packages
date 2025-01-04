@@ -15,7 +15,6 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         self.handlers = TerminalHandlersApi(binaryMessenger)
         self._discoverReadersController = DiscoverReadersControllerApi(binaryMessenger: binaryMessenger)
         self._readerDelegate = ReaderDelegatePlugin(handlers)
-        self._readerReconnectionDelegate = ReaderReconnectionDelegatePlugin(handlers)
     }
 
     public func onAttachedToEngine() {
@@ -44,6 +43,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     
     func onClearCachedCredentials() throws {
         Terminal.shared.clearCachedCredentials()
+        self._clean();
     }
 
 // MARK: - Reader discovery, connection and updates
@@ -53,7 +53,6 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         return _discoveryDelegate.readers
     } }
     private let _readerDelegate: ReaderDelegatePlugin
-    private let _readerReconnectionDelegate: ReaderReconnectionDelegatePlugin
 
     func onGetConnectionStatus() throws -> ConnectionStatusApi {
         return Terminal.shared.connectionStatus.toApi()
@@ -90,72 +89,24 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             _discoveryDelegate.onCancel
         )
     }
-
-    func onConnectHandoffReader(_ serialNumber: String) async throws -> ReaderApi {
-        throw PlatformError("", "Unsupported method")
-    }
-
-    func onConnectBluetoothReader(
-        _ serialNumber: String,
-        _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool
-    ) async throws -> ReaderApi {
-        let config = BluetoothConnectionConfigurationBuilder(locationId: locationId)
-            .setAutoReconnectOnUnexpectedDisconnect(autoReconnectOnUnexpectedDisconnect)
-            .setAutoReconnectionDelegate(_readerReconnectionDelegate)
-        do {
-            let reader = try await Terminal.shared.connectBluetoothReader(
-                _findReader(serialNumber),
-                delegate: _readerDelegate,
-                connectionConfig: config.build()
-            )
-            return reader.toApi()
-        } catch let error as NSError {
-            throw error.toPlatformError()
-        }
-    }
-
-    func onConnectInternetReader(
-        _ serialNumber: String,
-        _ failIfInUse: Bool
-    ) async throws -> ReaderApi {
-        let config = InternetConnectionConfigurationBuilder()
-            .setFailIfInUse(failIfInUse)
-        do {
-            let reader = try await Terminal.shared.connectInternetReader(
-                _findReader(serialNumber),
-                connectionConfig: config.build()
-            )
-            return reader.toApi()
-        } catch let error as NSError {
-            throw error.toPlatformError()
-        }
-    }
-
-    func onConnectMobileReader(
-        _ serialNumber: String,
-        _ locationId: String,
-        _ autoReconnectOnUnexpectedDisconnect: Bool,
-        _ onBehalfOf: String?
-    ) async throws -> ReaderApi {
-        let config = LocalMobileConnectionConfigurationBuilder(locationId: locationId)
-            .setOnBehalfOf(onBehalfOf)
-            .setAutoReconnectOnUnexpectedDisconnect(autoReconnectOnUnexpectedDisconnect)
-            .setAutoReconnectionDelegate(_readerReconnectionDelegate)
-        do {
-            let reader = try await Terminal.shared.connectLocalMobileReader(
-                _findReader(serialNumber),
-                delegate: _readerDelegate,
-                connectionConfig: config.build()
-            )
-            return reader.toApi()
-        } catch let error as NSError {
-            throw error.toPlatformError()
-        }
-    }
     
-    func onConnectUsbReader(_ serialNumber: String, _ locationId: String, _ autoReconnectOnUnexpectedDisconnect: Bool) async throws -> ReaderApi {
-        throw PlatformError("", "Unsupported method")
+    func onConnectReader(
+        _ serialNumber: String,
+        _ configuration: any ConnectionConfigurationApi
+    ) async throws -> ReaderApi {
+        let configuration = try configuration.toHost(_readerDelegate)
+        if let configuration = configuration {
+            do {
+                 let reader = try await Terminal.shared.connectReader(
+                     _findReader(serialNumber),
+                     connectionConfig: configuration
+                 )
+                 return reader.toApi()
+             } catch let error as NSError {
+                 throw error.toPlatformError()
+             }
+        }
+        throw PlatformError("", "Unsupported connection configuration")
     }
 
     func onGetConnectedReader() throws -> ReaderApi? {
@@ -279,23 +230,28 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     ) async throws {
         try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
-
-    func onConfirmPaymentIntent(
+    
+    private var _confirmPaymentIntentCancelables: [Int: Cancelable] = [:]
+    
+    func onStartConfirmPaymentIntent(
+        _ result: Result<PaymentIntentApi>,
+        _ operationId: Int,
         _ paymentIntentId: String
-    ) async throws -> PaymentIntentApi {
+    ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
-        do {
-            let (intent, error) = await Terminal.shared.confirmPaymentIntent(paymentIntent)
-            if let error {
-                if let paymentIntent = error.paymentIntent {
-                    _paymentIntents[paymentIntent.stripeId!] = paymentIntent
-                }
-                throw error.toPlatformError(apiError: error.requestError, paymentIntent: error.paymentIntent)
+        Terminal.shared.confirmPaymentIntent(paymentIntent, completion: { paymentIntent, error in
+            self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
+            if let error = error {
+                result.error(error.toPlatformError())
+                return
             }
-            return intent!.toApi()
-        } catch let error as NSError {
-            throw error.toPlatformError()
-        }
+            self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
+            result.success(paymentIntent!.toApi())
+        })
+    }
+    
+    func onStopConfirmPaymentIntent(_ operationId: Int) async throws {
+        try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
     
     func onCancelPaymentIntent(_ paymentIntentId: String) async throws -> PaymentIntentApi {
@@ -329,7 +285,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         usage.apply { params.setUsage($0.toHost()) }
         do {
             let setupIntent = try await Terminal.shared.createSetupIntent(params.build())
-            _setupIntents[setupIntent.stripeId] = setupIntent
+            _setupIntents[setupIntent.stripeId!] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
@@ -339,18 +295,17 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func onRetrieveSetupIntent(_ clientSecret: String) async throws -> SetupIntentApi {
         do {
             let setupIntent = try await Terminal.shared.retrieveSetupIntent(clientSecret: clientSecret)
-            _setupIntents[setupIntent.stripeId] = setupIntent
+            _setupIntents[setupIntent.stripeId!] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
         }
     }
-    
     func onStartCollectSetupIntentPaymentMethod(
         _ result: Result<SetupIntentApi>,
         _ operationId: Int,
         _ setupIntentId: String,
-        _ customerConsentCollected: Bool,
+        _ allowRedisplay: AllowRedisplayApi,
         _ customerCancellationEnabled: Bool
     ) throws {
         let setupIntent = try _findSetupIntent(setupIntentId)
@@ -359,7 +314,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         
         _cancelablesCollectSetupIntentPaymentMethod[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
             setupIntent,
-            customerConsentCollected: customerConsentCollected,
+            allowRedisplay: allowRedisplay.toHost(),
             setupConfig: try config.build(),
             completion: { setupIntent, error in
                 self._cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)
@@ -367,7 +322,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                     result.error(error.toPlatformError())
                     return
                 }
-                self._setupIntents[setupIntent!.stripeId] = setupIntent!
+                self._setupIntents[setupIntent!.stripeId!] = setupIntent!
                 result.success(setupIntent!.toApi())
         })
     }
@@ -376,14 +331,27 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         try await _cancelablesCollectSetupIntentPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
     
-    func onConfirmSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
+    private var _confirmSetupIntentCancelables: [Int: Cancelable] = [:]
+    
+    func onStartConfirmSetupIntent(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
+        _ setupIntentId: String
+    ) throws {
         let setupIntent = try _findSetupIntent(setupIntentId)
-        let (newSetupIntent, error) = await Terminal.shared.confirmSetupIntent(setupIntent)
-        if let error {
-            throw error.toPlatformError(apiError: error.requestError)
-        }
-        _setupIntents[newSetupIntent!.stripeId] = newSetupIntent!
-        return newSetupIntent!.toApi()
+        _confirmSetupIntentCancelables[operationId] = Terminal.shared.confirmSetupIntent(setupIntent, completion: { setupIntent, error in
+            self._confirmSetupIntentCancelables.removeValue(forKey: operationId)
+            if let error = error as? NSError {
+                result.error(error.toPlatformError())
+                return
+            }
+            self._setupIntents[setupIntent!.stripeId!] = setupIntent!
+            result.success(setupIntent!.toApi())
+    })
+    }
+    
+    func onStopConfirmSetupIntent(_ operationId: Int) async throws {
+        try await _confirmSetupIntentCancelables.removeValue(forKey: operationId)?.cancel()
     }
     
     func onCancelSetupIntent(_ setupIntentId: String) async throws -> SetupIntentApi {
@@ -435,17 +403,24 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         try await _cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
     
-    func onConfirmRefund() async throws -> RefundApi {
-        do {
-            let (refund, error) = await Terminal.shared.confirmRefund()
-            if let error {
-                throw error.toPlatformError(apiError: error.requestError)
+    private var _confirmRefundCancelables: [Int: Cancelable] = [:]
+    
+    func onStartConfirmRefund(_ result: Result<RefundApi>, _ operationId: Int) throws {
+        _confirmRefundCancelables[operationId] = Terminal.shared.confirmRefund(completion: { refund, error in
+            self._confirmRefundCancelables.removeValue(forKey: operationId)
+            if let error = error {
+                result.error(error.toPlatformError())
+                return
             }
-            return refund!.toApi()
-        } catch let error as NSError {
-            throw error.toPlatformError()
-        }
+            result.success(refund!.toApi())
+    })
     }
+    
+    func onStopConfirmRefund(_ operationId: Int) async throws {
+        try await _confirmRefundCancelables.removeValue(forKey: operationId)?.cancel()
+    }
+    
+
 
 // MARK: - Display information to customers
     
@@ -476,14 +451,20 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         
         self._cancelablesCollectPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectPaymentMethod = [:]
+        self._confirmSetupIntentCancelables.values.forEach { $0.cancel { error in } }
+        self._confirmSetupIntentCancelables = [:]
         self._paymentIntents = [:]
 
         self._cancelablesCollectSetupIntentPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectSetupIntentPaymentMethod = [:]
+        self._confirmPaymentIntentCancelables.values.forEach { $0.cancel { error in } }
+        self._confirmPaymentIntentCancelables = [:]
         self._setupIntents = [:]
 
         self._cancelablesCollectRefundPaymentMethod.values.forEach { $0.cancel { error in } }
         self._cancelablesCollectRefundPaymentMethod = [:]
+        self._confirmRefundCancelables.values.forEach { $0.cancel { error in } }
+        self._confirmRefundCancelables = [:]
     }
 
     private func _findReader(_ serialNumber: String) throws -> Reader {

@@ -568,6 +568,10 @@ class TerminalHandlersApi {
     ) {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
+
+    func readerAcceptTermsOfService() {
+        channel.invokeMethod("_onReaderAcceptTermsOfService", arguments: [])
+    }
 }
 
 struct AddressApi {

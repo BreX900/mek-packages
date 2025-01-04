@@ -539,6 +539,10 @@ class TerminalHandlersApi(
     ) {
         channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
+
+    fun readerAcceptTermsOfService() {
+        channel.invokeMethod("_onReaderAcceptTermsOfService", listOf<Any?>())
+    }
 }
 
 data class AddressApi(

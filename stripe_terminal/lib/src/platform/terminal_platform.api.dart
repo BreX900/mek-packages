@@ -493,6 +493,7 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
           args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
           args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
+      '_onReaderAcceptTermsOfService' => hostApi._onReaderAcceptTermsOfService(),
       _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),
     };
   });

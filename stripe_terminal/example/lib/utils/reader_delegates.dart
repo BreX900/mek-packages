@@ -36,28 +36,8 @@ mixin _LoggingReaderDisconnectDelegate on ReaderDisconnectDelegate {
   void onDisconnect(DisconnectReason reason) => onLog('onDisconnect: $reason');
 }
 
-class LoggingMobileReaderDelegate extends MobileReaderDelegate
-    with
-        _LoggingReaderDelegate,
-        _LoggingReaderReconnectionDelegate,
-        _LoggingReaderDisconnectDelegate {
-  @override
-  final LogListener onLog;
-
-  LoggingMobileReaderDelegate(this.onLog);
-
-  @override
-  void onBatteryLevelUpdate(double batteryLevel, BatteryStatus? batteryStatus, bool isCharging) {
-    onLog(
-        'onBatteryLevelUpdate: batteryLevel: $batteryLevel $batteryStatus isCharging: $isCharging');
-  }
-
-  @override
-  void onReportLowBatteryWarning() => onLog('onReportLowBatteryWarning');
-
-  @override
-  void onReportAvailableUpdate(ReaderSoftwareUpdate update) =>
-      onLog('onReportAvailableUpdate: ${update.version}');
+mixin _LoggingReaderPortableDelegate on ReaderPortableDelegate {
+  LogListener get onLog;
 
   @override
   void onStartInstallingUpdate(ReaderSoftwareUpdate update, Cancellable cancelUpdate) =>
@@ -80,6 +60,31 @@ class LoggingMobileReaderDelegate extends MobileReaderDelegate
       onLog('onRequestReaderInput: $ReaderInputOption(${options.map((e) => e.name).join(',')})');
 }
 
+class LoggingMobileReaderDelegate extends MobileReaderDelegate
+    with
+        _LoggingReaderDelegate,
+        _LoggingReaderReconnectionDelegate,
+        _LoggingReaderDisconnectDelegate,
+        _LoggingReaderPortableDelegate {
+  @override
+  final LogListener onLog;
+
+  LoggingMobileReaderDelegate(this.onLog);
+
+  @override
+  void onBatteryLevelUpdate(double batteryLevel, BatteryStatus? batteryStatus, bool isCharging) {
+    onLog(
+        'onBatteryLevelUpdate: batteryLevel: $batteryLevel $batteryStatus isCharging: $isCharging');
+  }
+
+  @override
+  void onReportLowBatteryWarning() => onLog('onReportLowBatteryWarning');
+
+  @override
+  void onReportAvailableUpdate(ReaderSoftwareUpdate update) =>
+      onLog('onReportAvailableUpdate: ${update.version}');
+}
+
 class LoggingHandoffReaderDelegate extends HandoffReaderDelegate
     with _LoggingReaderDelegate, _LoggingReaderDisconnectDelegate {
   @override
@@ -97,9 +102,15 @@ class LoggingInternetReaderDelegate extends InternetReaderDelegate
 }
 
 class LoggingTapToPayReaderDelegate extends TapToPayReaderDelegate
-    with _LoggingReaderReconnectionDelegate, _LoggingReaderDisconnectDelegate {
+    with
+        _LoggingReaderReconnectionDelegate,
+        _LoggingReaderDisconnectDelegate,
+        _LoggingReaderPortableDelegate {
   @override
   final LogListener onLog;
 
   LoggingTapToPayReaderDelegate(this.onLog);
+
+  @override
+  void onAcceptTermsOfService() => onLog('onAcceptTermsOfService');
 }

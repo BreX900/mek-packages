@@ -4,24 +4,43 @@ import StripeTerminal
 class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, InternetReaderDelegate, TapToPayReaderDelegate {
     
     private let _handlers: TerminalHandlersApi
-    var cancellableUpdate: Cancelable?
+    private var cancellableReconnection: Cancelable?
+    private var cancellableUpdate: Cancelable?
 
     init(_ handlers: TerminalHandlersApi) {
         self._handlers = handlers
     }
     
+    func cancelReconnection() async throws {
+        try await cancellableReconnection?.cancel()
+        cancellableReconnection = nil
+    }
+    
+    func cancelUpdate() async throws {
+        try await cancellableUpdate?.cancel()
+        cancellableUpdate = nil
+    }
+    
     // ReaderDelegate methods
     
     func reader(_ reader: Reader, didDisconnect reason: DisconnectReason) {
-        self._handlers.disconnect(reason: reason.toApi())
+        DispatchQueue.main.async {
+            self._handlers.disconnect(reason: reason.toApi())
+        }
     }
     
     func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable, disconnectReason: DisconnectReason) {
-        self._handlers.readerReconnectStarted(reader: reader.toApi(), reason: disconnectReason.toApi())
+        self.cancellableReconnection = cancelable
+        DispatchQueue.main.async {
+            self._handlers.readerReconnectStarted(reader: reader.toApi(), reason: disconnectReason.toApi())
+        }
     }
     
     func readerDidSucceedReconnect(_ reader: Reader) {
-        self._handlers.readerReconnectSucceeded(reader: reader.toApi())
+        cancellableReconnection = nil
+        DispatchQueue.main.async {
+            self._handlers.readerReconnectSucceeded(reader: reader.toApi())
+        }
     }
     
     // MobileReaderDelegate methods
@@ -113,6 +132,8 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
     }
     
     func tapToPayReaderDidAcceptTermsOfService(_ reader: Reader) {
-        // TODO: Implement this method
+        DispatchQueue.main.async {
+            self._handlers.readerAcceptTermsOfService()
+        }
     }
 }

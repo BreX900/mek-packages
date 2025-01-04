@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
 
+import 'dart:ui';
+
 import 'package:example/screens/initialization_screen.dart';
 import 'package:example/screens/terminal_area.dart';
 import 'package:example/utils/stripe_api.dart';
@@ -32,9 +34,8 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData.from(
-        useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
+          brightness: PlatformDispatcher.instance.platformBrightness,
           seedColor: Colors.amber,
         ),
       ),

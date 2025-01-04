@@ -114,7 +114,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     func onCancelReaderReconnection() async throws {
-        try await _readerReconnectionDelegate.cancelable?.cancel()
+        try await _readerDelegate.cancelReconnection()
     }
     
     func onListLocations(_ endingBefore: String?, _ limit: Int?, _ startingAfter: String?) async throws -> [LocationApi] {
@@ -134,7 +134,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     func onCancelReaderUpdate() async throws {
-        try await _readerDelegate.cancellableUpdate?.cancel()
+        try await _readerDelegate.cancelUpdate()
     }
     
     func onRebootReader() async throws {
@@ -341,7 +341,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         let setupIntent = try _findSetupIntent(setupIntentId)
         _confirmSetupIntentCancelables[operationId] = Terminal.shared.confirmSetupIntent(setupIntent, completion: { setupIntent, error in
             self._confirmSetupIntentCancelables.removeValue(forKey: operationId)
-            if let error = error as? NSError {
+            if let error = error {
                 result.error(error.toPlatformError())
                 return
             }

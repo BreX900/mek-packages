@@ -60,7 +60,6 @@ import mek.stripeterminal.mappings.toHost
 import mek.stripeterminal.mappings.toPlatformError
 import mek.stripeterminal.plugin.DiscoverReadersSubject
 import mek.stripeterminal.plugin.ReaderDelegatePlugin
-import mek.stripeterminal.plugin.ReaderReconnectionListenerPlugin
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
 import mek.stripeterminal.plugin.TerminalErrorHandler
 
@@ -123,7 +122,6 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         get() = discoverReadersSubject.readers
 
     private lateinit var readerDelegate: ReaderDelegatePlugin
-    private lateinit var readerReconnectionDelegate: ReaderReconnectionListenerPlugin
 
     override fun onGetConnectionStatus(): ConnectionStatusApi = terminal.connectionStatus.toApi()
 
@@ -165,10 +163,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     override fun onGetConnectedReader(): ReaderApi? = terminal.connectedReader?.toApi()
 
     override fun onCancelReaderReconnection(result: Result<Unit>) {
-        if (readerReconnectionDelegate.cancelReconnect == null) {
-            result.success(Unit)
-        }
-        readerReconnectionDelegate.cancelReconnect?.cancel(
+        readerDelegate.cancelReconnect(
             object : Callback, TerminalErrorHandler(result::error) {
                 override fun onSuccess() = result.success(Unit)
             }
@@ -197,15 +192,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     override fun onInstallAvailableUpdate() = terminal.installAvailableUpdate()
 
     override fun onCancelReaderUpdate(result: Result<Unit>) {
-        if (readerDelegate.cancelUpdate == null) {
-            result.success(Unit)
-        }
-        readerDelegate.cancelUpdate?.cancel(
+        readerDelegate.cancelUpdate(
             object : Callback, TerminalErrorHandler(result::error) {
                 override fun onSuccess() = result.success(Unit)
             }
         )
-        readerDelegate.cancelUpdate = null
     }
 
     override fun onRebootReader(result: Result<Unit>) {
@@ -603,7 +594,6 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         TerminalPlatformApi.setHandler(binaryMessenger, this)
         handlers = TerminalHandlersApi(binaryMessenger)
         readerDelegate = ReaderDelegatePlugin(handlers)
-        readerReconnectionDelegate = ReaderReconnectionListenerPlugin(handlers)
 
         setupDiscoverReadersController(binaryMessenger)
     }

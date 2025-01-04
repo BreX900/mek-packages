@@ -44,13 +44,15 @@ class TerminalHandlers {
   void _onPaymentStatusChange(PaymentStatus paymentStatus) =>
       _paymentStatusChangeController.add(paymentStatus);
 
-//region Reader delegate
+//region ReaderDelegate
   void _onReaderReportEvent(ReaderEvent event) {
     _runInZone<ReaderDelegate>(_readerDelegate, (delegate) {
       delegate.onReportReaderEvent(event);
     });
   }
+//endregion
 
+//region ReaderReconnectionDelegate
   void _onReaderReconnectFailed(Reader reader) {
     _runInZone<ReaderReconnectionDelegate>(_readerDelegate, (delegate) {
       delegate.onReaderReconnectFailed(reader);
@@ -68,25 +70,52 @@ class TerminalHandlers {
       delegate.onReaderReconnectSucceeded(reader);
     });
   }
+//endregion
 
+//region ReaderDisconnectDelegate
   void _onDisconnect(DisconnectReason reason) {
     _runInZone<ReaderDisconnectDelegate>(_readerDelegate, (delegate) {
       delegate.onDisconnect(reason);
     });
   }
+//endregion
+
+//region ReaderPortableDelegate
+  void _onReaderStartInstallingUpdate(ReaderSoftwareUpdate update) {
+    _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
+      delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
+    });
+  }
+
+  void _onReaderReportSoftwareUpdateProgress(double progress) {
+    _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
+      delegate.onReportReaderSoftwareUpdateProgress(progress);
+    });
+  }
+
+  void _onReaderFinishInstallingUpdate(
+    ReaderSoftwareUpdate? update,
+    TerminalException? exception,
+  ) {
+    _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
+      delegate.onFinishInstallingUpdate(update, exception);
+    });
+  }
 
   void _onReaderRequestDisplayMessage(ReaderDisplayMessage message) {
-    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+    _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
       delegate.onRequestReaderDisplayMessage(message);
     });
   }
 
   void _onReaderRequestInput(List<ReaderInputOption> options) {
-    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
+    _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
       delegate.onRequestReaderInput(options);
     });
   }
+//endregion
 
+//region MobileReaderDelegate
   void _onReaderBatteryLevelUpdate(
     double batteryLevel,
     BatteryStatus? batteryStatus,
@@ -108,27 +137,15 @@ class TerminalHandlers {
       delegate.onReportAvailableUpdate(update);
     });
   }
+//endRegion
 
-  void _onReaderStartInstallingUpdate(ReaderSoftwareUpdate update) {
-    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
-      delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
+//region TapToPayReaderDelegate
+  void _onReaderAcceptTermsOfService() {
+    _runInZone<TapToPayReaderDelegate>(_readerDelegate, (delegate) {
+      delegate.onAcceptTermsOfService();
     });
   }
-
-  void _onReaderReportSoftwareUpdateProgress(double progress) {
-    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
-      delegate.onReportReaderSoftwareUpdateProgress(progress);
-    });
-  }
-
-  void _onReaderFinishInstallingUpdate(
-    ReaderSoftwareUpdate? update,
-    TerminalException? exception,
-  ) {
-    _runInZone<MobileReaderDelegate>(_readerDelegate, (delegate) {
-      delegate.onFinishInstallingUpdate(update, exception);
-    });
-  }
+//endRegion
 
   void _runInZone<T>(
     ReaderDelegateAbstract? delegate,

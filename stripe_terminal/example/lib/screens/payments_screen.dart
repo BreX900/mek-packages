@@ -91,54 +91,56 @@ class _PaymentsScreenState extends State<PaymentsScreen> with StateTools {
         title: const Text('Payments'),
         bottom: isMutating ? const LinearProgressIndicatorBar() : null,
       ),
-      body: Column(
-        children: [
-          ListTile(
-            selected: true,
-            title: Text('Payment Status: ${paymentStatus.name}'),
-          ),
-          const Divider(height: 32.0),
-          FilledButton.tonal(
-            onPressed: !isMutating ? () => mutate(_createPaymentIntent) : null,
-            child: const Text('Create PaymentIntent via Skd'),
-          ),
-          const SizedBox(height: 8.0),
-          FilledButton.tonal(
-            onPressed:
-                !isMutating ? () => mutate(_createFromApiAndRetrievePaymentIntentFromSdk) : null,
-            child: const Text('Create PaymentIntent via Api and Retrieve it via Sdk'),
-          ),
-          const SizedBox(height: 8.0),
-          if (collectingPaymentMethod == null)
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            ListTile(
+              selected: true,
+              title: Text('Payment Status: ${paymentStatus.name}'),
+            ),
+            const Divider(height: 32.0),
+            FilledButton.tonal(
+              onPressed: !isMutating ? () => mutate(_createPaymentIntent) : null,
+              child: const Text('Create PaymentIntent via Skd'),
+            ),
+            const SizedBox(height: 8.0),
+            FilledButton.tonal(
+              onPressed:
+                  !isMutating ? () => mutate(_createFromApiAndRetrievePaymentIntentFromSdk) : null,
+              child: const Text('Create PaymentIntent via Api and Retrieve it via Sdk'),
+            ),
+            const SizedBox(height: 8.0),
+            if (collectingPaymentMethod == null)
+              FilledButton(
+                onPressed: !isMutating &&
+                        connectedReader != null &&
+                        paymentIntent != null &&
+                        paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
+                    ? () => mutate(() async => _collectPaymentMethod(paymentIntent))
+                    : null,
+                child: const Text('Collect Payment Method'),
+              )
+            else
+              FilledButton(
+                onPressed: () async => _cancelCollectingPaymentMethod(collectingPaymentMethod),
+                child: const Text('Cancel Collecting Payment Method'),
+              ),
+            const SizedBox(height: 8.0),
             FilledButton(
               onPressed: !isMutating &&
-                      connectedReader != null &&
                       paymentIntent != null &&
-                      paymentIntent.status == PaymentIntentStatus.requiresPaymentMethod
-                  ? () => mutate(() async => _collectPaymentMethod(paymentIntent))
+                      paymentIntent.status == PaymentIntentStatus.requiresConfirmation
+                  ? () => mutate(() async => _confirmPaymentIntent(paymentIntent))
                   : null,
-              child: const Text('Collect Payment Method'),
-            )
-          else
-            FilledButton(
-              onPressed: () async => _cancelCollectingPaymentMethod(collectingPaymentMethod),
-              child: const Text('Cancel Collecting Payment Method'),
+              child: const Text('Confirm PaymentIntent'),
             ),
-          const SizedBox(height: 8.0),
-          FilledButton(
-            onPressed: !isMutating &&
-                    paymentIntent != null &&
-                    paymentIntent.status == PaymentIntentStatus.requiresConfirmation
-                ? () => mutate(() async => _confirmPaymentIntent(paymentIntent))
-                : null,
-            child: const Text('Confirm PaymentIntent'),
-          ),
-          const Divider(height: 32.0),
-          if (paymentIntent != null)
-            ListTile(
-              title: Text('$paymentIntent'),
-            )
-        ],
+            const Divider(height: 32.0),
+            if (paymentIntent != null)
+              ListTile(
+                title: Text('$paymentIntent'),
+              )
+          ],
+        ),
       ),
     );
   }

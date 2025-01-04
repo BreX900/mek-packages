@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-library mek_stripe_terminal;
+library;
 
 export 'src/cancellable_future.dart';
 export 'src/models/card.dart';

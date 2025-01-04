@@ -12,7 +12,7 @@ environment:
   flutter: '>=3.10.0'
 
 scripts:
-  bootstrap: dart pub global activate index_generator
+  bootstrap: dart pub global activate index_generator 4.0.0
 
   # To generate library dart file
   generate-library: index_generator
@@ -110,7 +110,7 @@ index_generator:
     - '**.g.dart'
     - '**.api.dart'
   # Define the paths of the folders in which to generate the index files
-  indexes:
-    - path: lib
+  libraries:
+    - directory_path: lib
       exclude:
         - src/platform/**

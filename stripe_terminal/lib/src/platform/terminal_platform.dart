@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mek_stripe_terminal/src/models/card.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/charge.dart';
+import 'package:mek_stripe_terminal/src/models/connection_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/disconnect_reason.dart';
 import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
@@ -52,31 +53,7 @@ abstract class TerminalPlatform {
 
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration configuration);
 
-  Future<Reader> connectBluetoothReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-  });
-
-  Future<Reader> connectHandoffReader(String serialNumber);
-
-  Future<Reader> connectInternetReader(
-    String serialNumber, {
-    required bool failIfInUse,
-  });
-
-  Future<Reader> connectMobileReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-    String? onBehalfOf,
-  });
-
-  Future<Reader> connectUsbReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-  });
+  Future<Reader> connectReader(String serialNumber, ConnectionConfiguration configuration);
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
   Future<Reader?> getConnectedReader();
@@ -124,7 +101,10 @@ abstract class TerminalPlatform {
 
   Future<void> stopCollectPaymentMethod(int operationId);
 
-  Future<PaymentIntent> confirmPaymentIntent(String paymentIntentId);
+  @MethodApi(swift: MethodApiType.callbacks)
+  Future<PaymentIntent> startConfirmPaymentIntent(int operationId, String paymentIntentId);
+
+  Future<void> stopConfirmPaymentIntent(int operationId);
 
   Future<PaymentIntent> cancelPaymentIntent(String paymentIntentId);
 //endregion
@@ -145,13 +125,16 @@ abstract class TerminalPlatform {
   Future<SetupIntent> startCollectSetupIntentPaymentMethod({
     required int operationId,
     required String setupIntentId,
-    required bool customerConsentCollected,
+    required AllowRedisplay allowRedisplay,
     required bool customerCancellationEnabled,
   });
 
   Future<void> stopCollectSetupIntentPaymentMethod(int operationId);
 
-  Future<SetupIntent> confirmSetupIntent(String setupIntentId);
+  @MethodApi(swift: MethodApiType.callbacks)
+  Future<SetupIntent> startConfirmSetupIntent(int operationId, String setupIntentId);
+
+  Future<void> stopConfirmSetupIntent(int operationId);
 
   Future<SetupIntent> cancelSetupIntent(String setupIntentId);
 //endregion
@@ -172,7 +155,11 @@ abstract class TerminalPlatform {
 
   Future<void> stopCollectRefundPaymentMethod(int operationId);
 
-  Future<Refund> confirmRefund();
+  @MethodApi(swift: MethodApiType.callbacks)
+  Future<Refund> startConfirmRefund(int operationId);
+
+  Future<void> stopConfirmRefund(int operationId);
+
 //endregion
 
 //region Display information to customers

@@ -2,7 +2,9 @@ package mek.stripeterminal.plugin
 
 import com.stripe.stripeterminal.external.callable.Cancelable
 import com.stripe.stripeterminal.external.callable.HandoffReaderListener
-import com.stripe.stripeterminal.external.callable.ReaderListener
+import com.stripe.stripeterminal.external.callable.InternetReaderListener
+import com.stripe.stripeterminal.external.callable.MobileReaderListener
+import com.stripe.stripeterminal.external.callable.TapToPayReaderListener
 import com.stripe.stripeterminal.external.models.BatteryStatus
 import com.stripe.stripeterminal.external.models.DisconnectReason
 import com.stripe.stripeterminal.external.models.ReaderDisplayMessage
@@ -15,7 +17,7 @@ import mek.stripeterminal.mappings.toApi
 import mek.stripeterminal.runOnMainThread
 
 class ReaderDelegatePlugin(private val _handlers: TerminalHandlersApi) :
-    ReaderListener, HandoffReaderListener {
+    MobileReaderListener, HandoffReaderListener, InternetReaderListener, TapToPayReaderListener {
     var cancelUpdate: Cancelable? = null
 
     override fun onReportReaderEvent(event: ReaderEvent) = runOnMainThread {

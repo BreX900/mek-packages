@@ -18,7 +18,7 @@ import mek.stripeterminal.toHashMap
 
 fun SetupIntent.toApi(): SetupIntentApi {
     return SetupIntentApi(
-        id = id,
+        id = id!!,
         created = created,
         customerId = customerId,
         metadata = metadata.toHashMap(),

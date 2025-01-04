@@ -5,6 +5,8 @@ import 'dart:io';
 
 import 'package:example/models/discovery_method.dart';
 import 'package:example/models/k.dart';
+import 'package:example/models/not_found_location_exeception.dart';
+import 'package:example/reader_delegates.dart';
 import 'package:example/stripe_api.dart';
 import 'package:example/utils/permission_utils.dart';
 import 'package:flutter/foundation.dart';
@@ -47,6 +49,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _api = StripeApi();
+  var _isPending = false;
   Terminal? _terminal;
 
   var _locations = <Location>[];
@@ -55,7 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _onConnectionStatusChangeSub;
   var _connectionStatus = ConnectionStatus.notConnected;
   bool _isSimulated = true;
-  var _discoveringMethod = DiscoveryMethod.bluetoothScan;
+  DiscoveryMethod _discoveryMethod = DiscoveryMethod.bluetoothScan;
+  // DiscoveryConfiguration? _discoveryConfiguration;
   StreamSubscription? _discoverReaderSub;
   var _readers = const <Reader>[];
   StreamSubscription? _onUnexpectedReaderDisconnectSub;
@@ -110,23 +114,20 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    final terminal = await Terminal.getInstance(
+    await Terminal.initTerminal(
       shouldPrintLogs: true,
       fetchToken: _fetchConnectionToken,
     );
+    final terminal = Terminal.instance;
     setState(() => _terminal = terminal);
     _onConnectionStatusChangeSub = terminal.onConnectionStatusChange.listen((status) {
       print('Connection Status Changed: ${status.name}');
       setState(() {
         _connectionStatus = status;
         if (_connectionStatus == ConnectionStatus.notConnected) {
-          _readers = const [];
           _reader = null;
         }
       });
-    });
-    _onUnexpectedReaderDisconnectSub = terminal.onUnexpectedReaderDisconnect.listen((reader) {
-      print('Reader Unexpected Disconnected: ${reader.label}');
     });
     _onPaymentStatusChangeSub = terminal.onPaymentStatusChange.listen((status) {
       print('Payment Status Changed: ${status.name}');
@@ -154,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _changeDiscoveryMethod(DiscoveryMethod? method) {
     setState(() {
-      _discoveringMethod = method!;
+      _discoveryMethod = method!;
       _readers = const [];
     });
   }
@@ -164,45 +165,46 @@ class _HomeScreenState extends State<HomeScreen> {
     _showSnackBar('Connection status: ${status.name}');
   }
 
-  Future<Reader?> _tryConnectReader(Terminal terminal, Reader reader) async {
-    String? getLocationId() {
-      final locationId = _selectedLocation?.id ?? reader.locationId;
-      if (locationId == null) _showSnackBar('Missing location');
-      return locationId;
-    }
-
-    switch (_discoveringMethod) {
-      case DiscoveryMethod.bluetoothScan || DiscoveryMethod.bluetoothProximity:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectBluetoothReader(
-          reader,
-          locationId: locationId,
-        );
-      case DiscoveryMethod.localMobile:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectMobileReader(
-          reader,
-          locationId: locationId,
-        );
-      case DiscoveryMethod.internet:
-        return await terminal.connectInternetReader(reader);
-      case DiscoveryMethod.handOff:
-        return await terminal.connectHandoffReader(reader);
-      case DiscoveryMethod.usb:
-        final locationId = getLocationId();
-        if (locationId == null) return null;
-        return await terminal.connectUsbReader(reader, locationId: locationId);
-    }
-  }
-
   Future<void> _connectReader(Terminal terminal, Reader reader) async {
-    final connectedReader = await _tryConnectReader(terminal, reader);
-    if (connectedReader == null) return;
-    _showSnackBar(
-        'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
-    setState(() => _reader = connectedReader);
+    String getLocationId() {
+      final locationId = _selectedLocation?.id ?? reader.locationId;
+      if (locationId != null) return locationId;
+      throw NotFoundLocationException();
+    }
+
+    try {
+      final connectionConfiguration = switch (_discoveryMethod) {
+        DiscoveryMethod.bluetoothScan ||
+        DiscoveryMethod.bluetoothProximity =>
+          BluetoothConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: LoggingMobileReaderDelegate(_showSnackBar),
+          ),
+        DiscoveryMethod.tapToPay => TapToPayConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: LoggingTapToPayReaderDelegate(_showSnackBar),
+          ),
+        DiscoveryMethod.internet => InternetConnectionConfiguration(
+            readerDelegate: LoggingInternetReaderDelegate(_showSnackBar),
+          ),
+        DiscoveryMethod.handOff => HandoffConnectionConfiguration(
+            readerDelegate: LoggingHandoffReaderDelegate(_showSnackBar),
+          ),
+        DiscoveryMethod.usb => UsbConnectionConfiguration(
+            locationId: getLocationId(),
+            readerDelegate: LoggingMobileReaderDelegate(_showSnackBar),
+          ),
+      };
+
+      final connectedReader =
+          await terminal.connectReader(reader, configuration: connectionConfiguration);
+
+      _showSnackBar(
+          'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
+      setState(() => _reader = connectedReader);
+    } on NotFoundLocationException {
+      _showSnackBar('Location not selected!');
+    }
   }
 
   Future<void> _disconnectReader(Terminal terminal, Reader reader) async {
@@ -214,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _startDiscoverReaders(Terminal terminal) {
     setState(() => _readers = const []);
 
-    final configuration = switch (_discoveringMethod) {
+    final configuration = switch (_discoveryMethod) {
       DiscoveryMethod.bluetoothScan => BluetoothDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
@@ -225,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
       DiscoveryMethod.internet => InternetDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
-      DiscoveryMethod.localMobile => LocalMobileDiscoveryConfiguration(
+      DiscoveryMethod.tapToPay => TapToPayDiscoveryConfiguration(
           isSimulated: _isSimulated,
         ),
       DiscoveryMethod.usb => UsbDiscoveryConfiguration(
@@ -239,20 +241,14 @@ class _HomeScreenState extends State<HomeScreen> {
       _discoverReaderSub = discoverReaderStream.listen((readers) {
         setState(() => _readers = readers);
       }, onDone: () {
-        setState(() {
-          _discoverReaderSub = null;
-          _readers = const [];
-        });
+        setState(() => _discoverReaderSub = null);
       });
     });
   }
 
   void _stopDiscoverReaders() {
     unawaited(_discoverReaderSub?.cancel());
-    setState(() {
-      _discoverReaderSub = null;
-      _readers = const [];
-    });
+    setState(() => _discoverReaderSub = null);
   }
 
   Future<void> _createPaymentIntent(Terminal terminal) async {
@@ -311,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -319,19 +316,40 @@ class _HomeScreenState extends State<HomeScreen> {
       ));
   }
 
+  // ignore: avoid_void_async
+  void mutate(Future<void> Function() body) async {
+    if (_isPending) return;
+    setState(() => _isPending = true);
+    try {
+      await body();
+    } finally {
+      setState(() => _isPending = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final viewPadding = MediaQuery.viewPaddingOf(context);
-
     final terminal = _terminal;
     final paymentIntent = _paymentIntent;
     final collectingPaymentMethod = _collectingPaymentMethod;
 
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     final mainTab = [
       TextButton(
-        onPressed: terminal == null ? () async => _initTerminal() : null,
+        onPressed: !_isPending && terminal == null ? () => mutate(_initTerminal) : null,
         child: const Text('Init Stripe'),
       ),
+      TextButton(
+        onPressed: terminal != null && _connectionStatus == ConnectionStatus.notConnected
+            ? () => mutate(terminal.clearCachedCredentials)
+            : null,
+        child: const Text('Clear cached credentials'),
+      ),
+      Text('You can use this method to switch Stripe accounts in your app.',
+          style: textTheme.bodySmall),
       TextButton(
         onPressed: () async => _api.createReader(),
         child: const Text('Random button'),
@@ -359,8 +377,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text('Check status (${_connectionStatus.name})'),
       ),
       DropdownButton<DiscoveryMethod>(
-        value: _discoveringMethod,
-        onChanged: _changeDiscoveryMethod,
+        value: _discoveryMethod,
+        onChanged:
+            _connectionStatus == ConnectionStatus.notConnected ? _changeDiscoveryMethod : null,
         items: DiscoveryMethod.values.map((e) {
           return DropdownMenuItem(
             value: e,
@@ -368,42 +387,39 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }).toList(),
       ),
-      if (_discoveringMethod.canSimulate)
-        ListTile(
-          onTap: _changeMode,
-          title: const Text('Scanning mode'),
-          trailing: Text(_isSimulated ? 'Simulator' : 'Real'),
+      if (_discoveryMethod.canSimulate)
+        SwitchListTile(
+          onChanged:
+              _connectionStatus == ConnectionStatus.notConnected ? (_) => _changeMode() : null,
+          value: _isSimulated,
+          title: const Text('Is simulate scanning mode?'),
         ),
-      if (_connectionStatus != ConnectionStatus.notConnected)
+      if (_connectionStatus == ConnectionStatus.connected)
         TextButton(
-          onPressed: terminal != null && _connectionStatus == ConnectionStatus.connected
-              ? () async => _disconnectReader(terminal, _reader!)
-              : null,
+          onPressed: terminal != null ? () async => _disconnectReader(terminal, _reader!) : null,
           child: const Text('Disconnect Reader'),
         )
       else if (_discoverReaderSub == null)
         TextButton(
-          onPressed: terminal != null ? () => _startDiscoverReaders(terminal) : null,
+          onPressed: terminal != null && _connectionStatus == ConnectionStatus.notConnected
+              ? () => _startDiscoverReaders(terminal)
+              : null,
           child: const Text('Scan Devices'),
         )
       else
         TextButton(
-          onPressed: _stopDiscoverReaders,
+          onPressed:
+              _connectionStatus == ConnectionStatus.discovering ? _stopDiscoverReaders : null,
           child: const Text('Stop Scanning'),
         ),
       const Divider(),
-      ...[
-        ..._readers,
-        if (_reader != null) _reader!,
-      ].map((e) {
+      ..._readers.map((e) {
         return ListTile(
           selected: e.serialNumber == _reader?.serialNumber,
           enabled: terminal != null &&
               _connectionStatus != ConnectionStatus.connecting &&
               (_reader == null || _reader!.serialNumber == e.serialNumber),
-          onTap: terminal != null && _connectionStatus == ConnectionStatus.notConnected
-              ? () async => _connectReader(terminal, e)
-              : null,
+          onTap: terminal != null ? () async => _connectReader(terminal, e) : null,
           title: Text(e.serialNumber),
           subtitle: Text('${e.deviceType?.name ?? 'Unknown'} ${e.locationId ?? 'NoLocation'}'),
           trailing: Text('${(e.batteryLevel * 100).toInt()}'),
@@ -494,9 +510,20 @@ class _HomeScreenState extends State<HomeScreen> {
           preferredSize: Size.fromHeight(64.0 + viewPadding.top),
           child: Padding(
             padding: EdgeInsets.only(top: viewPadding.top),
-            child: TabBar(
-              isScrollable: true,
-              tabs: tabs.keys.toList(),
+            child: Stack(
+              children: [
+                TabBar(
+                  isScrollable: true,
+                  tabs: tabs.keys.toList(),
+                ),
+                if (_isPending)
+                  const Positioned(
+                    left: 0.0,
+                    right: 0.0,
+                    bottom: 0.0,
+                    child: LinearProgressIndicator(),
+                  ),
+              ],
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import com.stripe.stripeterminal.external.callable.Callback
 import com.stripe.stripeterminal.external.callable.Cancelable
 import com.stripe.stripeterminal.external.callable.DiscoveryListener
 import com.stripe.stripeterminal.external.models.Reader
+import com.stripe.stripeterminal.external.models.TerminalErrorCode
 import com.stripe.stripeterminal.external.models.TerminalException
 import mek.stripeterminal.EmptyCallback
 import mek.stripeterminal.api.ControllerSink
@@ -59,7 +60,7 @@ class DiscoverReadersSubject {
                     callback =
                     object : Callback {
                         override fun onFailure(e: TerminalException) = runOnMainThread {
-                            if (e.errorCode == TerminalException.TerminalErrorCode.CANCELED) {
+                            if (e.errorCode == TerminalErrorCode.CANCELED) {
                                 return@runOnMainThread
                             }
 

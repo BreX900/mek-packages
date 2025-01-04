@@ -1,5 +1,5 @@
 import 'package:mek_data_class/mek_data_class.dart';
-import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
+import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:meta/meta.dart';
 
 part 'charge.g.dart';

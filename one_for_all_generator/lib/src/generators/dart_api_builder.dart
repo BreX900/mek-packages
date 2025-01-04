@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:dart_style/dart_style.dart';
+// ignore: implementation_imports
+import 'package:dart_style/src/config_cache.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
@@ -29,6 +33,7 @@ class DartApiBuilder extends ApiBuilder {
       'cast_nullable_to_non_nullable',
       'prefer_if_elements_to_conditional_expressions',
       'unnecessary_lambdas',
+      'curly_braces_in_flow_control_structures',
     ]);
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
@@ -255,9 +260,20 @@ channel.setMethodCallHandler((call) async {
   }
 
   @override
-  String build() => DartFormatter(
-        pageWidth: options.pageWidth,
-      ).format('${_library.build().accept(DartEmitter(
-            useNullSafetySyntax: true,
-          ))}');
+  Future<String> build() async {
+    final cache = ConfigCache();
+    final folder = '${Directory.current.path}/lib';
+    final pageWidth = await cache.findPageWidth(File(folder));
+    final languageVersion = await cache.findLanguageVersion(File(folder), folder);
+
+    final formatter = DartFormatter(
+      pageWidth: pageWidth,
+      languageVersion: languageVersion ?? DartFormatter.latestLanguageVersion,
+    );
+    final emitter = DartEmitter(
+      orderDirectives: true,
+      useNullSafetySyntax: true,
+    );
+    return formatter.format('${_library.build().accept(emitter)}');
+  }
 }

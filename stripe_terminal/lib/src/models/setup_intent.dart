@@ -157,3 +157,5 @@ class SetupAttemptCardPresentDetails with _$SetupAttemptCardPresentDetails {
     required this.generatedCard,
   });
 }
+
+enum AllowRedisplay { always, limited, unspecified }

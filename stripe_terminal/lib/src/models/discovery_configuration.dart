@@ -76,10 +76,12 @@ class HandoffDiscoveryConfiguration extends DiscoveryConfiguration {
 class InternetDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
   final String? locationId;
+  final Duration? timeout;
 
   const InternetDiscoveryConfiguration({
     this.isSimulated = false,
     this.locationId,
+    this.timeout,
   });
 }
 
@@ -88,13 +90,11 @@ class InternetDiscoveryConfiguration extends DiscoveryConfiguration {
 /// will only be called once with a list of discovered readers, if any. An error may be provided if a
 /// discovery attempt is made in an on a device without hardware support for the Apple Built-In reader
 /// or one running an unsupported version of iOS.
-class LocalMobileDiscoveryConfiguration extends DiscoveryConfiguration {
+class TapToPayDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
-  final String? onBehalfOf;
 
-  const LocalMobileDiscoveryConfiguration({
+  const TapToPayDiscoveryConfiguration({
     this.isSimulated = false,
-    this.onBehalfOf,
   });
 }
 

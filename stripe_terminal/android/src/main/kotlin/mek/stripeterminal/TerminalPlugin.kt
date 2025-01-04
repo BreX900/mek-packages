@@ -14,8 +14,8 @@ import com.stripe.stripeterminal.external.callable.PaymentIntentCallback
 import com.stripe.stripeterminal.external.callable.ReaderCallback
 import com.stripe.stripeterminal.external.callable.RefundCallback
 import com.stripe.stripeterminal.external.callable.SetupIntentCallback
+import com.stripe.stripeterminal.external.models.AllowRedisplay
 import com.stripe.stripeterminal.external.models.CollectConfiguration
-import com.stripe.stripeterminal.external.models.ConnectionConfiguration
 import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
 import com.stripe.stripeterminal.external.models.Location
@@ -34,7 +34,9 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.BinaryMessenger
+import mek.stripeterminal.api.AllowRedisplayApi
 import mek.stripeterminal.api.CartApi
+import mek.stripeterminal.api.ConnectionConfigurationApi
 import mek.stripeterminal.api.ConnectionStatusApi
 import mek.stripeterminal.api.DeviceTypeApi
 import mek.stripeterminal.api.DiscoverReadersControllerApi
@@ -109,7 +111,10 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         )
     }
 
-    override fun onClearCachedCredentials() = terminal.clearCachedCredentials()
+    override fun onClearCachedCredentials() {
+        terminal.clearCachedCredentials();
+        clean();
+    }
 
     // region Reader discovery, connection and updates
     private lateinit var discoverReadersController: DiscoverReadersControllerApi
@@ -145,99 +150,12 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         )
     }
 
-    override fun onConnectBluetoothReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean
-    ) {
+    override fun onConnectReader(result: Result<ReaderApi>, serialNumber: String, configuration: ConnectionConfigurationApi) {
         val reader = findActiveReader(serialNumber)
 
-        terminal.connectBluetoothReader(
+        terminal.connectReader(
             reader,
-            ConnectionConfiguration.BluetoothConnectionConfiguration(
-                locationId = locationId,
-                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-                bluetoothReaderReconnectionListener = readerReconnectionDelegate
-            ),
-            readerDelegate,
-            object : TerminalErrorHandler(result::error), ReaderCallback {
-                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            }
-        )
-    }
-
-    override fun onConnectHandoffReader(result: Result<ReaderApi>, serialNumber: String) {
-        val reader = findActiveReader(serialNumber)
-
-        terminal.connectHandoffReader(
-            reader,
-            ConnectionConfiguration.HandoffConnectionConfiguration(),
-            readerDelegate,
-            object : TerminalErrorHandler(result::error), ReaderCallback {
-                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            }
-        )
-    }
-
-    override fun onConnectInternetReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        failIfInUse: Boolean
-    ) {
-        val reader = findActiveReader(serialNumber)
-
-        terminal.connectInternetReader(
-            reader,
-            ConnectionConfiguration.InternetConnectionConfiguration(
-                failIfInUse = failIfInUse
-            ),
-            object : TerminalErrorHandler(result::error), ReaderCallback {
-                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            }
-        )
-    }
-
-    override fun onConnectMobileReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean,
-        onBehalfOf: String?,
-    ) {
-        val reader = findActiveReader(serialNumber)
-
-        val config =
-            ConnectionConfiguration.LocalMobileConnectionConfiguration(
-                locationId = locationId,
-                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-                localMobileReaderReconnectionListener = readerReconnectionDelegate
-            )
-        terminal.connectLocalMobileReader(
-            reader,
-            config,
-            object : TerminalErrorHandler(result::error), ReaderCallback {
-                override fun onSuccess(reader: Reader) = result.success(reader.toApi())
-            }
-        )
-    }
-
-    override fun onConnectUsbReader(
-        result: Result<ReaderApi>,
-        serialNumber: String,
-        locationId: String,
-        autoReconnectOnUnexpectedDisconnect: Boolean
-    ) {
-        val reader = findActiveReader(serialNumber)
-
-        terminal.connectUsbReader(
-            reader,
-            ConnectionConfiguration.UsbConnectionConfiguration(
-                locationId = locationId,
-                autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-                usbReaderReconnectionListener = readerReconnectionDelegate
-            ),
-            readerDelegate,
+            configuration.toHost(readerDelegate),
             object : TerminalErrorHandler(result::error), ReaderCallback {
                 override fun onSuccess(reader: Reader) = result.success(reader.toApi())
             }
@@ -287,6 +205,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 override fun onSuccess() = result.success(Unit)
             }
         )
+        readerDelegate.cancelUpdate = null
     }
 
     override fun onRebootReader(result: Result<Unit>) {
@@ -306,7 +225,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     }
 
     override fun onSetSimulatorConfiguration(configuration: SimulatorConfigurationApi) {
-        Terminal.getInstance().simulatorConfiguration = configuration.toHost()
+        terminal.simulatorConfiguration = configuration.toHost()
     }
     // endregion
 
@@ -396,9 +315,16 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             )
     }
 
-    override fun onConfirmPaymentIntent(result: Result<PaymentIntentApi>, paymentIntentId: String) {
+    private var confirmPaymentIntentCancelables = HashMap<Long, Cancelable>()
+
+
+    override fun onStartConfirmPaymentIntent(
+        result: Result<PaymentIntentApi>,
+        operationId: Long,
+        paymentIntentId: String
+    ) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
-        terminal.confirmPaymentIntent(
+        confirmPaymentIntentCancelables[operationId]= terminal.confirmPaymentIntent(
             paymentIntent,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onFailure(e: TerminalException) {
@@ -413,6 +339,14 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                     paymentIntents.remove(paymentIntent.id)
                     result.success(paymentIntent.toApi())
                 }
+            }
+        )
+    }
+
+    override fun onStopConfirmPaymentIntent(result: Result<Unit>, operationId: Long) {
+        confirmPaymentIntentCancelables.remove(operationId)?.cancel(
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
             }
         )
     }
@@ -453,7 +387,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 .build(),
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id] = setupIntent
+                    setupIntents[setupIntent.id!!] = setupIntent
                     result.success(setupIntent.toApi())
                 }
             }
@@ -465,7 +399,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             clientSecret,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id] = setupIntent
+                    setupIntents[setupIntent.id!!] = setupIntent
                     result.success(setupIntent.toApi())
                 }
             }
@@ -476,7 +410,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
         result: Result<SetupIntentApi>,
         operationId: Long,
         setupIntentId: String,
-        customerConsentCollected: Boolean,
+        allowRedisplay: AllowRedisplayApi,
         customerCancellationEnabled: Boolean
     ) {
         val setupIntent = findSetupIntent(setupIntentId)
@@ -484,11 +418,16 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             SetupIntentConfiguration.Builder()
                 .setEnableCustomerCancellation(customerCancellationEnabled)
 
+
         cancelablesCollectSetupIntentPaymentMethod[operationId] =
             terminal.collectSetupIntentPaymentMethod(
                 setupIntent,
-                customerConsentCollected = customerConsentCollected,
                 config = config.build(),
+                allowRedisplay = when (allowRedisplay) {
+                    AllowRedisplayApi.ALWAYS -> AllowRedisplay.ALWAYS
+                    AllowRedisplayApi.LIMITED -> AllowRedisplay.LIMITED
+                    AllowRedisplayApi.UNSPECIFIED -> AllowRedisplay.UNSPECIFIED
+                },
                 callback =
                 object : TerminalErrorHandler(result::error), SetupIntentCallback {
                     override fun onFailure(e: TerminalException) {
@@ -498,12 +437,11 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
                     override fun onSuccess(setupIntent: SetupIntent) {
                         cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
-                        setupIntents[setupIntent.id] = setupIntent
+                        setupIntents[setupIntent.id!!] = setupIntent
                         result.success(setupIntent.toApi())
                     }
                 }
-            )
-    }
+            )    }
 
     override fun onStopCollectSetupIntentPaymentMethod(result: Result<Unit>, operationId: Long) {
         cancelablesCollectSetupIntentPaymentMethod
@@ -515,15 +453,29 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             )
     }
 
-    override fun onConfirmSetupIntent(result: Result<SetupIntentApi>, setupIntentId: String) {
+    private var confirmSetupIntentCancelables = HashMap<Long, Cancelable>()
+
+    override fun onStartConfirmSetupIntent(
+        result: Result<SetupIntentApi>,
+        operationId: Long,
+        setupIntentId: String
+    ) {
         val setupIntent = findSetupIntent(setupIntentId)
-        terminal.confirmSetupIntent(
+        confirmSetupIntentCancelables[operationId] = terminal.confirmSetupIntent(
             setupIntent,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id] = setupIntent
+                    setupIntents[setupIntent.id!!] = setupIntent
                     result.success(setupIntent.toApi())
                 }
+            }
+        )
+    }
+
+    override fun onStopConfirmSetupIntent(result: Result<Unit>, operationId: Long) {
+        confirmSetupIntentCancelables.remove(operationId)?.cancel(
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
             }
         )
     }
@@ -600,10 +552,28 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             )
     }
 
-    override fun onConfirmRefund(result: Result<RefundApi>) {
-        terminal.confirmRefund(
+    private var confirmRefundCancelables = HashMap<Long, Cancelable>()
+
+    override fun onStartConfirmRefund(result: Result<RefundApi>, operationId: Long) {
+        confirmRefundCancelables[operationId] = terminal.confirmRefund(
             object : TerminalErrorHandler(result::error), RefundCallback {
-                override fun onSuccess(refund: Refund) = result.success(refund.toApi())
+                override fun onFailure(e: TerminalException) {
+                    confirmRefundCancelables.remove(operationId)
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess(refund: Refund) {
+                    confirmRefundCancelables.remove(operationId)
+                    result.success(refund.toApi())
+                }
+            }
+        )
+    }
+
+    override fun onStopConfirmRefund(result: Result<Unit>, operationId: Long) {
+        confirmRefundCancelables.remove(operationId)?.cancel(
+            object : TerminalErrorHandler(result::error), Callback {
+                override fun onSuccess() = result.success(Unit)
             }
         )
     }
@@ -690,14 +660,20 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
         cancelablesCollectPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         cancelablesCollectPaymentMethod = hashMapOf()
+        confirmPaymentIntentCancelables.values.forEach { it.cancel(EmptyCallback()) }
+        confirmPaymentIntentCancelables = hashMapOf()
         paymentIntents = hashMapOf()
 
         cancelablesCollectSetupIntentPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         cancelablesCollectSetupIntentPaymentMethod = hashMapOf()
+        confirmSetupIntentCancelables.values.forEach { it.cancel(EmptyCallback()) }
+        confirmSetupIntentCancelables = hashMapOf()
         setupIntents = hashMapOf()
 
         cancelablesCollectRefundPaymentMethod.values.forEach { it.cancel(EmptyCallback()) }
         cancelablesCollectRefundPaymentMethod = hashMapOf()
+        confirmRefundCancelables.values.forEach { it.cancel(EmptyCallback()) }
+        confirmRefundCancelables = hashMapOf()
     }
 }
 

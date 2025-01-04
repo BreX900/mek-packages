@@ -156,10 +156,10 @@ extension NSError {
             return .invalidAmount
         case .invalidCurrency:
             return .invalidCurrency
-        case .appleBuiltInReaderTOSAcceptanceRequiresiCloudSignIn:
-            return .appleBuiltInReaderTOSAcceptanceRequiresiCloudSignIn
-        case .appleBuiltInReaderTOSAcceptanceCanceled:
-            return .appleBuiltInReaderTOSAcceptanceCanceled
+        case .tapToPayReaderTOSAcceptanceRequiresiCloudSignIn:
+            return .tapToPayReaderTOSAcceptanceRequiresiCloudSignIn
+        case .tapToPayReaderTOSAcceptanceCanceled:
+            return .tapToPayReaderTOSAcceptanceCanceled
         case .collectInputsTimedOut:
             return .collectInputsTimedOut
         case .readerBusy:
@@ -198,25 +198,25 @@ extension NSError {
             return .bluetoothReconnectStarted
         case .readerNotAccessibleInBackground:
             return .readerNotAccessibleInBackground
-        case .appleBuiltInReaderFailedToPrepare:
-            return .appleBuiltInReaderFailedToPrepare
-        case .appleBuiltInReaderDeviceBanned:
-            return .appleBuiltInReaderDeviceBanned
-        case .appleBuiltInReaderTOSNotYetAccepted:
-            return .appleBuiltInReaderTOSNotYetAccepted
-        case .appleBuiltInReaderTOSAcceptanceFailed:
-            return .appleBuiltInReaderTOSAcceptanceFailed
-        case .appleBuiltInReaderMerchantBlocked:
-            return .appleBuiltInReaderMerchantBlocked
-        case .appleBuiltInReaderInvalidMerchant:
-            return .appleBuiltInReaderInvalidMerchant
-        case .appleBuiltInReaderAccountDeactivated:
-            return .appleBuiltInReaderAccountDeactivated
+        case .tapToPayReaderFailedToPrepare:
+            return .tapToPayReaderFailedToPrepare
+        case .tapToPayReaderDeviceBanned:
+            return .tapToPayReaderDeviceBanned
+        case .tapToPayReaderTOSNotYetAccepted:
+            return .tapToPayReaderTOSNotYetAccepted
+        case .tapToPayReaderTOSAcceptanceFailed:
+            return .tapToPayReaderTOSAcceptanceFailed
+        case .tapToPayReaderMerchantBlocked:
+            return .tapToPayReaderMerchantBlocked
+        case .tapToPayReaderInvalidMerchant:
+            return .tapToPayReaderInvalidMerchant
+        case .tapToPayReaderAccountDeactivated:
+            return .tapToPayReaderAccountDeactivated
         case .readerMissingEncryptionKeys:
             return .readerMissingEncryptionKeys
         case .unexpectedSdkError:
             return .unexpectedSdkError
-        case .unexpectedReaderError:
+        case .unexpectedReaderError, .genericReaderError:
             return .unexpectedReaderError
         case .encryptionKeyFailure:
             return .encryptionKeyFailure
@@ -278,6 +278,14 @@ extension NSError {
             return .usbDiscoveryTimedOut
         case .usbDisconnected:
             return .usbDisconnected
+        case .cancelFailedUnavailable:
+            return .cancelFailedUnavailable
+        case .invalidConnectionConfiguration:
+            return .invalidParameter
+        case .canceledDueToIntegrationError:
+            return .canceledDueToIntegrationError
+        case .commandInvalidAllowRedisplay:
+            return .commandInvalidAllowRedisplay
         @unknown default:
             fatalError()
         }

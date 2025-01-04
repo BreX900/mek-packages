@@ -1,6 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 // ignore_for_file: cast_nullable_to_non_nullable
+// ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: prefer_if_elements_to_conditional_expressions
 // ignore_for_file: unnecessary_lambdas, unused_element
 
@@ -70,73 +71,13 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<Reader> connectBluetoothReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-  }) async {
-    try {
-      final result = await _$channel.invokeMethod('connectBluetoothReader',
-          [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
-      return _$deserializeReader(result as List);
-    } on PlatformException catch (exception) {
-      TerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Reader> connectHandoffReader(String serialNumber) async {
-    try {
-      final result = await _$channel.invokeMethod('connectHandoffReader', [serialNumber]);
-      return _$deserializeReader(result as List);
-    } on PlatformException catch (exception) {
-      TerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Reader> connectInternetReader(
-    String serialNumber, {
-    required bool failIfInUse,
-  }) async {
-    try {
-      final result =
-          await _$channel.invokeMethod('connectInternetReader', [serialNumber, failIfInUse]);
-      return _$deserializeReader(result as List);
-    } on PlatformException catch (exception) {
-      TerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Reader> connectMobileReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-    String? onBehalfOf,
-  }) async {
-    try {
-      final result = await _$channel.invokeMethod('connectMobileReader',
-          [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect, onBehalfOf]);
-      return _$deserializeReader(result as List);
-    } on PlatformException catch (exception) {
-      TerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Reader> connectUsbReader(
-    String serialNumber, {
-    required String locationId,
-    required bool autoReconnectOnUnexpectedDisconnect,
-  }) async {
+  Future<Reader> connectReader(
+    String serialNumber,
+    ConnectionConfiguration configuration,
+  ) async {
     try {
       final result = await _$channel.invokeMethod(
-          'connectUsbReader', [serialNumber, locationId, autoReconnectOnUnexpectedDisconnect]);
+          'connectReader', [serialNumber, _$serializeConnectionConfiguration(configuration)]);
       return _$deserializeReader(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -306,10 +247,24 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<PaymentIntent> confirmPaymentIntent(String paymentIntentId) async {
+  Future<PaymentIntent> startConfirmPaymentIntent(
+    int operationId,
+    String paymentIntentId,
+  ) async {
     try {
-      final result = await _$channel.invokeMethod('confirmPaymentIntent', [paymentIntentId]);
+      final result =
+          await _$channel.invokeMethod('startConfirmPaymentIntent', [operationId, paymentIntentId]);
       return _$deserializePaymentIntent(result as List);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> stopConfirmPaymentIntent(int operationId) async {
+    try {
+      await _$channel.invokeMethod('stopConfirmPaymentIntent', [operationId]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -365,12 +320,12 @@ class _$TerminalPlatform implements TerminalPlatform {
   Future<SetupIntent> startCollectSetupIntentPaymentMethod({
     required int operationId,
     required String setupIntentId,
-    required bool customerConsentCollected,
+    required AllowRedisplay allowRedisplay,
     required bool customerCancellationEnabled,
   }) async {
     try {
       final result = await _$channel.invokeMethod('startCollectSetupIntentPaymentMethod',
-          [operationId, setupIntentId, customerConsentCollected, customerCancellationEnabled]);
+          [operationId, setupIntentId, allowRedisplay.index, customerCancellationEnabled]);
       return _$deserializeSetupIntent(result as List);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
@@ -389,10 +344,24 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<SetupIntent> confirmSetupIntent(String setupIntentId) async {
+  Future<SetupIntent> startConfirmSetupIntent(
+    int operationId,
+    String setupIntentId,
+  ) async {
     try {
-      final result = await _$channel.invokeMethod('confirmSetupIntent', [setupIntentId]);
+      final result =
+          await _$channel.invokeMethod('startConfirmSetupIntent', [operationId, setupIntentId]);
       return _$deserializeSetupIntent(result as List);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> stopConfirmSetupIntent(int operationId) async {
+    try {
+      await _$channel.invokeMethod('stopConfirmSetupIntent', [operationId]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -449,10 +418,20 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<Refund> confirmRefund() async {
+  Future<Refund> startConfirmRefund(int operationId) async {
     try {
-      final result = await _$channel.invokeMethod('confirmRefund', []);
+      final result = await _$channel.invokeMethod('startConfirmRefund', [operationId]);
       return _$deserializeRefund(result as List);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> stopConfirmRefund(int operationId) async {
+    try {
+      await _$channel.invokeMethod('stopConfirmRefund', [operationId]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -486,13 +465,18 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
     final args = call.arguments as List<Object?>;
     return switch (call.method) {
       '_onRequestConnectionToken' => await hostApi._onRequestConnectionToken(),
-      '_onUnexpectedReaderDisconnect' =>
-        await hostApi._onUnexpectedReaderDisconnect(_$deserializeReader(args[0] as List)),
       '_onConnectionStatusChange' =>
-        await hostApi._onConnectionStatusChange(ConnectionStatus.values[args[0] as int]),
+        hostApi._onConnectionStatusChange(ConnectionStatus.values[args[0] as int]),
       '_onPaymentStatusChange' =>
-        await hostApi._onPaymentStatusChange(PaymentStatus.values[args[0] as int]),
+        hostApi._onPaymentStatusChange(PaymentStatus.values[args[0] as int]),
       '_onReaderReportEvent' => hostApi._onReaderReportEvent(ReaderEvent.values[args[0] as int]),
+      '_onReaderReconnectFailed' =>
+        hostApi._onReaderReconnectFailed(_$deserializeReader(args[0] as List)),
+      '_onReaderReconnectStarted' => hostApi._onReaderReconnectStarted(
+          _$deserializeReader(args[0] as List), DisconnectReason.values[args[1] as int]),
+      '_onReaderReconnectSucceeded' =>
+        hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
+      '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
       '_onReaderRequestDisplayMessage' =>
         hostApi._onReaderRequestDisplayMessage(ReaderDisplayMessage.values[args[0] as int]),
       '_onReaderRequestInput' => hostApi._onReaderRequestInput(
@@ -509,13 +493,6 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
           args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
           args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
-      '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
-      '_onReaderReconnectFailed' =>
-        hostApi._onReaderReconnectFailed(_$deserializeReader(args[0] as List)),
-      '_onReaderReconnectStarted' => hostApi._onReaderReconnectStarted(
-          _$deserializeReader(args[0] as List), DisconnectReason.values[args[1] as int]),
-      '_onReaderReconnectSucceeded' =>
-        hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
       _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),
     };
   });
@@ -580,6 +557,40 @@ Charge _$deserializeCharge(List<Object?> serialized) => Charge(
         serialized[7] != null ? _$deserializePaymentMethodDetails(serialized[7] as List) : null,
     statementDescriptorSuffix: serialized[8] as String?,
     status: ChargeStatus.values[serialized[9] as int]);
+List<Object?> _$serializeConnectionConfiguration(ConnectionConfiguration deserialized) =>
+    switch (deserialized) {
+      BluetoothConnectionConfiguration() =>
+        _$serializeBluetoothConnectionConfiguration(deserialized),
+      HandoffConnectionConfiguration() => _$serializeHandoffConnectionConfiguration(deserialized),
+      InternetConnectionConfiguration() => _$serializeInternetConnectionConfiguration(deserialized),
+      TapToPayConnectionConfiguration() => _$serializeTapToPayConnectionConfiguration(deserialized),
+      UsbConnectionConfiguration() => _$serializeUsbConnectionConfiguration(deserialized),
+    };
+List<Object?> _$serializeBluetoothConnectionConfiguration(
+        BluetoothConnectionConfiguration deserialized) =>
+    [
+      'BluetoothConnectionConfiguration',
+      deserialized.autoReconnectOnUnexpectedDisconnect,
+      deserialized.locationId
+    ];
+List<Object?> _$serializeHandoffConnectionConfiguration(
+        HandoffConnectionConfiguration deserialized) =>
+    ['HandoffConnectionConfiguration'];
+List<Object?> _$serializeInternetConnectionConfiguration(
+        InternetConnectionConfiguration deserialized) =>
+    ['InternetConnectionConfiguration', deserialized.failIfInUse];
+List<Object?> _$serializeTapToPayConnectionConfiguration(
+        TapToPayConnectionConfiguration deserialized) =>
+    [
+      'TapToPayConnectionConfiguration',
+      deserialized.autoReconnectOnUnexpectedDisconnect,
+      deserialized.locationId
+    ];
+List<Object?> _$serializeUsbConnectionConfiguration(UsbConnectionConfiguration deserialized) => [
+      'UsbConnectionConfiguration',
+      deserialized.autoReconnectOnUnexpectedDisconnect,
+      deserialized.locationId
+    ];
 List<Object?> _$serializeDiscoveryConfiguration(DiscoveryConfiguration deserialized) =>
     switch (deserialized) {
       BluetoothDiscoveryConfiguration() => _$serializeBluetoothDiscoveryConfiguration(deserialized),
@@ -587,8 +598,7 @@ List<Object?> _$serializeDiscoveryConfiguration(DiscoveryConfiguration deseriali
         _$serializeBluetoothProximityDiscoveryConfiguration(deserialized),
       HandoffDiscoveryConfiguration() => _$serializeHandoffDiscoveryConfiguration(deserialized),
       InternetDiscoveryConfiguration() => _$serializeInternetDiscoveryConfiguration(deserialized),
-      LocalMobileDiscoveryConfiguration() =>
-        _$serializeLocalMobileDiscoveryConfiguration(deserialized),
+      TapToPayDiscoveryConfiguration() => _$serializeTapToPayDiscoveryConfiguration(deserialized),
       UsbDiscoveryConfiguration() => _$serializeUsbDiscoveryConfiguration(deserialized),
     };
 List<Object?> _$serializeBluetoothDiscoveryConfiguration(
@@ -606,10 +616,15 @@ List<Object?> _$serializeHandoffDiscoveryConfiguration(
     ['HandoffDiscoveryConfiguration'];
 List<Object?> _$serializeInternetDiscoveryConfiguration(
         InternetDiscoveryConfiguration deserialized) =>
-    ['InternetDiscoveryConfiguration', deserialized.isSimulated, deserialized.locationId];
-List<Object?> _$serializeLocalMobileDiscoveryConfiguration(
-        LocalMobileDiscoveryConfiguration deserialized) =>
-    ['LocalMobileDiscoveryConfiguration', deserialized.isSimulated, deserialized.onBehalfOf];
+    [
+      'InternetDiscoveryConfiguration',
+      deserialized.isSimulated,
+      deserialized.locationId,
+      deserialized.timeout?.inMicroseconds
+    ];
+List<Object?> _$serializeTapToPayDiscoveryConfiguration(
+        TapToPayDiscoveryConfiguration deserialized) =>
+    ['TapToPayDiscoveryConfiguration', deserialized.isSimulated];
 List<Object?> _$serializeUsbDiscoveryConfiguration(UsbDiscoveryConfiguration deserialized) =>
     ['UsbDiscoveryConfiguration', deserialized.isSimulated, deserialized.timeout?.inMicroseconds];
 Location _$deserializeLocation(List<Object?> serialized) => Location(
@@ -701,6 +716,21 @@ Reader _$deserializeReader(List<Object?> serialized) => Reader(
     locationStatus: serialized[6] != null ? LocationStatus.values[serialized[6] as int] : null,
     serialNumber: serialized[7] as String,
     simulated: serialized[8] as bool);
+List<Object?> _$serializeReaderDelegateAbstract(ReaderDelegateAbstract deserialized) =>
+    switch (deserialized) {
+      MobileReaderDelegate() => _$serializeMobileReaderDelegate(deserialized),
+      HandoffReaderDelegate() => _$serializeHandoffReaderDelegate(deserialized),
+      InternetReaderDelegate() => _$serializeInternetReaderDelegate(deserialized),
+      TapToPayReaderDelegate() => _$serializeTapToPayReaderDelegate(deserialized),
+    };
+List<Object?> _$serializeMobileReaderDelegate(MobileReaderDelegate deserialized) =>
+    ['MobileReaderDelegate'];
+List<Object?> _$serializeHandoffReaderDelegate(HandoffReaderDelegate deserialized) =>
+    ['HandoffReaderDelegate'];
+List<Object?> _$serializeInternetReaderDelegate(InternetReaderDelegate deserialized) =>
+    ['InternetReaderDelegate'];
+List<Object?> _$serializeTapToPayReaderDelegate(TapToPayReaderDelegate deserialized) =>
+    ['TapToPayReaderDelegate'];
 ReaderSoftwareUpdate _$deserializeReaderSoftwareUpdate(List<Object?> serialized) =>
     ReaderSoftwareUpdate(
         components: (serialized[0] as List).map((e) => UpdateComponent.values[e as int]).toList(),

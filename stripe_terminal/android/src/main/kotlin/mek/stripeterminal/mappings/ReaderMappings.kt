@@ -25,7 +25,6 @@ import mek.stripeterminal.api.DeviceTypeApi
 import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.HandoffDiscoveryConfigurationApi
 import mek.stripeterminal.api.InternetDiscoveryConfigurationApi
-import mek.stripeterminal.api.LocalMobileDiscoveryConfigurationApi
 import mek.stripeterminal.api.LocationApi
 import mek.stripeterminal.api.LocationStatusApi
 import mek.stripeterminal.api.ReaderApi
@@ -33,6 +32,7 @@ import mek.stripeterminal.api.ReaderDisplayMessageApi
 import mek.stripeterminal.api.ReaderEventApi
 import mek.stripeterminal.api.ReaderInputOptionApi
 import mek.stripeterminal.api.ReaderSoftwareUpdateApi
+import mek.stripeterminal.api.TapToPayDiscoveryConfigurationApi
 import mek.stripeterminal.api.UpdateComponentApi
 import mek.stripeterminal.api.UpdateTimeEstimateApi
 import mek.stripeterminal.api.UsbDiscoveryConfigurationApi
@@ -66,7 +66,7 @@ fun DeviceType.toApi(): DeviceTypeApi? {
         DeviceType.CHIPPER_1X -> DeviceTypeApi.CHIPPER1_X
         DeviceType.CHIPPER_2X -> DeviceTypeApi.CHIPPER2_X
         DeviceType.STRIPE_M2 -> DeviceTypeApi.STRIPE_M2
-        DeviceType.COTS_DEVICE -> DeviceTypeApi.COTS_DEVICE
+        DeviceType.TAP_TO_PAY_DEVICE -> DeviceTypeApi.TAP_TO_PAY
         DeviceType.VERIFONE_P400 -> DeviceTypeApi.VERIFONE_P400
         DeviceType.WISECUBE -> DeviceTypeApi.WISE_CUBE
         DeviceType.WISEPAD_3 -> DeviceTypeApi.WISE_PAD3
@@ -150,9 +150,9 @@ fun ReaderSoftwareUpdate.toApi(): ReaderSoftwareUpdateApi {
         components = components.map { it.toApi() },
         keyProfileName = keyProfileName,
         onlyInstallRequiredUpdates = onlyInstallRequiredUpdates,
-        requiredAt = requiredAt.time,
+        requiredAt = requiredAtMs,
         settingsVersion = settingsVersion,
-        timeEstimate = timeEstimate.toApi(),
+        timeEstimate = durationEstimate.toApi(),
         version = version
     )
 }
@@ -166,15 +166,15 @@ fun ReaderSoftwareUpdate.UpdateComponent.toApi(): UpdateComponentApi {
     }
 }
 
-fun ReaderSoftwareUpdate.UpdateTimeEstimate.toApi(): UpdateTimeEstimateApi {
+fun ReaderSoftwareUpdate.UpdateDurationEstimate.toApi(): UpdateTimeEstimateApi {
     return when (this) {
-        ReaderSoftwareUpdate.UpdateTimeEstimate.LESS_THAN_ONE_MINUTE ->
+        ReaderSoftwareUpdate.UpdateDurationEstimate.LESS_THAN_ONE_MINUTE ->
             UpdateTimeEstimateApi.LESS_THAN_ONE_MINUTE
-        ReaderSoftwareUpdate.UpdateTimeEstimate.ONE_TO_TWO_MINUTES ->
+        ReaderSoftwareUpdate.UpdateDurationEstimate.ONE_TO_TWO_MINUTES ->
             UpdateTimeEstimateApi.ONE_TO_TWO_MINUTES
-        ReaderSoftwareUpdate.UpdateTimeEstimate.TWO_TO_FIVE_MINUTES ->
+        ReaderSoftwareUpdate.UpdateDurationEstimate.TWO_TO_FIVE_MINUTES ->
             UpdateTimeEstimateApi.TWO_TO_FIVE_MINUTES
-        ReaderSoftwareUpdate.UpdateTimeEstimate.FIVE_TO_FIFTEEN_MINUTES ->
+        ReaderSoftwareUpdate.UpdateDurationEstimate.FIVE_TO_FIFTEEN_MINUTES ->
             UpdateTimeEstimateApi.FIVE_TO_FIFTEEN_MINUTES
     }
 }
@@ -193,10 +193,11 @@ fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
         is InternetDiscoveryConfigurationApi ->
             DiscoveryConfiguration.InternetDiscoveryConfiguration(
                 isSimulated = isSimulated,
-                location = locationId
+                location = locationId,
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0
             )
-        is LocalMobileDiscoveryConfigurationApi ->
-            DiscoveryConfiguration.LocalMobileDiscoveryConfiguration(
+        is TapToPayDiscoveryConfigurationApi ->
+            DiscoveryConfiguration.TapToPayDiscoveryConfiguration(
                 isSimulated = isSimulated
             )
         is UsbDiscoveryConfigurationApi ->
@@ -212,19 +213,18 @@ fun DeviceTypeApi.toHost(): DeviceType? {
         DeviceTypeApi.CHIPPER1_X -> DeviceType.CHIPPER_1X
         DeviceTypeApi.CHIPPER2_X -> DeviceType.CHIPPER_2X
         DeviceTypeApi.STRIPE_M2 -> DeviceType.STRIPE_M2
-        DeviceTypeApi.COTS_DEVICE -> DeviceType.COTS_DEVICE
+        DeviceTypeApi.TAP_TO_PAY -> DeviceType.TAP_TO_PAY_DEVICE
         DeviceTypeApi.VERIFONE_P400 -> DeviceType.VERIFONE_P400
         DeviceTypeApi.WISE_CUBE -> DeviceType.WISECUBE
         DeviceTypeApi.WISE_PAD3 -> DeviceType.WISEPAD_3
-        DeviceTypeApi.WISE_PAD3S -> DeviceType.WISEPAD_3S
         DeviceTypeApi.WISE_POS_E -> DeviceType.WISEPOS_E
+        DeviceTypeApi.WISE_PAD3S -> DeviceType.WISEPAD_3S
         DeviceTypeApi.WISE_POS_E_DEVKIT -> DeviceType.WISEPOS_E_DEVKIT
         DeviceTypeApi.ETNA -> DeviceType.ETNA
         DeviceTypeApi.STRIPE_S700 -> DeviceType.STRIPE_S700
         DeviceTypeApi.STRIPE_S700_DEVKIT -> DeviceType.STRIPE_S700_DEVKIT
         DeviceTypeApi.STRIPE_S710 -> DeviceType.STRIPE_S710
         DeviceTypeApi.STRIPE_S710_DEVKIT -> DeviceType.STRIPE_S710_DEVKIT
-        DeviceTypeApi.APPLE_BUILT_IN -> null
     }
 }
 
@@ -254,5 +254,6 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
         ConnectionStatus.NOT_CONNECTED -> ConnectionStatusApi.NOT_CONNECTED
         ConnectionStatus.CONNECTING -> ConnectionStatusApi.CONNECTING
         ConnectionStatus.CONNECTED -> ConnectionStatusApi.CONNECTED
+        ConnectionStatus.DISCOVERING -> ConnectionStatusApi.DISCOVERING
     }
 }

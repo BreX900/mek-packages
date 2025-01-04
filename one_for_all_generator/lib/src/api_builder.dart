@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
@@ -30,7 +32,7 @@ abstract class ApiBuilder {
     }
   }
 
-  String build();
+  FutureOr<String> build();
 }
 
 extension TypeArgsDartType on DartType {

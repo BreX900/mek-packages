@@ -1,6 +1,6 @@
 name: one_for_all
 description: Annotations for the generator to make communication between Flutter and the host platform easier and more secure.
-version: 1.1.0
+version: 1.1.1
 repository: https://github.com/BreX900/mek-packages/tree/main/one_for_all
 homepage: https://pub.dev/packages/one_for_all
 topics:
@@ -16,7 +16,7 @@ scripts:
   publish: dart pub publish
 
 dependencies:
-  meta: ^1.8.0
+  meta: ^1.15.0
 
 dev_dependencies:
   mek_lints: ^2.0.0

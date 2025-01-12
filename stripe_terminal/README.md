@@ -5,13 +5,14 @@ A flutter plugin to scan stripe readers and connect to the them and get the paym
 ## Docs
 
 This plugin tries to faithfully follow the signature of classes and methods.
-Most of the classes in dart have the same name as the native classes. 
+Most of the classes in dart have the same name as the native classes.
 There may be some differences between this sdk and the native one to expose an API
 more simply by supporting streams instead of callbacks for listeners
 
 ## Features
 
 All features of android and ios sdk are supported (Also the TapToPay feature)
+
 - [Android sdk](https://github.com/stripe/stripe-terminal-android) version: 4.1.0
 - [IOS sdk](https://github.com/stripe/stripe-terminal-ios) version: 4.1.0
 
@@ -41,6 +42,7 @@ android {
     }
 }
 ```
+
 </details>
 
 [See official doc for more details](https://docs.stripe.com/terminal/payments/setup-integration?terminal-sdk-platform=android)
@@ -57,7 +59,10 @@ You need to provide permission request strings to your `Info.plist` file. A samp
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>This app uses Bluetooth to connect to supported card readers.</string>
 ```
-You also need to authorize background modes authorization for `bluetooth-central`. Paste the following to your `Info.plist` file
+
+You also need to authorize background modes authorization for `bluetooth-central`. Paste the following to your
+`Info.plist` file
+
 ```
 	<key>UIBackgroundModes</key>
 	<array>
@@ -71,6 +76,7 @@ To use Tap to Pay on iPhone to accept payments, your application must request an
 entitlement from [your Apple Developer account](https://developer.apple.com). Review the [instructions for requesting
 this entitlement](https://developer.apple.com/documentation/proximityreader/setting-up-the-entitlement-for-tap-to-pay-on-iphone?language=objc).
 After you add an entitlements file to your app build target, add the following:
+
 ```.plist
 <key>com.apple.developer.proximity-reader.payment.acceptance</key>
 <true/>
@@ -104,64 +110,71 @@ You can see the usage example in the [example folder](example/lib/main.dart)
     ```
 
 2. Initialize the SDK
-    ```
-    stripeTerminal = StripeTerminal.getInstance(
+    ```dart
+    StripeTerminal.initTerminal(
       fetchToken: () async {
         // Call your backend to get the connection token and return to this function
         // Example token can be.
-        const token = "pst_test_XXXXXXXXXX...."; 
+        const token = "pst_test_XXXXXXXXXX....";
 
         return token;
       },
     );
     ```
 
-	Example backend code to get the connection token written on node.js:
+   Example backend code to get the connection token written on node.js:
 
-	```js
-    import Stripe from "stripe";
-    import express from "express";
+   ```js
+   import Stripe from "stripe";
+   import express from "express";
 
-    const stripe = new Stripe("sk_test_XXXXXXXXXXXXXXXXXX", {
-        apiVersion: "2020-08-27"
-    })
+   const stripe = new Stripe("sk_test_XXXXXXXXXXXXXXXXXX", {
+       apiVersion: "2020-08-27"
+   })
 
-    const app = express();
+   const app = express();
 
-    app.get("/connectionToken", async (req, res) => {
-        const token = await stripe.terminal.connectionTokens.create();
-        res.send({
-            success: true,
-            data: token.secret
-        });
-    });
+   app.get("/connectionToken", async (req, res) => {
+       const token = await stripe.terminal.connectionTokens.create();
+       res.send({
+           success: true,
+           data: token.secret
+       });
+   });
 
-    app.listen(8000, () => {
-        console.log("Server started")
-    });
-	```
+   app.listen(8000, () => {
+       console.log("Server started")
+   });
+   ```
 
 ## Discover and Connect Reader
 
-1. Discover the devices nearby and show it to the user. [Stripe Docs](https://stripe.com/docs/terminal/payments/connect-reader?terminal-sdk-platform=android)
+1. Discover the devices nearby and show it to the
+   user. [Stripe Docs](https://stripe.com/docs/terminal/payments/connect-reader?terminal-sdk-platform=android)
     ```dart
-    stripeTerminal
-        .discoverReaders(BluetoothProximityDiscoveryConfiguration(isSimulated: true))
+    Terminal.instance
+        .discoverReaders(BluetoothDiscoveryConfiguration(isSimulated: true))
         .listen((List<StripeReader> readers) {
             setState(() => _readers = readers);
         });
     ```
-2. Connect to a reader
-   - Bluetooth reader
-      ```dart
-      await stripeTerminal.connectBluetoothReader(readers[0].serialNumber, locationId: locationId);
-      print("Connected to a device");
-      ``` 
-   - TapToPay
-      ```dart
-      await stripeTerminal.connectMobileReader(readers[0].serialNumber, locationId: locationId);
-      print("Connected to a device");
-      ```
+2. Implement the reader delegate:
+   ```dart
+   class MyMobileReaderDelegate extends MobileReaderDelegate {
+     void onReportAvailableUpdate(ReaderSoftwareUpdate update) {
+      print('A new update is available!');
+     }
+     // and handle others methods...
+   }
+   ```
+3. Connect to a bluetooth reader:
+    ```dart
+    await Terminal.instance.connectReader(readers[0], BluetoothConnectionConfiguration(
+      locationId: locationId,
+      delegate: MyMobileReaderDelegate(),
+    ));
+    print("Connected to a device");
+    ```
 
 ## Process a Payment
 
@@ -172,15 +185,15 @@ You can see the usage example in the [example folder](example/lib/main.dart)
     ```
 2. Retrieve payment intent
     ```dart
-    final paymentIntent = await stripeTerminal.retrievePaymentIntent(backendPaymentIntent.clientSecret);
+    final paymentIntent = await Terminal.instance.retrievePaymentIntent(backendPaymentIntent.clientSecret);
     ```
 3. Collect payment method
     ```dart
-    final processablePaymentIntent = await stripeTerminal.collectPaymentMethod(paymentIntent);
+    final processablePaymentIntent = await Terminal.instance.collectPaymentMethod(paymentIntent);
     ```
 4. Collect payment method
     ```dart
-    final capturablePaymentIntent = await stripeTerminal.confirmPaymentIntent(processablePaymentIntent)
+    final capturablePaymentIntent = await Terminal.instance.confirmPaymentIntent(processablePaymentIntent)
     print("A payment intent has captured a payment method, send this payment intent to you backend to capture the payment");
     ```
 
@@ -189,9 +202,11 @@ You can see the usage example in the [example folder](example/lib/main.dart)
 The code is formatted with a line/page length of 100 characters.
 Use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for your commits.
 Much code in this plugin is auto generated:
+
 - [one_for_all](https://pub.dev/packages/one_for_all) is used to generate the code for communication between platforms.
   Run this [script](tool/generate_api.dart)
 - [index_generator](https://pub.dev/packages/index_generator) is used to generate library exports
 
 ### Android
+
 Format code with `./gradlew spotlessApply`

@@ -1,3 +1,8 @@
+## 4.0.2
+- build: updated `meta` to `1.15.0` and `one_for_all` to `1.1.1` dependency
+- build: updated `dart` constraints to `>=3.5.0 <4.0.0` and `flutter` to `>=3.24.0`
+- docs: updated README.md file
+
 ## 4.0.1
 
 - docs: updated documentation

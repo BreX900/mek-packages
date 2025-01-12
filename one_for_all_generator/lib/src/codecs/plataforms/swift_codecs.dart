@@ -42,7 +42,7 @@ class SwiftApiCodes extends HostApiCodecs {
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
       return '($varAccess as$questionOrExclamation [Any?])'
-          '$questionOrEmpty.map { ${encodeDeserialization(typeArg, '\$0')} }';
+          '$questionOrEmpty.map { ${encodeDeserialization(typeArg, r'$0')} }';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
@@ -83,7 +83,7 @@ class SwiftApiCodes extends HostApiCodecs {
     if (type.isPrimitive) return varAccess;
     if (type.isDartCoreList) {
       final typeArg = type.singleTypeArg;
-      return '$varAccess$questionOrEmpty.map { ${encodeSerialization(typeArg, '\$0')} }';
+      return '$varAccess$questionOrEmpty.map { ${encodeSerialization(typeArg, r'$0')} }';
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;

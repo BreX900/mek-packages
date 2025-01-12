@@ -19,8 +19,8 @@ class SwiftApiBuilder extends ApiBuilder {
   String get outputFile => options.outputFile;
 
   SwiftApiBuilder(super.pluginOptions, this.options, this.codecs) {
-    final requiredPlatformErrorField = SwiftField(name: 'code', type: 'String');
-    final optionalPlatformErrorFields = [
+    const requiredPlatformErrorField = SwiftField(name: 'code', type: 'String');
+    const optionalPlatformErrorFields = [
       SwiftField(name: 'message', type: 'String?'),
       SwiftField(name: 'details', type: 'Any?'),
     ];
@@ -38,7 +38,7 @@ class SwiftApiBuilder extends ApiBuilder {
               .map((e) => e.toInitParameter(label: '_', defaultTo: 'nil')),
         ],
       ),
-      methods: [
+      methods: const [
         SwiftMethod(
           name: 'toFlutterError',
           returns: 'FlutterError',
@@ -48,7 +48,7 @@ class SwiftApiBuilder extends ApiBuilder {
       ],
     ));
 
-    final resultFields = [
+    const resultFields = [
       SwiftField(
         visibility: SwiftVisibility.private,
         name: 'result',
@@ -67,7 +67,7 @@ class SwiftApiBuilder extends ApiBuilder {
         parameters:
             resultFields.map((e) => e.toInitParameter(label: '_', annotation: 'escaping')).toList(),
       ),
-      methods: [
+      methods: const [
         SwiftMethod(
           name: 'success',
           parameters: [
@@ -86,7 +86,7 @@ class SwiftApiBuilder extends ApiBuilder {
       ],
     ));
 
-    final controllerSinkFields = [
+    const controllerSinkFields = [
       SwiftField(
         visibility: SwiftVisibility.private,
         name: 'sink',
@@ -106,7 +106,7 @@ class SwiftApiBuilder extends ApiBuilder {
             .map((e) => e.toInitParameter(label: '_', annotation: 'escaping'))
             .toList(),
       ),
-      methods: [
+      methods: const [
         SwiftMethod(
           name: 'success',
           parameters: [
@@ -130,7 +130,7 @@ class SwiftApiBuilder extends ApiBuilder {
       ],
     ));
 
-    final controllerHandlerFields = [
+    const controllerHandlerFields = [
       SwiftField(
         visibility: SwiftVisibility.private,
         name: '_onListen',
@@ -152,7 +152,7 @@ class SwiftApiBuilder extends ApiBuilder {
             .toList(),
       ),
       methods: [
-        SwiftMethod(
+        const SwiftMethod(
           name: 'onListen',
           parameters: [
             SwiftParameter(label: 'withArguments', name: 'arguments', type: 'Any?'),
@@ -167,7 +167,7 @@ class SwiftApiBuilder extends ApiBuilder {
           lambda: true,
           body: '_onListen(arguments, events)?.toFlutterError()',
         ),
-        SwiftMethod(
+        const SwiftMethod(
           name: 'onCancel',
           parameters: [SwiftParameter(label: 'withArguments', name: 'arguments', type: 'Any?')],
           returns: 'FlutterError?',
@@ -222,12 +222,14 @@ class SwiftApiBuilder extends ApiBuilder {
       return SwiftClass(
         name: codecs.encodeName('${e.name}Controller'),
         init: SwiftInit(
-          parameters: [SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')],
+          parameters: [
+            const SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')
+          ],
           body:
               'channel = FlutterEventChannel(name: "${handler.eventChannelName(e)}", binaryMessenger: binaryMessenger)',
         ),
         fields: [
-          SwiftField(
+          const SwiftField(
             visibility: SwiftVisibility.private,
             name: 'channel',
             type: 'FlutterEventChannel',
@@ -256,14 +258,14 @@ class SwiftApiBuilder extends ApiBuilder {
             body: '''
 channel.setStreamHandler(ControllerHandler({ arguments, events in
     let args = arguments as! [Any?]
-    let sink = ControllerSink<${codecs.encodeType(returnType)}>(events) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, '\$0')} }
+    let sink = ControllerSink<${codecs.encodeType(returnType)}>(events) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, r'$0')} }
     return onListen(${['sink', ...parameters].join(', ')})
 }, { arguments in
     let args = arguments as! [Any?]
     return onCancel(${parameters.join(', ')})
 }))''',
           ),
-          SwiftMethod(
+          const SwiftMethod(
             name: 'removeHandler',
             lambda: true,
             body: 'channel.setStreamHandler(nil)',
@@ -317,7 +319,7 @@ ${methods.map((_) {
         case "${e.name}":
 ${switch (methodType) {
           MethodApiType.callbacks => '''
-            let res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, '\$0')} }
+            let res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, r'$0')} }
             try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''',
           MethodApiType.sync => '''
             let res = try hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
@@ -358,7 +360,7 @@ ${switch (methodType) {
         ),
       ],
       init: SwiftInit(parameters: [
-        SwiftParameter(
+        const SwiftParameter(
           label: '_',
           name: 'binaryMessenger',
           type: 'FlutterBinaryMessenger',

@@ -19,4 +19,4 @@ dependencies:
   meta: ^1.15.0
 
 dev_dependencies:
-  mek_lints: ^2.0.0
+  mek_lints: ^5.0.0

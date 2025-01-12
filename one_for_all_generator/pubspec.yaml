@@ -35,7 +35,7 @@ dependencies:
   one_for_all: ^1.1.0
 
 dev_dependencies:
-  mek_lints: ^2.0.0
+  mek_lints: ^5.0.0
 
 dependency_overrides:
   one_for_all:

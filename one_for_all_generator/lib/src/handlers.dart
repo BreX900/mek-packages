@@ -222,7 +222,7 @@ class SerializableParamHandler {
     final isIgnored = annotation.peek('isIgnored')?.boolValue ?? false;
     if (isIgnored) return null;
 
-    return SerializableParamHandler._(type: type, name: name, defaultValueCode: null);
+    return SerializableParamHandler._(type: type, name: name, defaultValueCode: defaultValueCode);
   }
 
   SerializableParamHandler._({required this.type, required this.name, this.defaultValueCode});

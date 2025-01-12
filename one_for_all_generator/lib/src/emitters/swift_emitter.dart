@@ -320,7 +320,7 @@ class SwiftEmitter {
   Object _encodeMethod(SwiftMethod spec) {
     final buffer = StringBuffer();
     buffer.write(_space);
-    if (spec.visibility != null) buffer.write(_encodeVisibility(spec.visibility!));
+    if (spec.visibility != null) buffer.write(_encodeVisibility(spec.visibility));
     if (spec.modifier != null) buffer.write('${spec.modifier!.name} ');
     buffer.write('func ${spec.name}(');
     if (spec.parameters.isNotEmpty) {
@@ -340,7 +340,7 @@ class SwiftEmitter {
     if (spec.body == null) return buffer;
     if (spec.lambda) {
       buffer.write(' { ');
-      buffer.write(spec.body!);
+      buffer.write(spec.body);
       buffer.write(' }');
     } else {
       buffer.write(' {\n');

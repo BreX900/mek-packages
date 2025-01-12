@@ -44,6 +44,7 @@ class DartApiBuilder extends ApiBuilder {
 
   void _updateHostApiMethod(MethodElement e, MethodBuilder b) {
     b
+      // ignore: prefer_const_constructors
       ..annotations.add(CodeExpression(Code('override')))
       ..returns = Reference('${e.returnType}')
       ..name = e.name
@@ -69,14 +70,14 @@ class DartApiBuilder extends ApiBuilder {
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
-        ..name = '_\$channel'
-        ..assignment = Code('MethodChannel(\'${handler.methodChannelName()}\')')))
+        ..name = r'_$channel'
+        ..assignment = Code("MethodChannel('${handler.methodChannelName()}')")))
       ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         return Field((b) => b
           ..static = true
           ..modifier = FieldModifier.constant
           ..name = '_\$${e.name.no_}'
-          ..assignment = Code('EventChannel(\'${handler.eventChannelName(e)}\')'));
+          ..assignment = Code("EventChannel('${handler.eventChannelName(e)}')"));
       }))
       ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
         final returnType = e.returnType.singleTypeArg;
@@ -106,7 +107,7 @@ class DartApiBuilder extends ApiBuilder {
 
         String parseResult() {
           final code =
-              'await _\$channel.invokeMethod(\'${handler.methodChannelName(e)}\', [$parameters]);';
+              "await _\$channel.invokeMethod('${handler.methodChannelName(e)}', [$parameters]);";
           if (returnType is VoidType) return code;
           return 'final result = $code'
               'return ${codecs.encodeDeserialization(returnType, 'result')};';
@@ -136,7 +137,7 @@ try {
     final methods = element.methods.where((e) => e.isFlutterApiMethod);
 
     _library.body.add(Method((b) => b
-      ..returns = Reference('void')
+      ..returns = const Reference('void')
       ..name = '_\$setup${codecs.encodeName(element.name)}'
       ..requiredParameters.add(Parameter((b) => b
         ..type = Reference(element.name)
@@ -162,7 +163,7 @@ channel.setMethodCallHandler((call) async {
     final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
         handler;
 
-    final serializedRef = const Reference('List<Object?>');
+    const serializedRef = Reference('List<Object?>');
     final deserializedRef = Reference(element.name);
 
     if (children != null) {
@@ -177,7 +178,7 @@ channel.setMethodCallHandler((call) async {
             ..name = 'deserialized'))
           ..lambda = true
           ..body = Code('switch (deserialized) {\n'
-              '${children.map((e) => '  ${e.name}() => _\$serialize${e.name}(deserialized),\n').join('')}'
+              '${children.map((e) => '  ${e.name}() => _\$serialize${e.name}(deserialized),\n').join()}'
               '}')));
       }
       for (final child in children) {
@@ -195,7 +196,7 @@ channel.setMethodCallHandler((call) async {
           ..name = 'deserialized'))
         ..lambda = true
         ..body = Code('[${[
-          if (withName) '\'${element.name}\'',
+          if (withName) "'${element.name}'",
           ...params.map((e) {
             return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
           }),

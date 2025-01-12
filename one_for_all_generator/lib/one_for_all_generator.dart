@@ -13,6 +13,7 @@ import 'package:one_for_all_generator/src/generators/kotlin_api_builder.dart';
 import 'package:one_for_all_generator/src/generators/swift_api_builder.dart';
 import 'package:one_for_all_generator/src/library_scanner.dart';
 import 'package:one_for_all_generator/src/options.dart';
+import 'package:one_for_all_generator/src/utils.dart';
 import 'package:path/path.dart' as path_;
 import 'package:source_gen/source_gen.dart';
 
@@ -69,7 +70,7 @@ class OneForAll {
   }
 
   Future<void> build() async {
-    print('Scanning...');
+    report('Scanning...');
     // TODO: Check if file exists
     final apiAbsolutePaths = [options.apiFile, ...options.extraApiFiles]
         .map((e) => path_.absolute(path_.normalize(e)))
@@ -83,20 +84,20 @@ class OneForAll {
 
     await Future.wait(collection.contexts.expand((context) {
       return context.contextRoot.analyzedFiles().map((filePath) async {
-        print('Reading... $filePath');
+        report('Reading... $filePath');
         final session = context.currentSession;
         final result = await session.getLibraryByUri('file://$filePath');
         if (result is! LibraryElementResult) {
-          print(result);
+          report(result);
           return;
         }
 
-        print('Scanning... ${result.element.source.uri}');
+        report('Scanning... ${result.element.source.uri}');
         scanner.scan(result.element);
       });
     }));
 
-    print('Building...');
+    report('Building...');
     final scanResult = scanner.result;
     final builders = buildersCreator(options);
 
@@ -106,7 +107,7 @@ class OneForAll {
       scanResult.serializableHandlers.forEach(builder.writeSerializable);
     }
 
-    print('Writing...');
+    report('Writing...');
     await Future.wait(builders.map((builder) async {
       await File(builder.outputFile).writeAsString(await builder.build());
     }));

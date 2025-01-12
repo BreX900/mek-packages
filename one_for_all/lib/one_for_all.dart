@@ -61,6 +61,7 @@ class SerializableClass {
 class SerializableParam {
   final bool isIgnored;
 
+  // ignore: avoid_field_initializers_in_const_classes
   const SerializableParam.ignore() : isIgnored = true;
 }
 

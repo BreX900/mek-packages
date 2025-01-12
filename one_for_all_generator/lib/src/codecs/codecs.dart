@@ -12,6 +12,7 @@ extension IsNullableDartTypeExtension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
 
   String get displayName => getDisplayString(withNullability: false);
+  // ignore: avoid_redundant_argument_values
   String get displayNameNullable => getDisplayString(withNullability: true);
 }
 
@@ -98,6 +99,7 @@ abstract class HostApiCodecs extends ApiCodecs {
     final codec = findCodec(type);
     if (codec != null) return codec.encodeType(this, type);
 
+    // ignore: avoid_redundant_argument_values
     return type.getDisplayString(withNullability: true).replaceFirstMapped(RegExp(r'\w+'), (match) {
       return '${match.group(0)}${pluginOptions.hostClassSuffix}';
     });

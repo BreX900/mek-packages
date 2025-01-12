@@ -153,7 +153,7 @@ class KotlinEmitter {
     final buffer = StringBuffer();
     buffer.write(switch (spec) {
       KotlinLibrary() => _encodeLibrary(spec),
-      KotlinTopLevelSpec() => _encodeTopLevelSpec(spec, isInInterface: false),
+      KotlinTopLevelSpec() => _encodeTopLevelSpec(spec),
     });
     return buffer;
   }

@@ -18,13 +18,21 @@ formatter:
 
 # Uncomment the following section to specify additional rules.
 
-# linter:
-#   rules:
-#     - camel_case_types
-
 # analyzer:
 #   exclude:
 #     - path/to/excluded/files/**
+
+#analyzer:
+#  errors:
+#    missing_whitespace_between_adjacent_strings: ignore
+#    no_wildcard_variable_uses: ignore
+
+linter:
+  rules:
+    missing_whitespace_between_adjacent_strings: false
+    leading_newlines_in_multiline_strings: false
+    no_wildcard_variable_uses: false
+    parameter_assignments: false
 
 # For more information about the core and recommended set of lints, see
 # https://dart.dev/go/core-lints

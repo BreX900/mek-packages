@@ -1,5 +1,6 @@
 import 'package:args/args.dart';
 import 'package:one_for_all_generator/one_for_all_generator.dart';
+import 'package:one_for_all_generator/src/utils.dart';
 
 void main(List<String> arguments) async {
   final argParser = ArgParser()
@@ -12,7 +13,7 @@ void main(List<String> arguments) async {
   final args = argParser.parse(arguments);
 
   if (args['help'] as bool) {
-    print(argParser.usage);
+    report(argParser.usage);
     return;
   }
 
@@ -39,7 +40,7 @@ void main(List<String> arguments) async {
       apiFile: args['api-path'],
       hostClassSuffix: args['host-class-suffix'] ?? '',
     ),
-    dartOptions: DartOptions(),
+    dartOptions: const DartOptions(),
     kotlinOptions: kotlinOptions,
     swiftOptions: swiftOptions,
   ).build();

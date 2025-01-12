@@ -22,7 +22,7 @@ class KotlinApiBuilder extends ApiBuilder {
   String get outputFile => options.outputFile;
 
   KotlinApiBuilder(super.pluginOptions, this.options, this.codecs) {
-    _specs.add(KotlinClass(
+    _specs.add(const KotlinClass(
       name: 'PlatformError',
       initializers: [
         KotlinField(name: 'code', type: 'String'),
@@ -61,7 +61,7 @@ class KotlinApiBuilder extends ApiBuilder {
         ),
       ],
     ));
-    _specs.add(KotlinClass(
+    _specs.add(const KotlinClass(
       name: 'ControllerSink<T>',
       initializers: [
         KotlinField(
@@ -185,7 +185,7 @@ ${methods.map((_) {
         KotlinClass(
           modifier: KotlinClassModifier.companion,
           name: 'object',
-          fields: [
+          fields: const [
             KotlinField(
               visibility: KotlinVisibility.private,
               modifier: KotlinFieldModifier.lateInit,
@@ -238,7 +238,7 @@ coroutineScope.cancel()''',
 
       return KotlinClass(
         name: codecs.encodeName('${e.name}Controller'),
-        initializers: [
+        initializers: const [
           KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
         ],
         fields: [
@@ -257,7 +257,7 @@ coroutineScope.cancel()''',
                 name: 'onListen',
                 type: '($parametersType) -> Unit',
               ),
-              KotlinParameter(
+              const KotlinParameter(
                 name: 'onCancel',
                 type: '() -> Unit',
               ),
@@ -272,7 +272,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
     override fun onCancel(arguments: Any?) = onCancel()
 })''',
           ),
-          KotlinMethod(
+          const KotlinMethod(
             name: 'removeHandler',
             lambda: true,
             body: 'channel.setStreamHandler(null)',
@@ -288,7 +288,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
 
     _specs.add(KotlinClass(
       name: codecs.encodeName(element.name),
-      initializers: [
+      initializers: const [
         KotlinParameter(
           name: 'binaryMessenger',
           type: 'BinaryMessenger',
@@ -318,9 +318,9 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
                 name: e.name,
                 type: codecs.encodeType(e.type),
               );
-            }).toList(),
+            }),
             if (methodType == MethodApiType.callbacks) ...[
-              KotlinParameter(
+              const KotlinParameter(
                 name: 'onError',
                 type: '(error: PlatformError) -> Unit',
               ),

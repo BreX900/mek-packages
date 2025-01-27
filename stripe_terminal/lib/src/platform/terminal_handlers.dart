@@ -137,6 +137,13 @@ class TerminalHandlers {
     });
   }
 
+  void onAcceptTermsOfService() {
+    _runInZone(_readerDelegate, (delegate) async {
+      if (delegate is! PhysicalReaderDelegate) return;
+      await delegate.onAcceptTermsOfService();
+    });
+  }
+
 //endregion
 
 //region Reader reconnection delegate

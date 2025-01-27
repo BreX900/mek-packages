@@ -510,6 +510,7 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
           args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
           args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
       '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
+      'onAcceptTermsOfService' => hostApi.onAcceptTermsOfService(),
       '_onReaderReconnectFailed' =>
         hostApi._onReaderReconnectFailed(_$deserializeReader(args[0] as List)),
       '_onReaderReconnectStarted' => hostApi._onReaderReconnectStarted(

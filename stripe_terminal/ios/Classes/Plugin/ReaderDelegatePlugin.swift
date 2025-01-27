@@ -16,7 +16,9 @@ class ReaderDelegatePlugin: NSObject, BluetoothReaderDelegate, LocalMobileReader
     }
     
     func localMobileReaderDidAcceptTermsOfService(_ reader: Reader) {
-        // TODO: Implement this method
+        DispatchQueue.main.async {
+            self._handlers.acceptTermsOfService()
+        }
     }
     
     func reader(_ reader: Reader, didRequestReaderDisplayMessage message: ReaderDisplayMessage) {

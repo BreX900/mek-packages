@@ -571,6 +571,10 @@ class TerminalHandlersApi {
         channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
     }
 
+    func acceptTermsOfService() {
+        channel.invokeMethod("onAcceptTermsOfService", arguments: [])
+    }
+
     func readerReconnectFailed(
         reader: ReaderApi
     ) {

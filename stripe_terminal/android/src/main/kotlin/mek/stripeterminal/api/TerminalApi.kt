@@ -540,6 +540,10 @@ class TerminalHandlersApi(
         channel.invokeMethod("_onDisconnect", listOf<Any?>(reason.ordinal))
     }
 
+    fun acceptTermsOfService() {
+        channel.invokeMethod("onAcceptTermsOfService", listOf<Any?>())
+    }
+
     fun readerReconnectFailed(
         reader: ReaderApi,
     ) {

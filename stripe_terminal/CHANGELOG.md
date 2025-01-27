@@ -1,3 +1,6 @@
+## 3.9.0
+- feat: added the method `onAcceptTermsOfService` on `PhysicalReaderDelegate` class
+
 ## 3.8.1
 - doc: updated README.md file adding official documentation links
 

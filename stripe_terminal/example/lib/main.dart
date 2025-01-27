@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:example/models/discovery_method.dart';
 import 'package:example/models/k.dart';
 import 'package:example/stripe_api.dart';
+import 'package:example/utils/app_physical_reader_delegate.dart';
 import 'package:example/utils/permission_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with PhysicalReaderDelegate {
   final _api = StripeApi();
   Terminal? _terminal;
 
@@ -185,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return await terminal.connectMobileReader(
           reader,
           locationId: locationId,
+          delegate: AppPhysicalReaderDelegate(),
         );
       case DiscoveryMethod.internet:
         return await terminal.connectInternetReader(reader);

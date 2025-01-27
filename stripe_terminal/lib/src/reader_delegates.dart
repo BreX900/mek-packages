@@ -40,6 +40,9 @@ mixin class PhysicalReaderDelegate implements ReaderDelegate {
   ) {}
 
   FutureOr<void> onDisconnect(DisconnectReason reason) {}
+
+  /// Available only for tap to pay on ios device
+  FutureOr<void> onAcceptTermsOfService() {}
 }
 
 abstract mixin class ReaderReconnectionDelegate {

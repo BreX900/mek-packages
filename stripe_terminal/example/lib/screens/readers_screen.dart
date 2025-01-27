@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 
-class ReadersScreen extends StatefulWidget {
+class ReadersScreen extends ConsumerStatefulWidget {
   final ValueListenable<ConnectionStatus> connectionStatusListenable;
   final ValueListenable<Location?> locationListenable;
   final ValueNotifier<Reader?> connectedReaderNotifier;
@@ -26,7 +26,7 @@ class ReadersScreen extends StatefulWidget {
   State<ReadersScreen> createState() => _ReadersScreenState();
 }
 
-class _ReadersScreenState extends State<ReadersScreen> with StateTools {
+class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
   var _isSimulated = true;
   var _discoveryMethod = DiscoveryMethod.bluetoothScan;
 
@@ -145,8 +145,8 @@ class _ReadersScreenState extends State<ReadersScreen> with StateTools {
 
   @override
   Widget build(BuildContext context) {
-    final connectionStatus = watch(widget.connectionStatusListenable);
-    final connectedReader = watch(widget.connectedReaderNotifier);
+    final connectionStatus = ref.watch(widget.connectionStatusListenable);
+    final connectedReader = ref.watch(widget.connectedReaderNotifier);
 
     return Scaffold(
       appBar: AppBar(

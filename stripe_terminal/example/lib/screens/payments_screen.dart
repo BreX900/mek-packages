@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 
-class PaymentsScreen extends StatefulWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   final ValueListenable<PaymentStatus> paymentStatusListenable;
   final ValueListenable<Reader?> connectedReaderListenable;
 
@@ -20,7 +20,7 @@ class PaymentsScreen extends StatefulWidget {
   State<PaymentsScreen> createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends State<PaymentsScreen> with StateTools {
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> with StateTools {
   PaymentIntent? _paymentIntent;
   CancelableFuture<PaymentIntent>? _collectingPaymentMethod;
 
@@ -81,8 +81,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> with StateTools {
 
   @override
   Widget build(BuildContext context) {
-    final paymentStatus = watch(widget.paymentStatusListenable);
-    final connectedReader = watch(widget.connectedReaderListenable);
+    final paymentStatus = ref.watch(widget.paymentStatusListenable);
+    final connectedReader = ref.watch(widget.connectedReaderListenable);
     final paymentIntent = _paymentIntent;
     final collectingPaymentMethod = _collectingPaymentMethod;
 

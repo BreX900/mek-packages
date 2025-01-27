@@ -3,7 +3,7 @@ import 'package:example/utils/state_tools.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 
-class LocationsScreen extends StatefulWidget {
+class LocationsScreen extends ConsumerStatefulWidget {
   final ValueNotifier<Location?> locationNotifier;
 
   const LocationsScreen({
@@ -15,7 +15,7 @@ class LocationsScreen extends StatefulWidget {
   State<LocationsScreen> createState() => _LocationsScreenState();
 }
 
-class _LocationsScreenState extends State<LocationsScreen> with StateTools {
+class _LocationsScreenState extends ConsumerState<LocationsScreen> with StateTools {
   var _locations = <Location>[];
 
   Future<void> _fetchLocations() async {
@@ -31,7 +31,7 @@ class _LocationsScreenState extends State<LocationsScreen> with StateTools {
 
   @override
   Widget build(BuildContext context) {
-    final selectedLocation = watch(widget.locationNotifier);
+    final selectedLocation = ref.watch(widget.locationNotifier);
 
     return Scaffold(
       appBar: AppBar(

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 
-class MoreScreen extends StatefulWidget {
+class MoreScreen extends ConsumerStatefulWidget {
   final ValueListenable<ConnectionStatus> connectionStatusListenable;
 
   const MoreScreen({
@@ -17,10 +17,10 @@ class MoreScreen extends StatefulWidget {
   State<MoreScreen> createState() => _MoreScreenState();
 }
 
-class _MoreScreenState extends State<MoreScreen> with StateTools {
+class _MoreScreenState extends ConsumerState<MoreScreen> with StateTools {
   @override
   Widget build(BuildContext context) {
-    final connectionStatus = watch(widget.connectionStatusListenable);
+    final connectionStatus = ref.watch(widget.connectionStatusListenable);
 
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;

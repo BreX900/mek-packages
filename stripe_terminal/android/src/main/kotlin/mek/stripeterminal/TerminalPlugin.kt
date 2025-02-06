@@ -67,32 +67,9 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     private lateinit var handlers: TerminalHandlersApi
 
     private var activity: Activity? = null
-    private val permissions =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.BLUETOOTH_ADMIN
-            )
-        }
-
     private val terminal: Terminal get() = Terminal.getInstance()
 
     override fun onInit(shouldPrintLogs: Boolean) {
-        val permissionStatus = permissions.map { ContextCompat.checkSelfPermission(activity!!, it) }
-
-        if (permissionStatus.contains(PackageManager.PERMISSION_DENIED)) {
-            throw createApiError(
-                TerminalExceptionCodeApi.UNKNOWN,
-                "You have declined the necessary permission, " +
-                    "please allow from settings to continue."
-            )
-                .toPlatformError()
-        }
-
         // If a hot restart is performed in flutter the terminal is already initialized but we need to
         // clean it up
         if (Terminal.isInitialized()) {

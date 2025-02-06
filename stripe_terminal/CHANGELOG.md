@@ -1,3 +1,6 @@
+## 3.9.1
+- chore(android): removed permission check when initializing terminal
+
 ## 3.9.0
 - feat: added the method `onAcceptTermsOfService` on `PhysicalReaderDelegate` class
 

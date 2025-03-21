@@ -13,6 +13,7 @@ import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
+import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
@@ -519,6 +520,10 @@ class Terminal {
   ///
   /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
   Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
+
+  /// Configure Tap to Pay UX
+  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async =>
+      await _platform.setTapToPayUXConfiguration(configuration);
 //endregion
 
   StreamController<T> _handleStream<T>(

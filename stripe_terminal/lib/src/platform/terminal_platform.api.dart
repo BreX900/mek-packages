@@ -174,6 +174,17 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
+  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async {
+    try {
+      await _$channel.invokeMethod(
+          'setTapToPayUXConfiguration', [_$serializeTapToPayUXConfiguration(configuration)]);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
   Future<PaymentStatus> getPaymentStatus() async {
     try {
       final result = await _$channel.invokeMethod('getPaymentStatus', []);
@@ -811,3 +822,12 @@ TerminalException _$deserializeTerminalException(List<Object?> serialized) => Te
 Tip _$deserializeTip(List<Object?> serialized) => Tip(amount: serialized[0] as int?);
 List<Object?> _$serializeTippingConfiguration(TippingConfiguration deserialized) =>
     [deserialized.eligibleAmount];
+List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [
+      deserialized.tapZone?.indicator?.index,
+      deserialized.tapZone?.position?.xBias,
+      deserialized.tapZone?.position?.yBias,
+      deserialized.colors?.primary,
+      deserialized.colors?.success,
+      deserialized.colors?.error,
+      deserialized.theme?.index,
+    ];

@@ -2,6 +2,8 @@
 
 package mek.stripeterminal.api
 
+import android.graphics.Color
+import com.stripe.stripeterminal.external.models.TapToPayUxConfiguration
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -15,6 +17,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.graphics.toColorInt
 
 class PlatformError(
     val code: String,
@@ -102,6 +105,10 @@ interface TerminalPlatformApi {
 
     fun onSetSimulatorConfiguration(
         configuration: SimulatorConfigurationApi,
+    )
+
+    fun onSetTapToPayUXConfiguration(
+        configuration: TapToPayUXConfigurationApi,
     )
 
     fun onGetPaymentStatus(): PaymentStatusApi
@@ -291,6 +298,10 @@ interface TerminalPlatformApi {
                 }
                 "setSimulatorConfiguration" -> {
                     onSetSimulatorConfiguration((args[0] as List<Any?>).let { SimulatorConfigurationApi.deserialize(it) })
+                    result.success(null)
+                }
+                "setTapToPayUXConfiguration" -> {
+                    onSetTapToPayUXConfiguration((args[0] as List<Any?>).let { TapToPayUXConfigurationApi.deserialize(it) })
                     result.success(null)
                 }
                 "getPaymentStatus" -> {
@@ -1467,6 +1478,123 @@ data class SimulatorConfigurationApi(
                 simulatedCard = (serialized[0] as List<Any?>).let { SimulatedCardApi.deserialize(it) },
                 simulatedTipAmount = (serialized[1] as? Number)?.toLong(),
                 update = (serialized[2] as Int).let { SimulateReaderUpdateApi.values()[it] },
+            )
+        }
+    }
+}
+
+data class TapToPayUXConfigurationApi(
+    val tapZone: TapZoneApi?,
+    val colors: ColorsApi?,
+    val theme: TapToPayUxConfiguration.DarkMode?,
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): TapToPayUXConfigurationApi {
+            return TapToPayUXConfigurationApi(
+                tapZone = (serialized[0] as? List<Any?>)?.let { TapZoneApi.deserialize(it) },
+                colors = (serialized[3] as? List<Any?>)?.let { ColorsApi.deserialize(it) },
+                theme = (serialized[6] as? Int)?.let {
+                    when (it) {
+                        0 -> TapToPayUxConfiguration.DarkMode.SYSTEM
+                        1 -> TapToPayUxConfiguration.DarkMode.LIGHT
+                        2 -> TapToPayUxConfiguration.DarkMode.DARK
+                        else -> throw Error()
+                    }
+                }
+            )
+        }
+    }
+
+    fun toHost(): TapToPayUxConfiguration {
+        return TapToPayUxConfiguration.Builder()
+                .apply {
+                    if (tapZone != null) {
+                        tapZone(
+                            TapToPayUxConfiguration.TapZone.Manual.Builder()
+                                .apply {
+                                    if (tapZone.indicator != null) {
+                                        indicator(tapZone.indicator)
+                                    }
+                                    if (tapZone.position != null) {
+                                        position(TapToPayUxConfiguration.TapZonePosition.Manual(tapZone.position.xBias.toFloat(), tapZone.position.yBias.toFloat()))
+                                    }
+                                }
+                                .build()
+                        )
+                    }
+                    if (colors != null) {
+                        colors(
+                            TapToPayUxConfiguration.ColorScheme.Builder()
+                                .apply {
+                                    if (colors.primary != null) {
+                                        primary(TapToPayUxConfiguration.Color.Value(colors.primary.toColorInt()))
+                                    }
+                                    if (colors.success != null) {
+                                        success(TapToPayUxConfiguration.Color.Value(colors.success.toColorInt()))
+                                    }
+                                    if (colors.error != null) {
+                                        error(TapToPayUxConfiguration.Color.Value(colors.error.toColorInt()))
+                                    }
+                                }
+                                .build()
+                        )
+                    }
+                    if (theme != null) {
+                        darkMode(theme)
+                    }
+            }
+            .build();
+    }
+}
+
+data class TapZoneApi(
+    val indicator: TapToPayUxConfiguration.TapZoneIndicator?,
+    val position: PositionApi?
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): TapZoneApi {
+            return TapZoneApi(
+                indicator = (serialized[0] as? Int)?.let {
+                    when (it) {
+                        0 -> TapToPayUxConfiguration.TapZoneIndicator.DEFAULT
+                        1 -> TapToPayUxConfiguration.TapZoneIndicator.ABOVE
+                        2 -> TapToPayUxConfiguration.TapZoneIndicator.BELOW
+                        3 -> TapToPayUxConfiguration.TapZoneIndicator.FRONT
+                        4 -> TapToPayUxConfiguration.TapZoneIndicator.BEHIND
+                        else -> throw Error()
+                    }
+                },
+                position = (serialized[1] as? List<Any?>)?.let { PositionApi.deserialize(it) }
+            )
+        }
+    }
+}
+
+data class PositionApi(
+    val xBias: Double,
+    val yBias: Double
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): PositionApi {
+            return PositionApi(
+                xBias = (serialized[0] as Number).toDouble(),
+                yBias = (serialized[1] as Number).toDouble()
+            )
+        }
+    }
+}
+
+data class ColorsApi(
+    val primary: String?,
+    val success: String?,
+    val error: String?
+) {
+    companion object {
+        fun deserialize(serialized: List<Any?>): ColorsApi {
+            return ColorsApi(
+                primary = serialized[0] as? String,
+                success = serialized[1] as? String,
+                error = serialized[2] as? String
             )
         }
     }

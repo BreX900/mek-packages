@@ -823,11 +823,17 @@ Tip _$deserializeTip(List<Object?> serialized) => Tip(amount: serialized[0] as i
 List<Object?> _$serializeTippingConfiguration(TippingConfiguration deserialized) =>
     [deserialized.eligibleAmount];
 List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [
-      deserialized.tapZone?.indicator?.index,
-      deserialized.tapZone?.position?.xBias,
-      deserialized.tapZone?.position?.yBias,
-      deserialized.colors?.primary,
-      deserialized.colors?.success,
-      deserialized.colors?.error,
+      [
+        deserialized.tapZone?.indicator?.index,
+        [
+          deserialized.tapZone?.position?.xBias,
+          deserialized.tapZone?.position?.yBias,
+        ]
+      ],
+      [
+        deserialized.colors?.primary,
+        deserialized.colors?.success,
+        deserialized.colors?.error,
+      ],
       deserialized.theme?.index,
     ];

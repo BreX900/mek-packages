@@ -1492,8 +1492,8 @@ data class TapToPayUXConfigurationApi(
         fun deserialize(serialized: List<Any?>): TapToPayUXConfigurationApi {
             return TapToPayUXConfigurationApi(
                 tapZone = (serialized[0] as? List<Any?>)?.let { TapZoneApi.deserialize(it) },
-                colors = (serialized[3] as? List<Any?>)?.let { ColorsApi.deserialize(it) },
-                theme = (serialized[6] as? Int)?.let {
+                colors = (serialized[1] as? List<Any?>)?.let { ColorsApi.deserialize(it) },
+                theme = (serialized[2] as? Int)?.let {
                     when (it) {
                         0 -> TapToPayUxConfiguration.DarkMode.SYSTEM
                         1 -> TapToPayUxConfiguration.DarkMode.LIGHT

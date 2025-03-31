@@ -1,3 +1,3 @@
 abstract final class K {
-  static const String currency = 'gbp';
+  static const String currency = String.fromEnvironment('CURRENCY', defaultValue: 'gbp');
 }

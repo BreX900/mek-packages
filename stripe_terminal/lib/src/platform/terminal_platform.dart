@@ -18,6 +18,7 @@ import 'package:mek_stripe_terminal/src/models/reader_software_update.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
+import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/reader_delegates.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
@@ -167,6 +168,9 @@ abstract class TerminalPlatform {
   Future<void> setReaderDisplay(Cart cart);
 
   Future<void> clearReaderDisplay();
+
+  @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
+  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration);
 //endregion
 
   // TODO: add support to collectData and setLocalMobileUxConfiguration methods

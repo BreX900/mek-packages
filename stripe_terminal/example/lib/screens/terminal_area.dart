@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:example/screens/configuration_screen.dart';
 import 'package:example/screens/locations_screen.dart';
 import 'package:example/screens/more_screen.dart';
 import 'package:example/screens/payments_screen.dart';
@@ -19,10 +20,12 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
   var _destinationIndex = 0;
 
   late StreamSubscription<ConnectionStatus> _onConnectionStatusChangeSub;
-  final _connectionStatusNotifier = ValueNotifier<ConnectionStatus>(ConnectionStatus.notConnected);
+  final _connectionStatusNotifier =
+      ValueNotifier<ConnectionStatus>(ConnectionStatus.notConnected);
 
   late StreamSubscription<PaymentStatus> _onPaymentStatusChangeSub;
-  final _paymentStatusNotifier = ValueNotifier<PaymentStatus>(PaymentStatus.notReady);
+  final _paymentStatusNotifier =
+      ValueNotifier<PaymentStatus>(PaymentStatus.notReady);
 
   final _locationNotifier = ValueNotifier<Location?>(null);
 
@@ -31,12 +34,15 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
   @override
   void initState() {
     super.initState();
-    _onConnectionStatusChangeSub = Terminal.instance.onConnectionStatusChange.listen((status) {
+    _onConnectionStatusChangeSub =
+        Terminal.instance.onConnectionStatusChange.listen((status) {
       report('Connection Status Changed: ${status.name}');
       _connectionStatusNotifier.value = status;
-      if (status == ConnectionStatus.notConnected) _connectedReaderNotifier.value = null;
+      if (status == ConnectionStatus.notConnected)
+        _connectedReaderNotifier.value = null;
     });
-    _onPaymentStatusChangeSub = Terminal.instance.onPaymentStatusChange.listen((status) {
+    _onPaymentStatusChangeSub =
+        Terminal.instance.onPaymentStatusChange.listen((status) {
       report('Payment Status Changed: ${status.name}');
       _paymentStatusNotifier.value = status;
     });
@@ -93,6 +99,10 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
             locationListenable: _locationNotifier,
             connectedReaderNotifier: _connectedReaderNotifier,
           ),
+          ConfigurationScreen(
+            paymentStatusListenable: _paymentStatusNotifier,
+            connectedReaderListenable: _connectedReaderNotifier,
+          ),
           PaymentsScreen(
             paymentStatusListenable: _paymentStatusNotifier,
             connectedReaderListenable: _connectedReaderNotifier,
@@ -113,6 +123,10 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
           NavigationDestination(
             icon: Icon(Icons.barcode_reader),
             label: 'Readers',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Configuration',
           ),
           NavigationDestination(
             icon: Icon(Icons.payment),

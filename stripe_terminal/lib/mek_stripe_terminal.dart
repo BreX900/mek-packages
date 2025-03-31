@@ -18,6 +18,7 @@ export 'src/models/reader_software_update.dart';
 export 'src/models/refund.dart';
 export 'src/models/setup_intent.dart';
 export 'src/models/simultator_configuration.dart';
+export 'src/models/tap_to_pay_ux_configuration.dart';
 export 'src/models/tip.dart';
 export 'src/reader_delegates.dart';
 export 'src/terminal.dart';

@@ -1,3 +1,6 @@
+## 4.0.4
+- chore(android): when plugin si attached to activity the `Terminal.onCreate` method is called [#104](https://github.com/BreX900/mek-packages/issues/104)
+
 ## 4.0.3
 - chore(android): removed permission check when initializing terminal
 

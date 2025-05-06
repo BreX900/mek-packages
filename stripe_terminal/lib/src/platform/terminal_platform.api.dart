@@ -477,6 +477,13 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderReconnectSucceeded' =>
         hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
       '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
+      '_onReaderStartInstallingUpdate' =>
+        hostApi._onReaderStartInstallingUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
+      '_onReaderReportSoftwareUpdateProgress' =>
+        hostApi._onReaderReportSoftwareUpdateProgress(args[0] as double),
+      '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
+          args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
+          args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
       '_onReaderRequestDisplayMessage' =>
         hostApi._onReaderRequestDisplayMessage(ReaderDisplayMessage.values[args[0] as int]),
       '_onReaderRequestInput' => hostApi._onReaderRequestInput(
@@ -486,13 +493,6 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderReportLowBatteryWarning' => hostApi._onReaderReportLowBatteryWarning(),
       '_onReaderReportAvailableUpdate' =>
         hostApi._onReaderReportAvailableUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
-      '_onReaderStartInstallingUpdate' =>
-        hostApi._onReaderStartInstallingUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
-      '_onReaderReportSoftwareUpdateProgress' =>
-        hostApi._onReaderReportSoftwareUpdateProgress(args[0] as double),
-      '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
-          args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
-          args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
       '_onReaderAcceptTermsOfService' => hostApi._onReaderAcceptTermsOfService(),
       _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),
     };

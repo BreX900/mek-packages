@@ -119,6 +119,7 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.TAP_TO_PAY_INSECURE_ENVIRONMENT -> TerminalExceptionCodeApi.TAP_TO_PAY_INSECURE_ENVIRONMENT
         TerminalErrorCode.GENERIC_READER_ERROR -> TerminalExceptionCodeApi.UNEXPECTED_READER_ERROR
         TerminalErrorCode.ALLOW_REDISPLAY_INVALID -> TerminalExceptionCodeApi.ALLOW_REDISPLAY_INVALID
-        TerminalErrorCode.CANCELED_DUE_TO_INTEGRATION_ERROR -> TerminalExceptionCodeApi.CANCELED_DUE_TO_INTEGRATION_ERROR
+        TerminalErrorCode.CANCELED_DUE_TO_INTEGRATION_ERROR -> TerminalExceptionCodeApi.CANCELED_DUE_TO_INTEGRATION_ERROR,
+        TerminalErrorCode.READER_TAMPERED -> TerminalExceptionCodeApi.READER_TAMPERED
     }
 }

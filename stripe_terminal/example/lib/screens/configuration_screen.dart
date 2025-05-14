@@ -18,8 +18,7 @@ class ConfigurationScreen extends ConsumerStatefulWidget {
   State<ConfigurationScreen> createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends ConsumerState<ConfigurationScreen>
-    with StateTools {
+class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with StateTools {
   Future<void> _setConfig() async {
     await Terminal.instance.setTapToPayUXConfiguration(TapToPayUXConfiguration(
       tapZone: TapToPayUxConfigurationTapZone(

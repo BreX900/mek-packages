@@ -520,6 +520,25 @@ class TerminalHandlersApi {
         channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
     }
 
+    func readerStartInstallingUpdate(
+        update: ReaderSoftwareUpdateApi
+    ) {
+        channel.invokeMethod("_onReaderStartInstallingUpdate", arguments: [update.serialize()])
+    }
+
+    func readerReportSoftwareUpdateProgress(
+        progress: Double
+    ) {
+        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", arguments: [progress])
+    }
+
+    func readerFinishInstallingUpdate(
+        update: ReaderSoftwareUpdateApi?,
+        exception: TerminalExceptionApi?
+    ) {
+        channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
+    }
+
     func readerRequestDisplayMessage(
         message: ReaderDisplayMessageApi
     ) {
@@ -548,25 +567,6 @@ class TerminalHandlersApi {
         update: ReaderSoftwareUpdateApi
     ) {
         channel.invokeMethod("_onReaderReportAvailableUpdate", arguments: [update.serialize()])
-    }
-
-    func readerStartInstallingUpdate(
-        update: ReaderSoftwareUpdateApi
-    ) {
-        channel.invokeMethod("_onReaderStartInstallingUpdate", arguments: [update.serialize()])
-    }
-
-    func readerReportSoftwareUpdateProgress(
-        progress: Double
-    ) {
-        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", arguments: [progress])
-    }
-
-    func readerFinishInstallingUpdate(
-        update: ReaderSoftwareUpdateApi?,
-        exception: TerminalExceptionApi?
-    ) {
-        channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
 
     func readerAcceptTermsOfService() {

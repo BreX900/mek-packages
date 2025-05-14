@@ -174,17 +174,6 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async {
-    try {
-      await _$channel.invokeMethod(
-          'setTapToPayUXConfiguration', [_$serializeTapToPayUXConfiguration(configuration)]);
-    } on PlatformException catch (exception) {
-      TerminalPlatform._throwIfIsHostException(exception);
-      rethrow;
-    }
-  }
-
-  @override
   Future<PaymentStatus> getPaymentStatus() async {
     try {
       final result = await _$channel.invokeMethod('getPaymentStatus', []);
@@ -468,6 +457,17 @@ class _$TerminalPlatform implements TerminalPlatform {
       rethrow;
     }
   }
+
+  @override
+  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async {
+    try {
+      await _$channel.invokeMethod(
+          'setTapToPayUXConfiguration', [_$serializeTapToPayUXConfiguration(configuration)]);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
 }
 
 void _$setupTerminalHandlers(TerminalHandlers hostApi) {
@@ -488,6 +488,13 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderReconnectSucceeded' =>
         hostApi._onReaderReconnectSucceeded(_$deserializeReader(args[0] as List)),
       '_onDisconnect' => hostApi._onDisconnect(DisconnectReason.values[args[0] as int]),
+      '_onReaderStartInstallingUpdate' =>
+        hostApi._onReaderStartInstallingUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
+      '_onReaderReportSoftwareUpdateProgress' =>
+        hostApi._onReaderReportSoftwareUpdateProgress(args[0] as double),
+      '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
+          args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
+          args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
       '_onReaderRequestDisplayMessage' =>
         hostApi._onReaderRequestDisplayMessage(ReaderDisplayMessage.values[args[0] as int]),
       '_onReaderRequestInput' => hostApi._onReaderRequestInput(
@@ -497,13 +504,6 @@ void _$setupTerminalHandlers(TerminalHandlers hostApi) {
       '_onReaderReportLowBatteryWarning' => hostApi._onReaderReportLowBatteryWarning(),
       '_onReaderReportAvailableUpdate' =>
         hostApi._onReaderReportAvailableUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
-      '_onReaderStartInstallingUpdate' =>
-        hostApi._onReaderStartInstallingUpdate(_$deserializeReaderSoftwareUpdate(args[0] as List)),
-      '_onReaderReportSoftwareUpdateProgress' =>
-        hostApi._onReaderReportSoftwareUpdateProgress(args[0] as double),
-      '_onReaderFinishInstallingUpdate' => hostApi._onReaderFinishInstallingUpdate(
-          args[0] != null ? _$deserializeReaderSoftwareUpdate(args[0] as List) : null,
-          args[1] != null ? _$deserializeTerminalException(args[1] as List) : null),
       '_onReaderAcceptTermsOfService' => hostApi._onReaderAcceptTermsOfService(),
       _ => throw UnsupportedError('TerminalHandlers#Flutter.${call.method} method'),
     };
@@ -813,6 +813,16 @@ List<Object?> _$serializeSimulatorConfiguration(SimulatorConfiguration deseriali
       deserialized.simulatedTipAmount,
       deserialized.update.index
     ];
+List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [];
+List<Object?> _$serializeTapToPayUxConfigurationColors(
+        TapToPayUxConfigurationColors deserialized) =>
+    [];
+List<Object?> _$serializeTapToPayUxConfigurationTapZone(
+        TapToPayUxConfigurationTapZone deserialized) =>
+    [];
+List<Object?> _$serializeTapToPayUxConfigurationTapZonePosition(
+        TapToPayUxConfigurationTapZonePosition deserialized) =>
+    [];
 TerminalException _$deserializeTerminalException(List<Object?> serialized) => TerminalException(
     apiError: serialized[0],
     code: TerminalExceptionCode.values[serialized[1] as int],
@@ -822,18 +832,3 @@ TerminalException _$deserializeTerminalException(List<Object?> serialized) => Te
 Tip _$deserializeTip(List<Object?> serialized) => Tip(amount: serialized[0] as int?);
 List<Object?> _$serializeTippingConfiguration(TippingConfiguration deserialized) =>
     [deserialized.eligibleAmount];
-List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [
-      [
-        deserialized.tapZone?.indicator?.index,
-        [
-          deserialized.tapZone?.position?.xBias,
-          deserialized.tapZone?.position?.yBias,
-        ]
-      ],
-      [
-        deserialized.colors?.primary,
-        deserialized.colors?.success,
-        deserialized.colors?.error,
-      ],
-      deserialized.theme?.index,
-    ];

@@ -12,5 +12,7 @@ fun DisconnectReason.toApi(): DisconnectReasonApi {
         DisconnectReason.CRITICALLY_LOW_BATTERY -> DisconnectReasonApi.CRITICALLY_LOW_BATTERY
         DisconnectReason.POWERED_OFF -> DisconnectReasonApi.POWERED_OFF
         DisconnectReason.BLUETOOTH_DISABLED -> DisconnectReasonApi.BLUETOOTH_DISABLED
+        DisconnectReason.USB_DISCONNECTED -> DisconnectReasonApi.USB_DISCONNECTED
+        DisconnectReason.IDLE_POWER_DOWN -> DisconnectReasonApi.IDLE_POWER_DOWN
     }
 }

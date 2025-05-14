@@ -1,10 +1,6 @@
 package mek.stripeterminal
 
-import android.Manifest
-import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.core.content.ContextCompat
+import android.content.Context
 import com.stripe.stripeterminal.Terminal
 import com.stripe.stripeterminal.TerminalApplicationDelegate
 import com.stripe.stripeterminal.external.callable.Callback
@@ -64,10 +60,49 @@ import mek.stripeterminal.plugin.ReaderDelegatePlugin
 import mek.stripeterminal.plugin.TerminalDelegatePlugin
 import mek.stripeterminal.plugin.TerminalErrorHandler
 
-class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
-    private lateinit var handlers: TerminalHandlersApi
+class TerminalPlugin : FlutterPlugin, ActivityAware {
+    private lateinit var platform: TerminalPlatformPlugin
+    private lateinit var discoverReadersController: DiscoverReadersControllerApi
 
-    private var activity: Activity? = null
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        val discoverReadersSubject = DiscoverReadersSubject()
+        discoverReadersController = DiscoverReadersControllerApi(binding.binaryMessenger);
+        discoverReadersController.setHandler(
+            discoverReadersSubject::onListen,
+            discoverReadersSubject::onCancel
+        )
+        platform = TerminalPlatformPlugin(
+            applicationContext = binding.applicationContext,
+            handlers = TerminalHandlersApi(binding.binaryMessenger),
+            discoverReadersSubject = discoverReadersSubject,
+        )
+        TerminalPlatformApi.setHandler(binding.binaryMessenger, platform)
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        if (Terminal.isInitialized()) platform.clean()
+        discoverReadersController.removeHandler()
+        TerminalPlatformApi.removeHandler()
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        TerminalApplicationDelegate.onCreate(binding.activity.application)
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {}
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
+
+    override fun onDetachedFromActivity() {}
+}
+
+
+class TerminalPlatformPlugin(
+    private val applicationContext: Context,
+    private val handlers: TerminalHandlersApi,
+    private val discoverReadersSubject: DiscoverReadersSubject,
+) : TerminalPlatformApi {
+
     private val terminal: Terminal get() = Terminal.getInstance()
 
     override fun onInit(shouldPrintLogs: Boolean) {
@@ -78,10 +113,9 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
             return
         }
 
-        TerminalApplicationDelegate.onCreate(activity!!.application)
         val delegate = TerminalDelegatePlugin(handlers)
         Terminal.initTerminal(
-            activity!!.applicationContext,
+            applicationContext,
             if (shouldPrintLogs) LogLevel.VERBOSE else LogLevel.NONE,
             delegate,
             delegate
@@ -90,16 +124,14 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
 
     override fun onClearCachedCredentials() {
         terminal.clearCachedCredentials();
-        clean();
+        clean()
     }
 
     // region Reader discovery, connection and updates
-    private lateinit var discoverReadersController: DiscoverReadersControllerApi
-    private var discoverReadersSubject = DiscoverReadersSubject()
     private val discoveredReaders: List<Reader>
         get() = discoverReadersSubject.readers
 
-    private lateinit var readerDelegate: ReaderDelegatePlugin
+    private val readerDelegate: ReaderDelegatePlugin = ReaderDelegatePlugin(handlers)
 
     override fun onGetConnectionStatus(): ConnectionStatusApi = terminal.connectionStatus.toApi()
 
@@ -116,14 +148,6 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 discoveryConfiguration = hostDiscoveryConfiguration
             )
         return result.isSupported
-    }
-
-    private fun setupDiscoverReadersController(binaryMessenger: BinaryMessenger) {
-        discoverReadersController = DiscoverReadersControllerApi(binaryMessenger)
-        discoverReadersController.setHandler(
-            discoverReadersSubject::onListen,
-            discoverReadersSubject::onCancel
-        )
     }
 
     override fun onConnectReader(result: Result<ReaderApi>, serialNumber: String, configuration: ConnectionConfigurationApi) {
@@ -571,38 +595,6 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
     }
     // endregion
 
-    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        val binaryMessenger = flutterPluginBinding.binaryMessenger
-        TerminalPlatformApi.setHandler(binaryMessenger, this)
-        handlers = TerminalHandlersApi(binaryMessenger)
-        readerDelegate = ReaderDelegatePlugin(handlers)
-
-        setupDiscoverReadersController(binaryMessenger)
-    }
-
-    override fun onDetachedFromEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        if (Terminal.isInitialized()) clean()
-
-        discoverReadersController.removeHandler()
-        TerminalPlatformApi.removeHandler()
-    }
-
-    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activity = binding.activity
-    }
-
-    override fun onDetachedFromActivityForConfigChanges() {
-        activity = null
-    }
-
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        activity = binding.activity
-    }
-
-    override fun onDetachedFromActivity() {
-        activity = null
-    }
-
     // ======================== INTERNAL METHODS
 
     private fun findActiveReader(serialNumber: String): Reader {
@@ -625,7 +617,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware, TerminalPlatformApi {
                 .toPlatformError()
     }
 
-    private fun clean() {
+    internal fun clean() {
         if (terminal.connectedReader != null) {
             runOnMainThread {
                 terminal.disconnectReader(EmptyCallback())

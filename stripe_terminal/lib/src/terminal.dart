@@ -522,7 +522,7 @@ class Terminal {
   Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
 
   /// Configure Tap to Pay UX
-  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async =>
+  Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async =>
       await _platform.setTapToPayUXConfiguration(configuration);
 //endregion
 

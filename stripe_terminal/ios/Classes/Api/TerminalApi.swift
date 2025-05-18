@@ -241,7 +241,7 @@ protocol TerminalPlatformApi {
     func onClearReaderDisplay() async throws -> Void
 
     func onSetTapToPayUXConfiguration(
-        _ configuration: TapToPayUXConfigurationApi
+        _ configuration: TapToPayUxConfigurationApi
     ) throws -> Void
 }
 
@@ -441,7 +441,7 @@ func setTerminalPlatformApiHandler(
                     return nil
                 }
             case "setTapToPayUXConfiguration":
-                let res = try hostApi.onSetTapToPayUXConfiguration(TapToPayUXConfigurationApi.deserialize(args[0] as! [Any?]))
+                let res = try hostApi.onSetTapToPayUXConfiguration(TapToPayUxConfigurationApi.deserialize(args[0] as! [Any?]))
                 result(nil)
             default:
                 result(FlutterMethodNotImplemented)
@@ -1602,36 +1602,42 @@ struct SimulatorConfigurationApi {
     }
 }
 
-struct TapToPayUXConfigurationApi {
-    let colors: TapToPayUxConfigurationColorsApi?
+struct TapToPayUxConfigurationApi {
+    let colors: TapToPayUxConfigurationColorSchemeApi?
+    let darkMode: TapToPayUxConfigurationDarkModeApi?
     let tapZone: TapToPayUxConfigurationTapZoneApi?
-    let theme: TapToPayUxConfigurationThemeApi?
 
     static func deserialize(
         _ serialized: [Any?]
-    ) -> TapToPayUXConfigurationApi {
-        return TapToPayUXConfigurationApi(
-            colors: !(serialized[0] is NSNull) ? TapToPayUxConfigurationColorsApi.deserialize(serialized[0] as! [Any?]) : nil,
-            tapZone: !(serialized[1] is NSNull) ? TapToPayUxConfigurationTapZoneApi.deserialize(serialized[1] as! [Any?]) : nil,
-            theme: !(serialized[2] is NSNull) ? TapToPayUxConfigurationThemeApi(rawValue: serialized[2] as! Int)! : nil
+    ) -> TapToPayUxConfigurationApi {
+        return TapToPayUxConfigurationApi(
+            colors: !(serialized[0] is NSNull) ? TapToPayUxConfigurationColorSchemeApi.deserialize(serialized[0] as! [Any?]) : nil,
+            darkMode: !(serialized[1] is NSNull) ? TapToPayUxConfigurationDarkModeApi(rawValue: serialized[1] as! Int)! : nil,
+            tapZone: !(serialized[2] is NSNull) ? TapToPayUxConfigurationTapZoneApi.deserialize(serialized[2] as! [Any?]) : nil
         )
     }
 }
 
-struct TapToPayUxConfigurationColorsApi {
-    let error: String?
-    let primary: String?
-    let success: String?
+struct TapToPayUxConfigurationColorSchemeApi {
+    let error: Int?
+    let primary: Int?
+    let success: Int?
 
     static func deserialize(
         _ serialized: [Any?]
-    ) -> TapToPayUxConfigurationColorsApi {
-        return TapToPayUxConfigurationColorsApi(
-            error: serialized[0] as? String,
-            primary: serialized[1] as? String,
-            success: serialized[2] as? String
+    ) -> TapToPayUxConfigurationColorSchemeApi {
+        return TapToPayUxConfigurationColorSchemeApi(
+            error: serialized[0] as? Int,
+            primary: serialized[1] as? Int,
+            success: serialized[2] as? Int
         )
     }
+}
+
+enum TapToPayUxConfigurationDarkModeApi: Int {
+    case system
+    case light
+    case dark
 }
 
 struct TapToPayUxConfigurationTapZoneApi {
@@ -1649,7 +1655,6 @@ struct TapToPayUxConfigurationTapZoneApi {
 }
 
 enum TapToPayUxConfigurationTapZoneIndicatorApi: Int {
-    case deviceDefault
     case above
     case below
     case front
@@ -1668,12 +1673,6 @@ struct TapToPayUxConfigurationTapZonePositionApi {
             yBias: serialized[1] as! Double
         )
     }
-}
-
-enum TapToPayUxConfigurationThemeApi: Int {
-    case system
-    case light
-    case dark
 }
 
 struct TerminalExceptionApi {

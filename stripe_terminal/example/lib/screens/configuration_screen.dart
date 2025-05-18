@@ -20,7 +20,7 @@ class ConfigurationScreen extends ConsumerStatefulWidget {
 
 class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with StateTools {
   Future<void> _setConfig() async {
-    await Terminal.instance.setTapToPayUXConfiguration(const TapToPayUXConfiguration(
+    await Terminal.instance.setTapToPayUXConfiguration(const TapToPayUxConfiguration(
       tapZone: TapToPayUxConfigurationTapZone(
         indicator: TapToPayUxConfigurationTapZoneIndicator.below,
         position: TapToPayUxConfigurationTapZonePosition(
@@ -28,19 +28,18 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
           yBias: 0.5,
         ),
       ),
-      colors: TapToPayUxConfigurationColors(
-        primary: '#FF0000FF',
-        success: '#FF00FF00',
-        error: '#FFFF0000',
+      colors: TapToPayUxConfigurationColorScheme(
+        primary: 0xFF0000FF,
+        success: 0xFF00FF00,
+        error: 0xFFFF0000,
       ),
-      theme: TapToPayUxConfigurationTheme.dark,
+      darkMode: TapToPayUxConfigurationDarkMode.dark,
     ));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configured!')));
   }
 
   @override
   Widget build(BuildContext context) {
-    final paymentStatus = ref.watch(widget.paymentStatusListenable);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configuration'),
@@ -48,16 +47,10 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
       ),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ListTile(
-              selected: true,
-              title: Text('Payment Status: ${paymentStatus.name}'),
-            ),
-            const Divider(height: 32.0),
             FilledButton.tonal(
-              onPressed: () async {
-                await _setConfig();
-              },
+              onPressed: _setConfig,
               child: const Text('Set Config'),
             ),
           ],

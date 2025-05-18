@@ -29,7 +29,6 @@ import com.stripe.stripeterminal.log.LogLevel
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.BinaryMessenger
 import mek.stripeterminal.api.AllowRedisplayApi
 import mek.stripeterminal.api.CartApi
 import mek.stripeterminal.api.ConnectionConfigurationApi
@@ -47,7 +46,7 @@ import mek.stripeterminal.api.Result
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.SimulatorConfigurationApi
-import mek.stripeterminal.api.TapToPayUXConfigurationApi
+import mek.stripeterminal.api.TapToPayUxConfigurationApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
 import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.api.TerminalPlatformApi
@@ -590,7 +589,7 @@ class TerminalPlatformPlugin(
         )
     }
 
-    override fun onSetTapToPayUXConfiguration(configuration: TapToPayUXConfigurationApi) {
+    override fun onSetTapToPayUXConfiguration(configuration: TapToPayUxConfigurationApi) {
         terminal.setTapToPayUxConfiguration(configuration.toHost());
     }
     // endregion

@@ -1,15 +1,18 @@
-/// The `TapToPayUxConfiguration` class is used to configure the UX of the Tap to Pay flow.
-///
-/// Do not create new instances of this class. Instead, set the properties via [Terminal.setTapToPayUxConfiguration].
-class TapToPayUXConfiguration {
+/// Configuration for the user experience (UX) of the Tap to Pay screen. This configuration is only
+/// used for the Tap to Pay reader to customize the appearance of the Tap to Pay screen. There are
+/// three main components to the configuration:
+/// - The type and position of the tap zone indicator, which directs the user where to tap their payment method.
+/// - The overall theme for this screen, either light or dark mode.
+/// - The color scheme for this screen.
+class TapToPayUxConfiguration {
   final TapToPayUxConfigurationTapZone? tapZone;
-  final TapToPayUxConfigurationColors? colors;
-  final TapToPayUxConfigurationTheme? theme;
+  final TapToPayUxConfigurationColorScheme? colors;
+  final TapToPayUxConfigurationDarkMode? darkMode;
 
-  const TapToPayUXConfiguration({
+  const TapToPayUxConfiguration({
     this.tapZone,
     this.colors,
-    this.theme,
+    this.darkMode,
   });
 }
 
@@ -24,7 +27,6 @@ class TapToPayUxConfigurationTapZone {
 }
 
 enum TapToPayUxConfigurationTapZoneIndicator {
-  deviceDefault,
   above,
   below,
   front,
@@ -41,19 +43,24 @@ class TapToPayUxConfigurationTapZonePosition {
   });
 }
 
-class TapToPayUxConfigurationColors {
-  final String? primary;
-  final String? success;
-  final String? error;
+class TapToPayUxConfigurationColorScheme {
+  /// The color value in the form 0xAARRGGBB.
+  final int? primary;
 
-  const TapToPayUxConfigurationColors({
+  /// The color value in the form 0xAARRGGBB.
+  final int? success;
+
+  /// The color value in the form 0xAARRGGBB.
+  final int? error;
+
+  const TapToPayUxConfigurationColorScheme({
     this.primary,
     this.success,
     this.error,
   });
 }
 
-enum TapToPayUxConfigurationTheme {
+enum TapToPayUxConfigurationDarkMode {
   system,
   light,
   dark,

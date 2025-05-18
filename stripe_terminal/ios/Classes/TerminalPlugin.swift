@@ -444,7 +444,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         }
     }
     
-    func onSetTapToPayUXConfiguration(_ configuration: TapToPayUXConfigurationApi) throws {
+    func onSetTapToPayUXConfiguration(_ configuration: TapToPayUxConfigurationApi) throws {
         throw PlatformError("mek_stripe_terminal", "setTapToPayUXConfiguration method not supported on ios device");
     }
     

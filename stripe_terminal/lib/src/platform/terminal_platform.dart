@@ -170,7 +170,7 @@ abstract class TerminalPlatform {
   Future<void> clearReaderDisplay();
 
   @MethodApi(kotlin: MethodApiType.sync, swift: MethodApiType.sync)
-  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration);
+  Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration);
 //endregion
 
   // TODO: add support to collectData and setLocalMobileUxConfiguration methods

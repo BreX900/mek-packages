@@ -459,10 +459,10 @@ class _$TerminalPlatform implements TerminalPlatform {
   }
 
   @override
-  Future<void> setTapToPayUXConfiguration(TapToPayUXConfiguration configuration) async {
+  Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async {
     try {
       await _$channel.invokeMethod(
-          'setTapToPayUXConfiguration', [_$serializeTapToPayUXConfiguration(configuration)]);
+          'setTapToPayUXConfiguration', [_$serializeTapToPayUxConfiguration(configuration)]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -813,17 +813,17 @@ List<Object?> _$serializeSimulatorConfiguration(SimulatorConfiguration deseriali
       deserialized.simulatedTipAmount,
       deserialized.update.index
     ];
-List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [
+List<Object?> _$serializeTapToPayUxConfiguration(TapToPayUxConfiguration deserialized) => [
       deserialized.colors != null
-          ? _$serializeTapToPayUxConfigurationColors(deserialized.colors!)
+          ? _$serializeTapToPayUxConfigurationColorScheme(deserialized.colors!)
           : null,
+      deserialized.darkMode?.index,
       deserialized.tapZone != null
           ? _$serializeTapToPayUxConfigurationTapZone(deserialized.tapZone!)
-          : null,
-      deserialized.theme?.index
+          : null
     ];
-List<Object?> _$serializeTapToPayUxConfigurationColors(
-        TapToPayUxConfigurationColors deserialized) =>
+List<Object?> _$serializeTapToPayUxConfigurationColorScheme(
+        TapToPayUxConfigurationColorScheme deserialized) =>
     [deserialized.error, deserialized.primary, deserialized.success];
 List<Object?> _$serializeTapToPayUxConfigurationTapZone(
         TapToPayUxConfigurationTapZone deserialized) =>

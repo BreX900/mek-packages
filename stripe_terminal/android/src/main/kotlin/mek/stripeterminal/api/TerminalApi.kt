@@ -229,7 +229,7 @@ interface TerminalPlatformApi {
     )
 
     fun onSetTapToPayUXConfiguration(
-        configuration: TapToPayUXConfigurationApi,
+        configuration: TapToPayUxConfigurationApi,
     )
 
     private fun onMethodCall(
@@ -382,7 +382,7 @@ interface TerminalPlatformApi {
                     onClearReaderDisplay(res)
                 }
                 "setTapToPayUXConfiguration" -> {
-                    onSetTapToPayUXConfiguration((args[0] as List<Any?>).let { TapToPayUXConfigurationApi.deserialize(it) })
+                    onSetTapToPayUXConfiguration((args[0] as List<Any?>).let { TapToPayUxConfigurationApi.deserialize(it) })
                     result.success(null)
                 }
             }
@@ -1480,40 +1480,44 @@ data class SimulatorConfigurationApi(
     }
 }
 
-data class TapToPayUXConfigurationApi(
-    val colors: TapToPayUxConfigurationColorsApi?,
+data class TapToPayUxConfigurationApi(
+    val colors: TapToPayUxConfigurationColorSchemeApi?,
+    val darkMode: TapToPayUxConfigurationDarkModeApi?,
     val tapZone: TapToPayUxConfigurationTapZoneApi?,
-    val theme: TapToPayUxConfigurationThemeApi?,
 ) {
     companion object {
         fun deserialize(
             serialized: List<Any?>,
-        ): TapToPayUXConfigurationApi {
-            return TapToPayUXConfigurationApi(
-                colors = (serialized[0] as List<Any?>?)?.let { TapToPayUxConfigurationColorsApi.deserialize(it) },
-                tapZone = (serialized[1] as List<Any?>?)?.let { TapToPayUxConfigurationTapZoneApi.deserialize(it) },
-                theme = (serialized[2] as Int?)?.let { TapToPayUxConfigurationThemeApi.values()[it] },
+        ): TapToPayUxConfigurationApi {
+            return TapToPayUxConfigurationApi(
+                colors = (serialized[0] as List<Any?>?)?.let { TapToPayUxConfigurationColorSchemeApi.deserialize(it) },
+                darkMode = (serialized[1] as Int?)?.let { TapToPayUxConfigurationDarkModeApi.values()[it] },
+                tapZone = (serialized[2] as List<Any?>?)?.let { TapToPayUxConfigurationTapZoneApi.deserialize(it) },
             )
         }
     }
 }
 
-data class TapToPayUxConfigurationColorsApi(
-    val error: String?,
-    val primary: String?,
-    val success: String?,
+data class TapToPayUxConfigurationColorSchemeApi(
+    val error: Long?,
+    val primary: Long?,
+    val success: Long?,
 ) {
     companion object {
         fun deserialize(
             serialized: List<Any?>,
-        ): TapToPayUxConfigurationColorsApi {
-            return TapToPayUxConfigurationColorsApi(
-                error = serialized[0] as String?,
-                primary = serialized[1] as String?,
-                success = serialized[2] as String?,
+        ): TapToPayUxConfigurationColorSchemeApi {
+            return TapToPayUxConfigurationColorSchemeApi(
+                error = (serialized[0] as? Number)?.toLong(),
+                primary = (serialized[1] as? Number)?.toLong(),
+                success = (serialized[2] as? Number)?.toLong(),
             )
         }
     }
+}
+
+enum class TapToPayUxConfigurationDarkModeApi {
+    SYSTEM, LIGHT, DARK;
 }
 
 data class TapToPayUxConfigurationTapZoneApi(
@@ -1533,7 +1537,7 @@ data class TapToPayUxConfigurationTapZoneApi(
 }
 
 enum class TapToPayUxConfigurationTapZoneIndicatorApi {
-    DEVICE_DEFAULT, ABOVE, BELOW, FRONT, BEHIND;
+    ABOVE, BELOW, FRONT, BEHIND;
 }
 
 data class TapToPayUxConfigurationTapZonePositionApi(
@@ -1550,10 +1554,6 @@ data class TapToPayUxConfigurationTapZonePositionApi(
             )
         }
     }
-}
-
-enum class TapToPayUxConfigurationThemeApi {
-    SYSTEM, LIGHT, DARK;
 }
 
 data class TerminalExceptionApi(

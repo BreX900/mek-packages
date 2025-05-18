@@ -1,3 +1,5 @@
+- feat(android): configure tap to pay UX. Thanks [@hrueger](https://github.com/hrueger)
+
 ## 4.0.4
 - chore(android): when plugin si attached to activity the `Terminal.onCreate` method is called [#104](https://github.com/BreX900/mek-packages/issues/104)
 

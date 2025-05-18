@@ -1,4 +1,7 @@
 
+## 4.4.1
+- feat: added `allowRedisplay` param on `collectPaymentMethod` method
+
 ## 4.4.0
 - feat: bumped android and ios sdk version to `4.4.0`
 - fix(ios): fixed wrong mapping tap to pay configuration

@@ -275,6 +275,7 @@ class Terminal {
     TippingConfiguration? tippingConfiguration,
     bool shouldUpdatePaymentIntent = false,
     bool customerCancellationEnabled = false,
+    AllowRedisplay allowRedisplay = AllowRedisplay.unspecified,
   }) {
     return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
       return await _platform.startCollectPaymentMethod(
@@ -286,6 +287,7 @@ class Terminal {
         tippingConfiguration: tippingConfiguration,
         shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
         customerCancellationEnabled: customerCancellationEnabled,
+        allowRedisplay: allowRedisplay,
       );
     });
   }

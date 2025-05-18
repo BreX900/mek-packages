@@ -98,6 +98,7 @@ abstract class TerminalPlatform {
     required TippingConfiguration? tippingConfiguration,
     required bool shouldUpdatePaymentIntent,
     required bool customerCancellationEnabled,
+    required AllowRedisplay allowRedisplay,
   });
 
   Future<void> stopCollectPaymentMethod(int operationId);

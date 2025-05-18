@@ -150,7 +150,8 @@ protocol TerminalPlatformApi {
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
-        _ customerCancellationEnabled: Bool
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi
     ) throws
 
     func onStopCollectPaymentMethod(
@@ -364,7 +365,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? String, args[4] as! Bool, !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil, args[6] as! Bool, args[7] as! Bool)
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? String, args[4] as! Bool, !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil, args[6] as! Bool, args[7] as! Bool, AllowRedisplayApi(rawValue: args[8] as! Int)!)
             case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)

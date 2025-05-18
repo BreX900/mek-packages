@@ -265,7 +265,8 @@ class TerminalPlatformPlugin(
         skipTipping: Boolean,
         tippingConfiguration: TippingConfigurationApi?,
         shouldUpdatePaymentIntent: Boolean,
-        customerCancellationEnabled: Boolean
+        customerCancellationEnabled: Boolean,
+        allowRedisplay: AllowRedisplayApi
     ) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
         val config =
@@ -276,6 +277,7 @@ class TerminalPlatformPlugin(
                 .setTippingConfiguration(tippingConfiguration?.toHost())
                 .updatePaymentIntent(shouldUpdatePaymentIntent)
                 .setEnableCustomerCancellation(customerCancellationEnabled)
+                .setAllowRedisplay(allowRedisplay.toHost())
 
         cancelablesCollectPaymentMethod[operationId] =
             terminal.collectPaymentMethod(
@@ -415,11 +417,7 @@ class TerminalPlatformPlugin(
             terminal.collectSetupIntentPaymentMethod(
                 setupIntent,
                 config = config.build(),
-                allowRedisplay = when (allowRedisplay) {
-                    AllowRedisplayApi.ALWAYS -> AllowRedisplay.ALWAYS
-                    AllowRedisplayApi.LIMITED -> AllowRedisplay.LIMITED
-                    AllowRedisplayApi.UNSPECIFIED -> AllowRedisplay.UNSPECIFIED
-                },
+                allowRedisplay = allowRedisplay.toHost(),
                 callback =
                 object : TerminalErrorHandler(result::error), SetupIntentCallback {
                     override fun onFailure(e: TerminalException) {

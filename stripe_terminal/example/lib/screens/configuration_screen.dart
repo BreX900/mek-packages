@@ -35,7 +35,11 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
       ),
       darkMode: TapToPayUxConfigurationDarkMode.dark,
     ));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configured!')));
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Configured!'),
+    ));
   }
 
   @override
@@ -50,7 +54,7 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FilledButton.tonal(
-              onPressed: _setConfig,
+              onPressed: () => mutate(_setConfig),
               child: const Text('Set Config'),
             ),
           ],

@@ -126,6 +126,7 @@ interface TerminalPlatformApi {
         tippingConfiguration: TippingConfigurationApi?,
         shouldUpdatePaymentIntent: Boolean,
         customerCancellationEnabled: Boolean,
+        allowRedisplay: AllowRedisplayApi,
     )
 
     fun onStopCollectPaymentMethod(
@@ -311,7 +312,7 @@ interface TerminalPlatformApi {
                 }
                 "startCollectPaymentMethod" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as String?, args[4] as Boolean, (args[5] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) }, args[6] as Boolean, args[7] as Boolean)
+                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as String?, args[4] as Boolean, (args[5] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) }, args[6] as Boolean, args[7] as Boolean, (args[8] as Int).let { AllowRedisplayApi.values()[it] })
                 }
                 "stopCollectPaymentMethod" -> {
                     val res = Result<Unit>(result) { null }

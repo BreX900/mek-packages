@@ -217,6 +217,7 @@ class _$TerminalPlatform implements TerminalPlatform {
     required TippingConfiguration? tippingConfiguration,
     required bool shouldUpdatePaymentIntent,
     required bool customerCancellationEnabled,
+    required AllowRedisplay allowRedisplay,
   }) async {
     try {
       final result = await _$channel.invokeMethod('startCollectPaymentMethod', [
@@ -227,7 +228,8 @@ class _$TerminalPlatform implements TerminalPlatform {
         skipTipping,
         tippingConfiguration != null ? _$serializeTippingConfiguration(tippingConfiguration) : null,
         shouldUpdatePaymentIntent,
-        customerCancellationEnabled
+        customerCancellationEnabled,
+        allowRedisplay.index
       ]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {

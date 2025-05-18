@@ -158,4 +158,15 @@ class SetupAttemptCardPresentDetails with _$SetupAttemptCardPresentDetails {
   });
 }
 
-enum AllowRedisplay { always, limited, unspecified }
+/// A field used to indicate whether a payment method can be shown again to its customer in a
+/// checkout flow. Consent must be obtained to set this field.
+enum AllowRedisplay {
+  /// Use always to indicate that this payment method can always be shown to a customer in a checkout flow.
+  always,
+
+  /// Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription.
+  limited,
+
+  /// This is the default value for payment methods where allow_redisplay wasn’t set.
+  unspecified
+}

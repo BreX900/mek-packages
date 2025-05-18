@@ -202,7 +202,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
-        _ customerCancellationEnabled: Bool
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
         let config = CollectConfigurationBuilder()
@@ -212,6 +213,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             .setTippingConfiguration(try tippingConfiguration?.toHost())
             .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
             .setEnableCustomerCancellation(customerCancellationEnabled)
+            .setAllowRedisplay(allowRedisplay.toHost())
             
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(
             paymentIntent,

@@ -31,10 +31,10 @@ fun ConnectionConfigurationApi.toHost(readerDelegate: ReaderDelegatePlugin): Con
             failIfInUse = failIfInUse,
             internetReaderListener = readerDelegate,
         )
-        is TapToPayConnectionConfigurationApi -> ConnectionConfiguration.BluetoothConnectionConfiguration(
+        is TapToPayConnectionConfigurationApi -> ConnectionConfiguration.TapToPayConnectionConfiguration(
             locationId = locationId,
             autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
-            bluetoothReaderListener = readerDelegate
+            tapToPayReaderListener = readerDelegate
         )
         is UsbConnectionConfigurationApi -> ConnectionConfiguration.UsbConnectionConfiguration(
             locationId = locationId,

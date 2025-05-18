@@ -18,6 +18,12 @@ extension DisconnectReason {
             return .poweredOff
         case .bluetoothDisabled:
             return .bluetoothDisabled
+        case .idlePowerDown:
+            return .idlePowerDown
+        case .usbDisconnected:
+            return .usbDisconnected
+        case .bluetoothSignalLost:
+            return .bluetoothSignalLost
         @unknown default:
             fatalError("WTF")
         }

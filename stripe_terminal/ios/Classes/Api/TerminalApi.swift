@@ -918,6 +918,11 @@ enum DeviceTypeApi: Int {
     case stripeS700Devkit
     case stripeS710
     case stripeS710Devkit
+    case verifoneV660p
+    case verifoneM425
+    case verifoneM450
+    case verifoneP630
+    case verifoneUX700
 }
 
 enum DisconnectReasonApi: Int {
@@ -928,6 +933,9 @@ enum DisconnectReasonApi: Int {
     case criticallyLowBattery
     case poweredOff
     case bluetoothDisabled
+    case usbDisconnected
+    case idlePowerDown
+    case bluetoothSignalLost
 }
 
 protocol DiscoveryConfigurationApi {}
@@ -1595,31 +1603,47 @@ struct SimulatorConfigurationApi {
 }
 
 struct TapToPayUXConfigurationApi {
+    let colors: TapToPayUxConfigurationColorsApi?
+    let tapZone: TapToPayUxConfigurationTapZoneApi?
+    let theme: TapToPayUxConfigurationThemeApi?
+
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayUXConfigurationApi {
         return TapToPayUXConfigurationApi(
-        
+            colors: !(serialized[0] is NSNull) ? TapToPayUxConfigurationColorsApi.deserialize(serialized[0] as! [Any?]) : nil,
+            tapZone: !(serialized[1] is NSNull) ? TapToPayUxConfigurationTapZoneApi.deserialize(serialized[1] as! [Any?]) : nil,
+            theme: !(serialized[2] is NSNull) ? TapToPayUxConfigurationThemeApi(rawValue: serialized[2] as! Int)! : nil
         )
     }
 }
 
 struct TapToPayUxConfigurationColorsApi {
+    let error: String?
+    let primary: String?
+    let success: String?
+
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayUxConfigurationColorsApi {
         return TapToPayUxConfigurationColorsApi(
-        
+            error: serialized[0] as? String,
+            primary: serialized[1] as? String,
+            success: serialized[2] as? String
         )
     }
 }
 
 struct TapToPayUxConfigurationTapZoneApi {
+    let indicator: TapToPayUxConfigurationTapZoneIndicatorApi?
+    let position: TapToPayUxConfigurationTapZonePositionApi?
+
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayUxConfigurationTapZoneApi {
         return TapToPayUxConfigurationTapZoneApi(
-        
+            indicator: !(serialized[0] is NSNull) ? TapToPayUxConfigurationTapZoneIndicatorApi(rawValue: serialized[0] as! Int)! : nil,
+            position: !(serialized[1] is NSNull) ? TapToPayUxConfigurationTapZonePositionApi.deserialize(serialized[1] as! [Any?]) : nil
         )
     }
 }
@@ -1633,11 +1657,15 @@ enum TapToPayUxConfigurationTapZoneIndicatorApi: Int {
 }
 
 struct TapToPayUxConfigurationTapZonePositionApi {
+    let xBias: Double
+    let yBias: Double
+
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayUxConfigurationTapZonePositionApi {
         return TapToPayUxConfigurationTapZonePositionApi(
-        
+            xBias: serialized[0] as! Double,
+            yBias: serialized[1] as! Double
         )
     }
 }
@@ -1730,6 +1758,7 @@ enum TerminalExceptionCodeApi: Int {
     case readerBusy
     case incompatibleReader
     case readerCommunicationError
+    case readerTampered
     case unknownReaderIpAddress
     case internetConnectTimeOut
     case connectFailedReaderIsInUse
@@ -1796,6 +1825,13 @@ enum TerminalExceptionCodeApi: Int {
     case collectInputsApplicationError
     case collectInputsTimedOut
     case canceledDueToIntegrationError
+    case printerBusy
+    case printerPaperjam
+    case printerOutOfPaper
+    case printerCoverOpen
+    case printerAbsent
+    case printerUnavailable
+    case printerError
     case collectInputsUnsupported
     case readerSettingsError
     case invalidSurchargeParameter

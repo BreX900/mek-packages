@@ -813,16 +813,29 @@ List<Object?> _$serializeSimulatorConfiguration(SimulatorConfiguration deseriali
       deserialized.simulatedTipAmount,
       deserialized.update.index
     ];
-List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [];
+List<Object?> _$serializeTapToPayUXConfiguration(TapToPayUXConfiguration deserialized) => [
+      deserialized.colors != null
+          ? _$serializeTapToPayUxConfigurationColors(deserialized.colors!)
+          : null,
+      deserialized.tapZone != null
+          ? _$serializeTapToPayUxConfigurationTapZone(deserialized.tapZone!)
+          : null,
+      deserialized.theme?.index
+    ];
 List<Object?> _$serializeTapToPayUxConfigurationColors(
         TapToPayUxConfigurationColors deserialized) =>
-    [];
+    [deserialized.error, deserialized.primary, deserialized.success];
 List<Object?> _$serializeTapToPayUxConfigurationTapZone(
         TapToPayUxConfigurationTapZone deserialized) =>
-    [];
+    [
+      deserialized.indicator?.index,
+      deserialized.position != null
+          ? _$serializeTapToPayUxConfigurationTapZonePosition(deserialized.position!)
+          : null
+    ];
 List<Object?> _$serializeTapToPayUxConfigurationTapZonePosition(
         TapToPayUxConfigurationTapZonePosition deserialized) =>
-    [];
+    [deserialized.xBias, deserialized.yBias];
 TerminalException _$deserializeTerminalException(List<Object?> serialized) => TerminalException(
     apiError: serialized[0],
     code: TerminalExceptionCode.values[serialized[1] as int],

@@ -120,5 +120,13 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.GENERIC_READER_ERROR -> TerminalExceptionCodeApi.UNEXPECTED_READER_ERROR
         TerminalErrorCode.ALLOW_REDISPLAY_INVALID -> TerminalExceptionCodeApi.ALLOW_REDISPLAY_INVALID
         TerminalErrorCode.CANCELED_DUE_TO_INTEGRATION_ERROR -> TerminalExceptionCodeApi.CANCELED_DUE_TO_INTEGRATION_ERROR
+        TerminalErrorCode.READER_TAMPERED -> TerminalExceptionCodeApi.READER_TAMPERED
+        TerminalErrorCode.PRINTER_BUSY -> TerminalExceptionCodeApi.PRINTER_BUSY
+        TerminalErrorCode.PRINTER_PAPERJAM -> TerminalExceptionCodeApi.PRINTER_PAPERJAM
+        TerminalErrorCode.PRINTER_OUT_OF_PAPER -> TerminalExceptionCodeApi.PRINTER_OUT_OF_PAPER
+        TerminalErrorCode.PRINTER_COVER_OPEN -> TerminalExceptionCodeApi.PRINTER_COVER_OPEN
+        TerminalErrorCode.PRINTER_ABSENT -> TerminalExceptionCodeApi.PRINTER_ABSENT
+        TerminalErrorCode.PRINTER_UNAVAILABLE -> TerminalExceptionCodeApi.PRINTER_UNAVAILABLE
+        TerminalErrorCode.PRINTER_ERROR -> TerminalExceptionCodeApi.PRINTER_ERROR
     }
 }

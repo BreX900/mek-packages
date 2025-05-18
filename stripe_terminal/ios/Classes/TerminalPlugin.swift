@@ -3,6 +3,8 @@ import StripeTerminal
 import UIKit
 
 public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
+    
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = TerminalPlugin(registrar.messenger())
         setTerminalPlatformApiHandler(registrar.messenger(), instance)
@@ -440,6 +442,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         } catch let error as NSError {
             throw error.toPlatformError()
         }
+    }
+    
+    func onSetTapToPayUXConfiguration(_ configuration: TapToPayUXConfigurationApi) throws {
+        throw PlatformError("mek_stripe_terminal", "setTapToPayUXConfiguration method not supported on ios device");
     }
     
 // MARK: - PRIVATE METHODS

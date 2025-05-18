@@ -1,3 +1,6 @@
+
+- feat: bumped android and ios sdk version to `4.4.0`
+- fix(ios): fixed wrong mapping tap to pay configuration
 - feat(android): configure tap to pay UX. Thanks [@hrueger](https://github.com/hrueger)
 
 ## 4.0.4

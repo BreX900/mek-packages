@@ -87,6 +87,16 @@ extension DeviceType {
             return .stripeS700
         case .stripeS700DevKit:
             return .stripeS700Devkit
+        case .verifoneV660p:
+            return .verifoneV660p
+        case .verifoneM425:
+            return .verifoneM425
+        case .verifoneM450:
+            return .verifoneM450
+        case .verifoneP630:
+            return .verifoneP630
+        case .verifoneUX700:
+            return .verifoneUX700
         @unknown default:
             fatalError("DeviceType \(self) not supported.")
         }
@@ -302,6 +312,16 @@ extension DeviceTypeApi {
             return .tapToPay
         case .stripeS710, .stripeS710Devkit, .wisePad3s:
             return nil
+        case .verifoneV660p:
+            return .verifoneV660p
+        case .verifoneM425:
+            return .verifoneM425
+        case .verifoneM450:
+            return .verifoneM450
+        case .verifoneP630:
+            return .verifoneP630
+        case .verifoneUX700:
+            return .verifoneUX700
         }
     }
 }

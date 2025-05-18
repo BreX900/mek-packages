@@ -286,6 +286,24 @@ extension NSError {
             return .canceledDueToIntegrationError
         case .commandInvalidAllowRedisplay:
             return .commandInvalidAllowRedisplay
+        case .printerBusy:
+            return .printerBusy
+        case .printerPaperJam:
+            return .printerPaperjam
+        case .printerOutOfPaper:
+            return .printerOutOfPaper
+        case .printerCoverOpen:
+            return .printerCoverOpen
+        case .printerAbsent:
+            return .printerAbsent
+        case .printerUnavailable:
+            return .printerUnavailable
+        case .printerError:
+            return .printerError
+        case .collectDataApplicationError:
+            return .collectInputsApplicationError
+        case .tapToPayInternalNetworkError:
+            return .internalNetworkError
         @unknown default:
             fatalError()
         }

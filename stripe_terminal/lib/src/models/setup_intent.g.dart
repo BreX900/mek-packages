@@ -91,7 +91,8 @@ mixin _$SetupAttempt {
 }
 
 mixin _$SetupAttemptPaymentMethodDetails {
-  SetupAttemptPaymentMethodDetails get _self => this as SetupAttemptPaymentMethodDetails;
+  SetupAttemptPaymentMethodDetails get _self =>
+      this as SetupAttemptPaymentMethodDetails;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -115,7 +116,8 @@ mixin _$SetupAttemptPaymentMethodDetails {
 }
 
 mixin _$SetupAttemptCardPresentDetails {
-  SetupAttemptCardPresentDetails get _self => this as SetupAttemptCardPresentDetails;
+  SetupAttemptCardPresentDetails get _self =>
+      this as SetupAttemptCardPresentDetails;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

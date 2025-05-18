@@ -239,6 +239,10 @@ protocol TerminalPlatformApi {
     ) async throws -> Void
 
     func onClearReaderDisplay() async throws -> Void
+
+    func onSetTapToPayUXConfiguration(
+        _ configuration: TapToPayUXConfigurationApi
+    ) throws -> Void
 }
 
 class DiscoverReadersControllerApi {
@@ -436,6 +440,9 @@ func setTerminalPlatformApiHandler(
                     try await hostApi.onClearReaderDisplay()
                     return nil
                 }
+            case "setTapToPayUXConfiguration":
+                let res = try hostApi.onSetTapToPayUXConfiguration(TapToPayUXConfigurationApi.deserialize(args[0] as! [Any?]))
+                result(nil)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -520,6 +527,25 @@ class TerminalHandlersApi {
         channel.invokeMethod("_onDisconnect", arguments: [reason.rawValue])
     }
 
+    func readerStartInstallingUpdate(
+        update: ReaderSoftwareUpdateApi
+    ) {
+        channel.invokeMethod("_onReaderStartInstallingUpdate", arguments: [update.serialize()])
+    }
+
+    func readerReportSoftwareUpdateProgress(
+        progress: Double
+    ) {
+        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", arguments: [progress])
+    }
+
+    func readerFinishInstallingUpdate(
+        update: ReaderSoftwareUpdateApi?,
+        exception: TerminalExceptionApi?
+    ) {
+        channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
+    }
+
     func readerRequestDisplayMessage(
         message: ReaderDisplayMessageApi
     ) {
@@ -548,25 +574,6 @@ class TerminalHandlersApi {
         update: ReaderSoftwareUpdateApi
     ) {
         channel.invokeMethod("_onReaderReportAvailableUpdate", arguments: [update.serialize()])
-    }
-
-    func readerStartInstallingUpdate(
-        update: ReaderSoftwareUpdateApi
-    ) {
-        channel.invokeMethod("_onReaderStartInstallingUpdate", arguments: [update.serialize()])
-    }
-
-    func readerReportSoftwareUpdateProgress(
-        progress: Double
-    ) {
-        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", arguments: [progress])
-    }
-
-    func readerFinishInstallingUpdate(
-        update: ReaderSoftwareUpdateApi?,
-        exception: TerminalExceptionApi?
-    ) {
-        channel.invokeMethod("_onReaderFinishInstallingUpdate", arguments: [update?.serialize(), exception?.serialize()])
     }
 
     func readerAcceptTermsOfService() {
@@ -1585,6 +1592,60 @@ struct SimulatorConfigurationApi {
             update: SimulateReaderUpdateApi(rawValue: serialized[2] as! Int)!
         )
     }
+}
+
+struct TapToPayUXConfigurationApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUXConfigurationApi {
+        return TapToPayUXConfigurationApi(
+        
+        )
+    }
+}
+
+struct TapToPayUxConfigurationColorsApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationColorsApi {
+        return TapToPayUxConfigurationColorsApi(
+        
+        )
+    }
+}
+
+struct TapToPayUxConfigurationTapZoneApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationTapZoneApi {
+        return TapToPayUxConfigurationTapZoneApi(
+        
+        )
+    }
+}
+
+enum TapToPayUxConfigurationTapZoneIndicatorApi: Int {
+    case deviceDefault
+    case above
+    case below
+    case front
+    case behind
+}
+
+struct TapToPayUxConfigurationTapZonePositionApi {
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationTapZonePositionApi {
+        return TapToPayUxConfigurationTapZonePositionApi(
+        
+        )
+    }
+}
+
+enum TapToPayUxConfigurationThemeApi: Int {
+    case system
+    case light
+    case dark
 }
 
 struct TerminalExceptionApi {

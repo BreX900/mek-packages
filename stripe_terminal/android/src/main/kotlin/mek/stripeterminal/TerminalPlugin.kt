@@ -47,6 +47,7 @@ import mek.stripeterminal.api.Result
 import mek.stripeterminal.api.SetupIntentApi
 import mek.stripeterminal.api.SetupIntentUsageApi
 import mek.stripeterminal.api.SimulatorConfigurationApi
+import mek.stripeterminal.api.TapToPayUXConfigurationApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
 import mek.stripeterminal.api.TerminalHandlersApi
 import mek.stripeterminal.api.TerminalPlatformApi
@@ -587,6 +588,10 @@ class TerminalPlatformPlugin(
                 override fun onSuccess() = result.success(Unit)
             }
         )
+    }
+
+    override fun onSetTapToPayUXConfiguration(configuration: TapToPayUXConfigurationApi) {
+        terminal.setTapToPayUxConfiguration(configuration.toHost());
     }
     // endregion
 

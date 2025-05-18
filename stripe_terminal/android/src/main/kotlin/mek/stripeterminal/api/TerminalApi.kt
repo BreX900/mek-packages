@@ -228,6 +228,10 @@ interface TerminalPlatformApi {
         result: Result<Unit>,
     )
 
+    fun onSetTapToPayUXConfiguration(
+        configuration: TapToPayUXConfigurationApi,
+    )
+
     private fun onMethodCall(
         call: MethodCall,
         result: MethodChannel.Result,
@@ -377,6 +381,10 @@ interface TerminalPlatformApi {
                     val res = Result<Unit>(result) { null }
                     onClearReaderDisplay(res)
                 }
+                "setTapToPayUXConfiguration" -> {
+                    onSetTapToPayUXConfiguration((args[0] as List<Any?>).let { TapToPayUXConfigurationApi.deserialize(it) })
+                    result.success(null)
+                }
             }
         } catch (e: PlatformError) {
             result.error(e.code, e.message, e.details)
@@ -491,6 +499,25 @@ class TerminalHandlersApi(
         channel.invokeMethod("_onDisconnect", listOf<Any?>(reason.ordinal))
     }
 
+    fun readerStartInstallingUpdate(
+        update: ReaderSoftwareUpdateApi,
+    ) {
+        channel.invokeMethod("_onReaderStartInstallingUpdate", listOf<Any?>(update.serialize()))
+    }
+
+    fun readerReportSoftwareUpdateProgress(
+        progress: Double,
+    ) {
+        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", listOf<Any?>(progress))
+    }
+
+    fun readerFinishInstallingUpdate(
+        update: ReaderSoftwareUpdateApi?,
+        exception: TerminalExceptionApi?,
+    ) {
+        channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
+    }
+
     fun readerRequestDisplayMessage(
         message: ReaderDisplayMessageApi,
     ) {
@@ -519,25 +546,6 @@ class TerminalHandlersApi(
         update: ReaderSoftwareUpdateApi,
     ) {
         channel.invokeMethod("_onReaderReportAvailableUpdate", listOf<Any?>(update.serialize()))
-    }
-
-    fun readerStartInstallingUpdate(
-        update: ReaderSoftwareUpdateApi,
-    ) {
-        channel.invokeMethod("_onReaderStartInstallingUpdate", listOf<Any?>(update.serialize()))
-    }
-
-    fun readerReportSoftwareUpdateProgress(
-        progress: Double,
-    ) {
-        channel.invokeMethod("_onReaderReportSoftwareUpdateProgress", listOf<Any?>(progress))
-    }
-
-    fun readerFinishInstallingUpdate(
-        update: ReaderSoftwareUpdateApi?,
-        exception: TerminalExceptionApi?,
-    ) {
-        channel.invokeMethod("_onReaderFinishInstallingUpdate", listOf<Any?>(update?.serialize(), exception?.serialize()))
     }
 
     fun readerAcceptTermsOfService() {
@@ -1470,6 +1478,58 @@ data class SimulatorConfigurationApi(
             )
         }
     }
+}
+
+class TapToPayUXConfigurationApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayUXConfigurationApi {
+            return TapToPayUXConfigurationApi(
+            )
+        }
+    }
+}
+
+class TapToPayUxConfigurationColorsApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayUxConfigurationColorsApi {
+            return TapToPayUxConfigurationColorsApi(
+            )
+        }
+    }
+}
+
+class TapToPayUxConfigurationTapZoneApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayUxConfigurationTapZoneApi {
+            return TapToPayUxConfigurationTapZoneApi(
+            )
+        }
+    }
+}
+
+enum class TapToPayUxConfigurationTapZoneIndicatorApi {
+    DEVICE_DEFAULT, ABOVE, BELOW, FRONT, BEHIND;
+}
+
+class TapToPayUxConfigurationTapZonePositionApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayUxConfigurationTapZonePositionApi {
+            return TapToPayUxConfigurationTapZonePositionApi(
+            )
+        }
+    }
+}
+
+enum class TapToPayUxConfigurationThemeApi {
+    SYSTEM, LIGHT, DARK;
 }
 
 data class TerminalExceptionApi(

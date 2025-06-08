@@ -11,8 +11,10 @@ extension GetterRequestExtensions on Request {
   T get<T extends Object>() {
     final getter = context[_key] as RequestGetter?;
 
-    assert(getter != null,
-        'Missing getter scope in request context.\nUse getterScope method to provider it.');
+    assert(
+      getter != null,
+      'Missing getter scope in request context.\nUse getterScope method to provider it.',
+    );
 
     return getter!<T>(this);
   }

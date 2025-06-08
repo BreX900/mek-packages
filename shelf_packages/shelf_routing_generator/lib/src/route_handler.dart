@@ -44,21 +44,27 @@ class RouteHandler {
 
     if (!parametersIterator.moveNext() ||
         !requestChecker.isAssignableFromType(parametersIterator.current.type)) {
-      throw InvalidGenerationSourceError('need first parameter as "Request request".',
-          element: element);
+      throw InvalidGenerationSourceError(
+        'need first parameter as "Request request".',
+        element: element,
+      );
     }
 
     final pathParameters = <ParameterElement>[];
     for (final pathParam in pathParams) {
       if (!parametersIterator.moveNext()) {
-        throw InvalidGenerationSourceError('not has "$pathParam" path parameter.',
-            element: element);
+        throw InvalidGenerationSourceError(
+          'not has "$pathParam" path parameter.',
+          element: element,
+        );
       }
       final parameter = parametersIterator.current;
 
       if (pathParam != parameter.name) {
-        throw InvalidGenerationSourceError('has name different to path param "$pathParam".',
-            element: parameter);
+        throw InvalidGenerationSourceError(
+          'has name different to path param "$pathParam".',
+          element: parameter,
+        );
       }
       pathParameters.add(parameter);
     }
@@ -73,8 +79,9 @@ class RouteHandler {
       final parameterTypeName = parameter.type.getDisplayString(withNullability: false);
       if (parameterElement.constructors.every((e) => e.name != 'fromJson')) {
         throw InvalidGenerationSourceError(
-            'add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
-            element: parameterElement);
+          'add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
+          element: parameterElement,
+        );
       }
       bodyParameter = parameter;
     }
@@ -115,14 +122,17 @@ class RouteHandler {
       if (responseChecker.isAssignableFromType(returnType)) return RouteReturnsType.response;
       if (returnElement.methods.every((element) => element.name != 'toJson')) {
         throw InvalidGenerationSourceError(
-            'Please implement "Map<String, dynamic> ${returnElement.name}.toJson()" method.');
+          'Please implement "Map<String, dynamic> ${returnElement.name}.toJson()" method.',
+        );
       }
       return RouteReturnsType.json;
     }
 
     final typeName = type.getDisplayString(withNullability: false);
-    throw InvalidGenerationSourceError('Please update $typeName with valid returns json value.',
-        element: type.element);
+    throw InvalidGenerationSourceError(
+      'Please update $typeName with valid returns json value.',
+      element: type.element,
+    );
   }
 
   RouteHandler._({

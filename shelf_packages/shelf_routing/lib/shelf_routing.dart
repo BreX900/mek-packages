@@ -107,7 +107,7 @@ enum BadRequestPosition {
   queryParameter,
 
   /// Request body
-  body
+  body,
 }
 
 /// The exception that will be thrown in case the validation/parsing of the request fails.
@@ -125,25 +125,22 @@ class BadRequestException implements Exception {
   final String? name;
 
   /// Constructor for a request header error.
-  BadRequestException.header(
-    this.error,
-    this.stackTrace,
-    String this.name,
-  ) : position = BadRequestPosition.header;
+  BadRequestException.header(this.error, this.stackTrace, String this.name)
+    : position = BadRequestPosition.header;
 
   /// Constructor for a request path parameter error.
   BadRequestException.path(this.error, this.stackTrace)
-      : position = BadRequestPosition.path,
-        name = null;
+    : position = BadRequestPosition.path,
+      name = null;
 
   /// Constructor for a request query parameter error.
   BadRequestException.queryParameter(this.error, this.stackTrace, String this.name)
-      : position = BadRequestPosition.queryParameter;
+    : position = BadRequestPosition.queryParameter;
 
   /// Constructor for a request body error.
   BadRequestException.body(this.error, this.stackTrace)
-      : position = BadRequestPosition.body,
-        name = null;
+    : position = BadRequestPosition.body,
+      name = null;
 
   @override
   String toString() => 'Missing or invalid ${position.name}${name != null ? ' "$name"' : ''}.';

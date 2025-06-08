@@ -43,9 +43,7 @@ class ResponsesController {
 class Dto {
   final String value;
 
-  const Dto({
-    required this.value,
-  });
+  const Dto({required this.value});
 
   Map<String, dynamic> toJson() => {'value': value};
 }

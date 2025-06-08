@@ -32,10 +32,7 @@ void main() {
     test('simple controller', () async {
       when(() => controller.sync(any())).thenReturn(Response.ok(null));
 
-      final request = createRequest(
-        controller: controller,
-        route: const Route.get('/'),
-      );
+      final request = createRequest(controller: controller, route: const Route.get('/'));
       final response = await v1Router.call(request);
 
       expect(response.statusCode, 200);

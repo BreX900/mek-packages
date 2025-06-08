@@ -32,8 +32,10 @@ bool isHandlerAssignableFromType(DartType type) {
 
 void ensureIsValidRoute(String? route, {required String name, Element? element}) {
   if (route == null || RegExp(r'^\/.+[^/]$').hasMatch(route)) return;
-  throw InvalidGenerationSourceError('"$name" field must begin and not end with "/". ',
-      element: element);
+  throw InvalidGenerationSourceError(
+    '"$name" field must begin and not end with "/". ',
+    element: element,
+  );
 }
 
 extension JsonType on DartType {

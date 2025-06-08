@@ -110,7 +110,9 @@ class JsonResponse<T> extends Response {
     Map<String, /* String | List<String> */ Object>? headers,
     super.context,
   }) : super.internalServerError(
-            body: _bindBody(body ?? 'Internal Server Error'), headers: _bindHeaders(headers));
+         body: _bindBody(body ?? 'Internal Server Error'),
+         headers: _bindHeaders(headers),
+       );
 }
 
 final _encoder = JsonUtf8Encoder();

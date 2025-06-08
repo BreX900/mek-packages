@@ -20,7 +20,7 @@ enum QueryParameterFormat {
   /// Multiple parameter instances rather than multiple values.
   /// e.g. (foo=value&foo=another_value)
   // multi,
-  formExpanded;
+  formExpanded,
 }
 
 /// Specifies the array format (a single parameter with multiple parameter

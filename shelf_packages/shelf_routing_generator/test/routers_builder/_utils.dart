@@ -4,9 +4,7 @@ import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
 import 'package:shelf_routing_generator/run_router_builder.dart';
 
-Future<String?> testRouterBuilder({
-  required String source,
-}) async {
+Future<String?> testRouterBuilder({required String source}) async {
   const package = 'example';
   final writer = InMemoryAssetWriter();
 

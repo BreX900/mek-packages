@@ -58,7 +58,7 @@ class RouterGenerator extends Generator {
     }
   }
 
-  String _codeAddRoute(RouteHandler _) {
+  String _codeAddRoute(RouteHandler __) {
     final RouteHandler(
       :routable,
       method: verb,
@@ -70,7 +70,7 @@ class RouterGenerator extends Generator {
       :headers,
       :queryParameters,
       :returns,
-    ) = _;
+    ) = __;
 
     final routeParams = [
       'Request request',
@@ -86,7 +86,7 @@ class RouterGenerator extends Generator {
         return parserCode != null ? '$parserCode(${e.name})' : e.name;
       }),
       if (bodyParameter != null)
-        'await \$readBodyAs(request, ${bodyParameter.type.getDisplayString(withNullability: false)}.fromJson)',
+        'await \$readBodyAs(request, ${bodyParameter.type.getDisplayString()}.fromJson)',
       // if (headerParameters.isNotEmpty)
       //   ...headerParameters.map((e) {
       //     final key = e.name.paramCase;
@@ -97,7 +97,8 @@ class RouterGenerator extends Generator {
           final key = e.name.paramCase;
           return "${e.name}: \$parseQueryParameters(request, '$key', ${_codeListParser(e.type)})";
         }),
-    ].expand((e) sync* {
+    ];
+    final methodParamsText = methodParams.expand((e) sync* {
       yield e;
       yield ',\n';
     }).join();
@@ -106,15 +107,18 @@ class RouterGenerator extends Generator {
     if (element.returnType.isDartAsyncFutureOr || element.returnType.isDartAsyncFuture) {
       methodInvocation += 'await ';
     }
-    methodInvocation += '\$.${element.name}($methodParams)';
+    methodInvocation += '\$.${element.name}($methodParamsText)';
 
     final responseCode = switch (returns) {
-      RouteReturnsType.response => '''
+      RouteReturnsType.response =>
+        '''
     return $methodInvocation;''',
-      RouteReturnsType.json => '''
+      RouteReturnsType.json =>
+        '''
     final \$data = $methodInvocation;
     return JsonResponse.ok(\$data);''',
-      RouteReturnsType.nothing => '''
+      RouteReturnsType.nothing =>
+        '''
     $methodInvocation;
     return JsonResponse.ok(null);''',
     };
@@ -133,12 +137,14 @@ class RouterGenerator extends Generator {
 
     final routables = routes.groupListsBy((e) => e.routable.element);
 
-    return routables.entries.map((_) {
-      final MapEntry(key: class$, value: routes) = _;
-      final routesCode = routes.map(_codeAddRoute).join();
-      return '''
+    return routables.entries
+        .map((__) {
+          final MapEntry(key: class$, value: routes) = __;
+          final routesCode = routes.map(_codeAddRoute).join();
+          return '''
 Router get _${codePublicVarName('${class$.name}Router')} => Router()\n
   $routesCode;''';
-    }).join('\n');
+        })
+        .join('\n');
   }
 }

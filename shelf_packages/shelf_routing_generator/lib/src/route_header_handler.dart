@@ -7,15 +7,11 @@ class RouteHeaderHandler {
 
   final String name;
 
-  const RouteHeaderHandler._({
-    required this.name,
-  });
+  const RouteHeaderHandler._({required this.name});
 
   static List<RouteHeaderHandler> from(MethodElement element) {
     return _checker.annotationsOf(element).map(ConstantReader.new).map((e) {
-      return RouteHeaderHandler._(
-        name: e.read('name').stringValue,
-      );
+      return RouteHeaderHandler._(name: e.read('name').stringValue);
     }).toList();
   }
 }

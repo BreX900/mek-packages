@@ -11,10 +11,7 @@ class User {
   final int id;
   final String name;
 
-  const User({
-    required this.id,
-    required this.name,
-  });
+  const User({required this.id, required this.name});
 
   factory User.fromJson(Map<String, dynamic> map) => User(id: map['id'], name: map['name']);
   Map<String, dynamic> toJson() => {'id': id, 'name': name};

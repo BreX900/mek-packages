@@ -11,14 +11,10 @@ part of 'routes_group.dart';
 Router get _$routesGroupControllerRouter => Router()
   ..add('GET', r'/', (Request request) async {
     final $ = request.get<RoutesGroupController>();
-    return $.sync(
-      request,
-    );
+    return $.sync(request);
   });
-Router get _$routesGroupWithPrefixControllerRouter => Router()
-  ..add('GET', r'/', (Request request) async {
-    final $ = request.get<RoutesGroupWithPrefixController>();
-    return $.sync(
-      request,
-    );
-  });
+Router get _$routesGroupWithPrefixControllerRouter =>
+    Router()..add('GET', r'/', (Request request) async {
+      final $ = request.get<RoutesGroupWithPrefixController>();
+      return $.sync(request);
+    });

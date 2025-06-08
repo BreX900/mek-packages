@@ -28,18 +28,17 @@ class _RoutersRouterHandler {
       routables: annotation.read('routables').listValue.map((e) {
         final class$ = ConstantReader(e).typeValue.element;
         if (class$ is! ClassElement) {
-          throw InvalidGenerationSourceError('$Routable can only be used to annotate classes.',
-              element: class$);
+          throw InvalidGenerationSourceError(
+            '$Routable can only be used to annotate classes.',
+            element: class$,
+          );
         }
         return RoutableHandler.from(class$);
       }).toList(),
     );
   }
 
-  const _RoutersRouterHandler._({
-    required this.element,
-    required this.routables,
-  });
+  const _RoutersRouterHandler._({required this.element, required this.routables});
 }
 
 class GroupsRouterGenerator extends Generator {

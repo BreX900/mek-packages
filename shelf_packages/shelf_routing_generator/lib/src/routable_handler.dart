@@ -13,20 +13,16 @@ class RoutableHandler {
     final prefix = annotation.peek('prefix')?.stringValue;
 
     if (prefix != null && !RegExp(r'^\/.*[^/]$').hasMatch(prefix)) {
-      throw InvalidGenerationSourceError('"prefix" field must begin and not end with "/".',
-          element: element);
+      throw InvalidGenerationSourceError(
+        '"prefix" field must begin and not end with "/".',
+        element: element,
+      );
     }
 
-    return RoutableHandler._(
-      prefix: prefix,
-      element: element,
-    );
+    return RoutableHandler._(prefix: prefix, element: element);
   }
 
-  const RoutableHandler._({
-    required this.prefix,
-    required this.element,
-  });
+  const RoutableHandler._({required this.prefix, required this.element});
 
   // TODO: Support getters
   // return <ExecutableElement>[

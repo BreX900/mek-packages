@@ -6,13 +6,13 @@ homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/shelf
 version: 0.1.0
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 
 scripts:
   publish: dart pub publish
 
 dependencies:
-  shelf: ^1.4.1
+  shelf: ^1.4.2
   meta: ^1.10.0
 
   shelf_router: ^1.1.4

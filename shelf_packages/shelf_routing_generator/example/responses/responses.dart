@@ -5,7 +5,7 @@ import 'package:shelf_routing/shelf_routing.dart';
 part 'responses.g.dart';
 
 class ResponsesController {
-  static Router get router => _$responsesControllerRouter;
+  Router get router => _$ResponsesControllerRouter(this);
 
   const ResponsesController();
 

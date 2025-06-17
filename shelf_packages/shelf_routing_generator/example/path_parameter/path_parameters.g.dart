@@ -5,19 +5,17 @@
 part of 'path_parameters.dart';
 
 // **************************************************************************
-// RouterGenerator
+// RoutingGenerator
 // **************************************************************************
 
-Router get _$pathParametersControllerRouter => Router()
-  ..add('GET', r'/<integer>', (Request request, String integer) async {
-    final $ = request.get<PathParametersController>();
-    return $.fetchMessages(request, int.parse(integer));
-  })
-  ..add('POST', r'/<string>', (Request request, String string) async {
-    final $ = request.get<PathParametersController>();
-    return $.createMessage(request, string);
-  })
-  ..add('PUT', r'/<decimal>', (Request request, String decimal) async {
-    final $ = request.get<PathParametersController>();
-    return $.updateMessage(request, Decimal.parse(decimal));
-  });
+Router _$PathParametersControllerRouter(PathParametersController service) =>
+    Router()
+      ..add('GET', '/<integer>', (Request request, String $integer) async {
+        return service.fetchMessages(request, int.parse($integer));
+      })
+      ..add('POST', '/<string>', (Request request, String $string) async {
+        return service.createMessage(request, $string);
+      })
+      ..add('PUT', '/<decimal>', (Request request, String $decimal) async {
+        return service.updateMessage(request, Decimal.parse($decimal));
+      });

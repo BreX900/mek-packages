@@ -2,12 +2,11 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_routing/shelf_routing.dart';
 
-import 'route_group.dart';
-
 part 'routes_group.g.dart';
 
-class RoutesGroupController {
-  static Router get router => _$routesGroupControllerRouter;
+class RoutesGroupController implements RouterMixin {
+  @override
+  Router get router => _$RoutesGroupControllerRouter(this);
 
   const RoutesGroupController();
 
@@ -18,9 +17,9 @@ class RoutesGroupController {
   }
 }
 
-@RoutableV1(prefix: '/example')
-class RoutesGroupWithPrefixController {
-  static Router get router => _$routesGroupWithPrefixControllerRouter;
+class RoutesGroupWithPrefixController implements RouterMixin {
+  @override
+  Router get router => _$RoutesGroupWithPrefixControllerRouter(this);
 
   const RoutesGroupWithPrefixController();
 

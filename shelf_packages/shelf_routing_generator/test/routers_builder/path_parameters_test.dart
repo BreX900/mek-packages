@@ -28,7 +28,7 @@ void main() {
   group('path parameters tests', () {
     test('integer path parameter', () async {
       final request = createRequest(controller: controller, route: const Route.get('/1'));
-      final response = await PathParametersController.router.call(request);
+      final response = await const PathParametersController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -37,7 +37,7 @@ void main() {
 
     test('string path parameter', () async {
       final request = createRequest(controller: controller, route: const Route.post('/text'));
-      final response = await PathParametersController.router.call(request);
+      final response = await const PathParametersController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -46,7 +46,7 @@ void main() {
 
     test('decimal path parameter', () async {
       final request = createRequest(controller: controller, route: Route.put('/${Decimal.one}'));
-      final response = await PathParametersController.router.call(request);
+      final response = await const PathParametersController().router.call(request);
 
       expect(response.statusCode, 200);
 

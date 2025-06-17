@@ -3,18 +3,19 @@ import 'dart:async';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
 import 'package:recase/recase.dart';
 import 'package:shelf_routing_generator/src/route_handler.dart';
 import 'package:shelf_routing_generator/src/utils.dart';
 import 'package:source_gen/source_gen.dart';
 
-Builder runRouterBuilder(BuilderOptions options) {
-  return SharedPartBuilder(const [RouterGenerator()], 'router');
+Builder routingBuilder(BuilderOptions options) {
+  return SharedPartBuilder(const [RoutingGenerator()], 'routing');
 }
 
-class RouterGenerator extends Generator {
-  const RouterGenerator();
+class RoutingGenerator extends Generator {
+  const RoutingGenerator();
 
   String? _findParserMethod(DartType type) {
     if (type is! InterfaceType) return null;
@@ -85,7 +86,6 @@ class RouterGenerator extends Generator {
 
   String _codeAddRoute(RouteHandler __) {
     final RouteHandler(
-      :routable,
       method: verb,
       :path,
       :element,
@@ -99,16 +99,18 @@ class RouterGenerator extends Generator {
 
     final routeParams = [
       'Request request',
-      ...pathParameters.map((e) => 'String ${e.name}'),
+      ...pathParameters.map((e) => 'String \$${e.name}'),
     ].join(', ');
 
-    final headersCode = headers.map((e) => "\n\$ensureHasHeader(request, '${e.name}');").join();
+    final headersCode = headers.map((e) {
+      return '\n\$ensureHasHeader(request, ${literalString(e.name)});';
+    }).join();
 
     final methodParams = [
       if (hasRequest) 'request',
       ...pathParameters.map((e) {
         final parserCode = _codeParser(e.type);
-        return parserCode != null ? '$parserCode(${e.name})' : e.name;
+        return parserCode != null ? '$parserCode(\$${e.name})' : '\$${e.name}';
       }),
       if (bodyParameter != null)
         'await \$parseBodyAs(request, (data) => ${_codeFromJson(bodyParameter.type)})',
@@ -120,7 +122,7 @@ class RouterGenerator extends Generator {
       if (queryParameters.isNotEmpty)
         ...queryParameters.map((e) {
           final key = e.name.paramCase;
-          return "${e.name}: \$parseQueryParameters(request, '$key', ${_codeListParser(e.type)})";
+          return '${e.name}: \$parseQueryParameters(request, ${literalString(key)}, ${_codeListParser(e.type)})';
         }),
     ];
     final methodParamsText = methodParams.expand((e) sync* {
@@ -132,7 +134,7 @@ class RouterGenerator extends Generator {
     if (element.returnType.isDartAsyncFutureOr || element.returnType.isDartAsyncFuture) {
       methodInvocation += 'await ';
     }
-    methodInvocation += '\$.${element.name}($methodParamsText)';
+    methodInvocation += 'service.${element.name}($methodParamsText)';
 
     final responseCode = switch (returns) {
       RouteReturnsType.response =>
@@ -140,36 +142,53 @@ class RouterGenerator extends Generator {
     return $methodInvocation;''',
       RouteReturnsType.json =>
         '''
-    final \$data = $methodInvocation;
-    return JsonResponse.ok(\$data);''',
+    final body = $methodInvocation;
+    return JsonResponse.ok(body);''',
       RouteReturnsType.nothing =>
         '''
     $methodInvocation;
     return JsonResponse.ok(null);''',
     };
 
+    if (verb == r'$all') {
+      return '''
+  ..all(${literalString(path)}, ($routeParams) async {$headersCode
+    $responseCode
+  })''';
+    }
+
     return '''
-  ..add('$verb', r'$path', ($routeParams) async {$headersCode
-    final \$ = request.get<${routable.element.name}>();
+  ..add('$verb', ${literalString(path)}, ($routeParams) async {$headersCode
     $responseCode
   })''';
   }
 
   @override
   Future<String?> generate(LibraryReader library, BuildStep buildStep) async {
-    final routes = library.classes.expand(RouteHandler.fromClass).toList();
-    if (routes.isEmpty) return null;
+    final routers = library.classes.map((class$) {
+      final routes = RouteHandlerBase.fromClass(class$);
+      if (routes.isEmpty) return null;
+      return MapEntry(class$, routes);
+    }).nonNulls;
+    if (routers.isEmpty) return null;
 
-    final routables = routes.groupListsBy((e) => e.routable.element);
+    final routersCode = routers.map((__) {
+      final MapEntry(key: class$, value: routes) = __;
 
-    return routables.entries
-        .map((__) {
-          final MapEntry(key: class$, value: routes) = __;
-          final routesCode = routes.map(_codeAddRoute).join();
-          return '''
-Router get _${codePublicVarName('${class$.name}Router')} => Router()\n
-  $routesCode;''';
-        })
-        .join('\n');
+      final routesCode = routes.map((route) {
+        return switch (route) {
+          MountRouteHandler() => switch (route.isRouterMixin) {
+            false => '..mount(${literalString(route.path)}, service.${route.element.name}.call)',
+            true =>
+              '..mount(${literalString(route.path)}, service.${route.element.name}.router.call)',
+          },
+          RouteHandler() => _codeAddRoute(route),
+        };
+      }).join();
+      return '''
+Router _\$${class$.name}Router(${class$.name} service) => Router()\n
+  $routesCode;\n''';
+    });
+    return routersCode.join('\n');
   }
 }

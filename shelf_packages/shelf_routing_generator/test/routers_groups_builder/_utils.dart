@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
-import 'package:shelf_routing_generator/run_router_builder.dart';
+import 'package:shelf_routing_generator/routing_builder.dart';
 
 Future<String?> testRoutingBuilder({required String source}) async {
   const package = 'example';
   final writer = InMemoryAssetWriter();
 
   await testBuilder(
-    runRouterBuilder(BuilderOptions.empty),
+    routingBuilder(BuilderOptions.empty),
     {'$package|example.dart': source},
     reader: await PackageAssetReader.currentIsolate(),
     writer: writer,

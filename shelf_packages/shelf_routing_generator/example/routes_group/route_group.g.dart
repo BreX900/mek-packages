@@ -5,9 +5,9 @@
 part of 'route_group.dart';
 
 // **************************************************************************
-// GroupsRouterGenerator
+// RoutingGenerator
 // **************************************************************************
 
-Router get _$v1Router => Router()
-  ..mount('/', RoutesGroupController.router)
-  ..mount('/v1/example', RoutesGroupWithPrefixController.router);
+Router _$ApiControllerRouter(ApiController service) => Router()
+  ..mount('/', service.route.router.call)
+  ..mount('/example', service.example.router.call);

@@ -1,12 +1,11 @@
 import 'package:decimal/decimal.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
-import 'package:shelf_routing/shelf_routing.dart';
 
 part 'path_parameters.g.dart';
 
 class PathParametersController {
-  static Router get router => _$pathParametersControllerRouter;
+  Router get router => _$PathParametersControllerRouter(this);
 
   const PathParametersController();
 

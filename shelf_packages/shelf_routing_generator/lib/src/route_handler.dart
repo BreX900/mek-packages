@@ -1,18 +1,62 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:shelf_router/shelf_router.dart';
-import 'package:shelf_routing_generator/src/routable_handler.dart';
 import 'package:shelf_routing_generator/src/route_header_handler.dart';
 import 'package:shelf_routing_generator/src/utils.dart';
 import 'package:source_gen/source_gen.dart';
 
 enum RouteReturnsType { response, json, nothing }
 
-class RouteHandler {
-  static const TypeChecker _checker = TypeChecker.fromRuntime(Route);
+sealed class RouteHandlerBase {
+  static List<RouteHandlerBase> fromClass(ClassElement element) {
+    return [
+      ...element.methods.map(RouteHandler.from).nonNulls,
+      ...element.accessors.map(MountRouteHandler.from).nonNulls,
+    ];
+  }
+}
 
-  final RoutableHandler routable;
-  final MethodElement element;
+class MountRouteHandler extends RouteHandlerBase {
+  final ExecutableElement element;
+  final bool isRouterMixin;
+  final String path;
+
+  MountRouteHandler({required this.element, required this.isRouterMixin, required this.path});
+
+  static MountRouteHandler? from(ExecutableElement element) {
+    final annotation = ConstantReader(routeChecker.firstAnnotationOf(element));
+    if (annotation.isNull) return null;
+
+    final verb = annotation.read('verb').stringValue;
+    final route = annotation.read('route').stringValue;
+    if (!RegExp(r'^\/.*').hasMatch(route)) {
+      throw InvalidGenerationSourceError('"route" field must begin with "/".', element: element);
+    }
+    if (verb != r'$mount') {
+      throw InvalidGenerationSourceError(
+        'the field must be use @Route.mount(...) or @Route.all(...) annotation.',
+        element: element,
+      );
+    }
+
+    final type = element.returnType;
+    bool isRouterMixin;
+    if (routerChecker.isAssignableFromType(type)) {
+      isRouterMixin = false;
+    } else if (routerMixinChecker.isAssignableFromType(type)) {
+      isRouterMixin = true;
+    } else {
+      throw InvalidGenerationSourceError(
+        'the getter must be a returns a "Router" type or a class with "router" getter to returns a "Router" type.',
+        element: element,
+      );
+    }
+
+    return MountRouteHandler(element: element, isRouterMixin: isRouterMixin, path: route);
+  }
+}
+
+class RouteHandler extends RouteHandlerBase {
+  final ExecutableElement element;
   final String method;
   final String path;
 
@@ -24,13 +68,8 @@ class RouteHandler {
   final List<ParameterElement> queryParameters;
   final RouteReturnsType returns;
 
-  static List<RouteHandler> fromClass(ClassElement element) {
-    final routable = RoutableHandler.from(element);
-    return element.methods.map((method) => RouteHandler.from(routable, method)).nonNulls.toList();
-  }
-
-  static RouteHandler? from(RoutableHandler routable, MethodElement element) {
-    final annotation = ConstantReader(_checker.firstAnnotationOf(element));
+  static RouteHandler? from(MethodElement element) {
+    final annotation = ConstantReader(routeChecker.firstAnnotationOf(element));
     if (annotation.isNull) return null;
 
     final verb = annotation.read('verb').stringValue;
@@ -116,7 +155,7 @@ class RouteHandler {
     final queryParameters = element.parameters.where((e) => e.isNamed).toList();
 
     return RouteHandler._(
-      routable: routable,
+      // routable: routable,
       method: verb,
       path: route,
       element: element,
@@ -157,7 +196,7 @@ class RouteHandler {
   }
 
   RouteHandler._({
-    required this.routable,
+    // required this.routable,
     required this.element,
     required this.method,
     required this.path,

@@ -16,11 +16,13 @@ dependencies:
   shelf: ^1.4.2
   shelf_router: ^1.1.4
   shelf_routing: ^0.1.0
+  http_methods: ^1.0.0
 
   build: ^2.4.2
   source_gen: ^2.0.0
   analyzer: ^7.3.0
   dart_style: ^3.0.0
+  code_builder: ^4.0.0
 
   collection: ^1.19.0
   recase: ^4.1.0

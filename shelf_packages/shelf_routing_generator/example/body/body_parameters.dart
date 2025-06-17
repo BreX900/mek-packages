@@ -6,7 +6,7 @@ import 'package:shelf_routing/shelf_routing.dart';
 part 'body_parameters.g.dart';
 
 class PathParametersController {
-  static Router get router => _$pathParametersControllerRouter;
+  Router get router => _$PathParametersControllerRouter(this);
 
   const PathParametersController();
 

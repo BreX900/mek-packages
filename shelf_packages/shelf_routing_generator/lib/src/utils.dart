@@ -1,21 +1,19 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:recase/recase.dart';
 import 'package:shelf/shelf.dart';
+import 'package:shelf_router/shelf_router.dart';
+import 'package:shelf_routing/shelf_routing.dart';
 import 'package:source_gen/source_gen.dart';
 
+const TypeChecker routeChecker = TypeChecker.fromRuntime(Route);
 const TypeChecker requestChecker = TypeChecker.fromRuntime(Request);
 const TypeChecker responseChecker = TypeChecker.fromRuntime(Response);
 
-bool isHandlerAssignableFromType(DartType type) {
-  if (type is InterfaceType) {
-    final callMethod = type.getMethod('call');
-    if (callMethod == null || callMethod.isStatic) return false;
-    // ignore: parameter_assignments
-    type = callMethod.type;
-  }
+const TypeChecker routerChecker = TypeChecker.fromRuntime(Router);
+const TypeChecker routerMixinChecker = TypeChecker.fromRuntime(RouterMixin);
 
+bool isHandlerFunctionAssignableFromType(DartType type) {
   if (type is! FunctionType) return false;
 
   var returnType = type.returnType;
@@ -53,5 +51,3 @@ extension JsonType on DartType {
 extension InterfaceTypeExtensions on InterfaceType {
   DartType get typeArgument => typeArguments.single;
 }
-
-String codePublicVarName(String name) => '\$${name.camelCase}';

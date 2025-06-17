@@ -1,69 +1,13 @@
 library shelf_routing;
 
 import 'package:meta/meta_meta.dart';
+import 'package:shelf_router/shelf_router.dart';
 
-export 'package:shelf_routing/src/get_request_extension.dart';
 export 'package:shelf_routing/src/json_response.dart';
 export 'package:shelf_routing/src/utils.dart';
 
-/// Annotation for top level getters to generate a router that handles all routers of the types
-/// passed using the package `shelf_routing_generator`.
-///
-/// **Example**
-/// ```dart
-/// // Always import 'shelf_router' without 'show' or 'as'.
-/// import 'package:shelf_router/shelf_router.dart';
-/// // Always import 'shelf_routing' without 'show' or 'as'.
-/// import 'package:shelf_routing/shelf_routing.dart' show Request, Response;
-///
-/// // Include generated code, this assumes current file is 'services_router.dart'.
-/// part 'services_router.g.dart';
-///
-/// // Get a router for all these services.
-/// @GenerateRouterFor([MyService, MyAnotherService])
-/// Router get router => _$router;
-/// ```
-@Target({TargetKind.getter})
-class GenerateRouterFor {
-  /// List of services that have a static getter that returns a Router
-  final List<Type> routables;
-
-  /// See class documentation
-  const GenerateRouterFor(this.routables);
-}
-
-/// Annotation for services using on methods the Route annotation to add a [prefix] when the router
-/// is mounted via the [GenerateRouterFor] annotation using the package `shelf_routing_generator`.
-///
-/// **Example**
-/// ```dart
-/// // Always import 'shelf_router' without 'show' or 'as'.
-/// import 'package:shelf_router/shelf_router.dart';
-/// // Always import 'shelf_routing' without 'show' or 'as'.
-/// import 'package:shelf_routing/shelf_routing.dart' show Request, Response;
-///
-/// // Include generated code, this assumes current file is 'service.dart'.
-/// part 'service.g.dart';
-///
-/// // Get a router for all these services.
-/// @Routable(prefix: '/say-hello')
-/// class Service {
-///   @Route.get('/<name>')
-///   Future<Response> _sayHello(Request request, String name) async {
-///     return Response.ok('hello $name');
-///   }
-///
-///   /// Get a router for this service.
-///   Router get router => _$ServiceRouter(this);
-/// }
-/// ```
-@Target({TargetKind.classType})
-class Routable {
-  /// Router prefix
-  final String prefix;
-
-  /// See class documentation
-  const Routable({required this.prefix});
+abstract interface class RouterMixin {
+  Router get router;
 }
 
 /// Annotation for methods using Route annotation to indicate that the route should be called with

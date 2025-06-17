@@ -33,7 +33,7 @@ void main() {
       when(() => controller.sync(any())).thenReturn(Response.ok(null));
 
       final request = createRequest(controller: controller, route: const Route.get('/'));
-      final response = await v1Router.call(request);
+      final response = await ApiController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -47,7 +47,7 @@ void main() {
         controller: controllerWithPrefix,
         route: const Route.post('/example'),
       );
-      final response = await v1Router.call(request);
+      final response = await ApiController().router.call(request);
 
       expect(response.statusCode, 200);
 

@@ -5,7 +5,7 @@ import 'package:shelf_routing/shelf_routing.dart';
 part 'query_parameters.g.dart';
 
 class QueryParametersController {
-  static Router get router => _$queryParametersControllerRouter;
+  Router get router => _$QueryParametersControllerRouter(this);
 
   const QueryParametersController();
 

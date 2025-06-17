@@ -27,7 +27,7 @@ void main() {
       when(() => controller.sync(any())).thenReturn(Response.ok(null));
 
       final request = createRequest(controller: controller, route: const Route.get('/'));
-      final response = await ResponsesController.router.call(request);
+      final response = await const ResponsesController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -38,7 +38,7 @@ void main() {
       when(() => controller.async(any())).thenAnswer((_) async => Response.ok(null));
 
       final request = createRequest(controller: controller, route: const Route.post('/'));
-      final response = await ResponsesController.router.call(request);
+      final response = await const ResponsesController().router.call(request);
 
       expect(response.statusCode, 200);
 

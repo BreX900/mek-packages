@@ -13,7 +13,7 @@ class MessagesController with RouterMixin {
   @override
   Router get router => _$MessagesControllerRouter(this);
 
-  @Route.get('/messages')
+  @Route.get('/')
   @OpenApiRoute(requestQuery: MessageFetchDto)
   Future<JsonResponse<List<MessageDto>>> fetchMessages(Request request) async {
     // ...
@@ -21,7 +21,7 @@ class MessagesController with RouterMixin {
     return JsonResponse.ok(null);
   }
 
-  @Route.get('/messages/<messageId>')
+  @Route.get('/<messageId>')
   Future<JsonResponse<List<MessageDto>>> fetchMessage(Request request, int messageId) async {
     // ...
 

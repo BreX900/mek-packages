@@ -6,7 +6,26 @@ import 'package:shelf_router/shelf_router.dart';
 export 'package:shelf_routing/src/json_response.dart';
 export 'package:shelf_routing/src/utils.dart';
 
+/// Annotation for classes that use the [Route] annotation to indicate that the class exposes
+/// the [Router] to be mounted in another [Router] by [Router.mount] method
+///
+/// **Example**
+/// ```dart
+/// class MessagesService with RouterMixin {
+///   @override
+///   Router get router => _$MessagesServiceRouter(this);
+///   @Route.get('/<name>')
+///   Future<Response> _sayHello(Request request, String name) async {
+///     return Response.ok('hello $name');
+///   }
+/// }
+/// class ApiService {
+///   @Route.mount('/messages')
+///   MessagesService get messages => MessagesService();
+/// }
+/// ```
 mixin RouterMixin {
+  /// Used by code generator
   Router get router;
 }
 

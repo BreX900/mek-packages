@@ -7,12 +7,9 @@ part of 'messages_controller.dart';
 // **************************************************************************
 
 Router _$MessagesControllerRouter(MessagesController service) => Router()
-  ..add('GET', '/messages', (Request request) async {
+  ..add('GET', '/', (Request request) async {
     return await service.fetchMessages(request);
   })
-  ..add('GET', '/messages/<messageId>', (
-    Request request,
-    String $messageId,
-  ) async {
+  ..add('GET', '/<messageId>', (Request request, String $messageId) async {
     return await service.fetchMessage(request, int.parse($messageId));
   });

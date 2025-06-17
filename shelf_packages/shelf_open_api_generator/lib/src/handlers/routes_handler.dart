@@ -7,12 +7,12 @@ import 'package:shelf_open_api_generator/src/schemas_registry.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
 import 'package:shelf_open_api_generator/src/utils/utils.dart';
 
-class RoutesHandler {
+class OpenApiHandler {
   final Config config;
   final SchemasRegistry schemasRegistry;
-  final List<RouteHandler> routes;
+  final List<OpenRouteHandler> routes;
 
-  RoutesHandler({required this.config, required this.schemasRegistry, required this.routes});
+  OpenApiHandler({required this.config, required this.schemasRegistry, required this.routes});
 
   OpenApi buildOpenApi() {
     final routesInPaths = routes.groupListsBy((e) => e.path);
@@ -25,7 +25,7 @@ class RoutesHandler {
         final item = ItemPathOpenApi.from(
           operations: routes.toMap((route) {
             final operation = route.buildOperation();
-            return MapEntry(route.method, operation);
+            return MapEntry(route.verb, operation);
           }),
         );
         return MapEntry(path, item);

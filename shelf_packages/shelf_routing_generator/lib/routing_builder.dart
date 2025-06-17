@@ -84,9 +84,9 @@ class RoutingGenerator extends Generator {
     return '${type.getDisplayString()}.fromJson(data! as ${constructor.formalParameters.first.type.getDisplayString()})';
   }
 
-  String _codeAddRoute(RouteHandler __) {
-    final RouteHandler(
-      method: verb,
+  String _codeAddRoute(HttpRouteHandler __) {
+    final HttpRouteHandler(
+      :verb,
       :path,
       :element,
       :hasRequest,
@@ -113,7 +113,7 @@ class RoutingGenerator extends Generator {
         return parserCode != null ? '$parserCode(\$${e.name})' : '\$${e.name}';
       }),
       if (bodyParameter != null)
-        'await \$parseBodyAs(request, (data) => ${_codeFromJson(bodyParameter.type)})',
+        'await \$readBodyAs(request, (data) => ${_codeFromJson(bodyParameter.type)})',
       // if (headerParameters.isNotEmpty)
       //   ...headerParameters.map((e) {
       //     final key = e.name.paramCase;
@@ -166,7 +166,7 @@ class RoutingGenerator extends Generator {
   @override
   Future<String?> generate(LibraryReader library, BuildStep buildStep) async {
     final routers = library.classes.map((class$) {
-      final routes = RouteHandlerBase.fromClass(class$);
+      final routes = RouteHandler.from(class$);
       if (routes.isEmpty) return null;
       return MapEntry(class$, routes);
     }).nonNulls;
@@ -182,7 +182,7 @@ class RoutingGenerator extends Generator {
             true =>
               '..mount(${literalString(route.path)}, service.${route.element.name}.router.call)',
           },
-          RouteHandler() => _codeAddRoute(route),
+          HttpRouteHandler() => _codeAddRoute(route),
         };
       }).join();
       return '''

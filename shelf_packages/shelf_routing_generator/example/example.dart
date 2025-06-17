@@ -18,7 +18,7 @@ class User {
 }
 
 class UserController implements RouterMixin {
-  // // Create router using the generate function defined in 'example.g.dart'.
+  // Create router using the generate function defined in 'example.g.dart'.
   @override
   Router get router => _$UserControllerRouter(this);
 
@@ -48,13 +48,9 @@ class UserController implements RouterMixin {
   }
 }
 
-// Create router using the generate function defined in 'example.g.dart'.
-// @GenerateRouterFor([UserController])
-// Router get apiRouter => _$apiRouter;
-
-const _prefix = '/api';
-
 class ApiRouter {
+  static const _prefix = '/api';
+
   final DatabaseConnection connection;
 
   ApiRouter(this.connection);

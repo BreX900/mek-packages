@@ -16,7 +16,6 @@ This library is under development, any help is welcome
 - [ ] Bad Responses
 - [x] Reused schemas by `$ref`
 - [ ] Inheritance and Polymorphism by `allOf`, `oneOf`, `anyOf`, `discriminator`
-- [ ] `json_serializable` annotations
 - [-] Security (Partial implemented)
 - [x] Docs (`summary`, `description`, `example`)
 - [x] Tags/Groups
@@ -38,17 +37,67 @@ dev_dependencies:
   shelf_open_api_generator:
 ```
 
+> It is recommended to use with the [shelf_routing] and [shelf_routing_generator] packages
+
 ## Usage
 
 > You can see some examples in [example] folder.
 
+Annotate your routes class with `OpenApi` annotation
+```dart
+@OpenApi()
+class MessagesController {
+  @Route.get('/messages')
+  Future<Response> fetch(Request request) async {
+    // Code...
+  }
+}
+```
+
 Run the code generator, you can use:
-- `<dart|flutter> pub run build_runner build`
+- `dart run build_runner build`
 
 You can see the generated result in the `public` folder!
 
 Done! See options for more info/configurations.
-But now let's type the routes!
+
+
+## But now let's type the routes!
+
+### Typing with: Shelf routing
+
+Hey you could use the [shelf_routing] and [shelf_routing_generator] packages to type your routes
+without having to write open api annotations!
+
+```dart
+class MessagesController with RouterMixin {
+  Router get router => _$MessagesController(this);
+
+  @Route.post('/<messageId>')
+  Future<JsonResponse<MessageDto>> get(Request request, int messageId) async {
+    // Code...
+    return JsonResponse.ok(MessageDto(messageId: messageId));
+  }
+  
+  @Route.post('/')
+  Future<JsonResponse<MessageDto>> post(Request request, MessageCreateDto data) async {
+    // Code...
+    return JsonResponse.ok(MessageDto(messageId: data.messageId));
+  }
+}
+
+@OpenApi()
+class ApiController {
+  static const _prefix = '/api-v1';
+  
+  Router get router => _$ApiController(this);
+
+  @Route.mount('$_prefix/messages')
+  MessagesController get messages => MessagesController();
+}
+```
+
+### Typing with: Open Api Annotations
 
 Use `OpenApiRoute` on routes where the query type or body type needs to be defined.
 Remember that you can define the summary and description for each route.
@@ -56,6 +105,7 @@ The summary is the first line of each method and must only be in one line otherw
 The [JsonResponse] class can be found in the example. Should I add it to [shelf_open_api] package?
 
 ```dart
+@OpenApi()
 class MessagesController {
   @Route.get('/messages')
   @OpenApiRoute(requestQuery: MessageFetchDto)
@@ -74,6 +124,9 @@ class MessagesController {
   }
 }
 ```
+
+## More from Open Api Annotations
+
 
 You can define summaries, descriptions and examples for your queries or requests as well
 
@@ -114,55 +167,6 @@ targets:
                bearerFormat: JWT
 ```
 
-# Shelf Routing
-
-Have too many controllers in your app? This could save you!
-
-Write something down with `Routing` and a file with all the controllers in your app will be generated!
-
-```dart
-@Routing(
-  varName: 'controllersRouter',
-  generateFor: ['**/*_controller.dart'],
-)
-void main() {
-  // ...
-}
-
-// *.g.dart
-
-import 'package:shelf_router/shelf_router.dart';
-import 'package:app/features/chats/controllers/chats_controller.dart';
-import 'package:app/features/messages/controllers/messages_controller.dart';
-import 'package:app/features/users/controllers/users_controller.dart';
-
-final $controllersRouter = Router()
-  ..mount('/v1', UsersController().router)
-  ..mount('/v1', MessagessController().router)
-  ..mount('/v1', ChatsController().router);
-```
-
-This allows you to annotate your controllers with `@Routes(prefix: '/v1')` to prefix all controller routes.
-This annotation is not mandatory!
-
-```dart
-@Routes(prefix: '/v1')
-class MessagesController {
-  // ...
-}
-```
-
-## Options
-
-```yaml
-targets:
-  $default:
-    builders:
-      shelf_open_api_generator:shelf_routing:
-        generate_for:
-          - '**/*_api.dart'
-```
-
 ## More
 
 [open_api_client_generator] The purpose of this library is to expose the generation of file with open api specifications from your shelf controllers
@@ -172,5 +176,7 @@ targets:
 [build_runner]: https://pub.dev/packages/build_runner
 [shelf_open_api]: https://pub.dev/packages/shelf_open_api
 [shelf_open_api_generator]: https://pub.dev/packages/shelf_open_api_generator
+[shelf_routing]: https://pub.dev/packages/shelf_routing
+[shelf_routing_generator]: https://pub.dev/packages/shelf_routing_generator
 [OpenApi Specification]: https://swagger.io/specification/v3/
 [open_api_client_generator]: https://pub.dev/packages/open_api_client_generator

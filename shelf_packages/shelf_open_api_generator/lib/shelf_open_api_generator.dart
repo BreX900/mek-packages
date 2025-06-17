@@ -9,10 +9,10 @@ import 'package:shelf_open_api_generator/src/handlers/route_handler.dart';
 import 'package:shelf_open_api_generator/src/handlers/routes_handler.dart';
 import 'package:shelf_open_api_generator/src/schemas_registry.dart';
 import 'package:shelf_open_api_generator/src/utils/annotations_utils.dart';
-import 'package:shelf_open_api_generator/src/utils/routing_utils.dart';
 import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:shelf_open_api_generator/src/utils/yaml_encoder.dart';
 import 'package:shelf_router/shelf_router.dart';
+import 'package:shelf_routing_generator/shelf_routing_generator.dart';
 import 'package:source_gen/source_gen.dart';
 
 Builder buildOpenApi(BuilderOptions options) {
@@ -45,62 +45,47 @@ class OpenApiBuilder implements Builder {
         ...cls.accessors.where(_routeType.hasAnnotationOfExact),
       ]..sort((a, b) => (a.nameOffset).compareTo(b.nameOffset));
 
-  List<RouteHandler?> _findRoutes(
+  List<OpenRouteHandler?> _findRoutes(
     SchemasRegistry schemasRegistry,
-    ClassElement element, {
-    required String routePrefix,
+    ClassElement classElement, {
+    required String pathPrefix,
     required bool strict,
   }) {
-    final elements = getAnnotatedElementsOrderBySourceOffset(element);
+    final routes = RouteHandler.from(classElement, strict: strict);
 
-    return elements.expand((executableElement) {
-      final openApiAnnotation = ConstantReader(
-        _openApiRouteType.firstAnnotationOfExact(executableElement),
-      );
+    return routes.expand((route) sync* {
+      switch (route) {
+        case MountRouteHandler(:final element, :final path):
+          final childElement = element.returnType.element as ClassElement;
+          yield* _findRoutes(schemasRegistry, childElement, pathPrefix: path, strict: strict);
 
-      return _routeType.annotationsOfExact(executableElement).map(ConstantReader.new).expand((
-        routeAnnotation,
-      ) sync* {
-        final route = routeAnnotation.read('route').stringValue;
+        case HttpRouteHandler(:final element):
+          final openApiAnnotation = ConstantReader(
+            _openApiRouteType.firstAnnotationOfExact(route.element),
+          );
 
-        switch (routeAnnotation.read('verb').stringValue) {
-          case r'$all':
-            return;
-          case r'$mount':
-            final childElement = executableElement.returnType.element;
-            if (childElement is! ClassElement) {
-              throw InvalidGenerationSourceError('The mounted should be a class', element: element);
-            }
-            yield* _findRoutes(schemasRegistry, childElement, routePrefix: route, strict: strict);
-          default:
-            final routing = RoutingHandler.from(executableElement, strict: strict);
-
-            yield RouteHandler(
-              element: executableElement,
-              schemasRegistry: schemasRegistry,
-              path: '$routePrefix$route',
-              method: routeAnnotation.read('verb').stringValue,
-              security: (openApiAnnotation.peek('security')?.listReader ?? const []).map((
-                security,
-              ) {
-                return security.mapReader.map((securitySchemeKey, permissions) {
-                  return MapEntry(
-                    securitySchemeKey.stringValue,
-                    permissions.listReader.map((e) => e.stringValue).toList(),
-                  );
-                });
-              }).toList(),
-              requestQuery: openApiAnnotation.peek('requestQuery')?.typeValue,
-              requestBody: openApiAnnotation.peek('requestBody')?.typeValue,
-              routing: routing,
-            );
-        }
-      });
+          yield OpenRouteHandler(
+            handler: route,
+            element: element,
+            schemasRegistry: schemasRegistry,
+            pathPrefix: pathPrefix,
+            security: (openApiAnnotation.peek('security')?.listReader ?? const []).map((security) {
+              return security.mapReader.map((securitySchemeKey, permissions) {
+                return MapEntry(
+                  securitySchemeKey.stringValue,
+                  permissions.listReader.map((e) => e.stringValue).toList(),
+                );
+              });
+            }).toList(),
+            requestQuery: openApiAnnotation.peek('requestQuery')?.typeValue,
+            requestBody: openApiAnnotation.peek('requestBody')?.typeValue,
+          );
+      }
     }).toList();
   }
 
-  String _generate(SchemasRegistry schemasRegistry, List<RouteHandler> routes) {
-    final routesHandler = RoutesHandler(
+  String _generate(SchemasRegistry schemasRegistry, List<OpenRouteHandler> routes) {
+    final routesHandler = OpenApiHandler(
       config: config,
       schemasRegistry: schemasRegistry,
       routes: routes,
@@ -139,7 +124,7 @@ class OpenApiBuilder implements Builder {
       );
     }
 
-    final routes = _findRoutes(schemasRegistry, element, routePrefix: '', strict: hasRouting);
+    final routes = _findRoutes(schemasRegistry, element, pathPrefix: '', strict: hasRouting);
 
     final result = _generate(schemasRegistry, routes.nonNulls.toList());
 

@@ -6,32 +6,32 @@ import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_open_api_generator/src/schemas_registry.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
-import 'package:shelf_open_api_generator/src/utils/routing_utils.dart';
 import 'package:shelf_router/shelf_router.dart';
+import 'package:shelf_routing_generator/shelf_routing_generator.dart';
 import 'package:source_gen/source_gen.dart';
 
 /// A representation of a handler that was annotated with [Route].
-class RouteHandler {
+class OpenRouteHandler {
+  final HttpRouteHandler handler;
   final ExecutableElement element;
   final SchemasRegistry schemasRegistry;
-  final String path;
-  final String method;
+  final String pathPrefix;
   final List<Map<String, List<String>>> security;
   final DartType? requestQuery;
   final DartType? requestBody;
 
-  final RoutingHandler routing;
+  String get verb => handler.verb;
+  String get path => '$pathPrefix${handler.path}';
 
-  RouteHandler({
+  OpenRouteHandler({
+    required this.handler,
     required this.element,
     required this.schemasRegistry,
-    required this.path,
-    required this.method,
+    required this.pathPrefix,
     required this.security,
     required this.requestQuery,
     required this.requestBody,
-    required this.routing,
-  }) : assert(method != 'GET' || requestBody == null);
+  });
 
   OperationOpenApi buildOperation() {
     final classElement = element.enclosingElement3 as ClassElement;
@@ -50,17 +50,14 @@ class RouteHandler {
   }
 
   List<ParameterOpenApi> _buildParameters() {
-    final pathParams = RegExp(r'<([^>]+)>').allMatches(path).map((e) {
-      final name = e.group(1)!;
-
-      final parameterType = routing.pathParameters.firstWhereOrNull((e) => e.name == name)?.type;
+    final pathParams = handler.pathParameters.map((parameter) {
       final schema = schemasRegistry.tryRegisterV2(
         object: false,
         iterables: false,
-        dartType: parameterType,
+        dartType: parameter.type,
       );
       return ParameterOpenApi(
-        name: name,
+        name: parameter.name,
         in$: ParameterInOpenApi.path,
         required: true,
         schema: schema ?? SchemaOpenApi(type: TypeOpenApi.string),
@@ -77,7 +74,7 @@ class RouteHandler {
             required: e.type.nullabilitySuffix == NullabilitySuffix.none,
           );
         }) ??
-        routing.queryParameters.map((parameter) {
+        handler.queryParameters.map((parameter) {
           return ParameterOpenApi(
             name: parameter.name,
             in$: ParameterInOpenApi.query,
@@ -90,7 +87,7 @@ class RouteHandler {
   }
 
   RequestBodyOpenApi? _buildRequestBody() {
-    final requestBody = this.requestBody ?? routing.bodyParameter?.type;
+    final requestBody = this.requestBody ?? handler.bodyParameter?.type;
     if (requestBody == null) return null;
     return RequestBodyOpenApi(
       required: true,
@@ -127,5 +124,5 @@ class RouteHandler {
 
   @override
   String toString() =>
-      'RouteHandler(method: $method, security:$security, requestQuery: $requestQuery, requestBody: $requestBody, element: $element)';
+      'RouteHandler(verb: ${handler.verb}, security:$security, requestQuery: $requestQuery, requestBody: $requestBody, element: $element)';
 }

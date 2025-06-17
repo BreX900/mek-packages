@@ -12,7 +12,7 @@ class ChatsController with RouterMixin {
   @override
   Router get router => _$ChatsControllerRouter(this);
 
-  @Route.post('/chats')
+  @Route.post('/')
   @OpenApiRoute(requestBody: ChatCreateDto)
   Future<JsonResponse<void>> createChatForReport(Request request) async {
     // ...
@@ -20,7 +20,7 @@ class ChatsController with RouterMixin {
     return JsonResponse.ok(null);
   }
 
-  @Route.post('/chats')
+  @Route.put('/')
   Future<JsonResponse<void>> createChatForReportV2(Request request, ChatCreateDto data) async {
     // ...
 

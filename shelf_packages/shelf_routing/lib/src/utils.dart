@@ -31,17 +31,7 @@ void $ensureHasHeader(Request request, String name) {
 }
 
 /// Generator utils
-Future<T> $readBodyAs<T>(Request request, T Function(Map<String, dynamic> data) converter) async {
-  try {
-    final data = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
-    return converter(data);
-  } catch (error, stackTrace) {
-    throw BadRequestException.body(error, stackTrace);
-  }
-}
-
-/// Generator utils
-Future<T> $parseBodyAs<T>(Request request, T Function(Object? data) converter) async {
+Future<T> $readBodyAs<T>(Request request, T Function(Object? data) converter) async {
   try {
     final data = jsonDecode(await request.readAsString());
     return converter(data);

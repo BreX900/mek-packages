@@ -7,13 +7,13 @@ part of 'chats_controller.dart';
 // **************************************************************************
 
 Router _$ChatsControllerRouter(ChatsController service) => Router()
-  ..add('POST', '/chats', (Request request) async {
+  ..add('POST', '/', (Request request) async {
     return await service.createChatForReport(request);
   })
-  ..add('POST', '/chats', (Request request) async {
+  ..add('PUT', '/', (Request request) async {
     return await service.createChatForReportV2(
       request,
-      await $parseBodyAs(
+      await $readBodyAs(
         request,
         (data) => ChatCreateDto.fromJson(data! as Map<String, dynamic>),
       ),

@@ -34,6 +34,17 @@ class OpenApi with PrettyJsonToString {
     this.tags = const [],
   });
 
+  OpenApi copyWith({InfoOpenApi? info, List<ServerOpenApi>? servers}) {
+    return OpenApi(
+      openapi: openapi,
+      info: info ?? this.info,
+      servers: servers ?? this.servers,
+      paths: paths,
+      components: components,
+      tags: tags,
+    );
+  }
+
   factory OpenApi.fromJson(Map<dynamic, dynamic> map) => _$OpenApiFromJson(map);
   @override
   Map<String, dynamic> toJson() => _$OpenApiToJson(this);
@@ -90,13 +101,13 @@ class ItemPathOpenApi with PrettyJsonToString {
   }
 
   Map<String, OperationOpenApi> get operations => {
-        if (get != null) 'get': get!,
-        if (put != null) 'put': put!,
-        if (post != null) 'post': post!,
-        if (delete != null) 'delete': delete!,
-        if (head != null) 'head': head!,
-        if (patch != null) 'patch': patch!,
-      };
+    if (get != null) 'get': get!,
+    if (put != null) 'put': put!,
+    if (post != null) 'post': post!,
+    if (delete != null) 'delete': delete!,
+    if (head != null) 'head': head!,
+    if (patch != null) 'patch': patch!,
+  };
 
   factory ItemPathOpenApi.fromJson(Map<dynamic, dynamic> map) => _$ItemPathOpenApiFromJson(map);
   @override
@@ -157,10 +168,12 @@ class OperationOpenApi with PrettyJsonToString {
   }
 
   Map<int, ResponseOpenApi> get failedResponses {
-    return Map.fromEntries(responses.entries.where((e) {
-      final MapEntry(key: code) = e;
-      return code < 200 && code >= 300;
-    }));
+    return Map.fromEntries(
+      responses.entries.where((e) {
+        final MapEntry(key: code) = e;
+        return code < 200 && code >= 300;
+      }),
+    );
   }
 
   factory OperationOpenApi.fromJson(Map<dynamic, dynamic> map) => _$OperationOpenApiFromJson(map);
@@ -240,11 +253,7 @@ class RequestBodyOpenApi with PrettyJsonToString {
 
   final GroupMediaOpenApi content;
 
-  const RequestBodyOpenApi({
-    this.description,
-    this.required = false,
-    required this.content,
-  });
+  const RequestBodyOpenApi({this.description, this.required = false, required this.content});
 
   factory RequestBodyOpenApi.fromJson(Map<dynamic, dynamic> map) =>
       _$RequestBodyOpenApiFromJson(map);
@@ -261,11 +270,7 @@ class ResponseOpenApi with PrettyJsonToString {
 
   final GroupMediaOpenApi? content;
 
-  const ResponseOpenApi({
-    required this.description,
-    this.headers = const {},
-    this.content,
-  });
+  const ResponseOpenApi({required this.description, this.headers = const {}, this.content});
 
   factory ResponseOpenApi.fromJson(Map<dynamic, dynamic> map) => _$ResponseOpenApiFromJson(map);
   @override

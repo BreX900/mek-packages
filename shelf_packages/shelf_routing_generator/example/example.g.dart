@@ -26,7 +26,7 @@ Router _$UserControllerRouter(UserController service) => Router()
   ..add('POST', '/', (Request request) async {
     return await service.createUser(
       request,
-      await $parseBodyAs(
+      await $readBodyAs(
         request,
         (data) => User.fromJson(data! as Map<String, dynamic>),
       ),

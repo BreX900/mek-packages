@@ -20,10 +20,3 @@ builders:
     build_extensions: { 'lib/{{}}.dart': [ 'public/{{}}.yaml' ] }
     auto_apply: dependents
     build_to: source
-
-#  shelf_open_api_generator:shelf_routing:
-#    import: package:shelf_open_api_generator/shelf_routing_generator.dart
-#    builder_factories: [ 'buildRouting' ]
-#    build_extensions: { '.dart': [ '.routing.dart' ] }
-#    auto_apply: dependents
-#    build_to: source

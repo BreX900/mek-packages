@@ -6,7 +6,7 @@ import 'package:shelf_router/shelf_router.dart';
 export 'package:shelf_routing/src/json_response.dart';
 export 'package:shelf_routing/src/utils.dart';
 
-abstract interface class RouterMixin {
+mixin RouterMixin {
   Router get router;
 }
 

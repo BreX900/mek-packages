@@ -1,0 +1,29 @@
+targets:
+  $default:
+    builders:
+      shelf_open_api_generator:
+        enabled: false
+      shelf_open_api_generator:shelf_routing:
+        enabled: false
+
+      json_serializable:
+        generate_for:
+          - lib/src/config.dart
+        options:
+          create_factory: false
+          create_to_json: false
+
+builders:
+  shelf_open_api_generator:
+    import: package:shelf_open_api_generator/shelf_open_api_generator.dart
+    builder_factories: [ 'buildOpenApi' ]
+    build_extensions: { 'lib/{{}}.dart': [ 'public/{{}}.yaml' ] }
+    auto_apply: dependents
+    build_to: source
+
+#  shelf_open_api_generator:shelf_routing:
+#    import: package:shelf_open_api_generator/shelf_routing_generator.dart
+#    builder_factories: [ 'buildRouting' ]
+#    build_extensions: { '.dart': [ '.routing.dart' ] }
+#    auto_apply: dependents
+#    build_to: source

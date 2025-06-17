@@ -75,12 +75,33 @@ class RouteHandler {
         throw InvalidGenerationSourceError('"GET" endpoint cannot have a body.', element: element);
       }
       final parameter = parametersIterator.current;
-      final parameterElement = parameter.type.element! as ClassElement;
-      final parameterTypeName = parameter.type.getDisplayString(withNullability: false);
-      if (parameterElement.constructors.every((e) => e.name != 'fromJson')) {
+
+      bool check(DartType type) {
+        if (type.isDartCoreBool || type.isDartCoreString) return true;
+        if (type.isDartCoreInt || type.isDartCoreDouble || type.isDartCoreNum) return true;
+
+        if (type is! InterfaceType) return false;
+
+        if (type.isDartCoreList) {
+          return check(type.typeArgument);
+        } else if (type.isDartCoreMap) {
+          return check(type.typeArguments[1]);
+        } else {
+          final parameterElement = type.element as ClassElement;
+          if (parameterElement.constructors.every((e) => e.name != 'fromJson')) {
+            return false;
+          }
+          return true;
+        }
+      }
+
+      if (!check(parameter.type)) {
+        final parameterTypeName = parameter.type.getDisplayString(withNullability: false);
         throw InvalidGenerationSourceError(
-          'add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
-          element: parameterElement,
+          'invalid body parameter type.\n'
+          'You can use primitive types: bool, int, double, num or String or List, Map with primitive values.\n'
+          'If you want use custom type add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
+          element: parameter.enclosingElement3,
         );
       }
       bodyParameter = parameter;

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart';
@@ -58,6 +59,30 @@ class RouterGenerator extends Generator {
     }
   }
 
+  String _codeFromJson(DartType type) {
+    if (type.isDartCoreInt ||
+        type.isDartCoreDouble ||
+        type.isDartCoreNum ||
+        type.isDartCoreBool ||
+        type.isDartCoreString) {
+      return 'data! as ${type.getDisplayString()}';
+    }
+    type as InterfaceType;
+    if (type.isDartCoreList) {
+      return '(data! as List<dynamic>).map((data) {\n'
+          '  return ${_codeFromJson(type.typeArgument)};\n'
+          '}).toList()\n';
+    }
+    if (type.isDartCoreMap) {
+      return '(data! as Map<String, dynamic>).map((k, data) {\n'
+          '  return  MapEntry(k, ${_codeFromJson(type.typeArguments[1])});\n'
+          '})\n';
+    }
+    final element = type.element3 as ClassElement2;
+    final constructor = element.constructors2.firstWhere((e) => e.name3 == 'fromJson');
+    return '${type.getDisplayString()}.fromJson(data! as ${constructor.formalParameters.first.type.getDisplayString()})';
+  }
+
   String _codeAddRoute(RouteHandler __) {
     final RouteHandler(
       :routable,
@@ -86,7 +111,7 @@ class RouterGenerator extends Generator {
         return parserCode != null ? '$parserCode(${e.name})' : e.name;
       }),
       if (bodyParameter != null)
-        'await \$readBodyAs(request, ${bodyParameter.type.getDisplayString()}.fromJson)',
+        'await \$parseBodyAs(request, (data) => ${_codeFromJson(bodyParameter.type)})',
       // if (headerParameters.isNotEmpty)
       //   ...headerParameters.map((e) {
       //     final key = e.name.paramCase;

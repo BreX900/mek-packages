@@ -13,7 +13,11 @@ Router get _$queryParametersControllerRouter => Router()
     final $ = request.get<QueryParametersController>();
     return $.single(
       request,
-      integer: $parseQueryParameters(request, 'integer', (vls) => int.parse(vls.single)),
+      integer: $parseQueryParameters(
+        request,
+        'integer',
+        (vls) => int.parse(vls.single),
+      ),
       double: $parseQueryParameters(
         request,
         'double',

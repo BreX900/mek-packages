@@ -143,5 +143,8 @@ class BadRequestException implements Exception {
       name = null;
 
   @override
-  String toString() => 'Missing or invalid ${position.name}${name != null ? ' "$name"' : ''}.';
+  String toString() =>
+      'Missing or invalid ${position.name}${name != null ? ' "$name"' : ''}.\n'
+      '$error\n'
+      '$stackTrace';
 }

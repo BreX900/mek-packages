@@ -10,7 +10,7 @@ environment:
 
 scripts:
   publish: dart pub publish
-  runner:watch: dart run build_runner watch --delete-conflicting-outputs --verbose
+  generate-code: dart run build_runner watch --delete-conflicting-outputs --verbose
 
 dependencies:
   shelf: ^1.4.2

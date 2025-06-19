@@ -9,20 +9,18 @@ class ConfigSerializable extends JsonSerializable {
 
 @ConfigSerializable()
 class Config {
-  final String includeRoutesIn;
-  final String infoTitle;
+  final String? infoTitle;
   final String? infoDescription;
-  final String infoVersion;
+  final String? infoVersion;
   final String? infoTermsOfService;
   final String serverUrl;
   final String? serverDescription;
   final Map<String, SecuritySchemeOpenApi> securitySchemes;
 
   const Config({
-    this.includeRoutesIn = 'lib/**.dart',
-    this.infoTitle = 'Api',
+    this.infoTitle,
     this.infoDescription,
-    this.infoVersion = '0.0.0',
+    this.infoVersion,
     this.infoTermsOfService,
     this.serverUrl = 'http://localhost:8080',
     this.serverDescription,

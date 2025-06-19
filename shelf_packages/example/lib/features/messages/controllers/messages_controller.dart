@@ -14,7 +14,7 @@ class MessagesController with RouterMixin {
   Router get router => _$MessagesControllerRouter(this);
 
   @Route.get('/')
-  @OpenApiRoute(requestQuery: MessageFetchDto)
+  @OpenApiRouteHttp(requestQuery: MessageFetchDto)
   Future<JsonResponse<List<MessageDto>>> fetchMessages(Request request) async {
     // ...
 

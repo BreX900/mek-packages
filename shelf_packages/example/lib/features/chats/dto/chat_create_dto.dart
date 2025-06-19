@@ -6,9 +6,7 @@ part 'chat_create_dto.g.dart';
 class ChatCreateDto {
   final String title;
 
-  const ChatCreateDto({
-    required this.title,
-  });
+  const ChatCreateDto({required this.title});
 
   factory ChatCreateDto.fromJson(Map<String, dynamic> map) => _$ChatCreateDtoFromJson(map);
 }

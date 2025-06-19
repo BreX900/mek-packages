@@ -13,7 +13,7 @@ class ChatsController with RouterMixin {
   Router get router => _$ChatsControllerRouter(this);
 
   @Route.post('/')
-  @OpenApiRoute(requestBody: ChatCreateDto)
+  @OpenApiRouteHttp(requestBody: ChatCreateDto)
   Future<JsonResponse<void>> createChatForReport(Request request) async {
     // ...
 

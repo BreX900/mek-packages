@@ -7,10 +7,7 @@ class MessageDto {
   final String chatId;
   final String content;
 
-  const MessageDto({
-    required this.chatId,
-    required this.content,
-  });
+  const MessageDto({required this.chatId, required this.content});
 
   Map<String, dynamic> toJson() => _$MessageDtoToJson(this);
 }

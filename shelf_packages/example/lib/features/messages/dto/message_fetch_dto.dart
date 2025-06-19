@@ -6,9 +6,7 @@ part 'message_fetch_dto.g.dart';
 class MessageFetchDto {
   final String chatId;
 
-  const MessageFetchDto({
-    required this.chatId,
-  });
+  const MessageFetchDto({required this.chatId});
 
   factory MessageFetchDto.fromJson(Map<String, dynamic> map) => _$MessageFetchDtoFromJson(map);
 }

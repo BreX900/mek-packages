@@ -4,7 +4,9 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf/shelf.dart';
+import 'package:shelf_open_api/shelf_open_api.dart';
 import 'package:shelf_open_api_generator/src/schemas_registry.dart';
+import 'package:shelf_open_api_generator/src/utils/annotations_utils.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_routing_generator/shelf_routing_generator.dart';
@@ -23,7 +25,7 @@ class OpenRouteHandler {
   String get verb => handler.verb;
   String get path => '$pathPrefix${handler.path}';
 
-  OpenRouteHandler({
+  const OpenRouteHandler._({
     required this.handler,
     required this.element,
     required this.schemasRegistry,
@@ -125,4 +127,61 @@ class OpenRouteHandler {
   @override
   String toString() =>
       'RouteHandler(verb: ${handler.verb}, security:$security, requestQuery: $requestQuery, requestBody: $requestBody, element: $element)';
+}
+
+class OpenRouteFinder {
+  static final _openApiRouteHttpChecker = TypeChecker.fromRuntime(OpenApiRouteHttp);
+  static final _openApiRouteMountChecker = TypeChecker.fromRuntime(OpenApiRouteMount);
+  static final _openApiRouteIgnoreChecker = TypeChecker.fromRuntime(OpenApiRouteIgnore);
+
+  final SchemasRegistry schemasRegistry;
+  final bool strict;
+
+  const OpenRouteFinder({required this.schemasRegistry, required this.strict});
+
+  List<OpenRouteHandler> find(ClassElement classElement) => _find(classElement, pathPrefix: '');
+
+  List<OpenRouteHandler> _find(ClassElement classElement, {required String pathPrefix}) {
+    final routes = RouteHandler.from(classElement, strict: strict);
+
+    return routes.expand<OpenRouteHandler>((route) sync* {
+      final isIgnored = _openApiRouteIgnoreChecker.hasAnnotationOf(route.element);
+      if (isIgnored) return;
+
+      switch (route) {
+        case MountRouteHandler(:final element, :final path, :final isRouterMixin):
+          final mount = _openApiRouteMountChecker.firstAnnotationOf(element);
+          final serviceType = mount?.getField('serviceType')?.toTypeValue();
+
+          ClassElement? classElement;
+          if (serviceType != null) classElement = serviceType.element as ClassElement?;
+          if (strict && isRouterMixin) classElement = element.returnType.element as ClassElement;
+          if (classElement == null) return;
+
+          yield* _find(classElement, pathPrefix: path);
+
+        case HttpRouteHandler(:final element):
+          final openApiRoute = ConstantReader(
+            _openApiRouteHttpChecker.firstAnnotationOfExact(route.element),
+          );
+
+          yield OpenRouteHandler._(
+            handler: route,
+            element: element,
+            schemasRegistry: schemasRegistry,
+            pathPrefix: pathPrefix,
+            security: (openApiRoute.peek('security')?.listReader ?? const []).map((security) {
+              return security.mapReader.map((securitySchemeKey, permissions) {
+                return MapEntry(
+                  securitySchemeKey.stringValue,
+                  permissions.listReader.map((e) => e.stringValue).toList(),
+                );
+              });
+            }).toList(),
+            requestQuery: openApiRoute.peek('requestQuery')?.typeValue,
+            requestBody: openApiRoute.peek('requestBody')?.typeValue,
+          );
+      }
+    }).toList();
+  }
 }

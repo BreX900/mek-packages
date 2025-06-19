@@ -7,5 +7,5 @@ part of 'main.dart';
 // **************************************************************************
 
 Router _$ApiControllerRouter(ApiController service) => Router()
-  ..mount('/v1', service.chats.router.call)
-  ..mount('/v1', service.messages.router.call);
+  ..mount('/api-v1/chats', service.chats.router.call)
+  ..mount('/api-v1/messages', service.messages.router.call);

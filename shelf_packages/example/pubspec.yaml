@@ -1,6 +1,7 @@
 name: example
 description: A sample command-line application.
 publish_to: 'none'
+version: 1.2.3
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -17,8 +18,6 @@ dependencies:
   shelf_swagger_ui: ^2.0.0
 
   shelf_open_api: ^1.1.0
-
-  yaml:
 
   mek_data_class: ^1.4.0
   json_annotation: ^4.9.0

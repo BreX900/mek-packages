@@ -3,20 +3,35 @@ library shelf_open_api;
 
 import 'package:meta/meta_meta.dart';
 
+enum OpenApiFileFormat { yaml, json }
+
 @TargetKind.classType
-class OpenApi {
-  const OpenApi();
+class OpenApiFile {
+  final OpenApiFileFormat format;
+
+  const OpenApiFile({this.format = OpenApiFileFormat.json});
+}
+
+class OpenApiRouteIgnore {
+  const OpenApiRouteIgnore();
 }
 
 @TargetKind.method
-class OpenApiRoute {
+class OpenApiRouteHttp {
   final List<Map<String, List<String>>> security;
   final Type? requestQuery;
   final Type? requestBody;
 
-  const OpenApiRoute({
+  const OpenApiRouteHttp({
     this.security = const <Map<String, List<String>>>[],
     this.requestQuery,
     this.requestBody,
   });
+}
+
+@TargetKind.getter
+class OpenApiRouteMount {
+  final Type serviceType;
+
+  const OpenApiRouteMount(this.serviceType);
 }

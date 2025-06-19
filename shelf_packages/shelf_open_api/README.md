@@ -45,7 +45,7 @@ dev_dependencies:
 
 Annotate your routes class with `OpenApi` annotation
 ```dart
-@OpenApi()
+@OpenApiFile(format: OpenApiFile.json)
 class MessagesController {
   @Route.get('/messages')
   Future<Response> fetch(Request request) async {
@@ -160,6 +160,8 @@ targets:
         options:
           include_routes_in: 'lib/**_controller.dart'
           info_title: 'Api'
+          info_description: 'Shelf open api example'
+          server_url: 'http://localhost:8080'
           security_schemes:
              appwriteJwt:
                type: http

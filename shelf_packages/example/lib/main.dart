@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:example/features/chats/controllers/chats_controller.dart';
@@ -9,16 +8,15 @@ import 'package:shelf_open_api/shelf_open_api.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_static/shelf_static.dart';
 import 'package:shelf_swagger_ui/shelf_swagger_ui.dart';
-import 'package:yaml/yaml.dart';
 
 part 'main.g.dart';
 
 void main() async {
-  final data = loadYaml(File('public/open_api.yaml').readAsStringSync());
+  final data = File('public/main.json').readAsStringSync();
 
   final rootRouter = Router()
     ..mount('/', const ApiController().call)
-    ..mount('/swagger', SwaggerUI(_yamlToJson(data), title: 'Swagger Example Api'))
+    ..mount('/swagger', SwaggerUI(data, title: 'Swagger Example Api'))
     ..mount('/', createStaticHandler('public'));
 
   // Configure a pipeline.
@@ -34,25 +32,17 @@ void main() async {
   print('Server listening on $url -> Swagger: $url/swagger');
 }
 
-String _yamlToJson(Object? data) {
-  return jsonEncode(
-    data,
-    toEncodable: (data) {
-      if (data is Map<dynamic, dynamic>) return data.map((k, v) => MapEntry('$k', v));
-      return data;
-    },
-  );
-}
-
-@OpenApi()
+@OpenApiFile()
 class ApiController {
+  static const _version = '/api-v1';
+
   const ApiController();
 
   Router get router => _$ApiControllerRouter(this);
 
-  @Route.mount('/v1')
+  @Route.mount('$_version/chats')
   ChatsController get chats => const ChatsController();
-  @Route.mount('/v1')
+  @Route.mount('$_version/messages')
   MessagesController get messages => const MessagesController();
 
   Future<Response> call(Request request) => router.call(request);

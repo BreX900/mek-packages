@@ -19,6 +19,7 @@ dependencies:
   shelf_router: ^1.1.4
   shelf_open_api: ^3.0.0
   shelf_routing_generator: ^1.0.0
+  yaml: ^3.0.0
 
   collection: ^1.19.1
 

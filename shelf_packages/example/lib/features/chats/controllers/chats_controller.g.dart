@@ -18,4 +18,15 @@ Router _$ChatsControllerRouter(ChatsController service) => Router()
         (data) => ChatCreateDto.fromJson(data! as Map<String, dynamic>),
       ),
     );
+  })
+  ..add('PUT', '/', (Request request) async {
+    return await service.batchChats(
+      request,
+      await $readBodyAs(
+        request,
+        (data) => (data! as List<dynamic>).map((data) {
+          return ChatCreateDto.fromJson(data! as Map<String, dynamic>);
+        }).toList(),
+      ),
+    );
   });

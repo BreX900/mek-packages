@@ -1,14 +1,12 @@
 import 'dart:async';
 
 import 'package:build/build.dart';
-import 'package:shelf_open_api_generator/src/config.dart';
+import 'package:shelf_open_api_generator/src/dto/config.dart';
 import 'package:shelf_open_api_generator/src/handlers/route_handler.dart';
 import 'package:shelf_open_api_generator/src/handlers/routes_handler.dart';
-import 'package:shelf_open_api_generator/src/utils/utils.dart';
 
 Builder buildOpenApi(BuilderOptions options) {
-  final rawConfig = Utils.optionYamlToBuilder(options.config);
-  final config = Config.fromJson(rawConfig);
+  final config = Config.fromJson(options.config);
 
   return OpenApiBuilder(
     buildExtensions: const {

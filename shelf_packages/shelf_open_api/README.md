@@ -158,11 +158,12 @@ targets:
     builders:
       shelf_open_api_generator:
         options:
-          include_routes_in: 'lib/**_controller.dart'
-          info_title: 'Api'
-          info_description: 'Shelf open api example'
-          server_url: 'http://localhost:8080'
-          security_schemes:
+          info: # See more info on open_api_specification.InfoOpenApi class
+            title: 'Api'
+            description: 'Shelf open api example'
+          servers: # See more info on open_api_specification.ServerOpenApi class
+            url: 'http://localhost:8080'
+          security_schemes: # See more info on open_api_specification.SecuritySchemeOpenApi class
              appwriteJwt:
                type: http
                scheme: Bearer

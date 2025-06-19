@@ -5,6 +5,7 @@ part 'message_dto.g.dart';
 @JsonSerializable(createFactory: false)
 class MessageDto {
   final String chatId;
+  @JsonKey(name: 'description')
   final String content;
 
   const MessageDto({required this.chatId, required this.content});

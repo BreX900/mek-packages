@@ -5,6 +5,7 @@ import 'package:build/build.dart';
 import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
+import 'package:shelf_open_api_generator/src/utils/json_annotation.dart';
 import 'package:source_gen/source_gen.dart';
 
 class SchemasRegistry {
@@ -90,7 +91,7 @@ class _SchemaResolver {
         description: doc.summaryAndDescription,
         example: doc.example,
         type: TypeOpenApi.string,
-        enum$: enumValues.map((e) => e.name).toList(),
+        enum$: enumValues.map((e) => JsonAnnotation.getEnumValue(e) ?? e.name).toList(),
       );
     }
 
@@ -155,6 +156,17 @@ class _SchemaResolver {
         additionalProperties: resolve(dartType: typeArguments[1]),
       );
     } else if (element is ClassElement) {
+      final parameters = element.constructors.firstWhere((e) => e.name.isEmpty).parameters;
+      final fields = element.accessors.where((e) => e.isGetter).toList();
+      final names = <String, String>{
+        for (final e in parameters)
+          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
+        for (final e in element.fields)
+          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
+        for (final e in fields)
+          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
+      };
+
       final List<_ClassProperty> properties;
 
       if (isBidirectional) {
@@ -183,14 +195,17 @@ class _SchemaResolver {
         title: element.name,
         type: TypeOpenApi.object,
         format: null,
-        required: properties.where((e) => e.isRequired).map((e) => e.name).toList(),
+        required: properties
+            .where((e) => e.isRequired)
+            .map((e) => names[e.name] ?? e.name)
+            .toList(),
         properties: {
           for (final property in properties)
-            property.name: resolve(
+            names[property.name] ?? property.name: resolve(
               doc: Doc.from(
-                element.fields.firstWhereOrNull((e) {
-                  return e.name == property.name;
-                })?.documentationComment,
+                element.fields
+                    .firstWhereOrNull((e) => e.name == property.name)
+                    ?.documentationComment,
               ),
               dartType: property.type,
             ),

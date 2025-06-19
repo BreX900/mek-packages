@@ -14,10 +14,10 @@ targets:
           create_to_json: false
           checked: true
 
-#builders:
-#  shelf_open_api_generator:
-#    import: package:shelf_open_api_generator/shelf_open_api_generator.dart
-#    builder_factories: [ 'buildOpenApi' ]
-#    build_extensions: { 'lib/{{}}.dart': [ 'public/{{}}.yaml' ] }
-#    auto_apply: dependents
-#    build_to: source
+builders:
+  shelf_open_api_generator:
+    import: package:shelf_open_api_generator/shelf_open_api_generator.dart
+    builder_factories: [ 'buildOpenApi' ]
+    build_extensions: { 'lib/{{}}.dart': [ 'public/{{}}.yaml' ] }
+    auto_apply: dependents
+    build_to: source

@@ -16,7 +16,7 @@ void main() async {
 
   final rootRouter = Router()
     ..mount('/', const ApiController().call)
-    ..mount('/swagger', SwaggerUI(data, title: 'Swagger Example Api'))
+    ..mount('/swagger', SwaggerUI(data, title: 'Swagger Example Api v2'))
     ..mount('/', createStaticHandler('public'));
 
   // Configure a pipeline.

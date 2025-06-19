@@ -19,6 +19,7 @@ This library is under development, any help is welcome
 - [-] Security (Partial implemented)
 - [x] Docs (`summary`, `description`, `example`)
 - [x] Tags/Groups
+- [x] json_serializable
 - [ ] Deprecated operations by `@Deprecated()` meta annotation
 - [ ] Default values `default`
 

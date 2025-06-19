@@ -7,4 +7,12 @@ part of 'chat_create_dto.dart';
 // **************************************************************************
 
 ChatCreateDto _$ChatCreateDtoFromJson(Map<String, dynamic> json) =>
-    ChatCreateDto(title: json['title'] as String);
+    ChatCreateDto(
+      title: json['title'] as String,
+      visibility: $enumDecode(_$ChatVisibilityEnumMap, json['visibility']),
+    );
+
+const _$ChatVisibilityEnumMap = {
+  ChatVisibility.private: 'private',
+  ChatVisibility.public: 'open',
+};

@@ -174,7 +174,13 @@ enum DeviceType {
   verifoneP630,
 
   /// Verifone UX700
-  verifoneUX700,
+  verifoneUx700,
+
+  /// Verifone V660P DevKit
+  verifoneV660pDevkit,
+
+  /// Verifone UX700 DevKit
+  verifoneUx700Devkit,
 }
 
 /// A categorization of a reader’s battery charge level.

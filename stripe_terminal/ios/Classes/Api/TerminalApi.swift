@@ -923,7 +923,9 @@ enum DeviceTypeApi: Int {
     case verifoneM425
     case verifoneM450
     case verifoneP630
-    case verifoneUX700
+    case verifoneUx700
+    case verifoneV660pDevkit
+    case verifoneUx700Devkit
 }
 
 enum DisconnectReasonApi: Int {
@@ -1840,6 +1842,7 @@ enum TerminalExceptionCodeApi: Int {
     case surchargingNotAvailable
     case surchargeNoticeRequiresUpdatePaymentIntent
     case surchargeUnavailableWithDynamicCurrencyConversion
+    case tapToPayUnsupportedProcessor
 }
 
 struct TipApi {

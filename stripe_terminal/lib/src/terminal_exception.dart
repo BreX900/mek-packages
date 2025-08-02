@@ -582,6 +582,9 @@ enum TerminalExceptionCode {
 
   /// Only Ios. Surcharging was attempted while also using dynamic currency conversion.
   surchargeUnavailableWithDynamicCurrencyConversion,
+
+  /// The SDK is running on a device with a non-ARM processor (usually x86).
+  tapToPayUnsupportedProcessor,
   ;
 
   final String? message;

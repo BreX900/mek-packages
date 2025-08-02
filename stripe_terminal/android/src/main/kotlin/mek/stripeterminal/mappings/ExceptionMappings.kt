@@ -128,5 +128,6 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.PRINTER_ABSENT -> TerminalExceptionCodeApi.PRINTER_ABSENT
         TerminalErrorCode.PRINTER_UNAVAILABLE -> TerminalExceptionCodeApi.PRINTER_UNAVAILABLE
         TerminalErrorCode.PRINTER_ERROR -> TerminalExceptionCodeApi.PRINTER_ERROR
+        TerminalErrorCode.TAP_TO_PAY_UNSUPPORTED_PROCESSOR -> TerminalExceptionCodeApi.TAP_TO_PAY_UNSUPPORTED_PROCESSOR
     }
 }

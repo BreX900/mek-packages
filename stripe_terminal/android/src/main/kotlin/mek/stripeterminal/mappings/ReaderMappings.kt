@@ -82,7 +82,9 @@ fun DeviceType.toApi(): DeviceTypeApi? {
         DeviceType.VERIFONE_M425 -> DeviceTypeApi.VERIFONE_M425
         DeviceType.VERIFONE_M450 -> DeviceTypeApi.VERIFONE_M450
         DeviceType.VERIFONE_P630 -> DeviceTypeApi.VERIFONE_P630
-        DeviceType.VERIFONE_UX700 -> DeviceTypeApi.VERIFONE_U_X700
+        DeviceType.VERIFONE_UX700 -> DeviceTypeApi.VERIFONE_UX700
+        DeviceType.VERIFONE_V660P_DEVKIT -> DeviceTypeApi.VERIFONE_V660P_DEVKIT
+        DeviceType.VERIFONE_UX700_DEVKIT -> DeviceTypeApi.VERIFONE_UX700_DEVKIT
         DeviceType.UNKNOWN -> null
     }
 }
@@ -234,7 +236,9 @@ fun DeviceTypeApi.toHost(): DeviceType? {
         DeviceTypeApi.VERIFONE_M425 -> DeviceType.VERIFONE_M425
         DeviceTypeApi.VERIFONE_M450 -> DeviceType.VERIFONE_M450
         DeviceTypeApi.VERIFONE_P630 -> DeviceType.VERIFONE_P630
-        DeviceTypeApi.VERIFONE_U_X700 -> DeviceType.VERIFONE_UX700
+        DeviceTypeApi.VERIFONE_UX700 -> DeviceType.VERIFONE_UX700
+        DeviceTypeApi.VERIFONE_V660P_DEVKIT -> DeviceType.VERIFONE_V660P_DEVKIT
+        DeviceTypeApi.VERIFONE_UX700_DEVKIT -> DeviceType.VERIFONE_UX700_DEVKIT
     }
 }
 

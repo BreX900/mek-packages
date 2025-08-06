@@ -923,9 +923,9 @@ enum DeviceTypeApi: Int {
     case verifoneM425
     case verifoneM450
     case verifoneP630
-    case verifoneUx700
+    case verifoneUX700
     case verifoneV660pDevkit
-    case verifoneUx700Devkit
+    case verifoneUX700Devkit
 }
 
 enum DisconnectReasonApi: Int {

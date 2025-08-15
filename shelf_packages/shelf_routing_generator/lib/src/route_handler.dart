@@ -106,7 +106,7 @@ class HttpRouteHandler extends RouteHandler {
   final List<ParameterElement> pathParameters;
   final List<RouteHeaderHandler> headers;
   final List<ParameterElement> queryParameters;
-  final RouteReturnsType returns;
+  final RouteReturns returns;
 
   static HttpRouteHandler? from(MethodElement element, {bool strict = true}) {
     final route = _Route.from(element);
@@ -242,14 +242,13 @@ class HttpRouteHandler extends RouteHandler {
       queryParameters = element.parameters.where((e) => e.isNamed).toList();
     } else {
       for (final parameter in element.parameters) {
-        if (parameter.isNamed) {
-          throw InvalidGenerationSourceError(
-            'The shelf_router.Route annotation can only be used on shelf '
-            'request handlers accept a shelf.Request parameter and all parameters in the route, '
-            'optional positional parameters are not permitted',
-            element: parameter,
-          );
-        }
+        if (!parameter.isNamed) continue;
+        throw InvalidGenerationSourceError(
+          'The shelf_router.Route annotation can only be used on shelf '
+          'request handlers accept a shelf.Request parameter and all parameters in the route, '
+          'optional positional parameters are not permitted',
+          element: parameter,
+        );
       }
     }
 
@@ -266,31 +265,19 @@ class HttpRouteHandler extends RouteHandler {
     );
   }
 
-  static RouteReturnsType _parseReturnsType(DartType type) {
+  static RouteReturns _parseReturnsType(DartType type) {
     final returnType = type.isDartAsyncFuture || type.isDartAsyncFuture
         ? (type as InterfaceType).typeArguments.single
         : type;
 
-    if (returnType is VoidType) return RouteReturnsType.nothing;
-
-    if (returnType.isJson) return RouteReturnsType.json;
-
-    final returnElement = returnType.element;
-    if (returnElement is ClassElement) {
-      if (responseChecker.isAssignableFromType(returnType)) return RouteReturnsType.response;
-      if (returnElement.methods.every((element) => element.name != 'toJson')) {
-        throw InvalidGenerationSourceError(
-          'Please implement "Map<String, dynamic> ${returnElement.name}.toJson()" method.',
-        );
+    if (returnType is VoidType) return RouteReturnsVoid();
+    if (responseChecker.isAssignableFromType(returnType)) {
+      if (jsonResponseChecker.isAssignableFromType(returnType)) {
+        return RouteReturnsResponse((returnType as InterfaceType).typeArguments.single);
       }
-      return RouteReturnsType.json;
+      return RouteReturnsResponse(null);
     }
-
-    final typeName = type.getDisplayString();
-    throw InvalidGenerationSourceError(
-      'Please update $typeName with valid returns json value.',
-      element: type.element,
-    );
+    return RouteReturnsJson(returnType);
   }
 
   HttpRouteHandler._({
@@ -304,4 +291,20 @@ class HttpRouteHandler extends RouteHandler {
     required this.queryParameters,
     required this.returns,
   });
+}
+
+sealed class RouteReturns {}
+
+class RouteReturnsVoid extends RouteReturns {}
+
+class RouteReturnsResponse extends RouteReturns {
+  final DartType? type;
+
+  RouteReturnsResponse(this.type);
+}
+
+class RouteReturnsJson extends RouteReturns {
+  final DartType type;
+
+  RouteReturnsJson(this.type);
 }

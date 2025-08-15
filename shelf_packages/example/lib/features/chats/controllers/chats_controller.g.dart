@@ -11,13 +11,14 @@ Router _$ChatsControllerRouter(ChatsController service) => Router()
     return await service.createChatForReport(request);
   })
   ..add('PUT', '/', (Request request) async {
-    return await service.createChatForReportV2(
+    final body = await service.createChatForReportV2(
       request,
       await $readBodyAs(
         request,
         (data) => ChatCreateDto.fromJson(data! as Map<String, dynamic>),
       ),
     );
+    return JsonResponse.ok(body);
   })
   ..add('PUT', '/', (Request request) async {
     return await service.batchChats(

@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.2.3
 
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: ^3.8.0
 
 scripts:
   # To generate .g files:
@@ -26,7 +26,7 @@ dependencies:
 dev_dependencies:
   mek_lints: ^5.0.0
 
-  build_runner: ^2.4.15
+  build_runner: ^2.5.3
   mek_data_class_generator: ^2.0.3
   json_serializable: ^6.9.5
   shelf_open_api_generator: ^2.0.0

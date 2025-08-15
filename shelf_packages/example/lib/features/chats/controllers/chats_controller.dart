@@ -21,10 +21,10 @@ class ChatsController with RouterMixin {
   }
 
   @Route.put('/')
-  Future<JsonResponse<void>> createChatForReportV2(Request request, ChatCreateDto data) async {
+  Future<int> createChatForReportV2(Request request, ChatCreateDto data) async {
     // ...
 
-    return JsonResponse.ok(null);
+    return 12;
   }
 
   @Route.put('/')

@@ -137,17 +137,9 @@ class RoutingGenerator extends Generator {
     methodInvocation += 'service.${element.name}($methodParamsText)';
 
     final responseCode = switch (returns) {
-      RouteReturnsType.response =>
-        '''
-    return $methodInvocation;''',
-      RouteReturnsType.json =>
-        '''
-    final body = $methodInvocation;
-    return JsonResponse.ok(body);''',
-      RouteReturnsType.nothing =>
-        '''
-    $methodInvocation;
-    return JsonResponse.ok(null);''',
+      RouteReturnsVoid() => '$methodInvocation;\nreturn Response.ok(null)',
+      RouteReturnsResponse() => 'return $methodInvocation;',
+      RouteReturnsJson() => 'final body = $methodInvocation;\nreturn JsonResponse.ok(body);',
     };
 
     if (verb == r'$all') {

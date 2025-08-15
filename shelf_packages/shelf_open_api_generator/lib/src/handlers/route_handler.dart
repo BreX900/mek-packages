@@ -1,9 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api_spec.dart';
-import 'package:shelf/shelf.dart';
 import 'package:shelf_open_api/shelf_open_api.dart';
 import 'package:shelf_open_api_generator/src/schemas_registry.dart';
 import 'package:shelf_open_api_generator/src/utils/annotations_utils.dart';
@@ -21,6 +19,7 @@ class OpenRouteHandler {
   final List<Map<String, List<String>>> security;
   final DartType? requestQuery;
   final DartType? requestBody;
+  final DartType? responseBody;
 
   String get verb => handler.verb;
   String get path => '$pathPrefix${handler.path}';
@@ -33,6 +32,7 @@ class OpenRouteHandler {
     required this.security,
     required this.requestQuery,
     required this.requestBody,
+    required this.responseBody,
   });
 
   OperationOpenApi buildOperation() {
@@ -101,27 +101,34 @@ class OpenRouteHandler {
 
   ResponseOpenApi get _emptyResponse => ResponseOpenApi(description: 'Operation completed!');
 
-  static final _responseType = TypeChecker.fromRuntime(Response);
-
   ResponseOpenApi _buildResponse() {
-    final returnType = element.returnType;
-    if (returnType is! InterfaceType) return _emptyResponse;
+    final responseBody = this.responseBody;
+    if (responseBody != null) {
+      return ResponseOpenApi(
+        description: 'Operation completed!',
+        content: GroupMediaOpenApi(
+          json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: responseBody)),
+        ),
+      );
+    }
 
-    final responseReturnType = returnType.isDartAsyncFuture || returnType.isDartAsyncFutureOr
-        ? returnType.typeArguments.single
-        : returnType;
-    if (!_responseType.isAssignableFromType(responseReturnType)) return _emptyResponse;
-    if (responseReturnType is! InterfaceType) return _emptyResponse;
-
-    final responseType = responseReturnType.typeArguments.firstOrNull;
-    if (responseType == null || responseType is VoidType) return _emptyResponse;
-
-    return ResponseOpenApi(
-      description: 'Operation completed!',
-      content: GroupMediaOpenApi(
-        json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: responseType)),
+    return switch (handler.returns) {
+      RouteReturnsVoid() => _emptyResponse,
+      RouteReturnsResponse(:final type) => ResponseOpenApi(
+        description: 'Operation completed!',
+        content: type != null
+            ? GroupMediaOpenApi(
+                any: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
+              )
+            : null,
       ),
-    );
+      RouteReturnsJson(:final type) => ResponseOpenApi(
+        description: 'Operation completed!',
+        content: GroupMediaOpenApi(
+          json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
+        ),
+      ),
+    };
   }
 
   @override
@@ -161,9 +168,9 @@ class OpenRouteFinder {
           yield* _find(classElement, pathPrefix: path);
 
         case HttpRouteHandler(:final element):
-          final openApiRoute = ConstantReader(
-            _openApiRouteHttpChecker.firstAnnotationOfExact(route.element),
-          );
+          final openApiRoute = _openApiRouteHttpChecker
+              .firstAnnotationOfExact(route.element)
+              .asReader;
 
           yield OpenRouteHandler._(
             handler: route,
@@ -180,6 +187,7 @@ class OpenRouteFinder {
             }).toList(),
             requestQuery: openApiRoute.peek('requestQuery')?.typeValue,
             requestBody: openApiRoute.peek('requestBody')?.typeValue,
+            responseBody: openApiRoute.peek('responseBody')?.typeValue,
           );
       }
     }).toList();

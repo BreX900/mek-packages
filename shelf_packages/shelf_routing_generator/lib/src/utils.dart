@@ -9,6 +9,7 @@ import 'package:source_gen/source_gen.dart';
 const TypeChecker routeChecker = TypeChecker.fromRuntime(Route);
 const TypeChecker requestChecker = TypeChecker.fromRuntime(Request);
 const TypeChecker responseChecker = TypeChecker.fromRuntime(Response);
+const TypeChecker jsonResponseChecker = TypeChecker.fromRuntime(JsonResponse);
 
 const TypeChecker routerChecker = TypeChecker.fromRuntime(Router);
 const TypeChecker routerMixinChecker = TypeChecker.fromRuntime(RouterMixin);

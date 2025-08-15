@@ -9,8 +9,14 @@ class Pubspec {
   final String name;
   final String? description;
   final String? version;
+  final Map<String, dynamic> dependencies;
 
-  const Pubspec({required this.name, required this.description, required this.version});
+  const Pubspec({
+    required this.name,
+    required this.description,
+    required this.version,
+    this.dependencies = const <String, dynamic>{},
+  });
 
   static Future<Pubspec?> read(BuildStep buildStep) async {
     final pubspecAssetId = AssetId(buildStep.inputId.package, 'pubspec.yaml');

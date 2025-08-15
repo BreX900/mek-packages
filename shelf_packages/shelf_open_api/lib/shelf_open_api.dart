@@ -21,11 +21,13 @@ class OpenApiRouteHttp {
   final List<Map<String, List<String>>> security;
   final Type? requestQuery;
   final Type? requestBody;
+  final Type? responseBody;
 
   const OpenApiRouteHttp({
     this.security = const <Map<String, List<String>>>[],
     this.requestQuery,
     this.requestBody,
+    this.responseBody,
   });
 }
 

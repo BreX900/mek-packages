@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:build/build.dart';
 import 'package:shelf_open_api_generator/src/dto/config.dart';
+import 'package:shelf_open_api_generator/src/dto/pubspec.dart';
 import 'package:shelf_open_api_generator/src/handlers/route_handler.dart';
 import 'package:shelf_open_api_generator/src/handlers/routes_handler.dart';
 
@@ -31,15 +32,14 @@ class OpenApiBuilder implements Builder {
     final apiHandler = await OpenApiHandler.from(config, buildStep);
     if (apiHandler == null) return;
 
-    final package = await buildStep.packageConfig;
-    final hasShelfRoutingPackage = package.packages.any((e) => e.name == 'shelf_routing');
+    final pubspec = await Pubspec.read(buildStep);
 
     final routes = OpenRouteFinder(
       schemasRegistry: apiHandler.schemasRegistry,
-      strict: hasShelfRoutingPackage,
+      strict: pubspec?.dependencies.containsKey('shelf_routing') ?? false,
     ).find(apiHandler.element);
 
-    final (fileExtension, fileContent) = apiHandler.code(routes);
+    final (fileExtension, fileContent) = apiHandler.code(pubspec, routes);
 
     for (final output in buildStep.allowedOutputs) {
       if (output.extension != fileExtension) continue;

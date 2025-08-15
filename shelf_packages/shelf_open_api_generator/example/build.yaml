@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      source_combining:
+        options:
+          ignore_file:
+            - unnecessary_raw_strings

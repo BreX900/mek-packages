@@ -24,17 +24,11 @@ class OpenApiHandler {
   );
 
   final Config config;
-  final Pubspec? pubspec;
   final OpenApiFileFormat fileFormat;
   final ClassElement element;
   final SchemasRegistry schemasRegistry = SchemasRegistry();
 
-  OpenApiHandler._({
-    required this.config,
-    required this.pubspec,
-    required this.element,
-    required this.fileFormat,
-  });
+  OpenApiHandler._({required this.config, required this.element, required this.fileFormat});
 
   static Future<OpenApiHandler?> from(Config config, BuildStep buildStep) async {
     final library = await buildStep.resolver.libraryFor(buildStep.inputId);
@@ -64,22 +58,15 @@ class OpenApiHandler {
       ),
     };
 
-    final version = await Pubspec.read(buildStep);
-
-    return OpenApiHandler._(
-      config: config,
-      pubspec: version,
-      element: element,
-      fileFormat: fileFormat,
-    );
+    return OpenApiHandler._(config: config, element: element, fileFormat: fileFormat);
   }
 
-  OpenApi buildOpenApi(List<OpenRouteHandler> routes) {
+  OpenApi _buildOpenApi(Pubspec? pubspec, List<OpenRouteHandler> routes) {
     final routesInPaths = routes.groupListsBy((e) => e.path);
 
     return OpenApi(
       openapi: '3.0.0',
-      info: _buildInfoSpecs(),
+      info: _buildInfoSpecs(pubspec),
       servers: config.servers,
       paths: routesInPaths.map((path, routes) {
         final item = ItemPathOpenApi.from(
@@ -95,7 +82,7 @@ class OpenApiHandler {
     );
   }
 
-  InfoOpenApi _buildInfoSpecs() {
+  InfoOpenApi _buildInfoSpecs(Pubspec? pubspec) {
     return InfoOpenApi(
       title: config.info?.title ?? pubspec?.name ?? 'Api',
       description:
@@ -113,8 +100,8 @@ class OpenApiHandler {
     }).toList();
   }
 
-  (String, String) code(List<OpenRouteHandler> routes) {
-    final openApi = buildOpenApi(routes);
+  (String, String) code(Pubspec? pubspec, List<OpenRouteHandler> routes) {
+    final openApi = _buildOpenApi(pubspec, routes);
     final rawOpenApi = organizeOpenApi(openApi.toJson());
 
     final code = switch (fileFormat) {

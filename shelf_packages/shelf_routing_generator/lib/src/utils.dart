@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:shelf/shelf.dart';
@@ -6,13 +6,13 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_routing/shelf_routing.dart';
 import 'package:source_gen/source_gen.dart';
 
-const TypeChecker routeChecker = TypeChecker.fromRuntime(Route);
-const TypeChecker requestChecker = TypeChecker.fromRuntime(Request);
-const TypeChecker responseChecker = TypeChecker.fromRuntime(Response);
-const TypeChecker jsonResponseChecker = TypeChecker.fromRuntime(JsonResponse);
+const routeChecker = TypeChecker.typeNamed(Route, inPackage: 'shelf_router');
+const requestChecker = TypeChecker.typeNamed(Request, inPackage: 'shelf');
+const responseChecker = TypeChecker.typeNamed(Response, inPackage: 'shelf');
+const jsonResponseChecker = TypeChecker.typeNamed(JsonResponse, inPackage: 'shelf_routing');
 
-const TypeChecker routerChecker = TypeChecker.fromRuntime(Router);
-const TypeChecker routerMixinChecker = TypeChecker.fromRuntime(RouterMixin);
+const routerChecker = TypeChecker.typeNamed(Router, inPackage: 'shelf_router');
+const routerMixinChecker = TypeChecker.typeNamed(RouterMixin, inPackage: 'shelf_routing');
 
 bool isHandlerFunctionAssignableFromType(DartType type) {
   if (type is! FunctionType) return false;
@@ -23,13 +23,13 @@ bool isHandlerFunctionAssignableFromType(DartType type) {
       : returnType;
   if (!responseChecker.isAssignableFromType(returnType)) return false;
 
-  final parameter = type.parameters.singleOrNull;
+  final parameter = type.formalParameters.singleOrNull;
   if (parameter == null || !requestChecker.isAssignableFromType(parameter.type)) return false;
 
   return true;
 }
 
-void ensureIsValidRoute(String? route, {required String name, Element? element}) {
+void ensureIsValidRoute(String? route, {required String name, Element2? element}) {
   if (route == null || RegExp(r'^\/.+[^/]$').hasMatch(route)) return;
   throw InvalidGenerationSourceError(
     '"$name" field must begin and not end with "/". ',
@@ -51,4 +51,11 @@ extension JsonType on DartType {
 
 extension InterfaceTypeExtensions on InterfaceType {
   DartType get typeArgument => typeArguments.single;
+}
+
+extension RequireNameElementExtension on Element2 {
+  String get requireName {
+    if (name3 case final name?) return name;
+    throw InvalidGenerationSourceError('The parameter name is required!', element: this);
+  }
 }

@@ -20,18 +20,18 @@ class RoutingGenerator extends Generator {
   String? _findParserMethod(DartType type) {
     if (type is! InterfaceType) return null;
 
-    final parserMethod = type.getMethod('parse');
+    final parserMethod = type.getMethod2('parse');
     if (parserMethod == null) return null;
 
     if (!TypeChecker.fromStatic(type).isAssignableFromType(parserMethod.returnType)) return null;
 
-    final firstParameter = parserMethod.parameters.firstOrNull;
+    final firstParameter = parserMethod.formalParameters.firstOrNull;
     if (firstParameter == null || firstParameter.isNamed) return null;
 
     if (!firstParameter.type.isDartCoreString) return null;
-    if (parserMethod.parameters.skip(1).any((e) => e.isRequired)) return null;
+    if (parserMethod.formalParameters.skip(1).any((e) => e.isRequired)) return null;
 
-    return '${type.element.name}.${parserMethod.name}';
+    return '${type.element3.requireName}.${parserMethod.requireName}';
   }
 
   String? _codeParser(DartType type) {
@@ -99,7 +99,7 @@ class RoutingGenerator extends Generator {
 
     final routeParams = [
       'Request request',
-      ...pathParameters.map((e) => 'String \$${e.name}'),
+      ...pathParameters.map((e) => 'String \$${e.requireName}'),
     ].join(', ');
 
     final headersCode = headers.map((e) {
@@ -110,7 +110,7 @@ class RoutingGenerator extends Generator {
       if (hasRequest) 'request',
       ...pathParameters.map((e) {
         final parserCode = _codeParser(e.type);
-        return parserCode != null ? '$parserCode(\$${e.name})' : '\$${e.name}';
+        return parserCode != null ? '$parserCode(\$${e.requireName})' : '\$${e.requireName}';
       }),
       if (bodyParameter != null)
         'await \$readBodyAs(request, (data) => ${_codeFromJson(bodyParameter.type)})',
@@ -121,8 +121,8 @@ class RoutingGenerator extends Generator {
       //   }),
       if (queryParameters.isNotEmpty)
         ...queryParameters.map((e) {
-          final key = e.name.paramCase;
-          return '${e.name}: \$parseQueryParameters(request, ${literalString(key)}, ${_codeListParser(e.type)})';
+          final key = e.requireName.paramCase;
+          return '${e.requireName}: \$parseQueryParameters(request, ${literalString(key)}, ${_codeListParser(e.type)})';
         }),
     ];
     final methodParamsText = methodParams.expand((e) sync* {
@@ -134,7 +134,7 @@ class RoutingGenerator extends Generator {
     if (element.returnType.isDartAsyncFutureOr || element.returnType.isDartAsyncFuture) {
       methodInvocation += 'await ';
     }
-    methodInvocation += 'service.${element.name}($methodParamsText)';
+    methodInvocation += 'service.${element.requireName}($methodParamsText)';
 
     final responseCode = switch (returns) {
       RouteReturnsVoid() => '$methodInvocation;\nreturn Response.ok(null)',
@@ -170,15 +170,16 @@ class RoutingGenerator extends Generator {
       final routesCode = routes.map((route) {
         return switch (route) {
           MountRouteHandler() => switch (route.isRouterMixin) {
-            false => '..mount(${literalString(route.path)}, service.${route.element.name}.call)',
+            false =>
+              '..mount(${literalString(route.path)}, service.${route.element.requireName}.call)',
             true =>
-              '..mount(${literalString(route.path)}, service.${route.element.name}.router.call)',
+              '..mount(${literalString(route.path)}, service.${route.element.requireName}.router.call)',
           },
           HttpRouteHandler() => _codeAddRoute(route),
         };
       }).join();
       return '''
-Router _\$${class$.name}Router(${class$.name} service) => Router()\n
+Router _\$${class$.requireName}Router(${class$.requireName} service) => Router()\n
   $routesCode;\n''';
     });
     return routersCode.join('\n');

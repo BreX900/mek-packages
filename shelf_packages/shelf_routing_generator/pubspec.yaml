@@ -18,9 +18,9 @@ dependencies:
   shelf_routing: ^1.0.0
   http_methods: ^1.0.0
 
-  analyzer: ^7.0.0
-  build: ^2.4.2
-  source_gen: ^2.0.0
+  analyzer: '>=7.4.0 <9.0.0'
+  build: ^3.0.0
+  source_gen: ^3.0.0
   code_builder: ^4.0.0
 
   collection: ^1.19.1
@@ -31,10 +31,10 @@ dev_dependencies:
 
   test: ^1.26.2
   mocktail: ^1.0.4
-  build_test: ^2.2.3
+  build_test: ^3.3.2
 
   decimal: ^3.2.1
-  build_runner: ^2.4.15
+  build_runner: ^2.7.0
 
 dependency_overrides:
   shelf_routing: { path: ../shelf_routing }

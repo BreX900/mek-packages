@@ -1,7 +1,7 @@
 targets:
   $default:
     builders:
-      source_combining:
+      source_gen:combining_builder:
         options:
-          ignore_file:
+          ignore_for_file:
             - unnecessary_raw_strings

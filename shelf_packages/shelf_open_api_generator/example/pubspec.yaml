@@ -20,8 +20,8 @@ dependencies:
 dev_dependencies:
   mek_lints: ^5.0.0
 
-  build_runner: ^2.5.3
-  json_serializable: ^6.9.5
+  build_runner: ^2.7.0
+  json_serializable: ^6.10.0
   shelf_router_generator: ^1.1.1
   shelf_open_api_generator:
 

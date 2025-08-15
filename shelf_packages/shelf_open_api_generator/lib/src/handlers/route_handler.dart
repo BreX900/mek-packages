@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:open_api_specification/open_api_spec.dart';
@@ -6,6 +6,7 @@ import 'package:shelf_open_api/shelf_open_api.dart';
 import 'package:shelf_open_api_generator/src/schemas_registry.dart';
 import 'package:shelf_open_api_generator/src/utils/annotations_utils.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
+import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_routing_generator/shelf_routing_generator.dart';
 import 'package:source_gen/source_gen.dart';
@@ -13,7 +14,7 @@ import 'package:source_gen/source_gen.dart';
 /// A representation of a handler that was annotated with [Route].
 class OpenRouteHandler {
   final HttpRouteHandler handler;
-  final ExecutableElement element;
+  final ExecutableElement2 element;
   final SchemasRegistry schemasRegistry;
   final String pathPrefix;
   final List<Map<String, List<String>>> security;
@@ -36,7 +37,7 @@ class OpenRouteHandler {
   });
 
   OperationOpenApi buildOperation() {
-    final classElement = element.enclosingElement3 as ClassElement;
+    final classElement = element.enclosingElement2 as ClassElement2;
     final doc = Doc.from(element.documentationComment);
 
     return OperationOpenApi(
@@ -59,7 +60,7 @@ class OpenRouteHandler {
         dartType: parameter.type,
       );
       return ParameterOpenApi(
-        name: parameter.name,
+        name: parameter.requireName,
         in$: ParameterInOpenApi.path,
         required: true,
         schema: schema ?? SchemaOpenApi(type: TypeOpenApi.string),
@@ -67,9 +68,11 @@ class OpenRouteHandler {
     });
     // TODO: check client generation
     final queryParams =
-        (requestQuery?.element as ClassElement?)?.unnamedConstructor?.parameters.map((e) {
+        (requestQuery?.element3 as ClassElement2?)?.requireUnnamedConstructor.formalParameters.map((
+          e,
+        ) {
           return ParameterOpenApi(
-            name: e.name,
+            name: e.requireName,
             in$: ParameterInOpenApi.query,
             // TODO: throw if detect a nested object
             schema: schemasRegistry.tryRegister(dartType: e.type),
@@ -78,7 +81,7 @@ class OpenRouteHandler {
         }) ??
         handler.queryParameters.map((parameter) {
           return ParameterOpenApi(
-            name: parameter.name,
+            name: parameter.requireName,
             in$: ParameterInOpenApi.query,
             schema:
                 schemasRegistry.tryRegisterV2(object: false, dartType: parameter.type) ??
@@ -137,18 +140,27 @@ class OpenRouteHandler {
 }
 
 class OpenRouteFinder {
-  static final _openApiRouteHttpChecker = TypeChecker.fromRuntime(OpenApiRouteHttp);
-  static final _openApiRouteMountChecker = TypeChecker.fromRuntime(OpenApiRouteMount);
-  static final _openApiRouteIgnoreChecker = TypeChecker.fromRuntime(OpenApiRouteIgnore);
+  static final _openApiRouteHttpChecker = TypeChecker.typeNamed(
+    OpenApiRouteHttp,
+    inPackage: 'shelf_open_api',
+  );
+  static final _openApiRouteMountChecker = TypeChecker.typeNamed(
+    OpenApiRouteMount,
+    inPackage: 'shelf_open_api',
+  );
+  static final _openApiRouteIgnoreChecker = TypeChecker.typeNamed(
+    OpenApiRouteIgnore,
+    inPackage: 'shelf_open_api',
+  );
 
   final SchemasRegistry schemasRegistry;
   final bool strict;
 
   const OpenRouteFinder({required this.schemasRegistry, required this.strict});
 
-  List<OpenRouteHandler> find(ClassElement classElement) => _find(classElement, pathPrefix: '');
+  List<OpenRouteHandler> find(ClassElement2 classElement) => _find(classElement, pathPrefix: '');
 
-  List<OpenRouteHandler> _find(ClassElement classElement, {required String pathPrefix}) {
+  List<OpenRouteHandler> _find(ClassElement2 classElement, {required String pathPrefix}) {
     final routes = RouteHandler.from(classElement, strict: strict);
 
     return routes.expand<OpenRouteHandler>((route) sync* {
@@ -160,9 +172,9 @@ class OpenRouteFinder {
           final mount = _openApiRouteMountChecker.firstAnnotationOf(element);
           final serviceType = mount?.getField('serviceType')?.toTypeValue();
 
-          ClassElement? classElement;
-          if (serviceType != null) classElement = serviceType.element as ClassElement?;
-          if (strict && isRouterMixin) classElement = element.returnType.element as ClassElement;
+          ClassElement2? classElement;
+          if (serviceType != null) classElement = serviceType.element3 as ClassElement2?;
+          if (strict && isRouterMixin) classElement = element.returnType.element3 as ClassElement2;
           if (classElement == null) return;
 
           yield* _find(classElement, pathPrefix: path);

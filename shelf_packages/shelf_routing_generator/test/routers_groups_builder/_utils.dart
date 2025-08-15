@@ -6,17 +6,16 @@ import 'package:shelf_routing_generator/routing_builder.dart';
 
 Future<String?> testRoutingBuilder({required String source}) async {
   const package = 'example';
-  final writer = InMemoryAssetWriter();
+  final readerWriter = TestReaderWriter();
 
   await testBuilder(
     routingBuilder(BuilderOptions.empty),
     {'$package|example.dart': source},
-    reader: await PackageAssetReader.currentIsolate(),
-    writer: writer,
+    readerWriter: readerWriter,
+    // reader: await PackageAssetReader.currentIsolate(),
   );
 
-  final content = writer.assets[AssetId(package, 'example.routing.g.part')];
-  if (content == null) return null;
+  final content = await readerWriter.readAsBytes(AssetId(package, 'example.routing.g.part'));
 
   return utf8
       .decode(content)

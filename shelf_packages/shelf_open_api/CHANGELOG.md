@@ -1,4 +1,7 @@
 ## 3.0.0
+- build: bumped dart sdk version to `^3.8.0`
+- build(generator): required analyzer `>=7.4.0 <9.0.0`
+- build(generator): switch to analyzer element2 model and build `^3.0.0`
 - feat!: routing has been left to the shelf_router and shelf_routing packages so the Routes annotation has been removed
 - feat!: now to generate the specs you will need to annotate a class with @OpenApi()
 

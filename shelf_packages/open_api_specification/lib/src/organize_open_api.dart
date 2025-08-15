@@ -32,8 +32,9 @@ Map<String, dynamic> organizeOpenApi(Map<String, dynamic> document) {
             return MapEntry(
               type,
               media?.map((key, value) {
-                if (key == 'schema')
+                if (key == 'schema') {
                   return MapEntry(key, resolveSchema(value as Map<String, dynamic>));
+                }
                 return MapEntry(key, value);
               }),
             );

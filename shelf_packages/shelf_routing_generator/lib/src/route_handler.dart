@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:http_methods/http_methods.dart';
 // ignore: implementation_imports
@@ -15,7 +15,7 @@ class _Route {
 
   _Route(this.verb, this.path);
 
-  static _Route? from(ExecutableElement element) {
+  static _Route? from(ExecutableElement2 element) {
     final annotation = ConstantReader(routeChecker.firstAnnotationOf(element));
     if (annotation.isNull) return null;
 
@@ -24,15 +24,15 @@ class _Route {
 }
 
 sealed class RouteHandler {
-  final ExecutableElement element;
+  final ExecutableElement2 element;
   final String path;
 
   RouteHandler({required this.element, required this.path});
 
-  static List<RouteHandler> from(ClassElement element, {bool strict = true}) {
+  static List<RouteHandler> from(ClassElement2 element, {bool strict = true}) {
     return [
-      ...element.methods.map((element) => HttpRouteHandler.from(element, strict: strict)).nonNulls,
-      ...element.accessors.map(MountRouteHandler.from).nonNulls,
+      ...element.methods2.map((element) => HttpRouteHandler.from(element, strict: strict)).nonNulls,
+      ...element.getters2.map(MountRouteHandler.from).nonNulls,
     ];
   }
 }
@@ -42,7 +42,7 @@ class MountRouteHandler extends RouteHandler {
 
   MountRouteHandler({required super.element, required super.path, required this.isRouterMixin});
 
-  static MountRouteHandler? from(ExecutableElement element) {
+  static MountRouteHandler? from(GetterElement element) {
     final route = _Route.from(element);
     if (route == null) return null;
 
@@ -52,13 +52,13 @@ class MountRouteHandler extends RouteHandler {
         element: element,
       );
     }
-    if (element.kind != ElementKind.GETTER) {
-      throw InvalidGenerationSourceError(
-        'The shelf_router.Route.mount annotation can only be used on a '
-        'getter that returns shelf_router.Router',
-        element: element,
-      );
-    }
+    // if (element.kind != ElementKind.GETTER) {
+    //   throw InvalidGenerationSourceError(
+    //     'The shelf_router.Route.mount annotation can only be used on a '
+    //     'getter that returns shelf_router.Router',
+    //     element: element,
+    //   );
+    // }
     if (!route.path.startsWith('/')) {
       throw InvalidGenerationSourceError(
         'The prefix "${route.path}" in shelf_router.Route.mount(prefix) '
@@ -101,14 +101,14 @@ class MountRouteHandler extends RouteHandler {
 
 class HttpRouteHandler extends RouteHandler {
   final String verb;
-  final ParameterElement? bodyParameter;
+  final FormalParameterElement? bodyParameter;
   final bool hasRequest;
-  final List<ParameterElement> pathParameters;
+  final List<FormalParameterElement> pathParameters;
   final List<RouteHeaderHandler> headers;
-  final List<ParameterElement> queryParameters;
+  final List<FormalParameterElement> queryParameters;
   final RouteReturns returns;
 
-  static HttpRouteHandler? from(MethodElement element, {bool strict = true}) {
+  static HttpRouteHandler? from(MethodElement2 element, {bool strict = true}) {
     final route = _Route.from(element);
     if (route == null) return null;
 
@@ -125,19 +125,19 @@ class HttpRouteHandler extends RouteHandler {
         element: element,
       );
     }
-    if (element.kind == ElementKind.GETTER) {
-      throw InvalidGenerationSourceError(
-        'Only the shelf_router.Route.mount annotation can only be used on a '
-        'getter, and only if it returns a shelf_router.Router',
-        element: element,
-      );
-    }
-    if (element.kind != ElementKind.METHOD) {
-      throw InvalidGenerationSourceError(
-        'The shelf_router.Route annotation can only be used on request handling methods',
-        element: element,
-      );
-    }
+    // if (element.kind == ElementKind.GETTER) {
+    //   throw InvalidGenerationSourceError(
+    //     'Only the shelf_router.Route.mount annotation can only be used on a '
+    //     'getter, and only if it returns a shelf_router.Router',
+    //     element: element,
+    //   );
+    // }
+    // if (element.kind != ElementKind.METHOD) {
+    //   throw InvalidGenerationSourceError(
+    //     'The shelf_router.Route annotation can only be used on request handling methods',
+    //     element: element,
+    //   );
+    // }
     List<String> pathParams;
     try {
       pathParams = RouterEntry(route.verb, route.path, () => null).params;
@@ -146,7 +146,7 @@ class HttpRouteHandler extends RouteHandler {
       throw InvalidGenerationSourceError(e.toString(), element: element);
     }
 
-    final parametersIterator = element.parameters.where((e) => e.isPositional).iterator;
+    final parametersIterator = element.formalParameters.where((e) => e.isPositional).iterator;
 
     if (!parametersIterator.moveNext() ||
         !requestChecker.isAssignableFromType(parametersIterator.current.type)) {
@@ -157,7 +157,7 @@ class HttpRouteHandler extends RouteHandler {
       );
     }
 
-    final pathParameters = <ParameterElement>[];
+    final pathParameters = <FormalParameterElement>[];
     for (final pathParam in pathParams) {
       if (!parametersIterator.moveNext()) {
         throw InvalidGenerationSourceError(
@@ -169,11 +169,11 @@ class HttpRouteHandler extends RouteHandler {
       }
       final parameter = parametersIterator.current;
 
-      if (pathParam != parameter.name) {
+      if (pathParam != parameter.name3) {
         throw InvalidGenerationSourceError(
           'The shelf_router.Route annotation can only be used on shelf '
           'request handlers accept a shelf.Request parameter and and all parameters in the route, '
-          'the "${parameter.name}" parameter should be named "$pathParam"',
+          'the "${parameter.name3}" parameter should be named "$pathParam"',
           element: parameter,
         );
       }
@@ -188,7 +188,7 @@ class HttpRouteHandler extends RouteHandler {
       pathParameters.add(parameter);
     }
 
-    ParameterElement? bodyParameter;
+    FormalParameterElement? bodyParameter;
     if (strict && parametersIterator.moveNext()) {
       if (route.verb == 'GET') {
         throw InvalidGenerationSourceError('"GET" endpoint cannot have a body.', element: element);
@@ -206,8 +206,8 @@ class HttpRouteHandler extends RouteHandler {
         } else if (type.isDartCoreMap) {
           return check(type.typeArguments[1]);
         } else {
-          final parameterElement = type.element as ClassElement;
-          if (parameterElement.constructors.every((e) => e.name != 'fromJson')) {
+          final parameterElement = type.element3 as ClassElement2;
+          if (parameterElement.constructors2.every((e) => e.name3 != 'fromJson')) {
             return false;
           }
           return true;
@@ -220,7 +220,7 @@ class HttpRouteHandler extends RouteHandler {
           'invalid body parameter type.\n'
           'You can use primitive types: bool, int, double, num or String or List, Map with primitive values.\n'
           'If you want use custom type add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
-          element: parameter.enclosingElement3,
+          element: parameter.enclosingElement2,
         );
       }
       bodyParameter = parameter;
@@ -237,11 +237,11 @@ class HttpRouteHandler extends RouteHandler {
 
     // final headerParameters =
     //     element.parameters.where((e) => e.isNamed && _headerChecker.hasAnnotationOf(e)).toList();
-    var queryParameters = <ParameterElement>[];
+    var queryParameters = <FormalParameterElement>[];
     if (strict) {
-      queryParameters = element.parameters.where((e) => e.isNamed).toList();
+      queryParameters = element.formalParameters.where((e) => e.isNamed).toList();
     } else {
-      for (final parameter in element.parameters) {
+      for (final parameter in element.formalParameters) {
         if (!parameter.isNamed) continue;
         throw InvalidGenerationSourceError(
           'The shelf_router.Route annotation can only be used on shelf '

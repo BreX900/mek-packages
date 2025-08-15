@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
 import 'package:shelf_open_api_generator/src/utils/json_annotation.dart';
+import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:source_gen/source_gen.dart';
 
 class SchemasRegistry {
@@ -60,8 +61,8 @@ class SchemasRegistry {
 }
 
 class _SchemaResolver {
-  static final _dateTimeType = TypeChecker.fromRuntime(DateTime);
-  static final _uriType = TypeChecker.fromRuntime(Uri);
+  static final _dateTimeType = TypeChecker.typeNamed(DateTime, inSdk: true);
+  static final _uriType = TypeChecker.typeNamed(Uri, inSdk: true);
 
   final bool object;
   final bool iterables;
@@ -76,22 +77,22 @@ class _SchemaResolver {
   });
 
   SchemaOpenApi resolve({Doc doc = Doc.none, required DartType dartType}) {
-    final element = dartType.element;
+    final element = dartType.element3;
 
     final description = doc.summaryAndDescription;
     final example = doc.example;
 
-    if (element is EnumElement) {
+    if (element is EnumElement2) {
       final doc = Doc.from(element.documentationComment);
-      final enumValues = element.fields.where((element) => element.isEnumConstant);
+      final enumValues = element.fields2.where((element) => element.isEnumConstant);
 
-      registry._checkRegistration(dartType: dartType, name: element.name);
+      registry._checkRegistration(dartType: dartType, name: element.requireName);
       return SchemaOpenApi(
-        title: element.name,
+        title: element.requireName,
         description: doc.summaryAndDescription,
         example: doc.example,
         type: TypeOpenApi.string,
-        enum$: enumValues.map((e) => JsonAnnotation.getEnumValue(e) ?? e.name).toList(),
+        enum$: enumValues.map((e) => JsonAnnotation.getEnumValue(e) ?? e.requireName).toList(),
       );
     }
 
@@ -155,44 +156,44 @@ class _SchemaResolver {
         type: TypeOpenApi.object,
         additionalProperties: resolve(dartType: typeArguments[1]),
       );
-    } else if (element is ClassElement) {
-      final parameters = element.constructors.firstWhere((e) => e.name.isEmpty).parameters;
-      final fields = element.accessors.where((e) => e.isGetter).toList();
+    } else if (element is ClassElement2) {
+      final parameters = element.requireUnnamedConstructor.formalParameters;
+      final fields = element.getters2;
       final names = <String, String>{
         for (final e in parameters)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
-        for (final e in element.fields)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
+          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
+        for (final e in element.fields2)
+          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
         for (final e in fields)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.name: name,
+          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
       };
 
       final List<_ClassProperty> properties;
 
       if (isBidirectional) {
-        final parameters = element.constructors.firstWhere((e) => e.name.isEmpty).parameters;
+        final parameters = element.requireUnnamedConstructor.formalParameters;
 
         properties = parameters.map((e) {
           return _ClassProperty(
             isRequired: e.type.nullabilitySuffix == NullabilitySuffix.none,
-            name: e.name,
+            name: e.requireName,
             type: e.type,
           );
         }).toList();
       } else {
-        properties = element.accessors.where((e) => e.isGetter).map((e) {
+        properties = element.getters2.map((e) {
           return _ClassProperty(
             isRequired: e.returnType.nullabilitySuffix == NullabilitySuffix.none,
-            name: e.name,
+            name: e.requireName,
             type: e.returnType,
           );
         }).toList();
       }
 
-      registry._checkRegistration(dartType: dartType, name: element.name);
+      registry._checkRegistration(dartType: dartType, name: element.requireName);
 
       return SchemaOpenApi(
-        title: element.name,
+        title: element.requireName,
         type: TypeOpenApi.object,
         format: null,
         required: properties
@@ -203,8 +204,8 @@ class _SchemaResolver {
           for (final property in properties)
             names[property.name] ?? property.name: resolve(
               doc: Doc.from(
-                element.fields
-                    .firstWhereOrNull((e) => e.name == property.name)
+                element.fields2
+                    .firstWhereOrNull((e) => e.name3 == property.name)
                     ?.documentationComment,
               ),
               dartType: property.type,

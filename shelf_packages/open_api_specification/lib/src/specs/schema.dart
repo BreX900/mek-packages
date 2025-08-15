@@ -22,13 +22,7 @@ class GroupMediaOpenApi with PrettyJsonToString {
   @JsonKey(name: '*/*')
   final MediaOpenApi? any;
 
-  const GroupMediaOpenApi({
-    this.json,
-    this.urlEncoded,
-    this.formData,
-    this.image,
-    this.any,
-  });
+  const GroupMediaOpenApi({this.json, this.urlEncoded, this.formData, this.image, this.any});
 
   MediaOpenApi? get jsonOrAny => json ?? any;
 
@@ -47,11 +41,7 @@ class MediaOpenApi with PrettyJsonToString {
 
   final SchemaOpenApi schema;
 
-  const MediaOpenApi({
-    this.example,
-    this.examples = const {},
-    required this.schema,
-  });
+  const MediaOpenApi({this.example, this.examples = const {}, required this.schema});
 
   factory MediaOpenApi.fromJson(Map<dynamic, dynamic> map) => _$MediaOpenApiFromJson(map);
   @override
@@ -60,14 +50,7 @@ class MediaOpenApi with PrettyJsonToString {
 
 /// https://swagger.io/specification/#data-types
 @JsonEnum()
-enum TypeOpenApi {
-  boolean,
-  number,
-  integer,
-  string,
-  array,
-  object,
-}
+enum TypeOpenApi { boolean, number, integer, string, array, object }
 
 enum FormatOpenApi {
   int32,
@@ -87,7 +70,7 @@ enum FormatOpenApi {
 
   /// File upload
   binary,
-  base64;
+  base64,
 }
 
 @SpecsSerializable()

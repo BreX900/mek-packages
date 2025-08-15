@@ -8,32 +8,26 @@ part of 'security_open_api.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-SecuritySchemeOpenApi _$SecuritySchemeOpenApiFromJson(Map json) => $checkedCreate(
-      'SecuritySchemeOpenApi',
-      json,
-      ($checkedConvert) {
-        final val = SecuritySchemeOpenApi(
-          type: $checkedConvert('type', (v) => $enumDecode(_$SecuritySchemeTypeOpenApiEnumMap, v)),
-          description: $checkedConvert('description', (v) => v as String?),
-          name: $checkedConvert('name', (v) => v as String?),
-          in$: $checkedConvert(
-              'in', (v) => $enumDecodeNullable(_$SecuritySchemeInOpenApiEnumMap, v)),
-          scheme:
-              $checkedConvert('scheme', (v) => SecuritySchemeNameOpenApi.fromJson(v as String?)),
-          bearerFormat: $checkedConvert('bearerFormat', (v) => v as String?),
-          flows: $checkedConvert(
-              'flows', (v) => v == null ? null : OAuthFlowsOpenApi.fromJson(v as Map)),
-          openIdConnectUrl: $checkedConvert('openIdConnectUrl', (v) => v as String?),
-        );
-        return val;
-      },
-      fieldKeyMap: const {r'in$': 'in'},
-    );
+SecuritySchemeOpenApi _$SecuritySchemeOpenApiFromJson(Map json) =>
+    $checkedCreate('SecuritySchemeOpenApi', json, ($checkedConvert) {
+      final val = SecuritySchemeOpenApi(
+        type: $checkedConvert('type', (v) => $enumDecode(_$SecuritySchemeTypeOpenApiEnumMap, v)),
+        description: $checkedConvert('description', (v) => v as String?),
+        name: $checkedConvert('name', (v) => v as String?),
+        in$: $checkedConvert('in', (v) => $enumDecodeNullable(_$SecuritySchemeInOpenApiEnumMap, v)),
+        scheme: $checkedConvert('scheme', (v) => SecuritySchemeNameOpenApi.fromJson(v as String?)),
+        bearerFormat: $checkedConvert('bearerFormat', (v) => v as String?),
+        flows: $checkedConvert(
+          'flows',
+          (v) => v == null ? null : OAuthFlowsOpenApi.fromJson(v as Map),
+        ),
+        openIdConnectUrl: $checkedConvert('openIdConnectUrl', (v) => v as String?),
+      );
+      return val;
+    }, fieldKeyMap: const {r'in$': 'in'});
 
 Map<String, dynamic> _$SecuritySchemeOpenApiToJson(SecuritySchemeOpenApi instance) {
-  final val = <String, dynamic>{
-    'type': _$SecuritySchemeTypeOpenApiEnumMap[instance.type]!,
-  };
+  final val = <String, dynamic>{'type': _$SecuritySchemeTypeOpenApiEnumMap[instance.type]!};
 
   void writeNotNull(String key, dynamic value) {
     if (value != null) {
@@ -77,23 +71,28 @@ const _$SecuritySchemeNameOpenApiEnumMap = {
   SecuritySchemeNameOpenApi.vapid: 'vapid',
 };
 
-OAuthFlowsOpenApi _$OAuthFlowsOpenApiFromJson(Map json) => $checkedCreate(
-      'OAuthFlowsOpenApi',
-      json,
-      ($checkedConvert) {
-        final val = OAuthFlowsOpenApi(
-          implicit: $checkedConvert(
-              'implicit', (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map)),
-          password: $checkedConvert(
-              'password', (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map)),
-          clientCredentials: $checkedConvert(
-              'clientCredentials', (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map)),
-          authorizationCode: $checkedConvert(
-              'authorizationCode', (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map)),
-        );
-        return val;
-      },
-    );
+OAuthFlowsOpenApi _$OAuthFlowsOpenApiFromJson(Map json) =>
+    $checkedCreate('OAuthFlowsOpenApi', json, ($checkedConvert) {
+      final val = OAuthFlowsOpenApi(
+        implicit: $checkedConvert(
+          'implicit',
+          (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map),
+        ),
+        password: $checkedConvert(
+          'password',
+          (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map),
+        ),
+        clientCredentials: $checkedConvert(
+          'clientCredentials',
+          (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map),
+        ),
+        authorizationCode: $checkedConvert(
+          'authorizationCode',
+          (v) => v == null ? null : OAuthFlowOpenApi.fromJson(v as Map),
+        ),
+      );
+      return val;
+    });
 
 Map<String, dynamic> _$OAuthFlowsOpenApiToJson(OAuthFlowsOpenApi instance) {
   final val = <String, dynamic>{};
@@ -111,19 +110,16 @@ Map<String, dynamic> _$OAuthFlowsOpenApiToJson(OAuthFlowsOpenApi instance) {
   return val;
 }
 
-OAuthFlowOpenApi _$OAuthFlowOpenApiFromJson(Map json) => $checkedCreate(
-      'OAuthFlowOpenApi',
-      json,
-      ($checkedConvert) {
-        final val = OAuthFlowOpenApi(
-          authorizationUrl: $checkedConvert('authorizationUrl', (v) => v as String?),
-          tokenUrl: $checkedConvert('tokenUrl', (v) => v as String),
-          refreshUrl: $checkedConvert('refreshUrl', (v) => v as String?),
-          scopes: $checkedConvert('scopes', (v) => Map<String, String>.from(v as Map)),
-        );
-        return val;
-      },
-    );
+OAuthFlowOpenApi _$OAuthFlowOpenApiFromJson(Map json) =>
+    $checkedCreate('OAuthFlowOpenApi', json, ($checkedConvert) {
+      final val = OAuthFlowOpenApi(
+        authorizationUrl: $checkedConvert('authorizationUrl', (v) => v as String?),
+        tokenUrl: $checkedConvert('tokenUrl', (v) => v as String),
+        refreshUrl: $checkedConvert('refreshUrl', (v) => v as String?),
+        scopes: $checkedConvert('scopes', (v) => Map<String, String>.from(v as Map)),
+      );
+      return val;
+    });
 
 Map<String, dynamic> _$OAuthFlowOpenApiToJson(OAuthFlowOpenApi instance) {
   final val = <String, dynamic>{};

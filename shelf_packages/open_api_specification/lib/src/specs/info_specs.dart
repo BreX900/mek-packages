@@ -46,11 +46,7 @@ class TagOpenApi {
   final String? description;
   final ExternalDocsOpenApi? externalDocs;
 
-  const TagOpenApi({
-    required this.name,
-    this.description,
-    this.externalDocs,
-  });
+  const TagOpenApi({required this.name, this.description, this.externalDocs});
 
   factory TagOpenApi.fromJson(Map<dynamic, dynamic> map) => _$TagOpenApiFromJson(map);
   Map<String, dynamic> toJson() => _$TagOpenApiToJson(this);
@@ -61,10 +57,7 @@ class ExternalDocsOpenApi {
   final String? description;
   final String url;
 
-  const ExternalDocsOpenApi({
-    this.description,
-    required this.url,
-  });
+  const ExternalDocsOpenApi({this.description, required this.url});
 
   factory ExternalDocsOpenApi.fromJson(Map<dynamic, dynamic> map) =>
       _$ExternalDocsOpenApiFromJson(map);

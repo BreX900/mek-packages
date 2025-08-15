@@ -25,13 +25,20 @@ Map<String, dynamic> organizeOpenApi(Map<String, dynamic> document) {
     return data.map((key, content) {
       if (key == 'content') {
         content as Map<String, dynamic>?;
-        return MapEntry(key, content?.map((type, media) {
-          media as Map<String, dynamic>?;
-          return MapEntry(type, media?.map((key, value) {
-            if (key == 'schema') return MapEntry(key, resolveSchema(value as Map<String, dynamic>));
-            return MapEntry(key, value);
-          }));
-        }));
+        return MapEntry(
+          key,
+          content?.map((type, media) {
+            media as Map<String, dynamic>?;
+            return MapEntry(
+              type,
+              media?.map((key, value) {
+                if (key == 'schema')
+                  return MapEntry(key, resolveSchema(value as Map<String, dynamic>));
+                return MapEntry(key, value);
+              }),
+            );
+          }),
+        );
       }
       return MapEntry(key, content);
     });
@@ -51,7 +58,7 @@ Map<String, dynamic> organizeOpenApi(Map<String, dynamic> document) {
           if (responses != null)
             'responses': responses.map((code, media) {
               return MapEntry(code, resolveMedia(media));
-            })
+            }),
         });
       });
       return MapEntry(path, newEndpoint);

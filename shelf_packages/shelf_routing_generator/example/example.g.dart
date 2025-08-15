@@ -12,11 +12,7 @@ Router _$UserControllerRouter(UserController service) => Router()
   ..add('GET', '/', (Request request) async {
     final body = await service.listUsers(
       request,
-      query: $parseQueryParameters(
-        request,
-        'query',
-        (vls) => vls.isNotEmpty ? vls.single : null,
-      ),
+      query: $parseQueryParameters(request, 'query', (vls) => vls.isNotEmpty ? vls.single : null),
     );
     return JsonResponse.ok(body);
   })
@@ -26,10 +22,7 @@ Router _$UserControllerRouter(UserController service) => Router()
   ..add('POST', '/', (Request request) async {
     return await service.createUser(
       request,
-      await $readBodyAs(
-        request,
-        (data) => User.fromJson(data! as Map<String, dynamic>),
-      ),
+      await $readBodyAs(request, (data) => User.fromJson(data! as Map<String, dynamic>)),
     );
   });
 

@@ -40,17 +40,23 @@ Future<Object?> _resolveDocumentRefs(
   required Map<String, Map<dynamic, dynamic>>? cache,
 }) async {
   if (data is List<dynamic>) {
-    return await Future.wait<dynamic>(data.map((element) async {
-      return await _resolveDocumentRefs(input, document, element, cache: cache);
-    }));
+    return await Future.wait<dynamic>(
+      data.map((element) async {
+        return await _resolveDocumentRefs(input, document, element, cache: cache);
+      }),
+    );
   } else if (data is Map<dynamic, dynamic>) {
     final ref = data[r'$ref'] as String?;
     if (ref != null) return await readRef(input, document, ref, cache: cache);
 
-    return Map<dynamic, dynamic>.fromEntries(await Future.wait(data.entries.map((e) async {
-      final MapEntry(:key, :value) = e;
-      return MapEntry(key, await _resolveDocumentRefs(input, document, value, cache: cache));
-    })));
+    return Map<dynamic, dynamic>.fromEntries(
+      await Future.wait(
+        data.entries.map((e) async {
+          final MapEntry(:key, :value) = e;
+          return MapEntry(key, await _resolveDocumentRefs(input, document, value, cache: cache));
+        }),
+      ),
+    );
   } else {
     return data;
   }

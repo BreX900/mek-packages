@@ -19,9 +19,7 @@ class RefOpenApi<T extends Object> extends RefOr<T> with PrettyJsonToString {
   @JsonKey(name: r'$ref')
   final String ref;
 
-  const RefOpenApi({
-    required this.ref,
-  });
+  const RefOpenApi({required this.ref});
 
   @override
   R fold<R>(R Function(String ref) onRef, R Function(T p1) on) => onRef(ref);

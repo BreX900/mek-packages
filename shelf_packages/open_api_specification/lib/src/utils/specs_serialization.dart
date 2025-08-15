@@ -5,19 +5,16 @@ import 'package:open_api_specification/src/specs/schema.dart';
 export 'package:json_annotation/json_annotation.dart' show $checkKeys, $checkedCreate;
 
 class SpecsSerializable extends JsonSerializable {
-  const SpecsSerializable({
-    super.createPerFieldToJson,
-  }) : super(
-          anyMap: true,
-          createFactory: true,
-          createToJson: true,
-          includeIfNull: false,
-          checked: true,
-          explicitToJson: true,
-          converters: const [
-            RefOrSchemaOpenApiConverter(),
-          ],
-        );
+  const SpecsSerializable({super.createPerFieldToJson})
+    : super(
+        anyMap: true,
+        createFactory: true,
+        createToJson: true,
+        includeIfNull: false,
+        checked: true,
+        explicitToJson: true,
+        converters: const [RefOrSchemaOpenApiConverter()],
+      );
 }
 
 class RefOrSchemaOpenApiConverter extends _RefOrOpenApiConverter<SchemaOpenApi> {

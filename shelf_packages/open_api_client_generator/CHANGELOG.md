@@ -1,3 +1,6 @@
+## 1.1.0
+- chore: removed support to dart http client generator
+
 ## 1.0.1
 - fix: fixed security field in open api operation
 

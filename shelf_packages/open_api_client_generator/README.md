@@ -51,7 +51,6 @@ Several http clients, serializers and more are supported.
 | CommandLine       | Dart Class          | package | Description                                            |
 |-------------------|---------------------|---------|--------------------------------------------------------|
 | --client=abstract | AbstractClientCodec |         | Generate an abstract client                            |
-| --client=dart     | DartClientCodec     |         | Generate a client that does not use external libraries |
 | --client=http     | HttpClientCodec     | [http]  | Generate a client that uses the http library           |
 | --client=dio      | DioClientCodec      | [dio]   | Generate a client that uses the dio library            |
 

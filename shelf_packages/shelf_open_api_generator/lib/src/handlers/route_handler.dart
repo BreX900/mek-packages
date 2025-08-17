@@ -102,8 +102,6 @@ class OpenRouteHandler {
     );
   }
 
-  ResponseOpenApi get _emptyResponse => ResponseOpenApi(description: 'Operation completed!');
-
   ResponseOpenApi _buildResponse() {
     final responseBody = this.responseBody;
     if (responseBody != null) {
@@ -115,23 +113,23 @@ class OpenRouteHandler {
       );
     }
 
-    return switch (handler.returns) {
-      RouteReturnsVoid() => _emptyResponse,
-      RouteReturnsResponse(:final type) => ResponseOpenApi(
-        description: 'Operation completed!',
-        content: type != null
-            ? GroupMediaOpenApi(
-                any: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
-              )
-            : null,
-      ),
-      RouteReturnsJson(:final type) => ResponseOpenApi(
-        description: 'Operation completed!',
-        content: GroupMediaOpenApi(
+    return ResponseOpenApi(
+      description: 'Operation completed!',
+      content: switch (handler.returns) {
+        RouteReturnsVoid() => null,
+        RouteReturnsResponse() || RouteReturnsBytes() => GroupMediaOpenApi(
+          octetStream: MediaOpenApi(
+            schema: SchemaOpenApi(type: TypeOpenApi.string, format: FormatOpenApi.binary),
+          ),
+        ),
+        RouteReturnsText() => GroupMediaOpenApi(
+          textPlain: MediaOpenApi(schema: SchemaOpenApi(type: TypeOpenApi.string)),
+        ),
+        RouteReturnsJson(:final type) => GroupMediaOpenApi(
           json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
         ),
-      ),
-    };
+      },
+    );
   }
 
   @override

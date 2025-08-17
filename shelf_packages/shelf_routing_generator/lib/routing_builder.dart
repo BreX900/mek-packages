@@ -139,6 +139,8 @@ class RoutingGenerator extends Generator {
     final responseCode = switch (returns) {
       RouteReturnsVoid() => '$methodInvocation;\nreturn Response.ok(null)',
       RouteReturnsResponse() => 'return $methodInvocation;',
+      RouteReturnsBytes() ||
+      RouteReturnsText() => 'final body = $methodInvocation;\nreturn Response.ok(body);',
       RouteReturnsJson() => 'final body = $methodInvocation;\nreturn JsonResponse.ok(body);',
     };
 

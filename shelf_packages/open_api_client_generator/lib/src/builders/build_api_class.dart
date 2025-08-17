@@ -55,12 +55,14 @@ class BuildApiClass with ContextMixin {
 
     if (queryParameters.isNotEmpty) {
       b.write('final _queryParameters = <String, Object?>{\n');
-      b.writeAll(queryParameters.map((e) {
-        final key = codecs.encodeDartValue(e.name);
-        final varName = codecs.encodeName(e.name);
-        final varEncoder = collectionCodec.encodeToCore(ref(e.schema!).toNullable(!e.required));
-        return '$key: $varName$varEncoder,\n';
-      }));
+      b.writeAll(
+        queryParameters.map((e) {
+          final key = codecs.encodeDartValue(e.name);
+          final varName = codecs.encodeName(e.name);
+          final varEncoder = collectionCodec.encodeToCore(ref(e.schema!).toNullable(!e.required));
+          return '$key: $varName$varEncoder,\n';
+        }),
+      );
       b.write('};\n');
     }
 
@@ -70,12 +72,14 @@ class BuildApiClass with ContextMixin {
 
     if (responses.isNotEmpty) b.write('final _response = ');
 
-    b.writeln(clientCodec.encodeSendMethod(
-      method.toUpperCase(),
-      encodePath(path),
-      queryParametersVar: queryParameters.isNotEmpty ? '_queryParameters' : null,
-      dataVar: requestType != null ? '_data' : null,
-    ));
+    b.writeln(
+      clientCodec.encodeSendMethod(
+        method.toUpperCase(),
+        encodePath(path),
+        queryParametersVar: queryParameters.isNotEmpty ? '_queryParameters' : null,
+        dataVar: requestType != null ? '_data' : null,
+      ),
+    );
 
     if (responses.isNotEmpty) {
       b.write('return switch (_response.statusCode) {\n');
@@ -110,10 +114,11 @@ class BuildApiClass with ContextMixin {
     return responses.map((code, response) {
       final responseMedia = response.content?.jsonOrAny;
       final responseSchema = responseMedia?.schema;
-      final responseClassName =
-          code >= 200 && code < 300 ? '${methodName}Response' : '${methodName}Exception';
+      final responseClassName = code >= 200 && code < 300
+          ? '${methodName}Response'
+          : '${methodName}Exception';
       final responseClass = responseSchema != null
-          ? buildSchemaClass.call(responseClassName, responseSchema)
+          ? buildSchemaClass.call(responseClassName, responseSchema.resolve(components))
           : References.void$;
       return MapEntry(code, responseClass);
     });
@@ -132,8 +137,9 @@ class BuildApiClass with ContextMixin {
     final request = operation.requestBody;
     final requestSchema = request?.content.jsonOrAny?.schema;
     final requestClassName = '${methodName}Request';
-    final requestClass =
-        requestSchema != null ? buildSchemaClass.call(requestClassName, requestSchema) : null;
+    final requestClass = requestSchema != null
+        ? buildSchemaClass.call(requestClassName, requestSchema.resolve(components))
+        : null;
     final requestType = requestClass?.type.toNullable(!(request?.required ?? false));
 
     final responses = _resolveResponses(methodName, operation.responses);
@@ -151,48 +157,66 @@ class BuildApiClass with ContextMixin {
       responses: responses,
     );
 
-    return Method((b) => b
-      ..docs.addAll(Docs.format(Docs.documentMethod(
-        summary: operation.summary,
-        description: operation.description,
-        params: operation.parameters.expand((param) {
-          return Docs.documentField(
-            name: codecs.encodeName(param.name),
-            description: param.description,
-            example: param.example,
-          );
-        }),
-      )))
-      ..returns = References.future(successResponse?.value)
-      ..name = methodName
-      ..requiredParameters.addAll(pathParameters.map((param) {
-        return Parameter((b) => b
-          ..type = ref(param.schema!).toNullable(!param.required)
-          ..name = codecs.encodeName(param.name));
-      }))
-      ..requiredParameters.addAll([
-        if (request != null && requestSchema != null)
-          Parameter((b) => b
-            ..type = requestType
-            ..name = '_request')
-      ])
-      ..optionalParameters.addAll(queryParameters.map((e) {
-        return Parameter((b) => b
-          ..named = true
-          ..required = e.required
-          ..type = ref(e.schema!).toNullable(!e.required)
-          ..name = codecs.encodeName(e.name));
-      }))
-      ..modifier = MethodModifier.async
-      ..body = Code(operationCode));
+    return Method(
+      (b) => b
+        ..docs.addAll(
+          Docs.format(
+            Docs.documentMethod(
+              summary: operation.summary,
+              description: operation.description,
+              params: operation.parameters.expand((param) {
+                return Docs.documentField(
+                  name: codecs.encodeName(param.name),
+                  description: param.description,
+                  example: param.example,
+                );
+              }),
+            ),
+          ),
+        )
+        ..returns = References.future(successResponse?.value)
+        ..name = methodName
+        ..requiredParameters.addAll(
+          pathParameters.map((param) {
+            return Parameter(
+              (b) => b
+                ..type = ref(param.schema!).toNullable(!param.required)
+                ..name = codecs.encodeName(param.name),
+            );
+          }),
+        )
+        ..requiredParameters.addAll([
+          if (request != null && requestSchema != null)
+            Parameter(
+              (b) => b
+                ..type = requestType
+                ..name = '_request',
+            ),
+        ])
+        ..optionalParameters.addAll(
+          queryParameters.map((e) {
+            return Parameter(
+              (b) => b
+                ..named = true
+                ..required = e.required
+                ..type = ref(e.schema!).toNullable(!e.required)
+                ..name = codecs.encodeName(e.name),
+            );
+          }),
+        )
+        ..modifier = MethodModifier.async
+        ..body = Code(operationCode),
+    );
   }
 
   Class call(Map<String, ItemPathOpenApi> paths) {
     final fields = <Field>[
-      Field((b) => b
-        ..modifier = FieldModifier.final$
-        ..type = clientCodec.type
-        ..name = 'client'),
+      Field(
+        (b) => b
+          ..modifier = FieldModifier.final$
+          ..type = clientCodec.type
+          ..name = 'client',
+      ),
     ];
 
     final methods = paths.entries.expandEntry((path, itemPath) {
@@ -201,17 +225,27 @@ class BuildApiClass with ContextMixin {
       });
     });
 
-    return Class((b) => b
-      ..name = options.apiClassName
-      ..fields.addAll(fields)
-      ..constructors.add(Constructor((b) => b
-        ..optionalParameters.addAll(fields.map((field) {
-          return Parameter((b) => b
-            ..named = true
-            ..required = true
-            ..toThis = true
-            ..name = field.name);
-        }))))
-      ..methods.addAll(methods));
+    return Class(
+      (b) => b
+        ..name = options.apiClassName
+        ..fields.addAll(fields)
+        ..constructors.add(
+          Constructor(
+            (b) => b
+              ..optionalParameters.addAll(
+                fields.map((field) {
+                  return Parameter(
+                    (b) => b
+                      ..named = true
+                      ..required = true
+                      ..toThis = true
+                      ..name = field.name,
+                  );
+                }),
+              ),
+          ),
+        )
+        ..methods.addAll(methods),
+    );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -13,6 +15,8 @@ const jsonResponseChecker = TypeChecker.typeNamed(JsonResponse, inPackage: 'shel
 
 const routerChecker = TypeChecker.typeNamed(Router, inPackage: 'shelf_router');
 const routerMixinChecker = TypeChecker.typeNamed(RouterMixin, inPackage: 'shelf_routing');
+
+const bytesChecker = TypeChecker.typeNamed(Uint8List, inSdk: true);
 
 bool isHandlerFunctionAssignableFromType(DartType type) {
   if (type is! FunctionType) return false;

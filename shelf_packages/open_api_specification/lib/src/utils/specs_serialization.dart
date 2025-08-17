@@ -13,32 +13,28 @@ class SpecsSerializable extends JsonSerializable {
         includeIfNull: false,
         checked: true,
         explicitToJson: true,
-        converters: const [RefOrSchemaOpenApiConverter()],
+        converters: const [RefOrSchemaJsonConverter()],
       );
 }
 
-class RefOrSchemaOpenApiConverter extends _RefOrOpenApiConverter<SchemaOpenApi> {
-  const RefOrSchemaOpenApiConverter() : super(SchemaOpenApi.fromJson);
-}
-
-class _RefOrOpenApiConverter<T extends RefOr<T>>
-    extends JsonConverter<RefOr<T>, Map<dynamic, dynamic>> {
-  final T Function(Map<dynamic, dynamic>) deserialize;
-
-  const _RefOrOpenApiConverter(this.deserialize);
+class RefOrSchemaJsonConverter extends JsonConverter<RefOr<SchemaOpenApi>, Map<dynamic, dynamic>> {
+  const RefOrSchemaJsonConverter();
 
   @override
-  RefOr<T> fromJson(Map<dynamic, dynamic> json) {
-    final ref = json[r'$ref'];
-    if (ref != null) {
-      return RefOpenApi(ref: ref);
-    } else {
-      return deserialize(json);
-    }
+  RefOr<SchemaOpenApi> fromJson(Map<dynamic, dynamic> json) {
+    final ref = json[r'$ref'] as String?;
+    if (ref == null) return SchemaOpenApi.fromJson(json);
+
+    final segments = ref.split('/');
+    if (segments[0] != '#') throw ArgumentError.value(ref, 'SchemaOpenApi', 'Invalid');
+    if (segments[1] != 'schemas') throw ArgumentError.value(ref, 'SchemaOpenApi', 'Wrong');
+
+    SchemaOpenApi? cache;
+    return RefOpenApi(ref, (components) => cache ??= components.schemas[segments[2]]!);
   }
 
   @override
-  Map<dynamic, dynamic> toJson(RefOr<T> object) => object.toJson();
+  Map<dynamic, dynamic> toJson(RefOr<SchemaOpenApi> object) => object.toJson();
 }
 
 bool? $nullIfFalse(bool value) => value ? true : null;

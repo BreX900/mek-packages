@@ -95,60 +95,91 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
       if (!implicitCreate) ...['createFactory: true', 'createToJson: true'],
     ];
 
-    return spec.toSpec((b) => b
-      ..annotations
-          .add(CodeExpression(Code('${classAnnotation ?? 'JsonSerializable'}(${args.join(', ')})')))
-      ..constructors.add(Constructor((b) => b
-        ..constant = true
-        ..optionalParameters.addAll(spec.fields.map((e) {
-          return e.toParameter((b) => b..toThis = true);
-        }))))
-      ..fields.addAll(spec.fields.map((e) {
-        final wireName = _resolveWireName(classFieldRename, e.name, e.key);
+    return spec.toSpec(
+      (b) => b
+        ..annotations.add(
+          CodeExpression(Code('${classAnnotation ?? 'JsonSerializable'}(${args.join(', ')})')),
+        )
+        ..constructors.add(
+          Constructor(
+            (b) => b
+              ..constant = true
+              ..optionalParameters.addAll(
+                spec.fields.map((e) {
+                  return e.toParameter((b) => b..toThis = true);
+                }),
+              ),
+          ),
+        )
+        ..constructors.add(
+          Constructor(
+            (b) => b
+              ..factory = true
+              ..name = 'fromJson'
+              ..requiredParameters.add(
+                Parameter(
+                  (b) => b
+                    ..type = References.jsonMap
+                    ..name = 'map',
+                ),
+              )
+              ..lambda = true
+              ..body = Code('_\$${spec.name}FromJson(map)'),
+          ),
+        )
+        ..fields.addAll(
+          spec.fields.map((e) {
+            final wireName = _resolveWireName(classFieldRename, e.name, e.key);
 
-        return e.toField((b) => b
-          ..annotations.addAll([
-            if (wireName != null) CodeExpression(Code("JsonKey(name: '${e.key}')")),
-          ])
-          ..modifier = FieldModifier.final$);
-      }))
-      ..methods.add(Method((b) => b
-        ..static = true
-        ..returns = Reference(spec.name)
-        ..name = 'fromJson'
-        ..requiredParameters.add(Parameter((b) => b
-          ..type = References.jsonMap
-          ..name = 'map'))
-        ..lambda = true
-        ..body = Code('_\$${spec.name}FromJson(map)')))
-      ..methods.add(Method((b) => b
-        ..returns = References.jsonMap
-        ..name = 'toJson'
-        ..lambda = true
-        ..body = Code('_\$${spec.name}ToJson(this)'))));
+            return e.toField(
+              (b) => b
+                ..annotations.addAll([
+                  if (wireName != null) CodeExpression(Code("JsonKey(name: '${e.key}')")),
+                ])
+                ..modifier = FieldModifier.final$,
+            );
+          }),
+        )
+        ..methods.add(
+          Method(
+            (b) => b
+              ..returns = References.jsonMap
+              ..name = 'toJson'
+              ..lambda = true
+              ..body = Code('_\$${spec.name}ToJson(this)'),
+          ),
+        ),
+    );
   }
 
   @override
   Enum buildDataEnum(ApiEnum spec) {
-    return spec.toSpec((b) => b
-      ..annotations.addAll([
-        if (enumFieldRename != null)
-          CodeExpression(Code('${enumAnnotation ?? 'JsonEnum'}(fieldRename: $enumFieldRename)')),
-      ])
-      ..values.addAll(spec.values.map((e) {
-        final wireName = _resolveWireName(enumFieldRename, e.name, e.value);
+    return spec.toSpec(
+      (b) => b
+        ..annotations.addAll([
+          if (enumFieldRename != null)
+            CodeExpression(Code('${enumAnnotation ?? 'JsonEnum'}(fieldRename: $enumFieldRename)')),
+        ])
+        ..values.addAll(
+          spec.values.map((e) {
+            final wireName = _resolveWireName(enumFieldRename, e.name, e.value);
 
-        return e.toSpec((b) => b
-          ..annotations.addAll([
-            if (wireName != null) CodeExpression(Code("JsonValue('$wireName')")),
-          ]));
-      })));
+            return e.toSpec(
+              (b) => b
+                ..annotations.addAll([
+                  if (wireName != null) CodeExpression(Code("JsonValue('$wireName')")),
+                ]),
+            );
+          }),
+        ),
+    );
   }
 
   @override
   Library onLibrary(OpenApi openApi, Library spec) {
     return spec.rebuild(
-        (b) => b..directives.add(Directive.import('package:json_annotation/json_annotation.dart')));
+      (b) => b..directives.add(Directive.import('package:json_annotation/json_annotation.dart')),
+    );
   }
 
   String? _resolveWireName(FieldRename? fieldRename, String original, String target) {

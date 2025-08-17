@@ -261,23 +261,43 @@ class HttpRouteHandler extends RouteHandler {
       pathParameters: pathParameters,
       headers: RouteHeaderHandler.from(element),
       queryParameters: queryParameters,
-      returns: _parseReturnsType(element.returnType),
+      returns: _parseReturnsType(element),
     );
   }
 
-  static RouteReturns _parseReturnsType(DartType type) {
-    final returnType = type.isDartAsyncFuture || type.isDartAsyncFuture
-        ? (type as InterfaceType).typeArguments.single
-        : type;
-
-    if (returnType is VoidType) return RouteReturnsVoid();
-    if (responseChecker.isAssignableFromType(returnType)) {
-      if (jsonResponseChecker.isAssignableFromType(returnType)) {
-        return RouteReturnsResponse((returnType as InterfaceType).typeArguments.single);
-      }
-      return RouteReturnsResponse(null);
+  static RouteReturns _parseReturnsType(MethodElement2 element) {
+    final DartType type;
+    if (element.returnType.isDartAsyncFuture || element.returnType.isDartAsyncFuture) {
+      type = (element.returnType as InterfaceType).typeArguments.single;
+    } else if (jsonResponseChecker.isAssignableFromType(element.returnType)) {
+      type = (element.returnType as InterfaceType).typeArguments.single;
+    } else {
+      type = element.returnType;
     }
-    return RouteReturnsJson(returnType);
+
+    if (type is VoidType) {
+      return const RouteReturnsVoid();
+    }
+    if (type.isDartAsyncStream || bytesChecker.isAssignableFromType(type)) {
+      return const RouteReturnsBytes();
+    }
+    if (type.isJson) {
+      return RouteReturnsJson(type);
+    }
+    if (type is InterfaceType ? type.getMethod2('toJson') : null case final toJsonMethod?
+        when toJsonMethod.returnType.isJson && toJsonMethod.formalParameters.isEmpty) {
+      return RouteReturnsJson(type);
+    }
+    if (responseChecker.isAssignableFromType(type)) {
+      return const RouteReturnsResponse();
+    }
+
+    throw InvalidGenerationSourceError(
+      'The shelf_router.Route annotation can only be used on shelf '
+      'request handlers returns a Stream<List<int>>, Uint8List, any valid json value or '
+      'class with "toJson()" method returning valid json value.',
+      element: element,
+    );
   }
 
   HttpRouteHandler._({
@@ -293,14 +313,24 @@ class HttpRouteHandler extends RouteHandler {
   });
 }
 
-sealed class RouteReturns {}
+sealed class RouteReturns {
+  const RouteReturns();
+}
 
-class RouteReturnsVoid extends RouteReturns {}
+class RouteReturnsVoid extends RouteReturns {
+  const RouteReturnsVoid();
+}
 
 class RouteReturnsResponse extends RouteReturns {
-  final DartType? type;
+  const RouteReturnsResponse();
+}
 
-  RouteReturnsResponse(this.type);
+class RouteReturnsBytes extends RouteReturns {
+  const RouteReturnsBytes();
+}
+
+class RouteReturnsText extends RouteReturns {
+  const RouteReturnsText();
 }
 
 class RouteReturnsJson extends RouteReturns {

@@ -5,7 +5,9 @@ import 'package:open_api_specification/open_api_spec.dart';
 
 extension SchemaToRef on ContextMixin {
   Reference ref(SchemaOpenApi schema) {
-    if (schema.isEnum) return Reference(codecs.encodeType(schema.name!));
+    if (schema.name case final name? when schema.isEnum) {
+      return Reference(codecs.encodeType(name));
+    }
 
     switch (schema.format) {
       case FormatOpenApi.int32:
@@ -36,7 +38,7 @@ extension SchemaToRef on ContextMixin {
 
     switch (schema.type) {
       case TypeOpenApi.boolean:
-        return References.bool;
+        return References.boolean;
       case TypeOpenApi.integer:
         return References.int;
       case TypeOpenApi.number:
@@ -44,13 +46,15 @@ extension SchemaToRef on ContextMixin {
       case TypeOpenApi.string:
         return References.string;
       case TypeOpenApi.array:
-        return References.list(ref(schema.items!));
+        return References.list(ref(schema.items!.resolve(components)));
       case TypeOpenApi.object:
-        if (schema.name != null) return Reference(codecs.encodeType(schema.name!));
+        if (schema.name case final name?) return Reference(codecs.encodeType(name));
 
         return References.map(
           key: References.string,
-          value: schema.additionalProperties != null ? ref(schema.additionalProperties!) : null,
+          value: schema.additionalProperties != null
+              ? ref(schema.additionalProperties!.resolve(components))
+              : null,
         );
       case null:
         return References.jsonValue;

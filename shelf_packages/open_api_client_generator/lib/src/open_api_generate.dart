@@ -32,7 +32,7 @@ Future<void> generateApi({
     if (clientCodec is Plugin) clientCodec as Plugin,
     if (serializationCodec is Plugin) serializationCodec as Plugin,
     if (serializationCodec.collectionCodec is Plugin) serializationCodec.collectionCodec as Plugin,
-    ...plugins
+    ...plugins,
   ];
   await Future.wait(allPlugins.map((plugin) async => await plugin.onStart()));
   var specs = await readOpenApiWithRefs(options.input);
@@ -60,17 +60,12 @@ Future<void> generateApi({
 
   final codecs = ApiCodecs(options: options);
 
-  final context = Context(
-    options: options,
-    codecs: codecs,
-  );
+  final context = Context(options: options, codecs: codecs, components: openApi.components);
 
-// Api Class and data classes
+  // Api Class and data classes
 
   final apiFileName = '${options.outputApiFileTitle}.dart';
-  final buildSchemaClass = BuildSchemaClass(
-    context: context,
-  );
+  final buildSchemaClass = BuildSchemaClass(context: context);
   final buildApiClass = BuildApiClass(
     context: context,
     clientCodec: clientCodec,
@@ -94,16 +89,18 @@ Future<void> generateApi({
     }
   });
 
-  var librarySpec = Library((b) => b
-    ..ignoreForFile.addAll([
-      'unnecessary_brace_in_string_interps',
-      'no_leading_underscores_for_local_identifiers',
-      'always_use_package_imports',
-      'cast_nullable_to_non_nullable',
-    ])
-    ..directives.add(Directive.part('${path_.basenameWithoutExtension(apiFileName)}.g.dart'))
-    ..body.add(apiSpec)
-    ..body.addAll(dataSpecs));
+  var librarySpec = Library(
+    (b) => b
+      ..ignoreForFile.addAll([
+        'unnecessary_brace_in_string_interps',
+        'no_leading_underscores_for_local_identifiers',
+        'always_use_package_imports',
+        'cast_nullable_to_non_nullable',
+      ])
+      ..directives.add(Directive.part('${path_.basenameWithoutExtension(apiFileName)}.g.dart'))
+      ..body.add(apiSpec)
+      ..body.addAll(dataSpecs),
+  );
   librarySpec = allPlugins.fold(librarySpec, (spec, plugin) => plugin.onLibrary(openApi, spec));
 
   final page = formatter.format('${librarySpec.accept(emitter)}');

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:open_api_specification/src/specs/base_specs.dart';
 import 'package:open_api_specification/src/specs/ref_or_specs.dart';
 import 'package:open_api_specification/src/utils/specs_serialization.dart';
 import 'package:open_api_specification/src/utils/utils.dart';
@@ -6,29 +7,39 @@ import 'package:open_api_specification/src/utils/utils.dart';
 part 'schema.g.dart';
 
 @SpecsSerializable()
-class GroupMediaOpenApi with PrettyJsonToString {
+class GroupMediaOpenApi extends OriginalJson {
+  @JsonKey(name: 'text/plain')
+  final MediaOpenApi? textPlain;
   @JsonKey(name: 'application/json')
   final MediaOpenApi? json;
-
   @JsonKey(name: 'application/x-www-form-urlencoded')
   final MediaOpenApi? urlEncoded;
-
+  @JsonKey(name: 'application/octet-stream')
+  final MediaOpenApi? octetStream;
   @JsonKey(name: 'multipart/form-data')
   final MediaOpenApi? formData;
-
   @JsonKey(name: 'image/*')
   final MediaOpenApi? image;
-
   @JsonKey(name: '*/*')
   final MediaOpenApi? any;
 
-  const GroupMediaOpenApi({this.json, this.urlEncoded, this.formData, this.image, this.any});
+  const GroupMediaOpenApi({
+    super.originalJson,
+    this.textPlain,
+    this.json,
+    this.urlEncoded,
+    this.octetStream,
+    this.formData,
+    this.image,
+    this.any,
+  });
 
   MediaOpenApi? get jsonOrAny => json ?? any;
 
   MediaOpenApi? get single => json ?? any ?? urlEncoded;
 
-  factory GroupMediaOpenApi.fromJson(Map<dynamic, dynamic> map) => _$GroupMediaOpenApiFromJson(map);
+  factory GroupMediaOpenApi.fromJson(Map<dynamic, dynamic> map) =>
+      _$GroupMediaOpenApiFromJson(OriginalJson.wrap(map));
   @override
   Map<String, dynamic> toJson() => _$GroupMediaOpenApiToJson(this);
 }
@@ -39,7 +50,7 @@ class MediaOpenApi with PrettyJsonToString {
   @JsonKey(toJson: $nullIfEmpty)
   final Map<String, dynamic> examples;
 
-  final SchemaOpenApi schema;
+  final RefOr<SchemaOpenApi> schema;
 
   const MediaOpenApi({this.example, this.examples = const {}, required this.schema});
 
@@ -74,7 +85,7 @@ enum FormatOpenApi {
 }
 
 @SpecsSerializable()
-class SchemaOpenApi implements RefOr<SchemaOpenApi> {
+class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
   final String? name;
   final String? title;
   final String? description;
@@ -90,15 +101,15 @@ class SchemaOpenApi implements RefOr<SchemaOpenApi> {
   final List<Object>? enum$;
 
   /// Must be present if the type is [TypeOpenApi.array]
-  final SchemaOpenApi? items;
+  final RefOr<SchemaOpenApi>? items;
 
   /// With [TypeOpenApi.object]
-  final Map<String, SchemaOpenApi>? properties;
+  final Map<String, RefOr<SchemaOpenApi>>? properties;
 
   /// With [TypeOpenApi.object]. It define a Map<String, *>
-  final SchemaOpenApi? additionalProperties;
+  final RefOr<SchemaOpenApi>? additionalProperties;
 
-  final List<SchemaOpenApi>? allOf;
+  final List<RefOr<SchemaOpenApi>>? allOf;
 
   // final List<SchemaOrRefOpenApi> anyOf;
 
@@ -135,6 +146,7 @@ class SchemaOpenApi implements RefOr<SchemaOpenApi> {
   // enum
 
   const SchemaOpenApi({
+    super.originalJson,
     this.name,
     this.title,
     this.description,
@@ -153,85 +165,15 @@ class SchemaOpenApi implements RefOr<SchemaOpenApi> {
     this.uniqueItems,
   });
 
-  factory SchemaOpenApi.fromJson(Map<dynamic, dynamic> map) => _SchemaOpenApi(map);
-  @override
-  Map<dynamic, dynamic> toJson() => _$SchemaOpenApiToJson(this);
+  String get requireName => ensureIsNotNull('name', name);
 
   @override
-  R fold<R>(R Function(String ref) onRef, R Function(SchemaOpenApi p1) on) => on(this);
-}
+  SchemaOpenApi resolve(ComponentsOpenApi components) => this;
 
-class _SchemaOpenApi extends RefOr<SchemaOpenApi> with PrettyJsonToString implements SchemaOpenApi {
-  final Map<dynamic, dynamic> _json;
-  SchemaOpenApi? _delegate$;
-  SchemaOpenApi get _delegate => _delegate$ ??= _$SchemaOpenApiFromJson(_json);
-
+  factory SchemaOpenApi.fromJson(Map<dynamic, dynamic> map) =>
+      _$SchemaOpenApiFromJson(OriginalJson.wrap(map));
   @override
-  String? get name => _delegate.name;
-  @override
-  String? get title => _delegate.title;
-  @override
-  String? get description => _delegate.description;
-  @override
-  Object? get example => _delegate.example;
-
-  @override
-  TypeOpenApi? get type => _delegate.type;
-
-  @override
-  FormatOpenApi? get format => _delegate.format;
-
-  /// With [TypeOpenApi.integer] | [TypeOpenApi.string]
-  @override
-  @JsonKey(name: 'enum')
-  List<Object>? get enum$ => _delegate.enum$;
-
-  /// Must be present if the type is [TypeOpenApi.array]
-  @override
-  SchemaOpenApi? get items => _delegate.items;
-
-  /// With [TypeOpenApi.object]
-  @override
-  Map<String, SchemaOpenApi>? get properties => _delegate.properties;
-
-  /// With [TypeOpenApi.object]. It define a Map<String, *>
-  @override
-  SchemaOpenApi? get additionalProperties => _delegate.additionalProperties;
-
-  @override
-  List<SchemaOpenApi>? get allOf => _delegate.allOf;
-
-  // List<SchemaOrRefOpenApi> anyOf;
-
-  // List<SchemaOrRefOpenApi> oneOf;
-
-  /// With [TypeOpenApi.object]
-  @override
-  List<String>? get required => _delegate.required;
-
-  @override
-  @JsonKey(toJson: $nullIfFalse)
-  bool get nullable => _delegate.nullable;
-
-  @override
-  @JsonKey(name: 'default')
-  Object? get default$ => _delegate.default$;
-
-  @override
-  Object? get $original => _delegate.$original;
-
-  /// JSON PROPERTIES
-
-  @override
-  bool? get uniqueItems => _delegate.uniqueItems;
-
-  _SchemaOpenApi(this._json);
-
-  @override
-  R fold<R>(R Function(String ref) onRef, R Function(SchemaOpenApi p1) on) => on(this);
-
-  @override
-  Map<dynamic, dynamic> toJson() => _json;
+  Map<String, dynamic> toJson() => _$SchemaOpenApiToJson(this);
 }
 
 extension SchemaOpenApiX on SchemaOpenApi {
@@ -254,13 +196,23 @@ extension SchemaOpenApiX on SchemaOpenApi {
 
   bool get isEnum => enum$ != null;
 
-  Map<String, SchemaOpenApi> get allProperties {
-    final allOfProperties = allOf?.map((e) => e.properties).nonNulls;
+  List<SchemaOpenApi>? resolveAllOf(ComponentsOpenApi components) {
+    return allOf?.map((v) => v.resolve(components)).toList();
+  }
+
+  Map<String, SchemaOpenApi>? resolveProperties(ComponentsOpenApi components) {
+    return properties?.map((k, v) => MapEntry(k, v.resolve(components)));
+  }
+
+  Map<String, SchemaOpenApi> resolveAllProperties(ComponentsOpenApi components) {
+    final allOfProperties = allOf
+        ?.map((e) => e.resolve(components).resolveProperties(components))
+        .nonNulls;
 
     return {
       if (allOfProperties != null)
         for (final properties in allOfProperties) ...properties,
-      ...?properties,
+      ...?resolveProperties(components),
     };
   }
 }

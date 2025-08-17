@@ -10,9 +10,7 @@ class BuildSchemaClass with ContextMixin {
   @override
   final Context context;
 
-  BuildSchemaClass({
-    required this.context,
-  });
+  BuildSchemaClass({required this.context});
 
   final _cache = <String, _CacheEntry>{};
 
@@ -36,17 +34,16 @@ class BuildSchemaClass with ContextMixin {
   }
 
   _BuiltSchema _build(String name, SchemaOpenApi schema) {
-    final docs = Docs.format(Docs.documentClass(
-      description: schema.description,
-      example: schema.example,
-    ));
+    final docs = Docs.format(
+      Docs.documentClass(description: schema.description, example: schema.example),
+    );
 
     final items = schema.items;
     if (items != null) {
       return _BuiltSchema(
         // docs: docs.followedBy(built.docs ?? const []),
         type: ref(schema),
-        children: {name: items},
+        children: {name: items.resolve(components)},
       );
     }
 
@@ -61,18 +58,15 @@ class BuildSchemaClass with ContextMixin {
           docs: docs,
           name: enumName,
           values: values.map((value) {
-            return ApiEnumValue(
-              name: codecs.encodeEnumValue(value),
-              value: '$value',
-            );
+            return ApiEnumValue(name: codecs.encodeEnumValue(value), value: '$value');
           }).toList(),
         ),
       );
     }
 
     if (schema.isClass) {
-      final properties = schema.allProperties;
-      final allOf = schema.allOf ?? const [];
+      final properties = schema.resolveAllProperties(components);
+      final allOf = schema.resolveAllOf(components) ?? const [];
       final implements = allOf.where((e) => e.name != null).toList();
       final implementsNames = implements.map((e) => codecs.encodeType(e.name!)).toList();
 
@@ -103,7 +97,7 @@ class BuildSchemaClass with ContextMixin {
     final reference = ref(schema);
     if (!reference.isDartCore) {
       // ignore: avoid_print
-      print('$name $schema');
+      print('Not resolved: $name($reference) $schema');
     }
 
     return _BuiltSchema(
@@ -117,10 +111,7 @@ class _CacheEntry {
   final Reference type;
   final ApiSpec spec;
 
-  const _CacheEntry({
-    required this.type,
-    required this.spec,
-  });
+  const _CacheEntry({required this.type, required this.spec});
 }
 
 class _BuiltSchema {
@@ -128,11 +119,7 @@ class _BuiltSchema {
   final ApiSpec? spec;
   final Map<String, SchemaOpenApi> children;
 
-  const _BuiltSchema({
-    required this.type,
-    this.spec,
-    this.children = const {},
-  });
+  const _BuiltSchema({required this.type, this.spec, this.children = const {}});
 
   _CacheEntry? toCache() {
     final spec = this.spec;

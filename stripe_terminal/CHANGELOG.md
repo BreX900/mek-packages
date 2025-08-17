@@ -1,4 +1,7 @@
 
+# 4.6.0
+- feat: bumped android and ios sdk version to `4.6.0`
+
 ## 4.4.1
 - feat: added `allowRedisplay` param on `collectPaymentMethod` method
 

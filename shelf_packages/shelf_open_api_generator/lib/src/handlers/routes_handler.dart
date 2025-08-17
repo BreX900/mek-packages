@@ -27,11 +27,11 @@ class OpenApiHandler {
   );
 
   final Config config;
-  final OpenApiFileFormat fileFormat;
+  final Set<OpenApiFileFormat> fileFormats;
   final ClassElement2 element;
   final SchemasRegistry schemasRegistry = SchemasRegistry();
 
-  OpenApiHandler._({required this.config, required this.element, required this.fileFormat});
+  OpenApiHandler._({required this.config, required this.element, required this.fileFormats});
 
   static Future<OpenApiHandler?> from(Config config, BuildStep buildStep) async {
     final library = await buildStep.resolver.libraryFor(buildStep.inputId);
@@ -52,16 +52,18 @@ class OpenApiHandler {
     }
     final (element, annotation) = annotatedElement;
 
-    final fileFormat = switch (annotation.getField('format')!.variable2!.requireName) {
-      'json' => OpenApiFileFormat.json,
-      'yaml' => OpenApiFileFormat.yaml,
-      final format => throw InvalidGenerationSourceError(
-        'The format "$format" in shelf_open_api.OpenApiFile annotation is not supported',
-        element: element,
-      ),
-    };
+    final fileFormats = annotation.getField('formats')!.toSetValue()!.map((object) {
+      return switch (object.variable2!.requireName) {
+        'json' => OpenApiFileFormat.json,
+        'yaml' => OpenApiFileFormat.yaml,
+        final format => throw InvalidGenerationSourceError(
+          'The format "$format" in shelf_open_api.OpenApiFile annotation is not supported',
+          element: element,
+        ),
+      };
+    }).toSet();
 
-    return OpenApiHandler._(config: config, element: element, fileFormat: fileFormat);
+    return OpenApiHandler._(config: config, element: element, fileFormats: fileFormats);
   }
 
   OpenApi _buildOpenApi(Pubspec? pubspec, List<OpenRouteHandler> routes) {
@@ -103,14 +105,16 @@ class OpenApiHandler {
     }).toList();
   }
 
-  (String, String) code(Pubspec? pubspec, List<OpenRouteHandler> routes) {
+  List<(String, String)> code(Pubspec? pubspec, List<OpenRouteHandler> routes) {
     final openApi = _buildOpenApi(pubspec, routes);
     final rawOpenApi = organizeOpenApi(openApi.toJson());
 
-    final code = switch (fileFormat) {
-      OpenApiFileFormat.json => _jsonEncoder.convert(rawOpenApi),
-      OpenApiFileFormat.yaml => _yamlEncoder.convert(rawOpenApi),
-    };
-    return ('.${fileFormat.name}', code);
+    return fileFormats.map((fileFormat) {
+      final code = switch (fileFormat) {
+        OpenApiFileFormat.json => _jsonEncoder.convert(rawOpenApi),
+        OpenApiFileFormat.yaml => _yamlEncoder.convert(rawOpenApi),
+      };
+      return ('.${fileFormat.name}', code);
+    }).toList();
   }
 }

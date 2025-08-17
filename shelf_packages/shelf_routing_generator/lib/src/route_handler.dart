@@ -230,7 +230,7 @@ class HttpRouteHandler extends RouteHandler {
       throw InvalidGenerationSourceError(
         'The shelf_router.Route annotation can only be used on shelf '
         'request handlers accept a shelf.Request parameter and all parameters in the route, '
-        'remote "${parametersIterator.current}" parameter from the method',
+        'remove "${parametersIterator.current}" parameter from the method',
         element: element,
       );
     }

@@ -1,5 +1,8 @@
 targets:
   $default:
+    sources:
+      exclude:
+        - example/**
     builders:
       shelf_open_api_generator:
         enabled: false

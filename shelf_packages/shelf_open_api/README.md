@@ -46,7 +46,7 @@ dev_dependencies:
 
 Annotate your routes class with `OpenApi` annotation
 ```dart
-@OpenApiFile(format: OpenApiFile.json)
+@OpenApiFile()
 class MessagesController {
   @Route.get('/messages')
   Future<Response> fetch(Request request) async {

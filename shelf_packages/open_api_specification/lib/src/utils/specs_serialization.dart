@@ -22,13 +22,13 @@ class RefOrSchemaOpenApiConverter extends _RefOrOpenApiConverter<SchemaOpenApi> 
 }
 
 class _RefOrOpenApiConverter<T extends RefOr<T>>
-    extends JsonConverter<RefOr<T>, Map<String, dynamic>> {
-  final T Function(Map<String, dynamic>) deserialize;
+    extends JsonConverter<RefOr<T>, Map<dynamic, dynamic>> {
+  final T Function(Map<dynamic, dynamic>) deserialize;
 
   const _RefOrOpenApiConverter(this.deserialize);
 
   @override
-  RefOr<T> fromJson(Map<String, dynamic> json) {
+  RefOr<T> fromJson(Map<dynamic, dynamic> json) {
     final ref = json[r'$ref'];
     if (ref != null) {
       return RefOpenApi(ref: ref);
@@ -38,9 +38,7 @@ class _RefOrOpenApiConverter<T extends RefOr<T>>
   }
 
   @override
-  Map<String, dynamic> toJson(RefOr<T> object) {
-    return object.toJson();
-  }
+  Map<dynamic, dynamic> toJson(RefOr<T> object) => object.toJson();
 }
 
 bool? $nullIfFalse(bool value) => value ? true : null;

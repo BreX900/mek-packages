@@ -155,7 +155,7 @@ class SchemaOpenApi implements RefOr<SchemaOpenApi> {
 
   factory SchemaOpenApi.fromJson(Map<dynamic, dynamic> map) => _SchemaOpenApi(map);
   @override
-  Map<String, dynamic> toJson() => _$SchemaOpenApiToJson(this);
+  Map<dynamic, dynamic> toJson() => _$SchemaOpenApiToJson(this);
 
   @override
   R fold<R>(R Function(String ref) onRef, R Function(SchemaOpenApi p1) on) => on(this);
@@ -231,7 +231,7 @@ class _SchemaOpenApi extends RefOr<SchemaOpenApi> with PrettyJsonToString implem
   R fold<R>(R Function(String ref) onRef, R Function(SchemaOpenApi p1) on) => on(this);
 
   @override
-  Map<String, dynamic> toJson() => _delegate.toJson();
+  Map<dynamic, dynamic> toJson() => _json;
 }
 
 extension SchemaOpenApiX on SchemaOpenApi {

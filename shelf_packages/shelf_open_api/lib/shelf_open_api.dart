@@ -7,9 +7,9 @@ enum OpenApiFileFormat { yaml, json }
 
 @TargetKind.classType
 class OpenApiFile {
-  final OpenApiFileFormat format;
+  final Set<OpenApiFileFormat> formats;
 
-  const OpenApiFile({this.format = OpenApiFileFormat.json});
+  const OpenApiFile({this.formats = const {OpenApiFileFormat.json, OpenApiFileFormat.yaml}});
 }
 
 class OpenApiRouteIgnore {

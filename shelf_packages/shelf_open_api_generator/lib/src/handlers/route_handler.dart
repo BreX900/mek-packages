@@ -174,7 +174,7 @@ class OpenRouteFinder {
 
           ClassElement2? classElement;
           if (serviceType != null) classElement = serviceType.element3 as ClassElement2?;
-          if (strict && isRouterMixin) classElement = element.returnType.element3 as ClassElement2;
+          if (isRouterMixin) classElement = element.returnType.element3 as ClassElement2;
           if (classElement == null) return;
 
           yield* _find(classElement, pathPrefix: path);

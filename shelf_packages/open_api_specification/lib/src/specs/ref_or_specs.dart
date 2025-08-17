@@ -33,5 +33,5 @@ abstract class RefOr<T extends Object> {
 
   R fold<R>(R Function(String ref) onRef, R Function(T p1) on);
 
-  Map<String, dynamic> toJson();
+  Map<dynamic, dynamic> toJson();
 }

@@ -39,11 +39,13 @@ class OpenApiBuilder implements Builder {
       strict: pubspec?.dependencies.containsKey('shelf_routing') ?? false,
     ).find(apiHandler.element);
 
-    final (fileExtension, fileContent) = apiHandler.code(pubspec, routes);
+    final results = apiHandler.code(pubspec, routes);
 
     for (final output in buildStep.allowedOutputs) {
-      if (output.extension != fileExtension) continue;
-      await buildStep.writeAsString(output, fileContent);
+      for (final (fileExtension, fileContent) in results) {
+        if (output.extension != fileExtension) continue;
+        await buildStep.writeAsString(output, fileContent);
+      }
     }
   }
 }

@@ -157,6 +157,7 @@ class _SchemaResolver {
         additionalProperties: resolve(dartType: typeArguments[1]),
       );
     } else if (element is ClassElement2) {
+      final doc = Doc.from(element.documentationComment);
       final parameters = element.requireUnnamedConstructor.formalParameters;
       final fields = element.getters2;
       final names = <String, String>{
@@ -195,6 +196,8 @@ class _SchemaResolver {
       return SchemaOpenApi(
         title: element.requireName,
         type: TypeOpenApi.object,
+        description: doc.summaryAndDescription,
+        example: doc.example,
         format: null,
         required: properties
             .where((e) => e.isRequired)

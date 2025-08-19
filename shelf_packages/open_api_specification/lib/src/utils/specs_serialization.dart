@@ -26,11 +26,12 @@ class RefOrSchemaJsonConverter extends JsonConverter<RefOr<SchemaOpenApi>, Map<d
     if (ref == null) return SchemaOpenApi.fromJson(json);
 
     final segments = ref.split('/');
-    if (segments[0] != '#') throw ArgumentError.value(ref, 'SchemaOpenApi', 'Invalid');
-    if (segments[1] != 'schemas') throw ArgumentError.value(ref, 'SchemaOpenApi', 'Wrong');
+    if (segments[0] != '#' || segments[1] != 'components' || segments[2] != 'schemas') {
+      throw ArgumentError.value(ref, 'SchemaOpenApi', 'Invalid reference!');
+    }
 
     SchemaOpenApi? cache;
-    return RefOpenApi(ref, (components) => cache ??= components.schemas[segments[2]]!);
+    return RefOpenApi(ref, (components) => cache ??= components.schemas[segments[3]]!);
   }
 
   @override

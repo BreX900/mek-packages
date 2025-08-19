@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:example/features/chats/controllers/chats_controller.dart';
 import 'package:example/features/messages/controllers/messages_controller.dart';
+import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_open_api/shelf_open_api.dart';
@@ -13,6 +15,8 @@ part 'main.g.dart';
 
 void main() async {
   final data = File('public/main.json').readAsStringSync();
+
+  OpenApi.fromJson(jsonDecode(data));
 
   final rootRouter = Router()
     ..mount('/', const ApiController().call)

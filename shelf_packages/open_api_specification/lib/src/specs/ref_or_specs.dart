@@ -17,14 +17,14 @@ mixin RefOrOpenApi<T extends RefOrOpenApi<T>> {
 }
 
 class RefOpenApi<T extends Object> extends RefOr<T> with PrettyJsonToString {
-  final T Function(ComponentsOpenApi components) _reader;
+  final T Function(ComponentsOpenApi components) _resolver;
   @JsonKey(name: r'$ref')
   final String ref;
 
-  const RefOpenApi(this.ref, this._reader);
+  const RefOpenApi(this.ref, this._resolver);
 
   @override
-  T resolve(ComponentsOpenApi components) => _reader(components);
+  T resolve(ComponentsOpenApi components) => _resolver(components);
 
   @override
   Map<dynamic, dynamic> toJson() => {r'$ref': ref};

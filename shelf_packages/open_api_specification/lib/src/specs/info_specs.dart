@@ -18,6 +18,18 @@ class InfoOpenApi {
     required this.version,
   });
 
+  InfoOpenApi copyWith({
+    String? title,
+    String? description,
+    String? termsOfService,
+    String? version,
+  }) => InfoOpenApi(
+    title: title ?? this.title,
+    description: description ?? this.description,
+    termsOfService: termsOfService ?? this.termsOfService,
+    version: version ?? this.version,
+  );
+
   factory InfoOpenApi.fromJson(Map<dynamic, dynamic> map) => _$InfoOpenApiFromJson(map);
   Map<String, dynamic> toJson() => _$InfoOpenApiToJson(this);
 }

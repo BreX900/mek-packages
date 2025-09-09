@@ -871,13 +871,15 @@ struct InternetConnectionConfigurationApi: ConnectionConfigurationApi {
 struct TapToPayConnectionConfigurationApi: ConnectionConfigurationApi {
     let autoReconnectOnUnexpectedDisconnect: Bool
     let locationId: String
+    let tosAcceptancePermitted: Bool
 
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayConnectionConfigurationApi {
         return TapToPayConnectionConfigurationApi(
             autoReconnectOnUnexpectedDisconnect: serialized[0] as! Bool,
-            locationId: serialized[1] as! String
+            locationId: serialized[1] as! String,
+            tosAcceptancePermitted: serialized[2] as! Bool
         )
     }
 }
@@ -923,9 +925,9 @@ enum DeviceTypeApi: Int {
     case verifoneM425
     case verifoneM450
     case verifoneP630
-    case verifoneUX700
+    case verifoneUx700
     case verifoneV660pDevkit
-    case verifoneUX700Devkit
+    case verifoneUx700Devkit
 }
 
 enum DisconnectReasonApi: Int {

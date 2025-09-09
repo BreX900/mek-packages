@@ -598,7 +598,8 @@ List<Object?> _$serializeTapToPayConnectionConfiguration(
     [
       'TapToPayConnectionConfiguration',
       deserialized.autoReconnectOnUnexpectedDisconnect,
-      deserialized.locationId
+      deserialized.locationId,
+      deserialized.tosAcceptancePermitted
     ];
 List<Object?> _$serializeUsbConnectionConfiguration(UsbConnectionConfiguration deserialized) => [
       'UsbConnectionConfiguration',

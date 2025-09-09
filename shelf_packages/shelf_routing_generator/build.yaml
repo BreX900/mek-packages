@@ -13,17 +13,9 @@ targets:
           - example/**
 
 builders:
-  shelf_routing_generator:router:
-    import: package:shelf_routing_generator/run_router_builder.dart
-    builder_factories: [ 'runRouterBuilder' ]
-    applies_builders: [ 'source_gen:combining_builder' ]
-    build_extensions: { '.dart': [ '.router.g.part' ] }
-    auto_apply: dependents
-    build_to: cache
-
   shelf_routing_generator:
-    import: package:shelf_routing_generator/run_routing_builder.dart
-    builder_factories: [ 'runRoutingBuilder' ]
+    import: package:shelf_routing_generator/routing_builder.dart
+    builder_factories: [ 'routingBuilder' ]
     applies_builders: [ 'source_gen:combining_builder' ]
     build_extensions: { '.dart': [ '.routing.g.part' ] }
     auto_apply: dependents

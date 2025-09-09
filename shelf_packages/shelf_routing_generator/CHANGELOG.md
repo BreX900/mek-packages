@@ -1,3 +1,1 @@
-## 0.1.0
-
-- Initial version.
+../shelf_routing/CHANGELOG.md

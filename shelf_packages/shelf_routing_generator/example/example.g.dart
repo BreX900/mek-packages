@@ -5,36 +5,26 @@
 part of 'example.dart';
 
 // **************************************************************************
-// RouterGenerator
+// RoutingGenerator
 // **************************************************************************
 
-Router get _$userControllerRouter => Router()
-  ..add('GET', r'/', (Request request) async {
-    final $ = request.get<UserController>();
-    final $data = await $.listUsers(
+Router _$UserControllerRouter(UserController service) => Router()
+  ..add('GET', '/', (Request request) async {
+    final body = await service.listUsers(
       request,
-      query: $parseQueryParameters(
-          request, 'query', (vls) => vls.isNotEmpty ? vls.single : null),
+      query: $parseQueryParameters(request, 'query', (vls) => vls.isNotEmpty ? vls.single : null),
     );
-    return JsonResponse.ok($data);
+    return JsonResponse.ok(body);
   })
-  ..add('GET', r'/<userId>', (Request request, String userId) async {
-    final $ = request.get<UserController>();
-    return await $.fetchUser(
-      request,
-      int.parse(userId),
-    );
+  ..add('GET', '/<userId>', (Request request, String $userId) async {
+    return await service.fetchUser(request, int.parse($userId));
   })
-  ..add('POST', r'/', (Request request) async {
-    final $ = request.get<UserController>();
-    return await $.createUser(
+  ..add('POST', '/', (Request request) async {
+    return await service.createUser(
       request,
-      await $readBodyAs(request, User.fromJson),
+      await $readBodyAs(request, (data) => User.fromJson(data! as Map<String, dynamic>)),
     );
   });
 
-// **************************************************************************
-// GroupsRouterGenerator
-// **************************************************************************
-
-Router get _$apiRouter => Router()..mount('/users', UserController.router);
+Router _$ApiRouterRouter(ApiRouter service) =>
+    Router()..mount('/api/users', service.users.router.call);

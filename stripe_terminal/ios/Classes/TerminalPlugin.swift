@@ -3,6 +3,8 @@ import StripeTerminal
 import UIKit
 
 public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
+    
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = TerminalPlugin(registrar.messenger())
         setTerminalPlatformApiHandler(registrar.messenger(), instance)
@@ -200,7 +202,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
-        _ customerCancellationEnabled: Bool
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
         let config = CollectConfigurationBuilder()
@@ -210,6 +213,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             .setTippingConfiguration(try tippingConfiguration?.toHost())
             .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
             .setEnableCustomerCancellation(customerCancellationEnabled)
+            .setAllowRedisplay(allowRedisplay.toHost())
             
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(
             paymentIntent,
@@ -440,6 +444,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         } catch let error as NSError {
             throw error.toPlatformError()
         }
+    }
+    
+    func onSetTapToPayUXConfiguration(_ configuration: TapToPayUxConfigurationApi) throws {
+        throw PlatformError("mek_stripe_terminal", "setTapToPayUXConfiguration method not supported on ios device");
     }
     
 // MARK: - PRIVATE METHODS

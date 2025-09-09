@@ -125,6 +125,7 @@ enum DeviceType {
   /// The Stripe Reader M2 mobile reader.
   stripeM2,
 
+  /// Tap To Pay reader.
   tapToPay,
 
   /// The Verifone P400 countertop reader.
@@ -159,6 +160,27 @@ enum DeviceType {
 
   /// Stripe Reader S710 DevKit.
   stripeS710Devkit,
+
+  /// Verifone V660p
+  verifoneV660p,
+
+  /// Verifone M425
+  verifoneM425,
+
+  /// Verifone M450
+  verifoneM450,
+
+  /// Verifone P630
+  verifoneP630,
+
+  /// Verifone UX700
+  verifoneUx700,
+
+  /// Verifone V660P DevKit
+  verifoneV660pDevkit,
+
+  /// Verifone UX700 DevKit
+  verifoneUx700Devkit,
 }
 
 /// A categorization of a reader’s battery charge level.

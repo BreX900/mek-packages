@@ -5,20 +5,15 @@
 part of 'routes_group.dart';
 
 // **************************************************************************
-// RouterGenerator
+// RoutingGenerator
 // **************************************************************************
 
-Router get _$routesGroupControllerRouter => Router()
-  ..add('GET', r'/', (Request request) async {
-    final $ = request.get<RoutesGroupController>();
-    return $.sync(
-      request,
-    );
-  });
-Router get _$routesGroupWithPrefixControllerRouter => Router()
-  ..add('GET', r'/', (Request request) async {
-    final $ = request.get<RoutesGroupWithPrefixController>();
-    return $.sync(
-      request,
-    );
-  });
+Router _$RoutesGroupControllerRouter(RoutesGroupController service) =>
+    Router()..add('GET', '/', (Request request) async {
+      return service.sync(request);
+    });
+
+Router _$RoutesGroupWithPrefixControllerRouter(RoutesGroupWithPrefixController service) =>
+    Router()..add('GET', '/', (Request request) async {
+      return service.sync(request);
+    });

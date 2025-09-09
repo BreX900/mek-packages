@@ -217,6 +217,7 @@ class _$TerminalPlatform implements TerminalPlatform {
     required TippingConfiguration? tippingConfiguration,
     required bool shouldUpdatePaymentIntent,
     required bool customerCancellationEnabled,
+    required AllowRedisplay allowRedisplay,
   }) async {
     try {
       final result = await _$channel.invokeMethod('startCollectPaymentMethod', [
@@ -227,7 +228,8 @@ class _$TerminalPlatform implements TerminalPlatform {
         skipTipping,
         tippingConfiguration != null ? _$serializeTippingConfiguration(tippingConfiguration) : null,
         shouldUpdatePaymentIntent,
-        customerCancellationEnabled
+        customerCancellationEnabled,
+        allowRedisplay.index
       ]);
       return _$deserializePaymentIntent(result as List);
     } on PlatformException catch (exception) {
@@ -452,6 +454,17 @@ class _$TerminalPlatform implements TerminalPlatform {
   Future<void> clearReaderDisplay() async {
     try {
       await _$channel.invokeMethod('clearReaderDisplay', []);
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async {
+    try {
+      await _$channel.invokeMethod(
+          'setTapToPayUXConfiguration', [_$serializeTapToPayUxConfiguration(configuration)]);
     } on PlatformException catch (exception) {
       TerminalPlatform._throwIfIsHostException(exception);
       rethrow;
@@ -802,6 +815,29 @@ List<Object?> _$serializeSimulatorConfiguration(SimulatorConfiguration deseriali
       deserialized.simulatedTipAmount,
       deserialized.update.index
     ];
+List<Object?> _$serializeTapToPayUxConfiguration(TapToPayUxConfiguration deserialized) => [
+      deserialized.colors != null
+          ? _$serializeTapToPayUxConfigurationColorScheme(deserialized.colors!)
+          : null,
+      deserialized.darkMode?.index,
+      deserialized.tapZone != null
+          ? _$serializeTapToPayUxConfigurationTapZone(deserialized.tapZone!)
+          : null
+    ];
+List<Object?> _$serializeTapToPayUxConfigurationColorScheme(
+        TapToPayUxConfigurationColorScheme deserialized) =>
+    [deserialized.error, deserialized.primary, deserialized.success];
+List<Object?> _$serializeTapToPayUxConfigurationTapZone(
+        TapToPayUxConfigurationTapZone deserialized) =>
+    [
+      deserialized.indicator?.index,
+      deserialized.position != null
+          ? _$serializeTapToPayUxConfigurationTapZonePosition(deserialized.position!)
+          : null
+    ];
+List<Object?> _$serializeTapToPayUxConfigurationTapZonePosition(
+        TapToPayUxConfigurationTapZonePosition deserialized) =>
+    [deserialized.xBias, deserialized.yBias];
 TerminalException _$deserializeTerminalException(List<Object?> serialized) => TerminalException(
     apiError: serialized[0],
     code: TerminalExceptionCode.values[serialized[1] as int],

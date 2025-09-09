@@ -1,87 +1,82 @@
 buildscript {
-        ext.kotlin_version = '1.9.23' // O la versión de Kotlin que desees usar
-        repositories {
-            google()
-            mavenCentral()
-        }
-
-        dependencies {
-            classpath 'com.android.tools.build:gradle:8.7.2'
-            classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        }
-    }
-
-    plugins {
-        id "com.diffplug.spotless" version "6.22.0"
-        // Los plugins de Android y Kotlin se aplicarán más abajo usando 'apply plugin'
-    }
-
-    // Aplica los plugins de Android y Kotlin aquí
-    apply plugin: 'com.android.library'
-    apply plugin: 'kotlin-android'
-
-    group 'packages.mek'
-    version '1.0-SNAPSHOT'
-
-    allprojects {
-        repositories {
-            google()
-            mavenCentral()
-        }
-    }
-
-    android {
-        if (project.android.hasProperty("namespace")) {
-            namespace "mek.stripeterminal"
-        }
-
-        compileSdkVersion 35
-
-        compileOptions {
-            sourceCompatibility JavaVersion.VERSION_1_8
-            targetCompatibility JavaVersion.VERSION_1_8
-        }
-
-        kotlinOptions {
-            jvmTarget = '1.8'
-        }
-
-        sourceSets {
-            main.java.srcDirs += 'src/main/kotlin'
-            test.java.srcDirs += 'src/test/kotlin'
-        }
-
-        defaultConfig {
-            minSdkVersion 26
-        }
-
-        dependencies {
-            testImplementation 'org.jetbrains.kotlin:kotlin-test'
-            testImplementation 'org.mockito:mockito-core:5.0.0'
-        }
-
-        testOptions {
-            unitTests.all {
-                useJUnitPlatform()
-
-                testLogging {
-                   events "passed", "skipped", "failed", "standardOut", "standardError"
-                   outputs.upToDateWhen {false}
-                   showStandardStreams = true
-                }
-            }
-        }
+    repositories {
+        google()
+        mavenCentral()
     }
 
     dependencies {
-        implementation "com.stripe:stripeterminal-taptopay:4.3.1"
-        implementation "com.stripe:stripeterminal-core:4.3.1"
-        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:8.7.2'
+    }
+}
+
+plugins {
+    id "com.diffplug.spotless" version "6.22.0"
+}
+
+group 'packages.mek'
+version '1.0-SNAPSHOT'
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    if (project.android.hasProperty("namespace")) {
+        namespace "mek.stripeterminal"
     }
 
-    spotless {
-        kotlin {
-            target("**/*.kt")
-            ktlint("1.0.1")
+    compileSdkVersion 35
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+
+    defaultConfig {
+        minSdkVersion 26
+    }
+
+    dependencies {
+        testImplementation 'org.jetbrains.kotlin:kotlin-test'
+        testImplementation 'org.mockito:mockito-core:5.0.0'
+    }
+
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+
+            testLogging {
+               events "passed", "skipped", "failed", "standardOut", "standardError"
+               outputs.upToDateWhen {false}
+               showStandardStreams = true
+            }
         }
     }
+}
+
+dependencies {
+    implementation "com.stripe:stripeterminal-taptopay:4.6.0"
+    implementation "com.stripe:stripeterminal-core:4.6.0"
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        ktlint("1.0.1")
+    }
+}

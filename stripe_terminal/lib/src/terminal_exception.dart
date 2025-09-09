@@ -263,6 +263,9 @@ enum TerminalExceptionCode {
   /// Could not communicate with the reader.
   readerCommunicationError,
 
+  /// Only Android. The reader is in a tampered state, rendering it unusable.
+  readerTampered,
+
   /// Only IOS. The reader returned from discovery does not have an IP address and cannot be
   /// connected to. The IP address should have been set by the SDK during registration of
   /// the reader. Try registering the reader again.
@@ -532,6 +535,27 @@ enum TerminalExceptionCode {
   /// The operation was cancelled due to an integration error.
   canceledDueToIntegrationError,
 
+  /// Only Android. The printer is currently busy.
+  printerBusy,
+
+  /// Only Android. The printer has a paper jam.
+  printerPaperjam,
+
+  /// Only Android. The printer is out of paper.
+  printerOutOfPaper,
+
+  /// Only Android. The printer's cover or head assembly is open.
+  printerCoverOpen,
+
+  /// Only Android. The reader does not have a printer.
+  printerAbsent,
+
+  /// Only Android. The reader has a printer but it is currently unavailable.
+  printerUnavailable,
+
+  /// Only Android. Generic printer error. See error message for more details.
+  printerError,
+
   /// Error reported when the connected account does not have access to this feature,
   /// or the reader/SDK version is not compatible with the collect inputs operation.
   collectInputsUnsupported,
@@ -558,6 +582,9 @@ enum TerminalExceptionCode {
 
   /// Only Ios. Surcharging was attempted while also using dynamic currency conversion.
   surchargeUnavailableWithDynamicCurrencyConversion,
+
+  /// The SDK is running on a device with a non-ARM processor (usually x86).
+  tapToPayUnsupportedProcessor,
   ;
 
   final String? message;

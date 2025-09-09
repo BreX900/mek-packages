@@ -26,11 +26,8 @@ void main() {
     test('sync handler', () async {
       when(() => controller.sync(any())).thenReturn(Response.ok(null));
 
-      final request = createRequest(
-        controller: controller,
-        route: const Route.get('/'),
-      );
-      final response = await ResponsesController.router.call(request);
+      final request = createRequest(controller: controller, route: const Route.get('/'));
+      final response = await const ResponsesController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -40,11 +37,8 @@ void main() {
     test('async handler', () async {
       when(() => controller.async(any())).thenAnswer((_) async => Response.ok(null));
 
-      final request = createRequest(
-        controller: controller,
-        route: const Route.post('/'),
-      );
-      final response = await ResponsesController.router.call(request);
+      final request = createRequest(controller: controller, route: const Route.post('/'));
+      final response = await const ResponsesController().router.call(request);
 
       expect(response.statusCode, 200);
 

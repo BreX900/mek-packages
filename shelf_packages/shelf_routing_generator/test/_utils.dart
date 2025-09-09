@@ -8,7 +8,9 @@ Request createRequest({
 }) {
   T getter<T extends Object>(Request request) => controller as T;
 
-  return Request(route.verb, Uri.https('example.com', route.route, queryParameters), context: {
-    '_getter': getter,
-  });
+  return Request(
+    route.verb,
+    Uri.https('example.com', route.route, queryParameters),
+    context: {'_getter': getter},
+  );
 }

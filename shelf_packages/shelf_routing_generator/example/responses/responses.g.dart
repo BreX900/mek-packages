@@ -5,39 +5,24 @@
 part of 'responses.dart';
 
 // **************************************************************************
-// RouterGenerator
+// RoutingGenerator
 // **************************************************************************
 
-Router get _$responsesControllerRouter => Router()
-  ..add('GET', r'/sync', (Request request) async {
-    final $ = request.get<ResponsesController>();
-    return $.sync(
-      request,
-    );
+Router _$ResponsesControllerRouter(ResponsesController service) => Router()
+  ..add('GET', '/sync', (Request request) async {
+    return service.sync(request);
   })
-  ..add('POST', r'/async', (Request request) async {
-    final $ = request.get<ResponsesController>();
-    return await $.async(
-      request,
-    );
+  ..add('POST', '/async', (Request request) async {
+    return await service.async(request);
   })
-  ..add('PUT', r'/json', (Request request) async {
-    final $ = request.get<ResponsesController>();
-    final $data = await $.json(
-      request,
-    );
-    return JsonResponse.ok($data);
+  ..add('PUT', '/json', (Request request) async {
+    final body = await service.json(request);
+    return JsonResponse.ok(body);
   })
-  ..add('HEAD', r'/json-dto', (Request request) async {
-    final $ = request.get<ResponsesController>();
-    final $data = await $.jsonClass(
-      request,
-    );
-    return JsonResponse.ok($data);
+  ..add('HEAD', '/json-dto', (Request request) async {
+    final body = await service.jsonClass(request);
+    return JsonResponse.ok(body);
   })
-  ..add('DELETE', r'/json-response', (Request request) async {
-    final $ = request.get<ResponsesController>();
-    return await $.jsonResponse(
-      request,
-    );
+  ..add('DELETE', '/json-response', (Request request) async {
+    return await service.jsonResponse(request);
   });

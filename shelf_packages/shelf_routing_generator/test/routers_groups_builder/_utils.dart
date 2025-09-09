@@ -2,23 +2,20 @@ import 'dart:convert';
 
 import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
-import 'package:shelf_routing_generator/run_router_builder.dart';
+import 'package:shelf_routing_generator/routing_builder.dart';
 
-Future<String?> testRoutingBuilder({
-  required String source,
-}) async {
+Future<String?> testRoutingBuilder({required String source}) async {
   const package = 'example';
-  final writer = InMemoryAssetWriter();
+  final readerWriter = TestReaderWriter();
 
   await testBuilder(
-    runRouterBuilder(BuilderOptions.empty),
+    routingBuilder(BuilderOptions.empty),
     {'$package|example.dart': source},
-    reader: await PackageAssetReader.currentIsolate(),
-    writer: writer,
+    readerWriter: readerWriter,
+    // reader: await PackageAssetReader.currentIsolate(),
   );
 
-  final content = writer.assets[AssetId(package, 'example.routing.g.part')];
-  if (content == null) return null;
+  final content = await readerWriter.readAsBytes(AssetId(package, 'example.routing.g.part'));
 
   return utf8
       .decode(content)

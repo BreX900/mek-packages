@@ -1,0 +1,6 @@
+global_options:
+  source_gen:combining_builder:
+    options:
+      ignore_for_file:
+        - cast_nullable_to_non_nullable
+        - avoid_annotating_with_dynamic

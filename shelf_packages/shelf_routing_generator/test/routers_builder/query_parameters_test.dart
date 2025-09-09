@@ -40,7 +40,7 @@ void main() {
         },
       );
 
-      final response = await QueryParametersController.router.call(request);
+      final response = await const QueryParametersController().router.call(request);
 
       expect(response.statusCode, 200);
 
@@ -60,13 +60,10 @@ void main() {
       final request = createRequest(
         controller: controller,
         route: const Route.get('/single'),
-        queryParameters: {
-          'integer': '1',
-          'string': 'string',
-        },
+        queryParameters: {'integer': '1', 'string': 'string'},
       );
 
-      final response = await QueryParametersController.router.call(request);
+      final response = await const QueryParametersController().router.call(request);
 
       expect(response.statusCode, 200);
 

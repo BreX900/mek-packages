@@ -5,7 +5,7 @@ import 'package:shelf_routing/shelf_routing.dart';
 part 'responses.g.dart';
 
 class ResponsesController {
-  static Router get router => _$responsesControllerRouter;
+  Router get router => _$ResponsesControllerRouter(this);
 
   const ResponsesController();
 
@@ -43,9 +43,7 @@ class ResponsesController {
 class Dto {
   final String value;
 
-  const Dto({
-    required this.value,
-  });
+  const Dto({required this.value});
 
   Map<String, dynamic> toJson() => {'value': value};
 }

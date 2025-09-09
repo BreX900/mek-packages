@@ -1,0 +1,33 @@
+name: example
+
+environment:
+  sdk: ^3.8.0
+
+scripts:
+  # To generate .g files:
+  # Comment `builders` key on build.yaml before launch this command
+  generate-code: dart run build_runner watch --delete-conflicting-outputs --verbose
+
+dependencies:
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  shelf_open_api:
+
+  shelf_static: ^1.1.3
+  shelf_swagger_ui: ^2.0.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  mek_lints: ^5.0.0
+
+  build_runner: ^2.7.0
+  json_serializable: ^6.10.0
+  shelf_router_generator: ^1.1.1
+  shelf_open_api_generator:
+
+dependency_overrides:
+  open_api_specification: { path: ../../open_api_specification }
+  shelf_routing: { path: ../../shelf_routing }
+  shelf_routing_generator: { path: ../../shelf_routing_generator }
+  shelf_open_api: { path: ../../shelf_open_api }
+  shelf_open_api_generator: { path: .. }

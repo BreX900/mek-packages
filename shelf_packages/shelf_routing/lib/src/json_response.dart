@@ -50,6 +50,21 @@ class JsonResponse<T> extends Response {
     super.context,
   }) : super.found(body: _bindBody(body), headers: _bindHeaders(headers));
 
+  /// Constructs a 303 See Other response.
+  ///
+  /// This indicates that the response to the request should be retrieved using
+  /// a GET request to a new URI. [location] is that URI; it can be either a
+  /// [String] or a [Uri]. It's automatically set as the Location header in
+  /// [headers].
+  ///
+  /// {@macro shelf_response_body_and_encoding_param}
+  JsonResponse.seeOther(
+    super.location, {
+    Object? body,
+    Map<String, /* String | List<String> */ Object>? headers,
+    super.context,
+  }) : super.seeOther(body: _bindBody(body), headers: _bindHeaders(headers));
+
   /// Constructs a 304 Not Modified response.
   ///
   /// This is used to respond to a conditional GET request that provided
@@ -110,7 +125,9 @@ class JsonResponse<T> extends Response {
     Map<String, /* String | List<String> */ Object>? headers,
     super.context,
   }) : super.internalServerError(
-            body: _bindBody(body ?? 'Internal Server Error'), headers: _bindHeaders(headers));
+         body: _bindBody(body ?? 'Internal Server Error'),
+         headers: _bindHeaders(headers),
+       );
 }
 
 final _encoder = JsonUtf8Encoder();

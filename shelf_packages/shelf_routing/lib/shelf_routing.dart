@@ -1,69 +1,32 @@
 library shelf_routing;
 
 import 'package:meta/meta_meta.dart';
+import 'package:shelf_router/shelf_router.dart';
 
-export 'package:shelf_routing/src/get_request_extension.dart';
 export 'package:shelf_routing/src/json_response.dart';
 export 'package:shelf_routing/src/utils.dart';
 
-/// Annotation for top level getters to generate a router that handles all routers of the types
-/// passed using the package `shelf_routing_generator`.
+/// Annotation for classes that use the [Route] annotation to indicate that the class exposes
+/// the [Router] to be mounted in another [Router] by [Router.mount] method
 ///
 /// **Example**
 /// ```dart
-/// // Always import 'shelf_router' without 'show' or 'as'.
-/// import 'package:shelf_router/shelf_router.dart';
-/// // Always import 'shelf_routing' without 'show' or 'as'.
-/// import 'package:shelf_routing/shelf_routing.dart' show Request, Response;
-///
-/// // Include generated code, this assumes current file is 'services_router.dart'.
-/// part 'services_router.g.dart';
-///
-/// // Get a router for all these services.
-/// @GenerateRouterFor([MyService, MyAnotherService])
-/// Router get router => _$router;
-/// ```
-@Target({TargetKind.getter})
-class GenerateRouterFor {
-  /// List of services that have a static getter that returns a Router
-  final List<Type> routables;
-
-  /// See class documentation
-  const GenerateRouterFor(this.routables);
-}
-
-/// Annotation for services using on methods the Route annotation to add a [prefix] when the router
-/// is mounted via the [GenerateRouterFor] annotation using the package `shelf_routing_generator`.
-///
-/// **Example**
-/// ```dart
-/// // Always import 'shelf_router' without 'show' or 'as'.
-/// import 'package:shelf_router/shelf_router.dart';
-/// // Always import 'shelf_routing' without 'show' or 'as'.
-/// import 'package:shelf_routing/shelf_routing.dart' show Request, Response;
-///
-/// // Include generated code, this assumes current file is 'service.dart'.
-/// part 'service.g.dart';
-///
-/// // Get a router for all these services.
-/// @Routable(prefix: '/say-hello')
-/// class Service {
+/// class MessagesService with RouterMixin {
+///   @override
+///   Router get router => _$MessagesServiceRouter(this);
 ///   @Route.get('/<name>')
 ///   Future<Response> _sayHello(Request request, String name) async {
 ///     return Response.ok('hello $name');
 ///   }
-///
-///   /// Get a router for this service.
-///   Router get router => _$ServiceRouter(this);
+/// }
+/// class ApiService {
+///   @Route.mount('/messages')
+///   MessagesService get messages => MessagesService();
 /// }
 /// ```
-@Target({TargetKind.classType})
-class Routable {
-  /// Router prefix
-  final String prefix;
-
-  /// See class documentation
-  const Routable({required this.prefix});
+mixin RouterMixin {
+  /// Used by code generator
+  Router get router;
 }
 
 /// Annotation for methods using Route annotation to indicate that the route should be called with
@@ -107,7 +70,7 @@ enum BadRequestPosition {
   queryParameter,
 
   /// Request body
-  body
+  body,
 }
 
 /// The exception that will be thrown in case the validation/parsing of the request fails.
@@ -125,26 +88,26 @@ class BadRequestException implements Exception {
   final String? name;
 
   /// Constructor for a request header error.
-  BadRequestException.header(
-    this.error,
-    this.stackTrace,
-    String this.name,
-  ) : position = BadRequestPosition.header;
+  BadRequestException.header(this.error, this.stackTrace, String this.name)
+    : position = BadRequestPosition.header;
 
   /// Constructor for a request path parameter error.
   BadRequestException.path(this.error, this.stackTrace)
-      : position = BadRequestPosition.path,
-        name = null;
+    : position = BadRequestPosition.path,
+      name = null;
 
   /// Constructor for a request query parameter error.
   BadRequestException.queryParameter(this.error, this.stackTrace, String this.name)
-      : position = BadRequestPosition.queryParameter;
+    : position = BadRequestPosition.queryParameter;
 
   /// Constructor for a request body error.
   BadRequestException.body(this.error, this.stackTrace)
-      : position = BadRequestPosition.body,
-        name = null;
+    : position = BadRequestPosition.body,
+      name = null;
 
   @override
-  String toString() => 'Missing or invalid ${position.name}${name != null ? ' "$name"' : ''}.';
+  String toString() =>
+      'Missing or invalid ${position.name}${name != null ? ' "$name"' : ''}.\n'
+      '$error\n'
+      '$stackTrace';
 }

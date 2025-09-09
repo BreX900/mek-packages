@@ -150,7 +150,8 @@ protocol TerminalPlatformApi {
         _ skipTipping: Bool,
         _ tippingConfiguration: TippingConfigurationApi?,
         _ shouldUpdatePaymentIntent: Bool,
-        _ customerCancellationEnabled: Bool
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi
     ) throws
 
     func onStopCollectPaymentMethod(
@@ -239,6 +240,10 @@ protocol TerminalPlatformApi {
     ) async throws -> Void
 
     func onClearReaderDisplay() async throws -> Void
+
+    func onSetTapToPayUXConfiguration(
+        _ configuration: TapToPayUxConfigurationApi
+    ) throws -> Void
 }
 
 class DiscoverReadersControllerApi {
@@ -360,7 +365,7 @@ func setTerminalPlatformApiHandler(
                 }
             case "startCollectPaymentMethod":
                 let res = Result<PaymentIntentApi>(result) { $0.serialize() }
-                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? String, args[4] as! Bool, !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil, args[6] as! Bool, args[7] as! Bool)
+                try hostApi.onStartCollectPaymentMethod(res, args[0] as! Int, args[1] as! String, args[2] as! Bool, args[3] as? String, args[4] as! Bool, !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil, args[6] as! Bool, args[7] as! Bool, AllowRedisplayApi(rawValue: args[8] as! Int)!)
             case "stopCollectPaymentMethod":
                 runAsync {
                     try await hostApi.onStopCollectPaymentMethod(args[0] as! Int)
@@ -436,6 +441,9 @@ func setTerminalPlatformApiHandler(
                     try await hostApi.onClearReaderDisplay()
                     return nil
                 }
+            case "setTapToPayUXConfiguration":
+                let res = try hostApi.onSetTapToPayUXConfiguration(TapToPayUxConfigurationApi.deserialize(args[0] as! [Any?]))
+                result(nil)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -911,6 +919,13 @@ enum DeviceTypeApi: Int {
     case stripeS700Devkit
     case stripeS710
     case stripeS710Devkit
+    case verifoneV660p
+    case verifoneM425
+    case verifoneM450
+    case verifoneP630
+    case verifoneUX700
+    case verifoneV660pDevkit
+    case verifoneUX700Devkit
 }
 
 enum DisconnectReasonApi: Int {
@@ -921,6 +936,9 @@ enum DisconnectReasonApi: Int {
     case criticallyLowBattery
     case poweredOff
     case bluetoothDisabled
+    case usbDisconnected
+    case idlePowerDown
+    case bluetoothSignalLost
 }
 
 protocol DiscoveryConfigurationApi {}
@@ -1587,6 +1605,79 @@ struct SimulatorConfigurationApi {
     }
 }
 
+struct TapToPayUxConfigurationApi {
+    let colors: TapToPayUxConfigurationColorSchemeApi?
+    let darkMode: TapToPayUxConfigurationDarkModeApi?
+    let tapZone: TapToPayUxConfigurationTapZoneApi?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationApi {
+        return TapToPayUxConfigurationApi(
+            colors: !(serialized[0] is NSNull) ? TapToPayUxConfigurationColorSchemeApi.deserialize(serialized[0] as! [Any?]) : nil,
+            darkMode: !(serialized[1] is NSNull) ? TapToPayUxConfigurationDarkModeApi(rawValue: serialized[1] as! Int)! : nil,
+            tapZone: !(serialized[2] is NSNull) ? TapToPayUxConfigurationTapZoneApi.deserialize(serialized[2] as! [Any?]) : nil
+        )
+    }
+}
+
+struct TapToPayUxConfigurationColorSchemeApi {
+    let error: Int?
+    let primary: Int?
+    let success: Int?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationColorSchemeApi {
+        return TapToPayUxConfigurationColorSchemeApi(
+            error: serialized[0] as? Int,
+            primary: serialized[1] as? Int,
+            success: serialized[2] as? Int
+        )
+    }
+}
+
+enum TapToPayUxConfigurationDarkModeApi: Int {
+    case system
+    case light
+    case dark
+}
+
+struct TapToPayUxConfigurationTapZoneApi {
+    let indicator: TapToPayUxConfigurationTapZoneIndicatorApi?
+    let position: TapToPayUxConfigurationTapZonePositionApi?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationTapZoneApi {
+        return TapToPayUxConfigurationTapZoneApi(
+            indicator: !(serialized[0] is NSNull) ? TapToPayUxConfigurationTapZoneIndicatorApi(rawValue: serialized[0] as! Int)! : nil,
+            position: !(serialized[1] is NSNull) ? TapToPayUxConfigurationTapZonePositionApi.deserialize(serialized[1] as! [Any?]) : nil
+        )
+    }
+}
+
+enum TapToPayUxConfigurationTapZoneIndicatorApi: Int {
+    case above
+    case below
+    case front
+    case behind
+}
+
+struct TapToPayUxConfigurationTapZonePositionApi {
+    let xBias: Double
+    let yBias: Double
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> TapToPayUxConfigurationTapZonePositionApi {
+        return TapToPayUxConfigurationTapZonePositionApi(
+            xBias: serialized[0] as! Double,
+            yBias: serialized[1] as! Double
+        )
+    }
+}
+
 struct TerminalExceptionApi {
     let apiError: Any?
     let code: TerminalExceptionCodeApi
@@ -1669,6 +1760,7 @@ enum TerminalExceptionCodeApi: Int {
     case readerBusy
     case incompatibleReader
     case readerCommunicationError
+    case readerTampered
     case unknownReaderIpAddress
     case internetConnectTimeOut
     case connectFailedReaderIsInUse
@@ -1735,6 +1827,13 @@ enum TerminalExceptionCodeApi: Int {
     case collectInputsApplicationError
     case collectInputsTimedOut
     case canceledDueToIntegrationError
+    case printerBusy
+    case printerPaperjam
+    case printerOutOfPaper
+    case printerCoverOpen
+    case printerAbsent
+    case printerUnavailable
+    case printerError
     case collectInputsUnsupported
     case readerSettingsError
     case invalidSurchargeParameter
@@ -1743,6 +1842,7 @@ enum TerminalExceptionCodeApi: Int {
     case surchargingNotAvailable
     case surchargeNoticeRequiresUpdatePaymentIntent
     case surchargeUnavailableWithDynamicCurrencyConversion
+    case tapToPayUnsupportedProcessor
 }
 
 struct TipApi {

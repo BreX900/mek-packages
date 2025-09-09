@@ -13,6 +13,7 @@ import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
+import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
@@ -274,6 +275,7 @@ class Terminal {
     TippingConfiguration? tippingConfiguration,
     bool shouldUpdatePaymentIntent = false,
     bool customerCancellationEnabled = false,
+    AllowRedisplay allowRedisplay = AllowRedisplay.unspecified,
   }) {
     return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
       return await _platform.startCollectPaymentMethod(
@@ -285,6 +287,7 @@ class Terminal {
         tippingConfiguration: tippingConfiguration,
         shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
         customerCancellationEnabled: customerCancellationEnabled,
+        allowRedisplay: allowRedisplay,
       );
     });
   }
@@ -519,6 +522,10 @@ class Terminal {
   ///
   /// Note: Only available for the Verifone P400 and BBPOS WisePOS E.
   Future<void> clearReaderDisplay() async => await _platform.clearReaderDisplay();
+
+  /// Configure Tap to Pay UX
+  Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async =>
+      await _platform.setTapToPayUXConfiguration(configuration);
 //endregion
 
   StreamController<T> _handleStream<T>(

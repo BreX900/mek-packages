@@ -11,7 +11,9 @@ mixin _$Tip {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Tip && runtimeType == other.runtimeType && _self.amount == other.amount;
+      other is Tip &&
+          runtimeType == other.runtimeType &&
+          _self.amount == other.amount;
   @override
   int get hashCode {
     var hashCode = 0;
@@ -20,7 +22,8 @@ mixin _$Tip {
   }
 
   @override
-  String toString() => (ClassToString('Tip')..add('amount', _self.amount)).toString();
+  String toString() =>
+      (ClassToString('Tip')..add('amount', _self.amount)).toString();
 }
 
 mixin _$TippingConfiguration {
@@ -39,7 +42,7 @@ mixin _$TippingConfiguration {
   }
 
   @override
-  String toString() =>
-      (ClassToString('TippingConfiguration')..add('eligibleAmount', _self.eligibleAmount))
-          .toString();
+  String toString() => (ClassToString('TippingConfiguration')
+        ..add('eligibleAmount', _self.eligibleAmount))
+      .toString();
 }

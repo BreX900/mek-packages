@@ -1,0 +1,41 @@
+name: open_api_specification
+description: OpenAPI Generator allows generation of API client automatically given an OpenAPI Spec.
+repository: https://github.com/BreX900/mek-packages
+issue_tracker: https://github.com/BreX900/mek-packages/issues
+homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/open_api_specification
+version: 2.0.1
+
+environment:
+  sdk: ^3.8.0
+
+scripts:
+  generate-library: index_generator
+  # To generate .g files:
+  generate-code: dart run build_runner watch --delete-conflicting-outputs
+
+  publish: dart pub publish
+
+# Add regular dependencies here.
+dependencies:
+  json_annotation: ^4.9.0
+
+  path: ^1.8.3
+  http: ^1.1.0
+  yaml: ^3.1.2
+
+dev_dependencies:
+  mek_lints: ^3.0.0
+
+  build_runner: ^2.7.0
+  json_serializable: ^6.10.0
+
+index_generator:
+  exclude:
+    - '**.g.dart'
+  # Define the paths of the folders in which to generate the index files
+  indexes:
+    - path: ./lib
+      include: [ src/specs/*.dart ]
+    - path: ./lib
+      name: open_api
+      include: [ src/*.dart ]

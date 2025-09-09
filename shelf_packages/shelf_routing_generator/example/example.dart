@@ -11,19 +11,16 @@ class User {
   final int id;
   final String name;
 
-  const User({
-    required this.id,
-    required this.name,
-  });
+  const User({required this.id, required this.name});
 
   factory User.fromJson(Map<String, dynamic> map) => User(id: map['id'], name: map['name']);
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
 
-@Routable(prefix: '/users')
-class UserController {
+class UserController implements RouterMixin {
   // Create router using the generate function defined in 'example.g.dart'.
-  static Router get router => _$userControllerRouter;
+  @override
+  Router get router => _$UserControllerRouter(this);
 
   final DatabaseConnection connection;
 
@@ -51,9 +48,18 @@ class UserController {
   }
 }
 
-// Create router using the generate function defined in 'example.g.dart'.
-@GenerateRouterFor([UserController])
-Router get apiRouter => _$apiRouter;
+class ApiRouter {
+  static const _prefix = '/api';
+
+  final DatabaseConnection connection;
+
+  ApiRouter(this.connection);
+
+  Router get router => _$ApiRouterRouter(this);
+
+  @Route.mount('$_prefix/users')
+  UserController get users => UserController(connection);
+}
 
 class DatabaseConnection {
   static Future<DatabaseConnection> connect(String _) => throw UnimplementedError();

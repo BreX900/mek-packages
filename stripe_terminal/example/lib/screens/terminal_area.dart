@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:example/screens/configuration_screen.dart';
 import 'package:example/screens/locations_screen.dart';
 import 'package:example/screens/more_screen.dart';
 import 'package:example/screens/payments_screen.dart';
@@ -93,6 +94,10 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
             locationListenable: _locationNotifier,
             connectedReaderNotifier: _connectedReaderNotifier,
           ),
+          ConfigurationScreen(
+            paymentStatusListenable: _paymentStatusNotifier,
+            connectedReaderListenable: _connectedReaderNotifier,
+          ),
           PaymentsScreen(
             paymentStatusListenable: _paymentStatusNotifier,
             connectedReaderListenable: _connectedReaderNotifier,
@@ -113,6 +118,10 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
           NavigationDestination(
             icon: Icon(Icons.barcode_reader),
             label: 'Readers',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Configuration',
           ),
           NavigationDestination(
             icon: Icon(Icons.payment),

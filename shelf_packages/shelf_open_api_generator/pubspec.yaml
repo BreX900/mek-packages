@@ -1,0 +1,51 @@
+name: shelf_open_api_generator
+description: Open api specs generators from dart code for shelf package.
+repository: https://github.com/BreX900/mek-packages
+issue_tracker: https://github.com/BreX900/mek-packages/issues
+homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/shelf_open_api_generator
+version: 3.1.0
+
+environment:
+  sdk: ^3.8.0
+
+scripts:
+  # To generate .g files:
+  # Comment `builders` key on build.yaml before launch this command
+  generate-code: dart run build_runner watch --delete-conflicting-outputs --verbose
+
+  publish: dart pub publish
+
+dependencies:
+  open_api_specification: ^2.0.0
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  shelf_open_api: ^3.0.0
+  shelf_routing_generator: ^1.0.0
+  yaml: ^3.0.0
+
+  collection: ^1.19.1
+
+  analyzer: '>=7.4.0 <9.0.0'
+  build: ^3.0.0
+  source_gen: ^3.0.0
+
+  # OPEN API
+  json_annotation: ^4.8.0
+
+dev_dependencies:
+  mek_lints: ^2.0.0
+
+  test: ^1.23.1
+
+  build_runner: ^2.7.0
+  json_serializable: ^6.10.0
+
+dependency_overrides:
+  shelf_open_api:
+    path: ../shelf_open_api
+  open_api_specification:
+    path: ../open_api_specification
+  shelf_routing:
+    path: ../shelf_routing
+  shelf_routing_generator:
+    path: ../shelf_routing_generator

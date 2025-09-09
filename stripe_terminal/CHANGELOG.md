@@ -1,3 +1,15 @@
+
+# 4.6.0
+- feat: bumped android and ios sdk version to `4.6.0`
+
+## 4.4.1
+- feat: added `allowRedisplay` param on `collectPaymentMethod` method
+
+## 4.4.0
+- feat: bumped android and ios sdk version to `4.4.0`
+- fix(ios): fixed wrong mapping tap to pay configuration
+- feat(android): configure tap to pay UX. Thanks [@hrueger](https://github.com/hrueger)
+
 ## 4.0.4
 - chore(android): when plugin si attached to activity the `Terminal.onCreate` method is called [#104](https://github.com/BreX900/mek-packages/issues/104)
 

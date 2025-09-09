@@ -96,7 +96,7 @@ extension DeviceType {
         case .verifoneP630:
             return .verifoneP630
         case .verifoneUX700:
-            return .verifoneUX700
+            return .verifoneUx700
         @unknown default:
             fatalError("DeviceType \(self) not supported.")
         }
@@ -320,11 +320,11 @@ extension DeviceTypeApi {
             return .verifoneM450
         case .verifoneP630:
             return .verifoneP630
-        case .verifoneUX700:
+        case .verifoneUx700:
             return .verifoneUX700
         case .verifoneV660pDevkit:
             return .verifoneV660pDevKit
-        case .verifoneUX700Devkit:
+        case .verifoneUx700Devkit:
             return .verifoneUX700DevKit
         @unknown default:
             fatalError("DeviceType \(self) not supported.")

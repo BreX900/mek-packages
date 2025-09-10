@@ -110,7 +110,6 @@ class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
           ),
         DiscoveryMethod.tapToPay => TapToPayConnectionConfiguration(
             locationId: getLocationId(),
-            tosAcceptancePermitted: true, // Set to false to prevent ToS from showing during background connection
             readerDelegate: LoggingTapToPayReaderDelegate(showSnackBar),
           ),
         DiscoveryMethod.internet => InternetConnectionConfiguration(

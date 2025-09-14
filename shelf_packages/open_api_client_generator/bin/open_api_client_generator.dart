@@ -4,16 +4,21 @@ import 'package:open_api_client_generator/open_api_client_generator.dart';
 void main(List<String> arguments) async {
   final argParser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false)
-    ..addOption('input',
-        mandatory: true,
-        help:
-            'Path to the file or link to the OpenApi specification file in json, yaml or yml format.')
+    ..addOption(
+      'input',
+      mandatory: true,
+      help:
+          'Path to the file or link to the OpenApi specification file in json, yaml or yml format.',
+    )
     ..addOption('api-class-name', defaultsTo: 'Api')
     ..addOption('data-classes-postfix')
     ..addOption('output-folder', mandatory: true)
     ..addOption('client', allowed: ['abstract', 'dart', 'http', 'dio'], defaultsTo: 'dart')
-    ..addOption('collection',
-        allowed: ['dart', 'fast_immutable_collection', 'built_collection'], defaultsTo: 'dart')
+    ..addOption(
+      'collection',
+      allowed: ['dart', 'fast_immutable_collection', 'built_collection'],
+      defaultsTo: 'dart',
+    )
     ..addOption('serialization', mandatory: true, allowed: ['json_serializable', 'built_value'])
     ..addMultiOption('plugins', allowed: ['mek_data_class'])
     ..addSeparator('Data Codec: json_serializable')
@@ -40,7 +45,6 @@ void main(List<String> arguments) async {
 
   final client = switch (args['client']) {
     'abstract' => AbstractClientCodec(options: options),
-    'dart' => DartClientCodec(options: options),
     'http' => HttpClientCodec(options: options),
     'dio' => const DioClientCodec(),
     _ => throw StateError('Unsupported "client" option ${args['client']}'),
@@ -80,9 +84,7 @@ SerializationCodec _resolveDataCodec(ArgResults args) {
         enumFieldRename: FieldRename.fromName(args['d-js-enum-field-rename']),
       );
     case 'built_value':
-      return BuiltValueSerializationCodec(
-        collectionCodec: collection,
-      );
+      return BuiltValueSerializationCodec(collectionCodec: collection);
     default:
       throw StateError('Unsupported "serialization" option ${args['serialization']}');
   }

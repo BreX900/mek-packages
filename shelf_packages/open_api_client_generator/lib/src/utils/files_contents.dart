@@ -1,93 +1,4 @@
 abstract final class FilesContents {
-  static const String webApiClient = r'''
-// ignore_for_file: always_use_package_imports
-
-import 'dart:async';
-import 'dart:convert';
-import 'dart:html';
-import 'dart:typed_data';
-
-import 'api_client.dart';
-import 'dart_api_client.dart';
-
-DartApiClient createDartApiClient() => WebApiClient();
-
-class WebApiClient extends ApiClient implements DartApiClient {
-  WebApiClient();
-
-  @override
-  Future<ApiClientResponse> onSend(ApiClientRequest request) async {
-    final platformRequest = HttpRequest()
-      ..open(request.method, '${request.uri}')
-      ..responseType = 'arraybuffer';
-
-    request.headers.forEach((key, value) => platformRequest.setRequestHeader(key, value.join(',')));
-
-    final completer = Completer<ApiClientResponse>();
-
-    unawaited(platformRequest.onLoad.first.then((_) {
-      final body = (platformRequest.response as ByteBuffer).asUint8List();
-      completer.complete(ApiClientResponse(
-        request: request,
-        statusCode: platformRequest.status!,
-        headers:
-            platformRequest.responseHeaders.map((key, value) => MapEntry(key, value.split(','))),
-        data: jsonDecode(utf8.decode(body)),
-      ));
-    }));
-
-    unawaited(platformRequest.onError.first.then((_) {
-      // Unfortunately, the underlying XMLHttpRequest API doesn't expose any
-      // specific information about the error itself.
-      completer.completeError('XMLHttpRequest error.', StackTrace.current);
-    }));
-
-    platformRequest.send(utf8.encode(jsonEncode(request.data)));
-
-    return await completer.future;
-  }
-}
-
-''';
-  static const String ioApiClient = '''
-// ignore_for_file: always_use_package_imports
-
-import 'dart:convert';
-import 'dart:io';
-
-import 'api_client.dart';
-import 'dart_api_client.dart';
-
-DartApiClient createDartApiClient() => IoApiClient();
-
-class IoApiClient extends ApiClient implements DartApiClient {
-  final HttpClient httpClient;
-
-  IoApiClient([HttpClient? httpClient]) : httpClient = httpClient ?? HttpClient();
-
-  @override
-  Future<ApiClientResponse> onSend(ApiClientRequest request) async {
-    final platformRequest = await httpClient.openUrl(request.method, request.uri);
-
-    request.headers.forEach((key, value) {
-      platformRequest.headers.set(key, value);
-    });
-    platformRequest.add(utf8.encode(jsonEncode(request.data)));
-
-    final response = await platformRequest.close();
-    final responseHeaders = <String, List<String>>{};
-    response.headers.forEach((name, values) => responseHeaders[name] = values);
-
-    return ApiClientResponse(
-      request: request,
-      statusCode: response.statusCode,
-      headers: responseHeaders,
-      data: jsonDecode(await utf8.decodeStream(response)),
-    );
-  }
-}
-
-''';
   static const String httpApiClient = '''
 // ignore_for_file: always_use_package_imports
 
@@ -195,17 +106,6 @@ class ApiClientException implements Exception {
 
   factory ApiClientException.of(ApiClientResponse response) =>
       ApiClientException(response: response);
-}
-
-''';
-  static const String dartApiClient = '''
-// ignore_for_file: always_use_package_imports
-
-import 'api_client.dart';
-import 'io_api_client.dart' if (dart.html) 'web_api_client.dart';
-
-abstract interface class DartApiClient implements ApiClient {
-  factory DartApiClient() => createDartApiClient();
 }
 
 ''';

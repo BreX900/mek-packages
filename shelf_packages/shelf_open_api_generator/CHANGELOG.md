@@ -1,3 +1,7 @@
+## 3.1.1
+- build: allow `build: '>=3.0.0 <5.0.0'`
+- build: allow `source_gen: '>=3.1.0 <5.0.0'`
+- build: bumped `analyzer` dependency to `>=7.4.0 <9.0.0`
 
 ## 3.1.0
 - feat: added support for class/object documentation

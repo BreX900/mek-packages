@@ -14,7 +14,7 @@ void main(List<String> args) async {
   );
   await generateApi(
     options: options,
-    clientCodec: DartClientCodec(options: options),
+    clientCodec: HttpClientCodec(options: options),
     serializationCodec: const JsonSerializableSerializationCodec(
       collectionCodec: FastImmutableCollectionCodec(),
       classFieldRename: FieldRename.snake,

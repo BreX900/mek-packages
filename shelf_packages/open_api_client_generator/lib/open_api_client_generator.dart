@@ -8,7 +8,6 @@ export 'src/builders/build_api_class.dart';
 export 'src/builders/build_schema_class.dart';
 export 'src/client_codecs/abstract_client_codec.dart';
 export 'src/client_codecs/client_codec.dart';
-export 'src/client_codecs/dart_client_codec.dart';
 export 'src/client_codecs/dio_client_codec.dart';
 export 'src/client_codecs/http_client_codec.dart';
 export 'src/code_utils/code_buffer.dart';

@@ -24,6 +24,7 @@ extension ConnectionConfigurationApi {
                 locationId: config.locationId
             )
             .setAutoReconnectOnUnexpectedDisconnect(config.autoReconnectOnUnexpectedDisconnect)
+            .setTosAcceptancePermitted(config.tosAcceptancePermitted)
             .build()
         case _ as UsbConnectionConfigurationApi:
             return nil

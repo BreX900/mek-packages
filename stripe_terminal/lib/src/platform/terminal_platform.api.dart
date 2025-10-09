@@ -728,12 +728,15 @@ Reader _$deserializeReader(List<Object?> serialized) => Reader(
     availableUpdate: serialized[0] as bool,
     batteryLevel: serialized[1] as double,
     deviceType: serialized[2] != null ? DeviceType.values[serialized[2] as int] : null,
-    label: serialized[3] as String?,
-    location: serialized[4] != null ? _$deserializeLocation(serialized[4] as List) : null,
-    locationId: serialized[5] as String?,
-    locationStatus: serialized[6] != null ? LocationStatus.values[serialized[6] as int] : null,
-    serialNumber: serialized[7] as String,
-    simulated: serialized[8] as bool);
+    id: serialized[3] as String?,
+    ipAddress: serialized[4] as String?,
+    label: serialized[5] as String?,
+    location: serialized[6] != null ? _$deserializeLocation(serialized[6] as List) : null,
+    locationId: serialized[7] as String?,
+    locationStatus: serialized[8] != null ? LocationStatus.values[serialized[8] as int] : null,
+    networkStatus: serialized[9] != null ? NetworkStatus.values[serialized[9] as int] : null,
+    serialNumber: serialized[10] as String,
+    simulated: serialized[11] as bool);
 List<Object?> _$serializeReaderDelegateAbstract(ReaderDelegateAbstract deserialized) =>
     switch (deserialized) {
       MobileReaderDelegate() => _$serializeMobileReaderDelegate(deserialized),

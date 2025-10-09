@@ -1,4 +1,6 @@
 
+# 4.6.2
+- feat(terminal): Added `id`, `ipAddress`, and `networkStatus` fields to the `Reader` object. Added by [@mahmoud-othmane](https://github.com/mahmoud-othmane).
 
 # 4.6.1
 - feat: added support for optional ios parameters on internet and tap-to-pay connection configurations

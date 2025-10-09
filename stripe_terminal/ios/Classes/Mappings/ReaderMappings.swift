@@ -8,12 +8,15 @@ extension Reader {
             availableUpdate: availableUpdate != nil,
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
             deviceType: deviceType.toApi(),
+            id: stripeId,
+            ipAddress: ipAddress,
             label: label,
             location: location?.toApi(),
             locationId: locationId,
             locationStatus: locationStatus.toApi(),
+            networkStatus: status.toApi(),
             serialNumber: serialNumber,
-            simulated: simulated
+            simulated: simulated,
         )
     }
 }
@@ -56,6 +59,21 @@ extension LocationStatus {
             return .notSet
         @unknown default:
             fatalError("WTF")
+        }
+    }
+}
+
+extension ReaderNetworkStatus {
+    func toApi() -> NetworkStatusApi? {
+        switch self {
+        case .offline:
+            return .offline
+        case .online:
+            return .online
+        case .unknown:
+            return nil
+        @unknown default:
+            fatalError("ReaderNetworkStatus \(self) not supported.")
         }
     }
 }

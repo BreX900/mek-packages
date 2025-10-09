@@ -24,7 +24,8 @@ enum ConnectionStatus {
 /// labeled with the reader or reader type to which they apply.
 @DataClass()
 class Reader with _$Reader {
-  // TODO: Add id field
+  /// The reader’s unique identifier.
+  final String? id;
 
   /// Used to tell whether the location field has been set. Note that the Internet and simulated
   /// readers will always have an `null` [locationStatus].
@@ -86,13 +87,19 @@ class Reader with _$Reader {
 
   /// Internet readers properties
 
-  // TODO: Add ipAddress field
-  // TODO: Add status/networkStatus field
+  /// The reader’s IP address, or nil if the IP address is unknown.
+  final String? ipAddress;
+
+  /// The reader’s network status, or nil if the network status is unknown.
+  final NetworkStatus? networkStatus;
+
+  // TODO: Add status field
 
   final String? label;
 
   @internal
   const Reader({
+    required this.id,
     required this.locationStatus,
     required this.batteryLevel,
     required this.deviceType,
@@ -101,6 +108,8 @@ class Reader with _$Reader {
     required this.serialNumber,
     required this.locationId,
     required this.location,
+    required this.ipAddress,
+    required this.networkStatus,
     required this.label,
   });
 }
@@ -255,4 +264,12 @@ enum ReaderInputOption {
 
   /// Manually enter the card information (MOTO).
   manualEntry
+}
+
+enum NetworkStatus {
+  /// The reader is not connected to a network.
+  offline,
+
+  /// The reader is connected to a network.
+  online,
 }

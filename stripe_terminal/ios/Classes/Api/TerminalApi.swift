@@ -933,9 +933,9 @@ enum DeviceTypeApi: Int {
     case verifoneM425
     case verifoneM450
     case verifoneP630
-    case verifoneUx700
+    case verifoneUX700
     case verifoneV660pDevkit
-    case verifoneUx700Devkit
+    case verifoneUX700Devkit
 }
 
 enum DisconnectReasonApi: Int {
@@ -1078,6 +1078,11 @@ struct LocationApi {
 enum LocationStatusApi: Int {
     case set
     case notSet
+}
+
+enum NetworkStatusApi: Int {
+    case offline
+    case online
 }
 
 struct PaymentIntentApi {
@@ -1266,10 +1271,13 @@ struct ReaderApi {
     let availableUpdate: Bool
     let batteryLevel: Double
     let deviceType: DeviceTypeApi?
+    let id: String?
+    let ipAddress: String?
     let label: String?
     let location: LocationApi?
     let locationId: String?
     let locationStatus: LocationStatusApi?
+    let networkStatus: NetworkStatusApi?
     let serialNumber: String
     let simulated: Bool
 
@@ -1278,10 +1286,13 @@ struct ReaderApi {
             availableUpdate,
             batteryLevel,
             deviceType?.rawValue,
+            id,
+            ipAddress,
             label,
             location?.serialize(),
             locationId,
             locationStatus?.rawValue,
+            networkStatus?.rawValue,
             serialNumber,
             simulated,
         ]

@@ -1015,6 +1015,10 @@ enum class LocationStatusApi {
     SET, NOT_SET;
 }
 
+enum class NetworkStatusApi {
+    OFFLINE, ONLINE;
+}
+
 data class PaymentIntentApi(
     val amount: Double,
     val amountCapturable: Double?,
@@ -1193,10 +1197,13 @@ data class ReaderApi(
     val availableUpdate: Boolean,
     val batteryLevel: Double,
     val deviceType: DeviceTypeApi?,
+    val id: String?,
+    val ipAddress: String?,
     val label: String?,
     val location: LocationApi?,
     val locationId: String?,
     val locationStatus: LocationStatusApi?,
+    val networkStatus: NetworkStatusApi?,
     val serialNumber: String,
     val simulated: Boolean,
 ) {
@@ -1205,10 +1212,13 @@ data class ReaderApi(
             availableUpdate,
             batteryLevel,
             deviceType?.ordinal,
+            id,
+            ipAddress,
             label,
             location?.serialize(),
             locationId,
             locationStatus?.ordinal,
+            networkStatus?.ordinal,
             serialNumber,
             simulated,
         )

@@ -27,6 +27,7 @@ import mek.stripeterminal.api.HandoffDiscoveryConfigurationApi
 import mek.stripeterminal.api.InternetDiscoveryConfigurationApi
 import mek.stripeterminal.api.LocationApi
 import mek.stripeterminal.api.LocationStatusApi
+import mek.stripeterminal.api.NetworkStatusApi
 import mek.stripeterminal.api.ReaderApi
 import mek.stripeterminal.api.ReaderDisplayMessageApi
 import mek.stripeterminal.api.ReaderEventApi
@@ -44,12 +45,15 @@ fun Reader.toApi(): ReaderApi {
         locationStatus = locationStatus.toApi(),
         batteryLevel = batteryLevel?.toDouble() ?: -1.0,
         deviceType = deviceType.toApi(),
+        id = id,
         simulated = isSimulated,
         availableUpdate = availableUpdate?.hasFirmwareUpdate ?: false,
         locationId = location?.id,
         location = location?.toApi(),
         label = label,
-        serialNumber = serialNumber!!
+        serialNumber = serialNumber!!,
+        ipAddress = ipAddress,
+        networkStatus = networkStatus?.toApi()
     )
 }
 
@@ -97,6 +101,14 @@ fun Location.toApi(): LocationApi {
         livemode = livemode,
         metadata = metadata?.toHashMap() ?: hashMapOf()
     )
+}
+
+fun Reader.NetworkStatus.toApi(): NetworkStatusApi? {
+    return when (this) {
+        Reader.NetworkStatus.OFFLINE -> NetworkStatusApi.OFFLINE
+        Reader.NetworkStatus.ONLINE -> NetworkStatusApi.ONLINE
+        Reader.NetworkStatus.UNKNOWN -> null
+    }
 }
 
 fun Address.toApi(): AddressApi {

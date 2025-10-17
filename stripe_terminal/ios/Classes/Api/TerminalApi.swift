@@ -857,13 +857,15 @@ struct HandoffConnectionConfigurationApi: ConnectionConfigurationApi {
 }
 
 struct InternetConnectionConfigurationApi: ConnectionConfigurationApi {
+    let allowCustomerCancel: Bool
     let failIfInUse: Bool
 
     static func deserialize(
         _ serialized: [Any?]
     ) -> InternetConnectionConfigurationApi {
         return InternetConnectionConfigurationApi(
-            failIfInUse: serialized[0] as! Bool
+            allowCustomerCancel: serialized[0] as! Bool,
+            failIfInUse: serialized[1] as! Bool
         )
     }
 }
@@ -871,13 +873,21 @@ struct InternetConnectionConfigurationApi: ConnectionConfigurationApi {
 struct TapToPayConnectionConfigurationApi: ConnectionConfigurationApi {
     let autoReconnectOnUnexpectedDisconnect: Bool
     let locationId: String
+    let merchantDisplayName: String?
+    let onBehalfOf: String?
+    let returnReadResultImmediatelyEnabled: Bool
+    let tosAcceptancePermitted: Bool
 
     static func deserialize(
         _ serialized: [Any?]
     ) -> TapToPayConnectionConfigurationApi {
         return TapToPayConnectionConfigurationApi(
             autoReconnectOnUnexpectedDisconnect: serialized[0] as! Bool,
-            locationId: serialized[1] as! String
+            locationId: serialized[1] as! String,
+            merchantDisplayName: serialized[2] as? String,
+            onBehalfOf: serialized[3] as? String,
+            returnReadResultImmediatelyEnabled: serialized[4] as! Bool,
+            tosAcceptancePermitted: serialized[5] as! Bool
         )
     }
 }
@@ -923,9 +933,9 @@ enum DeviceTypeApi: Int {
     case verifoneM425
     case verifoneM450
     case verifoneP630
-    case verifoneUX700
+    case verifoneUx700
     case verifoneV660pDevkit
-    case verifoneUX700Devkit
+    case verifoneUx700Devkit
 }
 
 enum DisconnectReasonApi: Int {

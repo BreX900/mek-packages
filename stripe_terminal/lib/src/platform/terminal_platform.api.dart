@@ -592,13 +592,17 @@ List<Object?> _$serializeHandoffConnectionConfiguration(
     ['HandoffConnectionConfiguration'];
 List<Object?> _$serializeInternetConnectionConfiguration(
         InternetConnectionConfiguration deserialized) =>
-    ['InternetConnectionConfiguration', deserialized.failIfInUse];
+    ['InternetConnectionConfiguration', deserialized.allowCustomerCancel, deserialized.failIfInUse];
 List<Object?> _$serializeTapToPayConnectionConfiguration(
         TapToPayConnectionConfiguration deserialized) =>
     [
       'TapToPayConnectionConfiguration',
       deserialized.autoReconnectOnUnexpectedDisconnect,
-      deserialized.locationId
+      deserialized.locationId,
+      deserialized.merchantDisplayName,
+      deserialized.onBehalfOf,
+      deserialized.returnReadResultImmediatelyEnabled,
+      deserialized.tosAcceptancePermitted
     ];
 List<Object?> _$serializeUsbConnectionConfiguration(UsbConnectionConfiguration deserialized) => [
       'UsbConnectionConfiguration',

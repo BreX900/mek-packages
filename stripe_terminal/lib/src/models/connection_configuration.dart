@@ -33,12 +33,17 @@ class HandoffConnectionConfiguration extends ConnectionConfiguration {
 
 class InternetConnectionConfiguration extends ConnectionConfiguration {
   final bool failIfInUse;
+
+  /// Only available on iOS
+  final bool allowCustomerCancel;
+
   @override
   @SerializableParam.ignore()
   final InternetReaderDelegate? readerDelegate;
 
   const InternetConnectionConfiguration({
     this.failIfInUse = true,
+    this.allowCustomerCancel = false,
     required this.readerDelegate,
   });
 }
@@ -46,6 +51,19 @@ class InternetConnectionConfiguration extends ConnectionConfiguration {
 class TapToPayConnectionConfiguration extends ConnectionConfiguration {
   final String locationId;
   final bool autoReconnectOnUnexpectedDisconnect;
+
+  /// Only available on iOS
+  final String? onBehalfOf;
+
+  /// Only available on iOS
+  final String? merchantDisplayName;
+
+  /// Only available on iOS
+  final bool tosAcceptancePermitted;
+
+  /// Only available on iOS
+  final bool returnReadResultImmediatelyEnabled;
+
   @override
   @SerializableParam.ignore()
   final TapToPayReaderDelegate? readerDelegate;
@@ -53,6 +71,10 @@ class TapToPayConnectionConfiguration extends ConnectionConfiguration {
   const TapToPayConnectionConfiguration({
     required this.locationId,
     this.autoReconnectOnUnexpectedDisconnect = true,
+    this.onBehalfOf,
+    this.merchantDisplayName,
+    this.tosAcceptancePermitted = true,
+    this.returnReadResultImmediatelyEnabled = true,
     required this.readerDelegate,
   });
 }

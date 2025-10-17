@@ -815,6 +815,7 @@ class HandoffConnectionConfigurationApi: ConnectionConfigurationApi() {
 }
 
 data class InternetConnectionConfigurationApi(
+    val allowCustomerCancel: Boolean,
     val failIfInUse: Boolean,
 ): ConnectionConfigurationApi() {
     companion object {
@@ -822,7 +823,8 @@ data class InternetConnectionConfigurationApi(
             serialized: List<Any?>,
         ): InternetConnectionConfigurationApi {
             return InternetConnectionConfigurationApi(
-                failIfInUse = serialized[0] as Boolean,
+                allowCustomerCancel = serialized[0] as Boolean,
+                failIfInUse = serialized[1] as Boolean,
             )
         }
     }
@@ -831,6 +833,10 @@ data class InternetConnectionConfigurationApi(
 data class TapToPayConnectionConfigurationApi(
     val autoReconnectOnUnexpectedDisconnect: Boolean,
     val locationId: String,
+    val merchantDisplayName: String?,
+    val onBehalfOf: String?,
+    val returnReadResultImmediatelyEnabled: Boolean,
+    val tosAcceptancePermitted: Boolean,
 ): ConnectionConfigurationApi() {
     companion object {
         fun deserialize(
@@ -839,6 +845,10 @@ data class TapToPayConnectionConfigurationApi(
             return TapToPayConnectionConfigurationApi(
                 autoReconnectOnUnexpectedDisconnect = serialized[0] as Boolean,
                 locationId = serialized[1] as String,
+                merchantDisplayName = serialized[2] as String?,
+                onBehalfOf = serialized[3] as String?,
+                returnReadResultImmediatelyEnabled = serialized[4] as Boolean,
+                tosAcceptancePermitted = serialized[5] as Boolean,
             )
         }
     }

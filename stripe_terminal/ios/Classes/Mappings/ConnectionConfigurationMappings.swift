@@ -17,6 +17,7 @@ extension ConnectionConfigurationApi {
                 delegate: delegate
             )
             .setFailIfInUse(config.failIfInUse)
+            .setAllowCustomerCancel(config.allowCustomerCancel)
             .build()
         case let config as TapToPayConnectionConfigurationApi:
             return try TapToPayConnectionConfigurationBuilder(
@@ -24,6 +25,10 @@ extension ConnectionConfigurationApi {
                 locationId: config.locationId
             )
             .setAutoReconnectOnUnexpectedDisconnect(config.autoReconnectOnUnexpectedDisconnect)
+            .setOnBehalfOf(config.onBehalfOf)
+            .setMerchantDisplayName(config.merchantDisplayName)
+            .setTosAcceptancePermitted(config.tosAcceptancePermitted)
+            .setReturnReadResultImmediatelyEnabled(config.returnReadResultImmediatelyEnabled)
             .build()
         case _ as UsbConnectionConfigurationApi:
             return nil

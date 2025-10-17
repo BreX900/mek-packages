@@ -1,4 +1,8 @@
 
+
+# 4.6.1
+- feat: added support for optional ios parameters on internet and tap-to-pay connection configurations
+
 # 4.6.0
 - feat: bumped android and ios sdk version to `4.6.0`
 

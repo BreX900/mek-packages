@@ -60,7 +60,7 @@ jobs:
           flutter-version: '3.29.x'
 
       - name: Resolve dependencies
-        run: flutter pub get --enforce-lockfile
+        run: flutter pub get
         timeout-minutes: 2
 
       - name: Check code formatting

@@ -13,7 +13,7 @@ class RefOpenApi<T extends Object> extends RefOr<T> with PrettyJsonToString {
   T resolve(ComponentsOpenApi components) => _resolver(components);
 
   @override
-  Map<dynamic, dynamic> toJson() => {r'$ref': ref};
+  Map<String, dynamic> toJson() => {r'$ref': ref};
 }
 
 abstract class RefOr<T extends Object> {
@@ -21,5 +21,5 @@ abstract class RefOr<T extends Object> {
 
   T resolve(ComponentsOpenApi components);
 
-  Map<dynamic, dynamic> toJson();
+  Map<String, dynamic> toJson();
 }

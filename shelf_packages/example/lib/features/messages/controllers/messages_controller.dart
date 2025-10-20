@@ -27,6 +27,4 @@ class MessagesController with RouterMixin {
 
     return JsonResponse.ok(null);
   }
-
-  Future<Response> call(Request request) => router.call(request);
 }

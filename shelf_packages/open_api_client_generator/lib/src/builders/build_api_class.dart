@@ -59,7 +59,8 @@ class BuildApiClass with ContextMixin {
         queryParameters.map((e) {
           final key = codecs.encodeDartValue(e.name);
           final varName = codecs.encodeName(e.name);
-          final varEncoder = collectionCodec.encodeToCore(ref(e.schema!).toNullable(!e.required));
+          final schema = e.schema!.resolve(components);
+          final varEncoder = collectionCodec.encodeToCore(ref(schema).toNullable(!e.required));
           return '$key: $varName$varEncoder,\n';
         }),
       );
@@ -180,7 +181,7 @@ class BuildApiClass with ContextMixin {
           pathParameters.map((param) {
             return Parameter(
               (b) => b
-                ..type = ref(param.schema!).toNullable(!param.required)
+                ..type = ref(param.schema!.resolve(components)).toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),
@@ -199,7 +200,7 @@ class BuildApiClass with ContextMixin {
               (b) => b
                 ..named = true
                 ..required = e.required
-                ..type = ref(e.schema!).toNullable(!e.required)
+                ..type = ref(e.schema!.resolve(components)).toNullable(!e.required)
                 ..name = codecs.encodeName(e.name),
             );
           }),

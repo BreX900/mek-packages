@@ -1,3 +1,7 @@
+
+## 2.0.0
+- build: bumped `open_api_specification` to `3.0.0`
+
 ## 1.0.1
 - build: allow `build: '>=3.0.0 <5.0.0'`
 - build: allow `source_gen: '>=3.1.0 <5.0.0'`

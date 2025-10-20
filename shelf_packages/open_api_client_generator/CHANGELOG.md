@@ -1,3 +1,5 @@
+## 1.1.1
+- build: bumped `open_api_specification` to `3.0.0`
 
 ## 1.1.0
 - chore: removed support to dart http client generator

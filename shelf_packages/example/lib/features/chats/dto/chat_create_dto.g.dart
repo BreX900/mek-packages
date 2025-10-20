@@ -10,9 +10,16 @@ ChatCreateDto _$ChatCreateDtoFromJson(Map<String, dynamic> json) =>
     ChatCreateDto(
       title: json['title'] as String,
       visibility: $enumDecode(_$ChatVisibilityEnumMap, json['visibility']),
+      type: $enumDecode(_$ChatTypeEnumMap, json['type']),
     );
 
 const _$ChatVisibilityEnumMap = {
   ChatVisibility.private: 'private',
   ChatVisibility.public: 'open',
+};
+
+const _$ChatTypeEnumMap = {
+  ChatType.private: 'PV',
+  ChatType.channel: 'CH',
+  ChatType.group: 'GR',
 };

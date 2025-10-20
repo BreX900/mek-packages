@@ -3,7 +3,7 @@ description: OpenAPI Generator allows generation of API client automatically giv
 repository: https://github.com/BreX900/mek-packages
 issue_tracker: https://github.com/BreX900/mek-packages/issues
 homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/open_api_specification
-version: 2.0.1
+version: 3.0.0
 
 environment:
   sdk: ^3.8.0

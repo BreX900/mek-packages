@@ -266,13 +266,15 @@ class HttpRouteHandler extends RouteHandler {
   }
 
   static RouteReturns _parseReturnsType(MethodElement2 element) {
-    final DartType type;
-    if (element.returnType.isDartAsyncFuture || element.returnType.isDartAsyncFuture) {
-      type = (element.returnType as InterfaceType).typeArguments.single;
-    } else if (jsonResponseChecker.isAssignableFromType(element.returnType)) {
-      type = (element.returnType as InterfaceType).typeArguments.single;
-    } else {
-      type = element.returnType;
+    var type = element.returnType;
+    if (type.isDartAsyncFuture || type.isDartAsyncFuture) {
+      type = (type as InterfaceType).typeArguments.single;
+    }
+    if (responseChecker.isAssignableFromType(type)) {
+      if (jsonResponseChecker.isAssignableFromType(type)) {
+        return RouteReturnsJsonResponse((type as InterfaceType).typeArguments.single);
+      }
+      return const RouteReturnsResponse();
     }
 
     if (type is VoidType) {
@@ -287,9 +289,6 @@ class HttpRouteHandler extends RouteHandler {
     if (type is InterfaceType ? type.getMethod2('toJson') : null case final toJsonMethod?
         when toJsonMethod.returnType.isJson && toJsonMethod.formalParameters.isEmpty) {
       return RouteReturnsJson(type);
-    }
-    if (responseChecker.isAssignableFromType(type)) {
-      return const RouteReturnsResponse();
     }
 
     throw InvalidGenerationSourceError(
@@ -323,6 +322,12 @@ class RouteReturnsVoid extends RouteReturns {
 
 class RouteReturnsResponse extends RouteReturns {
   const RouteReturnsResponse();
+}
+
+class RouteReturnsJsonResponse extends RouteReturns {
+  final DartType type;
+
+  const RouteReturnsJsonResponse(this.type);
 }
 
 class RouteReturnsBytes extends RouteReturns {

@@ -23,11 +23,6 @@ paths:
       responses:
         200:
           description: "Operation completed!"
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
     post:
       tags:
         - ChatsController
@@ -42,11 +37,6 @@ paths:
       responses:
         200:
           description: "Operation completed!"
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
   /api-v1/messages/:
     get:
       tags:
@@ -63,10 +53,11 @@ paths:
         200:
           description: "Operation completed!"
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageDto"
   /api-v1/messages/<messageId>:
     get:
       tags:
@@ -84,18 +75,28 @@ paths:
         200:
           description: "Operation completed!"
           content:
-            application/octet-stream:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageDto"
 components:
   schemas:
     ChatVisibility:
       title: ChatVisibility
       type: string
+      format: string
       enum:
         - private
         - open
+    ChatType:
+      title: ChatType
+      type: string
+      format: string
+      enum:
+        - PV
+        - CH
+        - GR
     ChatCreateDto:
       title: ChatCreateDto
       type: object
@@ -104,9 +105,25 @@ components:
           type: string
         visibility:
           $ref: "#/components/schemas/ChatVisibility"
+        type:
+          $ref: "#/components/schemas/ChatType"
       required:
         - title
         - visibility
+        - type
+    MessageDto:
+      title: MessageDto
+      type: object
+      properties:
+        chatId:
+          type: string
+        description:
+          type: string
+        parent:
+          $ref: "#/components/schemas/MessageDto"
+      required:
+        - chatId
+        - description
 tags:
   - name: ChatsController
   - name: MessagesController

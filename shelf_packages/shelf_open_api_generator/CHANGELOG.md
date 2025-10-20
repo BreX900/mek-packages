@@ -1,3 +1,7 @@
+## 3.2.0
+- feat: added support to `JsonEnum.valueField` from `json_serializable` package
+- fix!: fixed incorrect mapping specs for `JsonResponse` type
+
 ## 3.1.1
 - build: allow `build: '>=3.0.0 <5.0.0'`
 - build: allow `source_gen: '>=3.1.0 <5.0.0'`

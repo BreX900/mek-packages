@@ -6,7 +6,7 @@ import 'package:json_annotation/json_annotation.dart';
 const encoder = JsonEncoder.withIndent('  ');
 
 mixin PrettyJsonToString {
-  Map<dynamic, dynamic> toJson();
+  Map<String, dynamic> toJson();
 
   @override
   String toString() => encoder.convert(toJson());

@@ -12,7 +12,7 @@ import 'package:source_gen/source_gen.dart';
 class SchemasRegistry {
   final Map<String, Set<DartType>> _schemas = {};
 
-  SchemaOpenApi tryRegister({
+  RefOr<SchemaOpenApi> tryRegister({
     bool isBidirectional = true,
     Doc doc = Doc.none,
     required DartType dartType,
@@ -25,7 +25,7 @@ class SchemasRegistry {
     ).resolve(dartType: dartType, doc: doc);
   }
 
-  SchemaOpenApi? tryRegisterV2({
+  RefOr<SchemaOpenApi>? tryRegisterV2({
     bool object = true,
     bool iterables = true,
     bool isBidirectional = true,
@@ -76,23 +76,36 @@ class _SchemaResolver {
     required this.registry,
   });
 
-  SchemaOpenApi resolve({Doc doc = Doc.none, required DartType dartType}) {
+  RefOr<SchemaOpenApi> resolve({Doc doc = Doc.none, required DartType dartType}) {
     final element = dartType.element3;
+
+    if (registry._schemas[element?.requireName]?.contains(dartType) ?? false) {
+      return RefOpenApi('#/components/schemas/${element!.requireName}', (_) {
+        throw UnsupportedError('');
+      });
+    }
 
     final description = doc.summaryAndDescription;
     final example = doc.example;
 
     if (element is EnumElement2) {
-      final doc = Doc.from(element.documentationComment);
-      final enumValues = element.fields2.where((element) => element.isEnumConstant);
-
       registry._checkRegistration(dartType: dartType, name: element.requireName);
+
+      final doc = Doc.from(element.documentationComment);
+      final values = element.constants2.map((field) {
+        return JsonAnnotation.getEnumValue(element, field);
+      }).toList();
+
       return SchemaOpenApi(
         title: element.requireName,
         description: doc.summaryAndDescription,
         example: doc.example,
-        type: TypeOpenApi.string,
-        enum$: enumValues.map((e) => JsonAnnotation.getEnumValue(e) ?? e.requireName).toList(),
+        type: switch (values) {
+          List<int>() => TypeOpenApi.integer,
+          List<num>() => TypeOpenApi.number,
+          _ => TypeOpenApi.string,
+        },
+        enum$: values,
       );
     }
 

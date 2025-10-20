@@ -1,3 +1,6 @@
+## 3.0.0
+- feat: added support a ref to `ParameterOpenApi.schema`
+
 ## 2.0.1
 - fix: fixed incorrect parsing schema ref
 

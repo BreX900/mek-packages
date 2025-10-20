@@ -19,7 +19,7 @@ void main() async {
   OpenApi.fromJson(jsonDecode(data));
 
   final rootRouter = Router()
-    ..mount('/', const ApiController().call)
+    ..mount('/', const ApiController().router)
     ..mount('/swagger', SwaggerUI(data, title: 'Swagger Example Api v2'))
     ..mount('/', createStaticHandler('public'));
 
@@ -48,6 +48,4 @@ class ApiController {
   ChatsController get chats => const ChatsController();
   @Route.mount('$_version/messages')
   MessagesController get messages => const MessagesController();
-
-  Future<Response> call(Request request) => router.call(request);
 }

@@ -125,9 +125,12 @@ class OpenRouteHandler {
         RouteReturnsText() => GroupMediaOpenApi(
           textPlain: MediaOpenApi(schema: SchemaOpenApi(type: TypeOpenApi.string)),
         ),
-        RouteReturnsJson(:final type) => GroupMediaOpenApi(
-          json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
-        ),
+        RouteReturnsJsonResponse(:final type) || RouteReturnsJson(:final type) =>
+          type is! VoidType
+              ? GroupMediaOpenApi(
+                  json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
+                )
+              : null,
       },
     );
   }

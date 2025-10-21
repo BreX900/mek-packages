@@ -124,7 +124,8 @@ mixin _$PaymentIntentParameters {
           _self.amount == other.amount &&
           _self.currency == other.currency &&
           _self.captureMethod == other.captureMethod &&
-          $listEquality.equals(_self.paymentMethodTypes, other.paymentMethodTypes) &&
+          $listEquality.equals(
+              _self.paymentMethodTypes, other.paymentMethodTypes) &&
           $mapEquality.equals(_self.metadata, other.metadata) &&
           _self.description == other.description &&
           _self.statementDescriptor == other.statementDescriptor &&
@@ -136,14 +137,16 @@ mixin _$PaymentIntentParameters {
           _self.transferGroup == other.transferGroup &&
           _self.onBehalfOf == other.onBehalfOf &&
           _self.setupFutureUsage == other.setupFutureUsage &&
-          _self.paymentMethodOptionsParameters == other.paymentMethodOptionsParameters;
+          _self.paymentMethodOptionsParameters ==
+              other.paymentMethodOptionsParameters;
   @override
   int get hashCode {
     var hashCode = 0;
     hashCode = $hashCombine(hashCode, _self.amount.hashCode);
     hashCode = $hashCombine(hashCode, _self.currency.hashCode);
     hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
-    hashCode = $hashCombine(hashCode, $listEquality.hash(_self.paymentMethodTypes));
+    hashCode =
+        $hashCombine(hashCode, $listEquality.hash(_self.paymentMethodTypes));
     hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
     hashCode = $hashCombine(hashCode, _self.description.hashCode);
     hashCode = $hashCombine(hashCode, _self.statementDescriptor.hashCode);
@@ -155,7 +158,8 @@ mixin _$PaymentIntentParameters {
     hashCode = $hashCombine(hashCode, _self.transferGroup.hashCode);
     hashCode = $hashCombine(hashCode, _self.onBehalfOf.hashCode);
     hashCode = $hashCombine(hashCode, _self.setupFutureUsage.hashCode);
-    hashCode = $hashCombine(hashCode, _self.paymentMethodOptionsParameters.hashCode);
+    hashCode =
+        $hashCombine(hashCode, _self.paymentMethodOptionsParameters.hashCode);
     return $hashFinish(hashCode);
   }
 
@@ -176,12 +180,14 @@ mixin _$PaymentIntentParameters {
         ..add('transferGroup', _self.transferGroup)
         ..add('onBehalfOf', _self.onBehalfOf)
         ..add('setupFutureUsage', _self.setupFutureUsage)
-        ..add('paymentMethodOptionsParameters', _self.paymentMethodOptionsParameters))
+        ..add('paymentMethodOptionsParameters',
+            _self.paymentMethodOptionsParameters))
       .toString();
 }
 
 mixin _$PaymentMethodOptionsParameters {
-  PaymentMethodOptionsParameters get _self => this as PaymentMethodOptionsParameters;
+  PaymentMethodOptionsParameters get _self =>
+      this as PaymentMethodOptionsParameters;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

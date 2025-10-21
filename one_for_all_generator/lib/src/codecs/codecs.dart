@@ -105,5 +105,6 @@ abstract class HostApiCodecs extends ApiCodecs {
     });
   }
 
+  // ignore: avoid_positional_boolean_parameters
   String? encodePrimitiveType(DartType type, [bool withNullability = true]);
 }

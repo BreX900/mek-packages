@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all/one_for_all.dart';
@@ -183,13 +183,13 @@ class SwiftApiBuilder extends ApiBuilder {
     final HostApiHandler(:element, swiftMethods: methods) = handler;
 
     _specs.add(SwiftProtocol(
-      name: codecs.encodeName(element.name),
+      name: codecs.encodeName(element.displayName),
       methods: methods.map((_) {
         final MethodHandler(element: e, swift: methodType) = _;
         final returnType = codecs.encodeType(e.returnType.singleTypeArg);
 
         return SwiftMethod(
-          name: _encodeMethodName(e.name),
+          name: _encodeMethodName(e.displayName),
           parameters: [
             if (methodType == MethodApiType.callbacks)
               SwiftParameter(
@@ -197,10 +197,10 @@ class SwiftApiBuilder extends ApiBuilder {
                 name: 'result',
                 type: 'Result<$returnType>',
               ),
-            ...e.parameters.map((e) {
+            ...e.formalParameters.map((e) {
               return SwiftParameter(
                 label: '_',
-                name: e.name,
+                name: e.displayName,
                 type: codecs.encodeType(e.type),
               );
             }),
@@ -212,15 +212,16 @@ class SwiftApiBuilder extends ApiBuilder {
       }).toList(),
     ));
 
-    _specs.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+    _specs.addAll(element.methods2.where((e) => e.isHostApiEvent).map((e) {
       final returnType = e.returnType.singleTypeArg;
 
-      final parametersType = e.parameters.map((e) => '_ ${e.name}: ${codecs.encodeType(e.type)}');
+      final parametersType =
+          e.formalParameters.map((e) => '_ ${e.displayName}: ${codecs.encodeType(e.type)}');
       final parameters =
-          e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
+          e.formalParameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
       return SwiftClass(
-        name: codecs.encodeName('${e.name}Controller'),
+        name: codecs.encodeName('${e.displayName}Controller'),
         init: SwiftInit(
           parameters: [
             const SwiftParameter(name: 'binaryMessenger', type: 'FlutterBinaryMessenger')
@@ -274,7 +275,7 @@ channel.setStreamHandler(ControllerHandler({ arguments, events in
       );
     }));
 
-    final channelVarAccess = 'channel${codecs.encodeName(element.name)}';
+    final channelVarAccess = 'channel${codecs.encodeName(element.displayName)}';
     _specs.add(SwiftField(
       visibility: SwiftVisibility.private,
       modifier: SwiftFieldModifier.var$,
@@ -283,10 +284,10 @@ channel.setStreamHandler(ControllerHandler({ arguments, events in
       assignment: 'nil',
     ));
     _specs.add(SwiftMethod(
-      name: 'set${codecs.encodeName(element.name)}Handler',
+      name: 'set${codecs.encodeName(element.displayName)}Handler',
       parameters: [
         const SwiftParameter(label: '_', name: 'binaryMessenger', type: 'FlutterBinaryMessenger'),
-        SwiftParameter(label: '_', name: 'hostApi', type: codecs.encodeName(element.name)),
+        SwiftParameter(label: '_', name: 'hostApi', type: codecs.encodeName(element.displayName)),
       ],
       body: '''
 $channelVarAccess = FlutterMethodChannel(name: "${handler.methodChannelName()}", binaryMessenger: binaryMessenger)
@@ -312,21 +313,24 @@ ${methods.map((_) {
         final MethodHandler(element: e, swift: methodType) = _;
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters =
-            e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
+        final parameters = e.formalParameters
+            .mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
         return '''
-        case "${e.name}":
+        case "${e.displayName}":
 ${switch (methodType) {
           MethodApiType.callbacks => '''
             let res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, r'$0')} }
-            try hostApi.${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})''',
+            try hostApi.${_encodeMethodName(e.displayName)}(${[
+              'res',
+              ...parameters
+            ].join(', ')})''',
           MethodApiType.sync => '''
-            let res = try hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
+            let res = try hostApi.${_encodeMethodName(e.displayName)}(${parameters.join(', ')})
             result(${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, 'res')})''',
           MethodApiType.async => '''
             runAsync {
-                ${returnType is VoidType ? '' : 'let res = '}try await hostApi.${_encodeMethodName(e.name)}(${parameters.join(', ')})
+                ${returnType is VoidType ? '' : 'let res = '}try await hostApi.${_encodeMethodName(e.displayName)}(${parameters.join(', ')})
                 return ${returnType is VoidType ? 'nil' : codecs.encodeSerialization(returnType, 'res')}
             }''',
         }}''';
@@ -342,7 +346,7 @@ ${switch (methodType) {
 }''',
     ));
     _specs.add(SwiftMethod(
-      name: 'remove${codecs.encodeName(element.name)}Handler',
+      name: 'remove${codecs.encodeName(element.displayName)}Handler',
       body: '$channelVarAccess?.setMethodCallHandler(nil)',
     ));
   }
@@ -352,7 +356,7 @@ ${switch (methodType) {
     final FlutterApiHandler(:element, swiftMethods: methods) = handler;
 
     _specs.add(SwiftClass(
-      name: codecs.encodeName(element.name),
+      name: codecs.encodeName(element.displayName),
       fields: const [
         SwiftField(
           name: 'channel',
@@ -374,14 +378,15 @@ channel = FlutterMethodChannel(
         final MethodHandler(element: e, swift: methodType) = _;
         final returnType = e.returnType.thisOrSingleTypeArg;
 
-        final parameters =
-            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
+        final parameters = e.formalParameters
+            .map((e) => codecs.encodeSerialization(e.type, e.displayName))
+            .join(', ');
 
         return SwiftMethod(
-          name: _encodeMethodName(e.name),
-          parameters: e.parameters.map((e) {
+          name: _encodeMethodName(e.displayName),
+          parameters: e.formalParameters.map((e) {
             return SwiftParameter(
-              name: e.name,
+              name: e.displayName,
               type: codecs.encodeType(e.type),
             );
           }).toList(),
@@ -392,7 +397,7 @@ channel = FlutterMethodChannel(
               : null,
           body: switch (methodType) {
             MethodApiType.callbacks => throw UnsupportedError(
-                'Not supported method ${MethodApiType.callbacks} on ${element.name}.${e.name}'),
+                'Not supported method ${MethodApiType.callbacks} on ${element.displayName}.${e.displayName}'),
             MethodApiType.sync => '''
 channel.invokeMethod("${handler.methodChannelName(e)}", arguments: [$parameters])''',
             MethodApiType.async => '''
@@ -414,18 +419,18 @@ return try await withCheckedThrowingContinuation { continuation in
   }
 
   @override
-  void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
+  void writeSerializableClass(SerializableClassHandler handler, {ClassElement2? extend}) {
     if (!handler.swiftGeneration) return;
     final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
         handler;
 
     if (children != null) {
       _specs.add(SwiftProtocol(
-        name: codecs.encodeName(element.name),
+        name: codecs.encodeName(element.displayName),
       ));
       if (flutterToHost) {
         _specs.add(SwiftMethod(
-          name: 'deserialize${codecs.encodeName(element.name)}',
+          name: 'deserialize${codecs.encodeName(element.displayName)}',
           parameters: [
             const SwiftParameter(
               label: '_',
@@ -436,8 +441,8 @@ return try await withCheckedThrowingContinuation { continuation in
           returns: codecs.encodeType(element.thisType),
           body: 'switch serialized[0] as! String {\n'
               '${children.map((h) {
-            return 'case "${h.element.name}":\n'
-                '    return ${codecs.encodeName(h.element.name)}.deserialize(Array(serialized.dropFirst()))\n';
+            return 'case "${h.element.displayName}":\n'
+                '    return ${codecs.encodeName(h.element.displayName)}.deserialize(Array(serialized.dropFirst()))\n';
           }).join()}'
               'default:\n'
               '    fatalError()\n'
@@ -451,8 +456,8 @@ return try await withCheckedThrowingContinuation { continuation in
     }
 
     _specs.add(SwiftStruct(
-      name: codecs.encodeName(element.name),
-      implements: [if (extend != null) codecs.encodeName(extend.name)],
+      name: codecs.encodeName(element.displayName),
+      implements: [if (extend != null) codecs.encodeName(extend.displayName)],
       fields: params.map((e) {
         return SwiftField(
           name: _encodeVarName(e.name),
@@ -480,7 +485,7 @@ return try await withCheckedThrowingContinuation { continuation in
               ),
             ],
             returns: codecs.encodeType(element.thisType),
-            body: 'return ${codecs.encodeName(element.name)}(\n${params.mapIndexed((i, e) {
+            body: 'return ${codecs.encodeName(element.displayName)}(\n${params.mapIndexed((i, e) {
               return '    ${_encodeVarName(e.name)}: ${codecs.encodeDeserialization(e.type, 'serialized[$i]')}';
             }).join(',\n')}\n)',
           ),
@@ -493,15 +498,15 @@ return try await withCheckedThrowingContinuation { continuation in
     final SerializableEnumHandler(:element) = handler;
 
     _specs.add(SwiftEnum(
-      name: codecs.encodeName(element.name),
+      name: codecs.encodeName(element.displayName),
       implements: [
         switch (handler.type) {
           SerializableEnumType.int => 'Int',
           SerializableEnumType.string => 'String',
         },
       ],
-      values: element.fields.where((element) => element.isEnumConstant).map((e) {
-        return _encodeVarName(e.name);
+      values: element.fields2.where((element) => element.isEnumConstant).map((e) {
+        return _encodeVarName(e.displayName);
       }).toList(),
     ));
   }
@@ -523,7 +528,7 @@ return try await withCheckedThrowingContinuation { continuation in
       ))}';
 
   @override
-  void writeException(EnumElement element) {
+  void writeException(EnumElement2 element) {
     // TODO: implement writeException
   }
 }

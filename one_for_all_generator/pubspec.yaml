@@ -27,10 +27,10 @@ dependencies:
   path: ^1.8.3
   glob: ^2.1.2
 
-  analyzer: '>=6.9.0 <8.0.0'
-  code_builder: ^4.5.0
+  analyzer: '>=7.4.0 <9.0.0'
+  source_gen: '>=3.1.0 <5.0.0'
+  code_builder: ^4.4.0
   dart_style: ^3.0.0
-  source_gen: ^2.0.0
 
   one_for_all: ^1.1.0
 

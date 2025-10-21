@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
@@ -8,15 +8,15 @@ import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:source_gen/source_gen.dart';
 
 class MethodHandler {
-  static const _checker = TypeChecker.fromRuntime(MethodApi);
+  static const _checker = TypeChecker.typeNamed(MethodApi, inPackage: 'one_for_all');
 
-  final MethodElement element;
+  final MethodElement2 element;
   final MethodApiType swift;
   final MethodApiType kotlin;
 
   const MethodHandler({required this.element, required this.swift, required this.kotlin});
 
-  factory MethodHandler.from(MethodElement element, MethodApiType defaultMethod) {
+  factory MethodHandler.from(MethodElement2 element, MethodApiType defaultMethod) {
     final annotation = ConstantReader(_checker.firstAnnotationOf(element));
 
     return MethodHandler(
@@ -29,7 +29,7 @@ class MethodHandler {
 
 class HostApiHandler {
   final OneForAllOptions options;
-  final ClassElement element;
+  final ClassElement2 element;
   final Revivable? hostExceptionHandler;
   final MethodApiType kotlinMethod;
   final MethodApiType swiftMethod;
@@ -47,29 +47,31 @@ class HostApiHandler {
 
     return HostApiHandler(
       options: options,
-      element: element as ClassElement,
+      element: element as ClassElement2,
       hostExceptionHandler: annotation.peek('hostExceptionHandler')?.revive(),
       kotlinMethod: annotation.read('kotlinMethod').reviveEnum(MethodApiType.values),
       swiftMethod: annotation.read('swiftMethod').reviveEnum(MethodApiType.values),
     );
   }
 
-  late final List<MethodHandler> kotlinMethods = element.methods
+  late final List<MethodHandler> kotlinMethods = element.methods2
       .where((e) => e.isHostApiMethod)
       .map((e) => MethodHandler.from(e, kotlinMethod))
       .toList();
-  late final List<MethodHandler> swiftMethods = element.methods
+  late final List<MethodHandler> swiftMethods = element.methods2
       .where((e) => e.isHostApiMethod)
       .map((e) => MethodHandler.from(e, swiftMethod))
       .toList();
 
-  String methodChannelName([MethodElement? e]) => e?.name ?? options.channelName(element.name);
-  String eventChannelName(MethodElement? e) => options.channelName(element.name, e?.name);
+  String methodChannelName([MethodElement2? e]) =>
+      e?.displayName ?? options.channelName(element.displayName);
+  String eventChannelName(MethodElement2? e) =>
+      options.channelName(element.displayName, e?.displayName);
 }
 
 class FlutterApiHandler {
   final OneForAllOptions options;
-  final ClassElement element;
+  final ClassElement2 element;
   final MethodApiType kotlinMethod;
   final MethodApiType swiftMethod;
 
@@ -85,25 +87,26 @@ class FlutterApiHandler {
 
     return FlutterApiHandler(
       options: options,
-      element: element as ClassElement,
+      element: element as ClassElement2,
       kotlinMethod: annotation.read('kotlinMethod').reviveEnum(MethodApiType.values),
       swiftMethod: annotation.read('swiftMethod').reviveEnum(MethodApiType.values),
     );
   }
 
-  late final List<MethodHandler> kotlinMethods = element.methods
+  late final List<MethodHandler> kotlinMethods = element.methods2
       .where((e) => e.isFlutterApiMethod)
       .map((e) => MethodHandler.from(e, kotlinMethod))
       .toList();
-  late final List<MethodHandler> swiftMethods = element.methods
+  late final List<MethodHandler> swiftMethods = element.methods2
       .where((e) => e.isFlutterApiMethod)
       .map((e) => MethodHandler.from(e, swiftMethod))
       .toList();
 
-  String methodChannelName([MethodElement? e]) => e?.name ?? options.channelName(element.name);
+  String methodChannelName([MethodElement2? e]) =>
+      e?.displayName ?? options.channelName(element.displayName);
 }
 
-sealed class SerializableHandler<T extends InterfaceElement> extends Equatable {
+sealed class SerializableHandler<T extends InterfaceElement2> extends Equatable {
   final T element;
   final bool kotlinGeneration;
   final bool swiftGeneration;
@@ -128,8 +131,9 @@ sealed class SerializableHandler<T extends InterfaceElement> extends Equatable {
       [element, kotlinGeneration, swiftGeneration, flutterToHost, hostToFlutter];
 }
 
-class SerializableClassHandler extends SerializableHandler<ClassElement> {
-  static const _annotationChecker = TypeChecker.fromRuntime(SerializableClass);
+class SerializableClassHandler extends SerializableHandler<ClassElement2> {
+  static const _annotationChecker =
+      TypeChecker.typeNamed(SerializableClass, inPackage: 'one_for_all');
 
   final List<SerializableClassHandler>? children;
 
@@ -142,13 +146,13 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
     required this.children,
   });
 
-  factory SerializableClassHandler.from(ClassElement element) {
+  factory SerializableClassHandler.from(ClassElement2 element) {
     final annotation = ConstantReader(_annotationChecker.firstAnnotationOf(element));
 
     List<SerializableClassHandler>? children;
     if (element.isSealed) {
       final childChecker = TypeChecker.fromStatic(element.thisType);
-      children = LibraryReader(element.library)
+      children = LibraryReader(element.library2)
           .classes
           .where(childChecker.isSuperOf)
           .map(SerializableClassHandler.from)
@@ -166,10 +170,11 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
   }
 
   late final List<SerializableParamHandler> params = (flutterToHost
-          ? element.fields
+          ? element.fields2
               .where((e) => !e.isStatic && e.isFinal && !e.hasInitializer)
               .map(SerializableParamHandler.fromField)
-          : element.unnamedConstructor!.parameters.map(SerializableParamHandler.fromParameter))
+          : element.unnamedConstructor2!.formalParameters
+              .map(SerializableParamHandler.fromParameter))
       .nonNulls
       .sortedBy((e) => e.name);
 
@@ -192,27 +197,29 @@ class SerializableClassHandler extends SerializableHandler<ClassElement> {
 }
 
 class SerializableParamHandler {
-  static const _annotationChecker = TypeChecker.fromRuntime(SerializableParam);
+  static const _annotationChecker =
+      TypeChecker.typeNamed(SerializableParam, inPackage: 'one_for_all');
 
   final DartType type;
   final String name;
   final String? defaultValueCode;
 
-  static SerializableParamHandler? fromParameter(ParameterElement element) {
+  static SerializableParamHandler? fromParameter(FormalParameterElement element) {
     return SerializableParamHandler._from(
       element: element,
       type: element.type,
-      name: element.name,
+      name: element.displayName,
       defaultValueCode: element.defaultValueCode,
     );
   }
 
-  static SerializableParamHandler? fromField(FieldElement element) {
-    return SerializableParamHandler._from(element: element, type: element.type, name: element.name);
+  static SerializableParamHandler? fromField(FieldElement2 element) {
+    return SerializableParamHandler._from(
+        element: element, type: element.type, name: element.displayName);
   }
 
   static SerializableParamHandler? _from({
-    required Element element,
+    required Element2 element,
     required DartType type,
     required String name,
     String? defaultValueCode,
@@ -229,7 +236,8 @@ class SerializableParamHandler {
 }
 
 class SerializableEnumHandler extends SerializableHandler {
-  static const _annotationChecker = TypeChecker.fromRuntime(SerializableEnum);
+  static const _annotationChecker =
+      TypeChecker.typeNamed(SerializableEnum, inPackage: 'one_for_all');
 
   final SerializableEnumType type;
 
@@ -242,7 +250,7 @@ class SerializableEnumHandler extends SerializableHandler {
     required super.hostToFlutter,
   });
 
-  factory SerializableEnumHandler.from(EnumElement element) {
+  factory SerializableEnumHandler.from(EnumElement2 element) {
     final annotation = ConstantReader(_annotationChecker.firstAnnotationOf(element));
 
     return SerializableEnumHandler(
@@ -294,7 +302,7 @@ extension on ConstantReader {
   }
 }
 
-class AnnotatedWithElement<T extends Element> {
+class AnnotatedWithElement<T extends Element2> {
   final ConstantReader annotation;
   final T element;
 

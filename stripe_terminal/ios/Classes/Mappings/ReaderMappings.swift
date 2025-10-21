@@ -113,6 +113,8 @@ extension DeviceType {
             return .verifoneM450
         case .verifoneP630:
             return .verifoneP630
+        case .verifoneV660pDevKit:
+            return .verifoneV660p
         case .verifoneUX700:
             return .verifoneUx700
         case .verifoneUX700DevKit:

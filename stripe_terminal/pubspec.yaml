@@ -1,6 +1,6 @@
 name: mek_stripe_terminal
 description: A StripeTerminal plugin to discover readers, connect to them and process payments.
-version: 4.6.1
+version: 4.6.2
 repository: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 homepage: https://github.com/BreX900/mek-packages/tree/main/stripe_terminal
 topics:
@@ -33,15 +33,15 @@ dependencies:
   collection: ^1.18.0
   recase: ^4.1.0
 
-  mek_data_class: ^1.4.0
+  mek_data_class: ^2.1.0
   one_for_all: ^1.1.1
 
 dev_dependencies:
   mek_lints: ^5.0.0
 
   path: ^1.8.3
-  build_runner: ^2.4.8
-  mek_data_class_generator: ^2.0.0
+  build_runner: ^2.7.0
+  mek_data_class_generator: ^4.1.0
 
   one_for_all_generator: ^2.0.2
 

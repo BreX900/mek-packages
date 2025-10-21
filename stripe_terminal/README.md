@@ -24,6 +24,21 @@ All features of android and ios sdk are supported (Also the TapToPay feature)
 
 ## Android
 
+Add to `android/app/build.gralde`:
+
+```groovy
+android {
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+}
+```
+
 <details>
 <summary>If you are using this plugin along with Stripe Terminal SDK see this section</summary>
 [Issue #349][https://github.com/stripe/stripe-terminal-android/issues/349]

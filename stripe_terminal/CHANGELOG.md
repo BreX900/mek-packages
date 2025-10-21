@@ -1,11 +1,12 @@
 
-# 4.6.2
+## 4.6.2
 - feat(terminal): Added `id`, `ipAddress`, and `networkStatus` fields to the `Reader` object. Added by [@mahmoud-othmane](https://github.com/mahmoud-othmane).
+- build: bumped `mek_data_class` package to `2.0.0`
 
-# 4.6.1
+## 4.6.1
 - feat: added support for optional ios parameters on internet and tap-to-pay connection configurations
 
-# 4.6.0
+## 4.6.0
 - feat: bumped android and ios sdk version to `4.6.0`
 
 ## 4.4.1

@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:one_for_all/one_for_all.dart';
@@ -104,7 +104,7 @@ class KotlinApiBuilder extends ApiBuilder {
     final HostApiHandler(:element, kotlinMethods: methods) = handler;
 
     _specs.add(KotlinInterface(
-      name: codecs.encodeName(element.name),
+      name: codecs.encodeName(element.displayName),
       body: [
         ...methods.map((_) {
           final MethodHandler(element: e, kotlin: methodType) = _;
@@ -112,16 +112,16 @@ class KotlinApiBuilder extends ApiBuilder {
 
           return KotlinMethod(
             modifiers: {if (methodType == MethodApiType.async) KotlinMethodModifier.suspend},
-            name: _encodeMethodName(e.name),
+            name: _encodeMethodName(e.displayName),
             parameters: [
               if (methodType == MethodApiType.callbacks)
                 KotlinParameter(
                   name: 'result',
                   type: 'Result<${codecs.encodeType(returnType)}>',
                 ),
-              ...e.parameters.map((e) {
+              ...e.formalParameters.map((e) {
                 return KotlinParameter(
-                  name: e.name,
+                  name: e.displayName,
                   type: codecs.encodeType(e.type),
                 );
               }),
@@ -158,21 +158,21 @@ ${methods.map((_) {
             final MethodHandler(element: e, kotlin: methodType) = _;
             final returnType = e.returnType.singleTypeArg;
 
-            final parameters =
-                e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
+            final parameters = e.formalParameters
+                .mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]'));
 
             return '''
-        "${e.name}" -> ${switch (methodType) {
+        "${e.displayName}" -> ${switch (methodType) {
               MethodApiType.sync => '''{
-            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.name)}(${parameters.join(', ')})
+            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.displayName)}(${parameters.join(', ')})
             result.success(${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'res')})
         }''',
               MethodApiType.callbacks => '''{
             val res = Result<${codecs.encodeType(returnType)}>(result) { ${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'it')} }
-            ${_encodeMethodName(e.name)}(${['res', ...parameters].join(', ')})
+            ${_encodeMethodName(e.displayName)}(${['res', ...parameters].join(', ')})
         }''',
               MethodApiType.async => '''runAsync {
-            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.name)}(${parameters.join(', ')})
+            ${returnType is VoidType ? '' : 'val res = '}${_encodeMethodName(e.displayName)}(${parameters.join(', ')})
             return@runAsync ${returnType is VoidType ? 'null' : codecs.encodeSerialization(returnType, 'res')}
         }''',
             }}''';
@@ -204,7 +204,7 @@ ${methods.map((_) {
               name: 'setHandler',
               parameters: [
                 const KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
-                KotlinParameter(name: 'api', type: codecs.encodeName(element.name)),
+                KotlinParameter(name: 'api', type: codecs.encodeName(element.displayName)),
                 const KotlinParameter(
                     name: 'coroutineScope', type: 'CoroutineScope?', defaultTo: 'null'),
               ],
@@ -224,20 +224,21 @@ coroutineScope.cancel()''',
       ],
     ));
 
-    _specs.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+    _specs.addAll(element.methods2.where((e) => e.isHostApiEvent).map((e) {
       final returnType = e.returnType.singleTypeArg;
 
       final parametersType = [
         'sink: ControllerSink<${codecs.encodeType(returnType)}>',
-        ...e.parameters.map((e) => '${e.name}: ${codecs.encodeType(e.type)}')
+        ...e.formalParameters.map((e) => '${e.displayName}: ${codecs.encodeType(e.type)}')
       ].join(', ');
       final parameters = [
         'sink',
-        ...e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')),
+        ...e.formalParameters
+            .mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')),
       ].join(', ');
 
       return KotlinClass(
-        name: codecs.encodeName('${e.name}Controller'),
+        name: codecs.encodeName('${e.displayName}Controller'),
         initializers: const [
           KotlinParameter(name: 'binaryMessenger', type: 'BinaryMessenger'),
         ],
@@ -287,7 +288,7 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
     final FlutterApiHandler(:element, kotlinMethods: methods) = handler;
 
     _specs.add(KotlinClass(
-      name: codecs.encodeName(element.name),
+      name: codecs.encodeName(element.displayName),
       initializers: const [
         KotlinParameter(
           name: 'binaryMessenger',
@@ -306,16 +307,17 @@ channel.setStreamHandler(object : EventChannel.StreamHandler {
         final MethodHandler(element: e, kotlin: methodType) = _;
         final returnType = e.returnType.thisOrSingleTypeArg;
 
-        final parameters =
-            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
+        final parameters = e.formalParameters
+            .map((e) => codecs.encodeSerialization(e.type, e.displayName))
+            .join(', ');
 
         return KotlinMethod(
           modifiers: {if (methodType == MethodApiType.async) KotlinMethodModifier.suspend},
-          name: _encodeMethodName(e.name),
+          name: _encodeMethodName(e.displayName),
           parameters: [
-            ...e.parameters.map((e) {
+            ...e.formalParameters.map((e) {
               return KotlinParameter(
-                name: e.name,
+                name: e.displayName,
                 type: codecs.encodeType(e.type),
               );
             }),
@@ -369,7 +371,7 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeSerializableClass(SerializableClassHandler handler, {ClassElement? extend}) {
+  void writeSerializableClass(SerializableClassHandler handler, {ClassElement2? extend}) {
     if (!handler.kotlinGeneration) return;
     final SerializableClassHandler(:element, :flutterToHost, :hostToFlutter, :params, :children) =
         handler;
@@ -377,7 +379,7 @@ return suspendCoroutine { continuation ->
     if (children != null) {
       _specs.add(KotlinClass(
         modifier: KotlinClassModifier.sealed,
-        name: codecs.encodeName(element.name),
+        name: codecs.encodeName(element.displayName),
         body: [
           if (flutterToHost)
             KotlinClass(
@@ -395,7 +397,7 @@ return suspendCoroutine { continuation ->
                   returns: codecs.encodeType(element.thisType),
                   body: 'return when (serialized[0]) {\n'
                       '${children.map((h) {
-                    return '    "${h.element.name}" -> ${codecs.encodeName(h.element.name)}.deserialize(serialized.drop(1))\n';
+                    return '    "${h.element.displayName}" -> ${codecs.encodeName(h.element.displayName)}.deserialize(serialized.drop(1))\n';
                   }).join()}'
                       '    else -> throw Error()\n'
                       '}',
@@ -412,8 +414,8 @@ return suspendCoroutine { continuation ->
 
     _specs.add(KotlinClass(
       modifier: params.isNotEmpty ? KotlinClassModifier.data : null,
-      name: codecs.encodeName(element.name),
-      extend: extend != null ? '${codecs.encodeName(extend.name)}()' : null,
+      name: codecs.encodeName(element.displayName),
+      extend: extend != null ? '${codecs.encodeName(extend.displayName)}()' : null,
       initializers: params.map((e) {
         return KotlinField(
           name: _encodeVarName(e.name),
@@ -443,7 +445,8 @@ return suspendCoroutine { continuation ->
                   ),
                 ],
                 returns: codecs.encodeType(element.thisType),
-                body: 'return ${codecs.encodeName(element.name)}(\n${params.mapIndexed((i, e) {
+                body:
+                    'return ${codecs.encodeName(element.displayName)}(\n${params.mapIndexed((i, e) {
                   return '    ${_encodeVarName(e.name)} = ${codecs.encodeDeserialization(e.type, 'serialized[$i]')},\n';
                 }).join()})',
               ),
@@ -458,9 +461,9 @@ return suspendCoroutine { continuation ->
     final SerializableEnumHandler(:element) = handler;
 
     _specs.add(KotlinEnum(
-      name: codecs.encodeName(element.name),
-      values: element.fields.where((element) => element.isEnumConstant).map((e) {
-        return _encodeVarName(e.name.constantCase);
+      name: codecs.encodeName(element.displayName),
+      values: element.fields2.where((element) => element.isEnumConstant).map((e) {
+        return _encodeVarName(e.displayName.constantCase);
       }).toList(),
     ));
   }
@@ -478,7 +481,7 @@ return suspendCoroutine { continuation ->
   }
 
   @override
-  void writeException(EnumElement element) {
+  void writeException(EnumElement2 element) {
     // final name = element.name.replaceFirst('Code', '');
     // _specs.add(KotlinEnum(
     //   name: element.name,

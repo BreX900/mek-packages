@@ -40,7 +40,7 @@ class OneForAll {
     ApiBuildersCreator? buildersCreator,
   }) {
     final platformsCodecs = Map.fromEntries(LanguageApi.values.map((platform) {
-      final entries = codecs.map((e) => (TypeChecker.fromRuntime(e.type), e));
+      final entries = codecs.map((e) => (TypeChecker.typeNamed(e.type), e));
       return MapEntry(platform, entries.map((e) => (e.$1, e.$2.read(platform))).toList());
     }));
     return OneForAll(
@@ -92,8 +92,8 @@ class OneForAll {
           return;
         }
 
-        report('Scanning... ${result.element.source.uri}');
-        scanner.scan(result.element);
+        report('Scanning... ${result.element2.uri}');
+        scanner.scan(result.element2);
       });
     }));
 

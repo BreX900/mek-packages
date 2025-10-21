@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
@@ -51,7 +51,7 @@ class KotlinApiCodes extends HostApiCodecs {
           '.toTypedArray())';
       return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
+    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
       return '($varAccess as Int$questionOrEmpty)'
           '$questionOrEmpty.let { ${encodeName(type.displayName)}.values()[it] }';
     }
@@ -87,7 +87,7 @@ class KotlinApiCodes extends HostApiCodecs {
           '.toTypedArray())';
       return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
+    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
       return '$varAccess$questionOrEmpty.ordinal';
     }
 

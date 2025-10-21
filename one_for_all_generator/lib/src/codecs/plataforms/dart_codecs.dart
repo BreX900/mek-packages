@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
@@ -31,7 +31,7 @@ class DartApiCodes extends ApiCodecs {
       return '($varAccess as Map$questionOrEmpty)'
           '$questionOrEmpty.map((k, v) => MapEntry(${encodeDeserialization(typesArgs.$1, 'k')}, ${encodeDeserialization(typesArgs.$2, 'v')}))';
     }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
+    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
       final deserializer = '${encodeName(type.displayName)}.values[$varAccess as int]';
       return type.isNullable ? '$varAccess != null ? $deserializer : null' : deserializer;
     }
@@ -67,7 +67,7 @@ class DartApiCodes extends ApiCodecs {
       return '$varAccess'
           '$questionOrEmpty.map((k, v) => MapEntry(${encodeSerialization(typesArgs.$1, 'k')}, ${encodeSerialization(typesArgs.$2, 'v')}))';
     }
-    if (type.isDartCoreEnum || type.element is EnumElement) {
+    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
       return '$varAccess$questionOrEmpty.index';
     }
 

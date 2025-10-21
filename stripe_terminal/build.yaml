@@ -9,8 +9,6 @@ targets:
         generate_for:
           - 'lib/**/models/*.dart'
 
-      mek_data_class_generator|data_class:
+      mek_data_class_generator:
         generate_for:
           - 'lib/**/models/*.dart'
-        options:
-          page_width: 100

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:collection/collection.dart';
@@ -38,20 +38,22 @@ class DartApiBuilder extends ApiBuilder {
     _library.directives.add(Directive.partOf(basename(pluginOptions.apiFile)));
   }
 
-  void updateParameter(ParameterElement e, ParameterBuilder b) => b
+  void updateParameter(FormalParameterElement e, ParameterBuilder b) => b
     ..type = Reference('${e.type}')
-    ..name = e.name;
+    ..name = e.displayName;
 
-  void _updateHostApiMethod(MethodElement e, MethodBuilder b) {
+  void _updateHostApiMethod(MethodElement2 e, MethodBuilder b) {
     b
       // ignore: prefer_const_constructors
       ..annotations.add(CodeExpression(Code('override')))
       ..returns = Reference('${e.returnType}')
-      ..name = e.name
-      ..requiredParameters.addAll(e.parameters.where((e) => !e.isNamed && e.isRequired).map((e) {
+      ..name = e.displayName
+      ..requiredParameters
+          .addAll(e.formalParameters.where((e) => !e.isNamed && e.isRequired).map((e) {
         return Parameter((b) => b..update((b) => updateParameter(e, b)));
       }))
-      ..optionalParameters.addAll(e.parameters.where((e) => e.isNamed || !e.isRequired).map((e) {
+      ..optionalParameters
+          .addAll(e.formalParameters.where((e) => e.isNamed || !e.isRequired).map((e) {
         return Parameter((b) => b
           ..update((b) => updateParameter(e, b))
           ..required = e.isRequired
@@ -65,25 +67,26 @@ class DartApiBuilder extends ApiBuilder {
     final HostApiHandler(:element, :hostExceptionHandler) = handler;
 
     _library.body.add(Class((b) => b
-      ..name = '_\$${codecs.encodeName(element.name)}'
-      ..implements.add(Reference(element.name))
+      ..name = '_\$${codecs.encodeName(element.displayName)}'
+      ..implements.add(Reference(element.displayName))
       ..fields.add(Field((b) => b
         ..static = true
         ..modifier = FieldModifier.constant
         ..name = r'_$channel'
         ..assignment = Code("MethodChannel('${handler.methodChannelName()}')")))
-      ..fields.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+      ..fields.addAll(element.methods2.where((e) => e.isHostApiEvent).map((e) {
         return Field((b) => b
           ..static = true
           ..modifier = FieldModifier.constant
-          ..name = '_\$${e.name.no_}'
+          ..name = '_\$${e.displayName.no_}'
           ..assignment = Code("EventChannel('${handler.eventChannelName(e)}')"));
       }))
-      ..methods.addAll(element.methods.where((e) => e.isHostApiEvent).map((e) {
+      ..methods.addAll(element.methods2.where((e) => e.isHostApiEvent).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters =
-            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
+        final parameters = e.formalParameters
+            .map((e) => codecs.encodeSerialization(e.type, e.displayName))
+            .join(', ');
 
         final errorHandler = hostExceptionHandler != null
             ? '.handleError((error, _) {'
@@ -94,16 +97,17 @@ class DartApiBuilder extends ApiBuilder {
 
         return Method((b) => b
           ..update((b) => _updateHostApiMethod(e, b))
-          ..body = Code('return _\$${e.name.no_}'
+          ..body = Code('return _\$${e.displayName.no_}'
               '.receiveBroadcastStream([$parameters])'
               '.map((e) => ${codecs.encodeDeserialization(returnType, 'e')})'
               '$errorHandler;'));
       }))
-      ..methods.addAll(element.methods.where((e) => e.isHostApiMethod).map((e) {
+      ..methods.addAll(element.methods2.where((e) => e.isHostApiMethod).map((e) {
         final returnType = e.returnType.singleTypeArg;
 
-        final parameters =
-            e.parameters.map((e) => codecs.encodeSerialization(e.type, e.name)).join(', ');
+        final parameters = e.formalParameters
+            .map((e) => codecs.encodeSerialization(e.type, e.displayName))
+            .join(', ');
 
         String parseResult() {
           final code =
@@ -134,13 +138,13 @@ try {
   @override
   void writeFlutterApiClass(FlutterApiHandler handler) {
     final FlutterApiHandler(:element) = handler;
-    final methods = element.methods.where((e) => e.isFlutterApiMethod);
+    final methods = element.methods2.where((e) => e.isFlutterApiMethod);
 
     _library.body.add(Method((b) => b
       ..returns = const Reference('void')
-      ..name = '_\$setup${codecs.encodeName(element.name)}'
+      ..name = '_\$setup${codecs.encodeName(element.displayName)}'
       ..requiredParameters.add(Parameter((b) => b
-        ..type = Reference(element.name)
+        ..type = Reference(element.displayName)
         ..name = 'hostApi'))
       ..body = Code('''
 const channel = MethodChannel('${handler.methodChannelName()}');
@@ -150,10 +154,10 @@ channel.setMethodCallHandler((call) async {
   ${methods.map((e) {
         final isFutureReturnType = e.returnType.isDartAsyncFuture;
         return '''
-    '${e.name}' => ${isFutureReturnType ? 'await ' : ''}hostApi.${e.name}(${e.parameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
+    '${e.displayName}' => ${isFutureReturnType ? 'await ' : ''}hostApi.${e.displayName}(${e.formalParameters.mapIndexed((i, e) => codecs.encodeDeserialization(e.type, 'args[$i]')).join(', ')}),
         ''';
       }).join('\n')}
-    _ =>  throw UnsupportedError('${element.name}#Flutter.\${call.method} method'),
+    _ =>  throw UnsupportedError('${element.displayName}#Flutter.\${call.method} method'),
   };
 });''')));
   }
@@ -164,21 +168,21 @@ channel.setMethodCallHandler((call) async {
         handler;
 
     const serializedRef = Reference('List<Object?>');
-    final deserializedRef = Reference(element.name);
+    final deserializedRef = Reference(element.displayName);
 
     if (children != null) {
       if (flutterToHost) {
         final childChecker = TypeChecker.fromStatic(element.thisType);
-        final children = LibraryReader(element.library).classes.where(childChecker.isSuperOf);
+        final children = LibraryReader(element.library2).classes.where(childChecker.isSuperOf);
         _library.body.add(Method((b) => b
           ..returns = serializedRef
-          ..name = '_\$serialize${element.name}'
+          ..name = '_\$serialize${element.displayName}'
           ..requiredParameters.add(Parameter((b) => b
             ..type = deserializedRef
             ..name = 'deserialized'))
           ..lambda = true
           ..body = Code('switch (deserialized) {\n'
-              '${children.map((e) => '  ${e.name}() => _\$serialize${e.name}(deserialized),\n').join()}'
+              '${children.map((e) => '  ${e.displayName}() => _\$serialize${e.displayName}(deserialized),\n').join()}'
               '}')));
       }
       for (final child in children) {
@@ -190,13 +194,13 @@ channel.setMethodCallHandler((call) async {
     if (flutterToHost) {
       _library.body.add(Method((b) => b
         ..returns = serializedRef
-        ..name = '_\$serialize${element.name}'
+        ..name = '_\$serialize${element.displayName}'
         ..requiredParameters.add(Parameter((b) => b
           ..type = deserializedRef
           ..name = 'deserialized'))
         ..lambda = true
         ..body = Code('[${[
-          if (withName) "'${element.name}'",
+          if (withName) "'${element.displayName}'",
           ...params.map((e) {
             return codecs.encodeSerialization(e.type, 'deserialized.${e.name}');
           }),
@@ -206,12 +210,12 @@ channel.setMethodCallHandler((call) async {
     if (hostToFlutter) {
       _library.body.add(Method((b) => b
         ..returns = deserializedRef
-        ..name = '_\$deserialize${element.name}'
+        ..name = '_\$deserialize${element.displayName}'
         ..requiredParameters.add(Parameter((b) => b
           ..type = serializedRef
           ..name = 'serialized'))
         ..lambda = true
-        ..body = Code('${element.name}(${params.mapIndexed((i, e) {
+        ..body = Code('${element.displayName}(${params.mapIndexed((i, e) {
           return '${e.name}: ${codecs.encodeDeserialization(e.type, 'serialized[$i]')}';
         }).join(',')})')));
     }
@@ -221,7 +225,7 @@ channel.setMethodCallHandler((call) async {
   void writeSerializableEnum(SerializableEnumHandler handler) {}
 
   @override
-  void writeException(EnumElement element) {
+  void writeException(EnumElement2 element) {
     // _library.body.add(Class((b) => b
     //   ..name = element.name.replaceFirst('Code', '')
     //   ..fields.add(Field((b) => b

@@ -13,6 +13,7 @@ mixin _$Reader {
       identical(this, other) ||
       other is Reader &&
           runtimeType == other.runtimeType &&
+          _self.id == other.id &&
           _self.locationStatus == other.locationStatus &&
           _self.deviceType == other.deviceType &&
           _self.simulated == other.simulated &&
@@ -21,10 +22,13 @@ mixin _$Reader {
           _self.serialNumber == other.serialNumber &&
           _self.availableUpdate == other.availableUpdate &&
           _self.batteryLevel == other.batteryLevel &&
+          _self.ipAddress == other.ipAddress &&
+          _self.networkStatus == other.networkStatus &&
           _self.label == other.label;
   @override
   int get hashCode {
     var hashCode = 0;
+    hashCode = $hashCombine(hashCode, _self.id.hashCode);
     hashCode = $hashCombine(hashCode, _self.locationStatus.hashCode);
     hashCode = $hashCombine(hashCode, _self.deviceType.hashCode);
     hashCode = $hashCombine(hashCode, _self.simulated.hashCode);
@@ -33,12 +37,15 @@ mixin _$Reader {
     hashCode = $hashCombine(hashCode, _self.serialNumber.hashCode);
     hashCode = $hashCombine(hashCode, _self.availableUpdate.hashCode);
     hashCode = $hashCombine(hashCode, _self.batteryLevel.hashCode);
+    hashCode = $hashCombine(hashCode, _self.ipAddress.hashCode);
+    hashCode = $hashCombine(hashCode, _self.networkStatus.hashCode);
     hashCode = $hashCombine(hashCode, _self.label.hashCode);
     return $hashFinish(hashCode);
   }
 
   @override
   String toString() => (ClassToString('Reader')
+        ..add('id', _self.id)
         ..add('locationStatus', _self.locationStatus)
         ..add('deviceType', _self.deviceType)
         ..add('simulated', _self.simulated)
@@ -47,6 +54,8 @@ mixin _$Reader {
         ..add('serialNumber', _self.serialNumber)
         ..add('availableUpdate', _self.availableUpdate)
         ..add('batteryLevel', _self.batteryLevel)
+        ..add('ipAddress', _self.ipAddress)
+        ..add('networkStatus', _self.networkStatus)
         ..add('label', _self.label))
       .toString();
 }

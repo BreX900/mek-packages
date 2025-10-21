@@ -58,7 +58,8 @@ mixin _$CardPresentDetails {
           _self.cardholderName == other.cardholderName &&
           _self.emvAuthData == other.emvAuthData &&
           _self.generatedCard == other.generatedCard &&
-          _self.incrementalAuthorizationStatus == other.incrementalAuthorizationStatus &&
+          _self.incrementalAuthorizationStatus ==
+              other.incrementalAuthorizationStatus &&
           _self.networks == other.networks &&
           _self.receipt == other.receipt;
   @override
@@ -73,7 +74,8 @@ mixin _$CardPresentDetails {
     hashCode = $hashCombine(hashCode, _self.cardholderName.hashCode);
     hashCode = $hashCombine(hashCode, _self.emvAuthData.hashCode);
     hashCode = $hashCombine(hashCode, _self.generatedCard.hashCode);
-    hashCode = $hashCombine(hashCode, _self.incrementalAuthorizationStatus.hashCode);
+    hashCode =
+        $hashCombine(hashCode, _self.incrementalAuthorizationStatus.hashCode);
     hashCode = $hashCombine(hashCode, _self.networks.hashCode);
     hashCode = $hashCombine(hashCode, _self.receipt.hashCode);
     return $hashFinish(hashCode);
@@ -90,7 +92,8 @@ mixin _$CardPresentDetails {
         ..add('cardholderName', _self.cardholderName)
         ..add('emvAuthData', _self.emvAuthData)
         ..add('generatedCard', _self.generatedCard)
-        ..add('incrementalAuthorizationStatus', _self.incrementalAuthorizationStatus)
+        ..add('incrementalAuthorizationStatus',
+            _self.incrementalAuthorizationStatus)
         ..add('networks', _self.networks)
         ..add('receipt', _self.receipt))
       .toString();
@@ -133,8 +136,10 @@ mixin _$ReceiptDetails {
           _self.authorizationResponseCode == other.authorizationResponseCode &&
           _self.applicationCryptogram == other.applicationCryptogram &&
           _self.dedicatedFileName == other.dedicatedFileName &&
-          _self.transactionStatusInformation == other.transactionStatusInformation &&
-          _self.terminalVerificationResults == other.terminalVerificationResults;
+          _self.transactionStatusInformation ==
+              other.transactionStatusInformation &&
+          _self.terminalVerificationResults ==
+              other.terminalVerificationResults;
   @override
   int get hashCode {
     var hashCode = 0;
@@ -144,8 +149,10 @@ mixin _$ReceiptDetails {
     hashCode = $hashCombine(hashCode, _self.authorizationResponseCode.hashCode);
     hashCode = $hashCombine(hashCode, _self.applicationCryptogram.hashCode);
     hashCode = $hashCombine(hashCode, _self.dedicatedFileName.hashCode);
-    hashCode = $hashCombine(hashCode, _self.transactionStatusInformation.hashCode);
-    hashCode = $hashCombine(hashCode, _self.terminalVerificationResults.hashCode);
+    hashCode =
+        $hashCombine(hashCode, _self.transactionStatusInformation.hashCode);
+    hashCode =
+        $hashCombine(hashCode, _self.terminalVerificationResults.hashCode);
     return $hashFinish(hashCode);
   }
 
@@ -157,7 +164,8 @@ mixin _$ReceiptDetails {
         ..add('authorizationResponseCode', _self.authorizationResponseCode)
         ..add('applicationCryptogram', _self.applicationCryptogram)
         ..add('dedicatedFileName', _self.dedicatedFileName)
-        ..add('transactionStatusInformation', _self.transactionStatusInformation)
+        ..add(
+            'transactionStatusInformation', _self.transactionStatusInformation)
         ..add('terminalVerificationResults', _self.terminalVerificationResults))
       .toString();
 }
@@ -170,7 +178,8 @@ mixin _$CardPresentParameters {
       other is CardPresentParameters &&
           runtimeType == other.runtimeType &&
           _self.captureMethod == other.captureMethod &&
-          _self.requestExtendedAuthorization == other.requestExtendedAuthorization &&
+          _self.requestExtendedAuthorization ==
+              other.requestExtendedAuthorization &&
           _self.requestIncrementalAuthorizationSupport ==
               other.requestIncrementalAuthorizationSupport &&
           _self.requestedPriority == other.requestedPriority;
@@ -178,8 +187,10 @@ mixin _$CardPresentParameters {
   int get hashCode {
     var hashCode = 0;
     hashCode = $hashCombine(hashCode, _self.captureMethod.hashCode);
-    hashCode = $hashCombine(hashCode, _self.requestExtendedAuthorization.hashCode);
-    hashCode = $hashCombine(hashCode, _self.requestIncrementalAuthorizationSupport.hashCode);
+    hashCode =
+        $hashCombine(hashCode, _self.requestExtendedAuthorization.hashCode);
+    hashCode = $hashCombine(
+        hashCode, _self.requestIncrementalAuthorizationSupport.hashCode);
     hashCode = $hashCombine(hashCode, _self.requestedPriority.hashCode);
     return $hashFinish(hashCode);
   }
@@ -187,9 +198,10 @@ mixin _$CardPresentParameters {
   @override
   String toString() => (ClassToString('CardPresentParameters')
         ..add('captureMethod', _self.captureMethod)
-        ..add('requestExtendedAuthorization', _self.requestExtendedAuthorization)
         ..add(
-            'requestIncrementalAuthorizationSupport', _self.requestIncrementalAuthorizationSupport)
+            'requestExtendedAuthorization', _self.requestExtendedAuthorization)
+        ..add('requestIncrementalAuthorizationSupport',
+            _self.requestIncrementalAuthorizationSupport)
         ..add('requestedPriority', _self.requestedPriority))
       .toString();
 }

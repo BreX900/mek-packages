@@ -16,7 +16,7 @@ extension Reader {
             locationStatus: locationStatus.toApi(),
             networkStatus: status.toApi(),
             serialNumber: serialNumber,
-            simulated: simulated,
+            simulated: simulated
         )
     }
 }

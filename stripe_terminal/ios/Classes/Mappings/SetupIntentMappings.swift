@@ -94,8 +94,8 @@ extension SetupAttemptPaymentMethodDetails {
 extension SetupAttemptCardPresentDetails {
     func toApi() -> SetupAttemptCardPresentDetailsApi {
         return SetupAttemptCardPresentDetailsApi(
-            emvAuthData: emvAuthData,
-            generatedCard: generatedCard
+            emvAuthData: emvAuthData ?? "",
+            generatedCard: generatedCard ?? ""
         )
     }
 }

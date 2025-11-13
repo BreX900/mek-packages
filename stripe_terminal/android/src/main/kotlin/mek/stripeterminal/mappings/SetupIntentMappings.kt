@@ -82,8 +82,8 @@ fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi
 
 fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
     return SetupAttemptCardPresentDetailsApi(
-        emvAuthData = emvAuthData!!,
-        generatedCard = generatedCard!!
+        emvAuthData = emvAuthData ?: "",
+        generatedCard = generatedCard ?: ""
     )
 }
 

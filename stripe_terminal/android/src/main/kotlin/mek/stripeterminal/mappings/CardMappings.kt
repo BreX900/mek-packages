@@ -77,7 +77,7 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
         accountType = accountType,
         applicationPreferredName = applicationPreferredName,
         authorizationCode = authorizationCode,
-        authorizationResponseCode = authorizationResponseCode!!,
+        authorizationResponseCode = authorizationResponseCode ?: "",
         applicationCryptogram = applicationCryptogram,
         dedicatedFileName = dedicatedFileName,
         transactionStatusInformation = tsi,
@@ -87,8 +87,7 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
 
 fun CardNetworks.toApi(): CardNetworksApi {
     return CardNetworksApi(
-        available =
-        available.map { cardBrandToApi(it)!! },
+        available = available.mapNotNull { cardBrandToApi(it) },
         preferred = preferred
     )
 }

@@ -42,7 +42,7 @@ class Charge with _$Charge {
   /// Metadata associated with the charge.
   ///
   /// See https://stripe.com/docs/api#metadata
-  final Map<String, String> metadata;
+  final Map<String, String>? metadata;
 
   /// Extra dynamic information about a Charge. This will appear concatenated with the
   /// statementDescriptor on your customer’s credit card’s statement.

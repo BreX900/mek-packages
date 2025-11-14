@@ -4,11 +4,11 @@ import StripeTerminal
 extension PaymentIntent {
     func toApi() -> PaymentIntentApi {
         return PaymentIntentApi(
-            amount: Double(amount),
+            amount: Int(amount),
             amountCapturable: nil,
             amountDetails: amountDetails?.toApi(),
             amountReceived: nil,
-            amountTip: amountTip != nil ? Double(truncating: amountTip!) : nil,
+            amountTip: amountTip?.intValue,
             applicationFeeAmount: nil,
             applicationId: nil,
             canceledAt: nil,
@@ -21,9 +21,9 @@ extension PaymentIntent {
             currency: currency,
             customerId: nil,
             description: description,
-            id: stripeId!,
+            id: stripeId,
             invoiceId: nil,
-            metadata: metadata ?? [:],
+            metadata: metadata,
             onBehalfOf: nil,
             paymentMethod: paymentMethod?.toApi(),
             paymentMethodId: paymentMethodId,
@@ -93,7 +93,7 @@ extension PaymentIntentParametersApi {
             )
             .setPaymentMethodTypes(paymentMethodTypes.map { $0.toHost() })
             .setCaptureMethod(captureMethod.toHost())
-            .setMetadata(metadata)
+            .setMetadata(metadata ?? [:])
             .setStripeDescription(description)
             .setStatementDescriptor(statementDescriptor)
             .setStatementDescriptorSuffix(statementDescriptorSuffix)

@@ -172,7 +172,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func onCreatePaymentIntent(_ parameters: PaymentIntentParametersApi) async throws -> PaymentIntentApi {
         do {
             let paymentIntent = try await Terminal.shared.createPaymentIntent(parameters.toHost())
-            _paymentIntents[paymentIntent.stripeId!] = paymentIntent
+            guard let paymentIntentID = paymentIntent.stripeId else {
+                throw createApiException(TerminalExceptionCodeApi.paymentIntentNotRecovered).toPlatformError()
+            }
+            _paymentIntents[paymentIntentID] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
@@ -184,7 +187,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     ) async throws -> PaymentIntentApi {
         do {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
-            _paymentIntents[paymentIntent.stripeId!] = paymentIntent
+            guard let paymentIntentID = paymentIntent.stripeId else {
+                throw createApiException(TerminalExceptionCodeApi.paymentIntentNotRecovered).toPlatformError()
+            }
+            _paymentIntents[paymentIntentID] = paymentIntent
             return paymentIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
@@ -224,8 +230,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 result.error(error.toPlatformError())
                 return
             }
-            self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
-            result.success(paymentIntent!.toApi())
+            guard let paymentIntent = paymentIntent,
+                  let paymentIntentID = paymentIntent.stripeId else {
+                result.error(createApiException(TerminalExceptionCodeApi.paymentIntentNotRecovered).toPlatformError())
+                return
+            }
+            self._paymentIntents[paymentIntentID] = paymentIntent
+            result.success(paymentIntent.toApi())
         })
     }
 
@@ -249,8 +260,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 result.error(error.toPlatformError())
                 return
             }
-            self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
-            result.success(paymentIntent!.toApi())
+            guard let paymentIntent = paymentIntent,
+                  let paymentIntentID = paymentIntent.stripeId else {
+                result.error(createApiException(TerminalExceptionCodeApi.paymentIntentNotRecovered).toPlatformError())
+                return
+            }
+            self._paymentIntents[paymentIntentID] = paymentIntent
+            result.success(paymentIntent.toApi())
         })
     }
     
@@ -289,7 +305,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         usage.apply { params.setUsage($0.toHost()) }
         do {
             let setupIntent = try await Terminal.shared.createSetupIntent(params.build())
-            _setupIntents[setupIntent.stripeId!] = setupIntent
+            guard let setupIntentID = setupIntent.stripeId else {
+                throw createApiException(TerminalExceptionCodeApi.setupIntentNotRecovered).toPlatformError()
+            }
+            _setupIntents[setupIntentID] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
@@ -299,7 +318,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func onRetrieveSetupIntent(_ clientSecret: String) async throws -> SetupIntentApi {
         do {
             let setupIntent = try await Terminal.shared.retrieveSetupIntent(clientSecret: clientSecret)
-            _setupIntents[setupIntent.stripeId!] = setupIntent
+            guard let setupIntentID = setupIntent.stripeId else {
+                throw createApiException(TerminalExceptionCodeApi.setupIntentNotRecovered).toPlatformError()
+            }
+            _setupIntents[setupIntentID] = setupIntent
             return setupIntent.toApi()
         } catch let error as NSError {
             throw error.toPlatformError()
@@ -326,8 +348,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                     result.error(error.toPlatformError())
                     return
                 }
-                self._setupIntents[setupIntent!.stripeId!] = setupIntent!
-                result.success(setupIntent!.toApi())
+                guard let setupIntent = setupIntent,
+                      let setupIntentID = setupIntent.stripeId else {
+                    result.error(createApiException(TerminalExceptionCodeApi.setupIntentNotRecovered).toPlatformError())
+                    return
+                }
+                self._setupIntents[setupIntentID] = setupIntent
+                result.success(setupIntent.toApi())
         })
     }
     
@@ -349,8 +376,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 result.error(error.toPlatformError())
                 return
             }
-            self._setupIntents[setupIntent!.stripeId!] = setupIntent!
-            result.success(setupIntent!.toApi())
+            guard let setupIntent = setupIntent,
+                  let setupIntentID = setupIntent.stripeId else {
+                result.error(createApiException(TerminalExceptionCodeApi.setupIntentNotRecovered).toPlatformError())
+                return
+            }
+            self._setupIntents[setupIntentID] = setupIntent
+            result.success(setupIntent.toApi())
     })
     }
     
@@ -416,7 +448,11 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
                 result.error(error.toPlatformError())
                 return
             }
-            result.success(refund!.toApi())
+            guard let refund = refund else {
+                result.error(createApiException(TerminalExceptionCodeApi.unknown).toPlatformError())
+                return
+            }
+            result.success(refund.toApi())
     })
     }
     

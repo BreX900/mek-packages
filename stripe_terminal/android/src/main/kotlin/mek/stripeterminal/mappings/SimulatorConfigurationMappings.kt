@@ -28,7 +28,7 @@ fun SimulateReaderUpdateApi.toHost(): SimulateReaderUpdate {
 
 fun SimulatedCardApi.toHost(): SimulatedCard {
     if (type != null) return SimulatedCard(type.toHost())
-    return SimulatedCard(testCardNumber!!)
+    return SimulatedCard(testCardNumber ?: "")
 }
 
 fun SimulatedCardTypeApi.toHost(): SimulatedCardType {

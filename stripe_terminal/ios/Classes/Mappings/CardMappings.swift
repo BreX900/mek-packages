@@ -98,7 +98,10 @@ extension SCPIncrementalAuthorizationStatus {
 extension SCPNetworks {
     func toApi() -> CardNetworksApi {
         return CardNetworksApi(
-            available: available?.map { CardBrand(rawValue: Int(truncating: $0))!.toApi()! } ?? [],
+            available: available?.compactMap { 
+                guard let brand = CardBrand(rawValue: Int(truncating: $0)) else { return nil }
+                return brand.toApi()
+            } ?? [],
             preferred: nil
         )
     }

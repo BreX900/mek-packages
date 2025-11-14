@@ -1410,7 +1410,7 @@ struct ReceiptDetailsApi {
     let applicationCryptogram: String?
     let applicationPreferredName: String?
     let authorizationCode: String?
-    let authorizationResponseCode: String
+    let authorizationResponseCode: String?
     let dedicatedFileName: String?
     let terminalVerificationResults: String?
     let transactionStatusInformation: String?

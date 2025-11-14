@@ -25,7 +25,7 @@ class Charge with _$Charge {
   final int amount;
 
   /// The currency of the charge.
-  final String currency;
+  final String? currency;
 
   /// The status of the charge.
   final ChargeStatus status;

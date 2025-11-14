@@ -1324,7 +1324,7 @@ data class ReceiptDetailsApi(
     val applicationCryptogram: String?,
     val applicationPreferredName: String?,
     val authorizationCode: String?,
-    val authorizationResponseCode: String,
+    val authorizationResponseCode: String?,
     val dedicatedFileName: String?,
     val terminalVerificationResults: String?,
     val transactionStatusInformation: String?,

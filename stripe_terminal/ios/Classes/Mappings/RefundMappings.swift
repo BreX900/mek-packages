@@ -4,7 +4,7 @@ import StripeTerminal
 extension Refund {
     func toApi() -> RefundApi {
         return RefundApi(
-            amount: amount != nil ? Int(truncating: amount!) : nil,
+            amount: Int(amount),
             chargeId: charge,
             created: created,
             currency: currency,

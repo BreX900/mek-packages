@@ -21,15 +21,15 @@ dependencies:
   shelf_open_api:
   shelf_routing:
 
-  mek_data_class: ^1.4.0
+  mek_data_class: ^2.1.0
   json_annotation: ^4.9.0
 
 dev_dependencies:
   mek_lints: ^5.0.0
 
-  build_runner: ^2.7.0
-  mek_data_class_generator: ^3.0.0
-  json_serializable: ^6.10.0
+  build_runner: ^2.10.4
+  mek_data_class_generator: ^4.1.1
+  json_serializable: ^6.11.3
 
   shelf_open_api_generator:
   shelf_routing_generator:

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api.dart';
@@ -28,7 +28,7 @@ class OpenApiHandler {
 
   final Config config;
   final Set<OpenApiFileFormat> fileFormats;
-  final ClassElement2 element;
+  final ClassElement element;
   final SchemasRegistry schemasRegistry = SchemasRegistry();
 
   OpenApiHandler._({required this.config, required this.element, required this.fileFormats});
@@ -53,7 +53,7 @@ class OpenApiHandler {
     final (element, annotation) = annotatedElement;
 
     final fileFormats = annotation.getField('formats')!.toSetValue()!.map((object) {
-      return switch (object.variable2!.requireName) {
+      return switch (object.variable!.requireName) {
         'json' => OpenApiFileFormat.json,
         'yaml' => OpenApiFileFormat.yaml,
         final format => throw InvalidGenerationSourceError(
@@ -100,7 +100,7 @@ class OpenApiHandler {
   }
 
   List<TagOpenApi> _buildTags(List<OpenRouteHandler> routes) {
-    return routes.map((e) => e.element.enclosingElement2 as ClassElement2).toSet().map((e) {
+    return routes.map((e) => e.element.enclosingElement as ClassElement).toSet().map((e) {
       return TagOpenApi(name: e.displayName, description: Doc.clean(e.documentationComment));
     }).toList();
   }

@@ -1,3 +1,8 @@
+## 3.2.1
+- build: bumped `analyzer: ^9.0.0`
+- build: bumped `build: ^4.0.3`
+- build: bumped `source_gen: ^4.1.1`
+
 ## 3.2.0
 - feat: added support to `JsonEnum.valueField` from `json_serializable` package
 - fix!: fixed incorrect mapping specs for `JsonResponse` type

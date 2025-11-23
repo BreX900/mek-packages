@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
@@ -20,7 +20,7 @@ class RoutingGenerator extends Generator {
   String? _findParserMethod(DartType type) {
     if (type is! InterfaceType) return null;
 
-    final parserMethod = type.getMethod2('parse');
+    final parserMethod = type.getMethod('parse');
     if (parserMethod == null) return null;
 
     if (!TypeChecker.fromStatic(type).isAssignableFromType(parserMethod.returnType)) return null;
@@ -31,7 +31,7 @@ class RoutingGenerator extends Generator {
     if (!firstParameter.type.isDartCoreString) return null;
     if (parserMethod.formalParameters.skip(1).any((e) => e.isRequired)) return null;
 
-    return '${type.element3.requireName}.${parserMethod.requireName}';
+    return '${type.element.requireName}.${parserMethod.requireName}';
   }
 
   String? _codeParser(DartType type) {
@@ -79,8 +79,8 @@ class RoutingGenerator extends Generator {
           '  return  MapEntry(k, ${_codeFromJson(type.typeArguments[1])});\n'
           '})\n';
     }
-    final element = type.element3 as ClassElement2;
-    final constructor = element.constructors2.firstWhere((e) => e.name3 == 'fromJson');
+    final element = type.element as ClassElement;
+    final constructor = element.constructors.firstWhere((e) => e.name == 'fromJson');
     return '${type.getDisplayString()}.fromJson(data! as ${constructor.formalParameters.first.type.getDisplayString()})';
   }
 

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:shelf/shelf.dart';
@@ -33,7 +33,7 @@ bool isHandlerFunctionAssignableFromType(DartType type) {
   return true;
 }
 
-void ensureIsValidRoute(String? route, {required String name, Element2? element}) {
+void ensureIsValidRoute(String? route, {required String name, Element? element}) {
   if (route == null || RegExp(r'^\/.+[^/]$').hasMatch(route)) return;
   throw InvalidGenerationSourceError(
     '"$name" field must begin and not end with "/". ',
@@ -57,9 +57,9 @@ extension InterfaceTypeExtensions on InterfaceType {
   DartType get typeArgument => typeArguments.single;
 }
 
-extension RequireNameElementExtension on Element2 {
+extension RequireNameElementExtension on Element {
   String get requireName {
-    if (name3 case final name?) return name;
+    if (name case final name?) return name;
     throw InvalidGenerationSourceError('The parameter name is required!', element: this);
   }
 }

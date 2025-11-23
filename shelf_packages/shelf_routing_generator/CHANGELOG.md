@@ -1,4 +1,9 @@
 
+## 2.0.1
+- build: bumped `analyzer: ^9.0.0`
+- build: bumped `build: ^4.0.3`
+- build: bumped `source_gen: ^4.1.1`
+
 ## 2.0.0
 - build: bumped `open_api_specification` to `3.0.0`
 

@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:http_methods/http_methods.dart';
 // ignore: implementation_imports
@@ -15,7 +15,7 @@ class _Route {
 
   _Route(this.verb, this.path);
 
-  static _Route? from(ExecutableElement2 element) {
+  static _Route? from(ExecutableElement element) {
     final annotation = ConstantReader(routeChecker.firstAnnotationOf(element));
     if (annotation.isNull) return null;
 
@@ -24,15 +24,15 @@ class _Route {
 }
 
 sealed class RouteHandler {
-  final ExecutableElement2 element;
+  final ExecutableElement element;
   final String path;
 
   RouteHandler({required this.element, required this.path});
 
-  static List<RouteHandler> from(ClassElement2 element, {bool strict = true}) {
+  static List<RouteHandler> from(ClassElement element, {bool strict = true}) {
     return [
-      ...element.methods2.map((element) => HttpRouteHandler.from(element, strict: strict)).nonNulls,
-      ...element.getters2.map(MountRouteHandler.from).nonNulls,
+      ...element.methods.map((element) => HttpRouteHandler.from(element, strict: strict)).nonNulls,
+      ...element.getters.map(MountRouteHandler.from).nonNulls,
     ];
   }
 }
@@ -108,7 +108,7 @@ class HttpRouteHandler extends RouteHandler {
   final List<FormalParameterElement> queryParameters;
   final RouteReturns returns;
 
-  static HttpRouteHandler? from(MethodElement2 element, {bool strict = true}) {
+  static HttpRouteHandler? from(MethodElement element, {bool strict = true}) {
     final route = _Route.from(element);
     if (route == null) return null;
 
@@ -169,11 +169,11 @@ class HttpRouteHandler extends RouteHandler {
       }
       final parameter = parametersIterator.current;
 
-      if (pathParam != parameter.name3) {
+      if (pathParam != parameter.name) {
         throw InvalidGenerationSourceError(
           'The shelf_router.Route annotation can only be used on shelf '
           'request handlers accept a shelf.Request parameter and and all parameters in the route, '
-          'the "${parameter.name3}" parameter should be named "$pathParam"',
+          'the "${parameter.name}" parameter should be named "$pathParam"',
           element: parameter,
         );
       }
@@ -206,8 +206,8 @@ class HttpRouteHandler extends RouteHandler {
         } else if (type.isDartCoreMap) {
           return check(type.typeArguments[1]);
         } else {
-          final parameterElement = type.element3 as ClassElement2;
-          if (parameterElement.constructors2.every((e) => e.name3 != 'fromJson')) {
+          final parameterElement = type.element as ClassElement;
+          if (parameterElement.constructors.every((e) => e.name != 'fromJson')) {
             return false;
           }
           return true;
@@ -220,7 +220,7 @@ class HttpRouteHandler extends RouteHandler {
           'invalid body parameter type.\n'
           'You can use primitive types: bool, int, double, num or String or List, Map with primitive values.\n'
           'If you want use custom type add "factory $parameterTypeName.fromJson(Map<String, dynamic> map)" constructor.',
-          element: parameter.enclosingElement2,
+          element: parameter.enclosingElement,
         );
       }
       bodyParameter = parameter;
@@ -265,7 +265,7 @@ class HttpRouteHandler extends RouteHandler {
     );
   }
 
-  static RouteReturns _parseReturnsType(MethodElement2 element) {
+  static RouteReturns _parseReturnsType(MethodElement element) {
     var type = element.returnType;
     if (type.isDartAsyncFuture || type.isDartAsyncFuture) {
       type = (type as InterfaceType).typeArguments.single;
@@ -286,7 +286,7 @@ class HttpRouteHandler extends RouteHandler {
     if (type.isJson) {
       return RouteReturnsJson(type);
     }
-    if (type is InterfaceType ? type.getMethod2('toJson') : null case final toJsonMethod?
+    if (type is InterfaceType ? type.getMethod('toJson') : null case final toJsonMethod?
         when toJsonMethod.returnType.isJson && toJsonMethod.formalParameters.isEmpty) {
       return RouteReturnsJson(type);
     }

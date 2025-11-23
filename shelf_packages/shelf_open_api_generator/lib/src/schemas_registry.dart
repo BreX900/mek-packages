@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
@@ -77,7 +77,7 @@ class _SchemaResolver {
   });
 
   RefOr<SchemaOpenApi> resolve({Doc doc = Doc.none, required DartType dartType}) {
-    final element = dartType.element3;
+    final element = dartType.element;
 
     if (registry._schemas[element?.requireName]?.contains(dartType) ?? false) {
       return RefOpenApi('#/components/schemas/${element!.requireName}', (_) {
@@ -88,11 +88,11 @@ class _SchemaResolver {
     final description = doc.summaryAndDescription;
     final example = doc.example;
 
-    if (element is EnumElement2) {
+    if (element is EnumElement) {
       registry._checkRegistration(dartType: dartType, name: element.requireName);
 
       final doc = Doc.from(element.documentationComment);
-      final values = element.constants2.map((field) {
+      final values = element.constants.map((field) {
         return JsonAnnotation.getEnumValue(element, field);
       }).toList();
 
@@ -169,14 +169,14 @@ class _SchemaResolver {
         type: TypeOpenApi.object,
         additionalProperties: resolve(dartType: typeArguments[1]),
       );
-    } else if (element is ClassElement2) {
+    } else if (element is ClassElement) {
       final doc = Doc.from(element.documentationComment);
       final parameters = element.requireUnnamedConstructor.formalParameters;
-      final fields = element.getters2;
+      final fields = element.getters;
       final names = <String, String>{
         for (final e in parameters)
           if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
-        for (final e in element.fields2)
+        for (final e in element.fields)
           if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
         for (final e in fields)
           if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
@@ -195,7 +195,7 @@ class _SchemaResolver {
           );
         }).toList();
       } else {
-        properties = element.getters2.map((e) {
+        properties = element.getters.map((e) {
           return _ClassProperty(
             isRequired: e.returnType.nullabilitySuffix == NullabilitySuffix.none,
             name: e.requireName,
@@ -220,8 +220,8 @@ class _SchemaResolver {
           for (final property in properties)
             names[property.name] ?? property.name: resolve(
               doc: Doc.from(
-                element.fields2
-                    .firstWhereOrNull((e) => e.name3 == property.name)
+                element.fields
+                    .firstWhereOrNull((e) => e.name == property.name)
                     ?.documentationComment,
               ),
               dartType: property.type,

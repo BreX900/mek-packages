@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:open_api_specification/open_api_spec.dart';
@@ -14,7 +14,7 @@ import 'package:source_gen/source_gen.dart';
 /// A representation of a handler that was annotated with [Route].
 class OpenRouteHandler {
   final HttpRouteHandler handler;
-  final ExecutableElement2 element;
+  final ExecutableElement element;
   final SchemasRegistry schemasRegistry;
   final String pathPrefix;
   final List<Map<String, List<String>>> security;
@@ -37,7 +37,7 @@ class OpenRouteHandler {
   });
 
   OperationOpenApi buildOperation() {
-    final classElement = element.enclosingElement2 as ClassElement2;
+    final classElement = element.enclosingElement as ClassElement;
     final doc = Doc.from(element.documentationComment);
 
     return OperationOpenApi(
@@ -68,7 +68,7 @@ class OpenRouteHandler {
     });
     // TODO: check client generation
     final queryParams =
-        (requestQuery?.element3 as ClassElement2?)?.requireUnnamedConstructor.formalParameters.map((
+        (requestQuery?.element as ClassElement?)?.requireUnnamedConstructor.formalParameters.map((
           e,
         ) {
           return ParameterOpenApi(
@@ -159,9 +159,9 @@ class OpenRouteFinder {
 
   const OpenRouteFinder({required this.schemasRegistry, required this.strict});
 
-  List<OpenRouteHandler> find(ClassElement2 classElement) => _find(classElement, pathPrefix: '');
+  List<OpenRouteHandler> find(ClassElement classElement) => _find(classElement, pathPrefix: '');
 
-  List<OpenRouteHandler> _find(ClassElement2 classElement, {required String pathPrefix}) {
+  List<OpenRouteHandler> _find(ClassElement classElement, {required String pathPrefix}) {
     final routes = RouteHandler.from(classElement, strict: strict);
 
     return routes.expand<OpenRouteHandler>((route) sync* {
@@ -173,9 +173,9 @@ class OpenRouteFinder {
           final mount = _openApiRouteMountChecker.firstAnnotationOf(element);
           final serviceType = mount?.getField('serviceType')?.toTypeValue();
 
-          ClassElement2? classElement;
-          if (serviceType != null) classElement = serviceType.element3 as ClassElement2?;
-          if (isRouterMixin) classElement = element.returnType.element3 as ClassElement2;
+          ClassElement? classElement;
+          if (serviceType != null) classElement = serviceType.element as ClassElement?;
+          if (isRouterMixin) classElement = element.returnType.element as ClassElement;
           if (classElement == null) return;
 
           yield* _find(classElement, pathPrefix: path);

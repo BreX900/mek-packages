@@ -28,7 +28,7 @@ extension SimulatedCardApi {
         if let type {
             return SimulatedCard(type: type.toHost())
         }
-        return SimulatedCard(testCardNumber: testCardNumber!)
+        return SimulatedCard(testCardNumber: testCardNumber ?? "")
     }
 
 }

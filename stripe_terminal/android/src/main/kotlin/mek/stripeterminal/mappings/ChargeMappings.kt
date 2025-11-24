@@ -10,7 +10,7 @@ import mek.stripeterminal.toHashMap
 fun Charge.toApi(): ChargeApi {
     return ChargeApi(
         amount = amount,
-        currency = currency!!,
+        currency = currency,
         status = when (status) {
             "pending" -> ChargeStatusApi.PENDING
             "failed" -> ChargeStatusApi.FAILED

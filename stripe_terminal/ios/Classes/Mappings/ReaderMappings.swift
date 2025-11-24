@@ -5,8 +5,8 @@ import StripeTerminal
 extension Reader {
     func toApi() -> ReaderApi {
         return ReaderApi(
-            availableUpdate: availableUpdate != nil,
-            batteryLevel: batteryLevel?.doubleValue ?? -1.0,
+            availableUpdate: availableUpdate != nil ? true : nil,
+            batteryLevel: batteryLevel?.doubleValue,
             deviceType: deviceType.toApi(),
             id: stripeId,
             ipAddress: ipAddress,
@@ -28,7 +28,7 @@ extension Location {
             displayName: displayName,
             id: stripeId,
             livemode: livemode,
-            metadata: metadata ?? [:]
+            metadata: metadata
         )
     }
 }

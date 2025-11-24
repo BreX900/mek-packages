@@ -92,7 +92,7 @@ class ReceiptDetails with _$ReceiptDetails {
   final String? accountType;
   final String? applicationPreferredName;
   final String? authorizationCode;
-  final String authorizationResponseCode;
+  final String? authorizationResponseCode;
   final String? applicationCryptogram;
   final String? dedicatedFileName;
   final String? transactionStatusInformation;

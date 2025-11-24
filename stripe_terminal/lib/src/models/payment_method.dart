@@ -38,7 +38,7 @@ class PaymentMethod with _$PaymentMethod {
 
   /// Set of key-value pairs that you can attach to an object. This can be useful for storing
   /// additional information about the object in a structured format.
-  final Map<String, String> metadata;
+  final Map<String, String>? metadata;
 
   @internal
   const PaymentMethod({

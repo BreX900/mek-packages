@@ -7,11 +7,11 @@ part 'refund.g.dart';
 @DataClass()
 class Refund with _$Refund {
   final String id;
-  final int amount;
-  final String chargeId;
-  final DateTime created;
-  final String currency;
-  final Map<String, String> metadata;
+  final int? amount;
+  final String? chargeId;
+  final DateTime? created;
+  final String? currency;
+  final Map<String, String>? metadata;
   final String? reason;
   final RefundStatus? status;
   final PaymentMethodDetails? paymentMethodDetails;

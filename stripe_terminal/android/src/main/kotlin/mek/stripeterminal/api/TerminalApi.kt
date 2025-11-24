@@ -238,7 +238,7 @@ interface TerminalPlatformApi {
         result: MethodChannel.Result,
     ) {
         try {
-            val args = call.arguments<List<Any?>>()!!
+            val args = call.arguments<List<Any?>>() ?: listOf()
             fun runAsync(callback: suspend () -> Any?) {
                 coroutineScope.launch {
                     val res = callback()
@@ -738,10 +738,10 @@ data class ChargeApi(
     val amount: Long,
     val authorizationCode: String?,
     val calculatedStatementDescriptor: String?,
-    val currency: String,
+    val currency: String?,
     val description: String?,
     val id: String,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
     val paymentMethodDetails: PaymentMethodDetailsApi?,
     val statementDescriptorSuffix: String?,
     val status: ChargeStatusApi,
@@ -754,7 +754,7 @@ data class ChargeApi(
             currency,
             description,
             id,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
             paymentMethodDetails?.serialize(),
             statementDescriptorSuffix,
             status.ordinal,
@@ -998,7 +998,7 @@ data class LocationApi(
     val displayName: String?,
     val id: String?,
     val livemode: Boolean?,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -1006,7 +1006,7 @@ data class LocationApi(
             displayName,
             id,
             livemode,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
         )
     }
 }
@@ -1020,12 +1020,12 @@ enum class NetworkStatusApi {
 }
 
 data class PaymentIntentApi(
-    val amount: Double,
-    val amountCapturable: Double?,
+    val amount: Long,
+    val amountCapturable: Long?,
     val amountDetails: AmountDetailsApi?,
-    val amountReceived: Double?,
-    val amountTip: Double?,
-    val applicationFeeAmount: Double?,
+    val amountReceived: Long?,
+    val amountTip: Long?,
+    val applicationFeeAmount: Long?,
     val applicationId: String?,
     val canceledAt: Long?,
     val cancellationReason: String?,
@@ -1034,12 +1034,12 @@ data class PaymentIntentApi(
     val clientSecret: String?,
     val confirmationMethod: ConfirmationMethodApi?,
     val created: Long,
-    val currency: String,
+    val currency: String?,
     val customerId: String?,
     val description: String?,
-    val id: String,
+    val id: String?,
     val invoiceId: String?,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
     val onBehalfOf: String?,
     val paymentMethod: PaymentMethodApi?,
     val paymentMethodId: String?,
@@ -1048,7 +1048,7 @@ data class PaymentIntentApi(
     val setupFutureUsage: PaymentIntentUsageApi?,
     val statementDescriptor: String?,
     val statementDescriptorSuffix: String?,
-    val status: PaymentIntentStatusApi,
+    val status: PaymentIntentStatusApi?,
     val transferGroup: String?,
 ) {
     fun serialize(): List<Any?> {
@@ -1072,7 +1072,7 @@ data class PaymentIntentApi(
             description,
             id,
             invoiceId,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
             onBehalfOf,
             paymentMethod?.serialize(),
             paymentMethodId,
@@ -1081,7 +1081,7 @@ data class PaymentIntentApi(
             setupFutureUsage?.ordinal,
             statementDescriptor,
             statementDescriptorSuffix,
-            status.ordinal,
+            status?.ordinal,
             transferGroup,
         )
     }
@@ -1094,7 +1094,7 @@ data class PaymentIntentParametersApi(
     val currency: String,
     val customerId: String?,
     val description: String?,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
     val onBehalfOf: String?,
     val paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?,
     val paymentMethodTypes: List<PaymentMethodTypeApi>,
@@ -1116,7 +1116,7 @@ data class PaymentIntentParametersApi(
                 currency = serialized[3] as String,
                 customerId = serialized[4] as String?,
                 description = serialized[5] as String?,
-                metadata = hashMapOf(*(serialized[6] as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()),
+                metadata = serialized[6]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) },
                 onBehalfOf = serialized[7] as String?,
                 paymentMethodOptionsParameters = (serialized[8] as List<Any?>?)?.let { PaymentMethodOptionsParametersApi.deserialize(it) },
                 paymentMethodTypes = (serialized[9] as List<*>).map { (it as Int).let { PaymentMethodTypeApi.values()[it] } },
@@ -1145,7 +1145,7 @@ data class PaymentMethodApi(
     val customerId: String?,
     val id: String,
     val interacPresent: CardPresentDetailsApi?,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -1154,7 +1154,7 @@ data class PaymentMethodApi(
             customerId,
             id,
             interacPresent?.serialize(),
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
         )
     }
 }
@@ -1194,8 +1194,8 @@ enum class PaymentStatusApi {
 }
 
 data class ReaderApi(
-    val availableUpdate: Boolean,
-    val batteryLevel: Double,
+    val availableUpdate: Boolean?,
+    val batteryLevel: Double?,
     val deviceType: DeviceTypeApi?,
     val id: String?,
     val ipAddress: String?,
@@ -1204,7 +1204,7 @@ data class ReaderApi(
     val locationId: String?,
     val locationStatus: LocationStatusApi?,
     val networkStatus: NetworkStatusApi?,
-    val serialNumber: String,
+    val serialNumber: String?,
     val simulated: Boolean,
 ) {
     fun serialize(): List<Any?> {
@@ -1324,7 +1324,7 @@ data class ReceiptDetailsApi(
     val applicationCryptogram: String?,
     val applicationPreferredName: String?,
     val authorizationCode: String?,
-    val authorizationResponseCode: String,
+    val authorizationResponseCode: String?,
     val dedicatedFileName: String?,
     val terminalVerificationResults: String?,
     val transactionStatusInformation: String?,
@@ -1344,13 +1344,13 @@ data class ReceiptDetailsApi(
 }
 
 data class RefundApi(
-    val amount: Long,
-    val chargeId: String,
-    val created: Long,
-    val currency: String,
+    val amount: Long?,
+    val chargeId: String?,
+    val created: Long?,
+    val currency: String?,
     val failureReason: String?,
     val id: String,
-    val metadata: HashMap<String, String>,
+    val metadata: HashMap<String, String>?,
     val paymentMethodDetails: PaymentMethodDetailsApi?,
     val reason: String?,
     val status: RefundStatusApi?,
@@ -1363,7 +1363,7 @@ data class RefundApi(
             currency,
             failureReason,
             id,
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
             paymentMethodDetails?.serialize(),
             reason,
             status?.ordinal,
@@ -1383,7 +1383,7 @@ data class SetupAttemptApi(
     val onBehalfOf: String?,
     val paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?,
     val paymentMethodId: String?,
-    val setupIntentId: String,
+    val setupIntentId: String?,
     val status: SetupAttemptStatusApi,
 ) {
     fun serialize(): List<Any?> {
@@ -1402,8 +1402,8 @@ data class SetupAttemptApi(
 }
 
 data class SetupAttemptCardPresentDetailsApi(
-    val emvAuthData: String,
-    val generatedCard: String,
+    val emvAuthData: String?,
+    val generatedCard: String?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -1432,11 +1432,11 @@ enum class SetupAttemptStatusApi {
 data class SetupIntentApi(
     val created: Long,
     val customerId: String?,
-    val id: String,
+    val id: String?,
     val latestAttempt: SetupAttemptApi?,
-    val metadata: HashMap<String, String>,
-    val status: SetupIntentStatusApi,
-    val usage: SetupIntentUsageApi,
+    val metadata: HashMap<String, String>?,
+    val status: SetupIntentStatusApi?,
+    val usage: SetupIntentUsageApi?,
 ) {
     fun serialize(): List<Any?> {
         return listOf(
@@ -1444,9 +1444,9 @@ data class SetupIntentApi(
             customerId,
             id,
             latestAttempt?.serialize(),
-            hashMapOf(*metadata.map { (k, v) -> k to v }.toTypedArray()),
-            status.ordinal,
-            usage.ordinal,
+            metadata?.let { hashMapOf(*it.map { (k, v) -> k to v }.toTypedArray()) },
+            status?.ordinal,
+            usage?.ordinal,
         )
     }
 }

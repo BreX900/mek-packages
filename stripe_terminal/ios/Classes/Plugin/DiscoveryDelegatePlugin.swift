@@ -29,7 +29,16 @@ class DiscoveryDelegatePlugin: NSObject, DiscoveryDelegate {
     ) -> PlatformError? {
         self._cancel()
         
-        let configurationHost = try! configuration.toHost()
+        let configurationHost: DiscoveryConfiguration?
+        do {
+            configurationHost = try configuration.toHost()
+        } catch {
+            return createApiException(
+                TerminalExceptionCodeApi.unknown,
+                "Failed to convert DiscoveryConfiguration: \(error.localizedDescription)"
+            ).toPlatformError()
+        }
+        
         guard let configurationHost else {
             return createApiException(
                 TerminalExceptionCodeApi.unknown,

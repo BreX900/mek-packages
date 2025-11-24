@@ -161,7 +161,13 @@ class Terminal {
     required ConnectionConfiguration configuration,
   }) async {
     return _handlers.handleReaderConnection(configuration.readerDelegate, () async {
-      return await _platform.connectReader(reader.serialNumber, configuration);
+      final serialNumber = reader.serialNumber;
+
+      if (serialNumber == null) {
+        throw ArgumentError('Reader must have a valid serial number to connect.');
+      }
+
+      return await _platform.connectReader(serialNumber, configuration);
     });
   }
 
@@ -278,9 +284,14 @@ class Terminal {
     AllowRedisplay allowRedisplay = AllowRedisplay.unspecified,
   }) {
     return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
+      final paymentIntentID = paymentIntent.id;
+      if (paymentIntentID == null) {
+        throw ArgumentError('PaymentIntent must have a valid id to collect a payment method.');
+      }
+
       return await _platform.startCollectPaymentMethod(
         operationId: id,
-        paymentIntentId: paymentIntent.id,
+        paymentIntentId: paymentIntentID,
         requestDynamicCurrencyConversion: requestDynamicCurrencyConversion,
         surchargeNotice: surchargeNotice,
         skipTipping: skipTipping,
@@ -319,7 +330,12 @@ class Terminal {
   ///   with the updated [PaymentIntent] to try charging another card.
   CancelableFuture<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) {
     return CancelableFuture(_platform.stopConfirmPaymentIntent, (id) async {
-      return await _platform.startConfirmPaymentIntent(id, paymentIntent.id);
+      final paymentIntentID = paymentIntent.id;
+      if (paymentIntentID == null) {
+        throw ArgumentError('PaymentIntent must have a valid id to confirm the payment.');
+      }
+
+      return await _platform.startConfirmPaymentIntent(id, paymentIntentID);
     });
   }
 
@@ -329,8 +345,15 @@ class Terminal {
   /// with status [PaymentIntentStatus.canceled].
   ///
   /// Note: This cannot be used with the Verifone P400 reader.
-  Future<void> cancelPaymentIntent(PaymentIntent paymentIntent) async =>
-      await _platform.cancelPaymentIntent(paymentIntent.id);
+  Future<void> cancelPaymentIntent(PaymentIntent paymentIntent) async {
+    final paymentIntentID = paymentIntent.id;
+    if (paymentIntentID == null) {
+      throw ArgumentError('PaymentIntent must have a valid id to cancel the payment.');
+    }
+
+    await _platform.cancelPaymentIntent(paymentIntentID);
+  }
+
 //endregion
 
 //region Saving payment details for later use
@@ -395,9 +418,13 @@ class Terminal {
     bool customerCancellationEnabled = false,
   }) {
     return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
+      final setupIntentID = setupIntent.id;
+      if (setupIntentID == null) {
+        throw ArgumentError('SetupIntent must have a valid id to collect a payment method.');
+      }
       return await _platform.startCollectSetupIntentPaymentMethod(
         operationId: id,
-        setupIntentId: setupIntent.id,
+        setupIntentId: setupIntentID,
         allowRedisplay: allowRedisplay,
         customerCancellationEnabled: customerCancellationEnabled,
       );
@@ -419,7 +446,11 @@ class Terminal {
   ///     be authentication the cardholder must perform offline before the saved PaymentMethod can be used.
   CancelableFuture<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) {
     return CancelableFuture(_platform.stopConfirmSetupIntent, (id) async {
-      return await _platform.startConfirmSetupIntent(id, setupIntent.id);
+      final setupIntentID = setupIntent.id;
+      if (setupIntentID == null) {
+        throw ArgumentError('SetupIntent must have a valid id to confirm the setup.');
+      }
+      return await _platform.startConfirmSetupIntent(id, setupIntentID);
     });
   }
 
@@ -427,8 +458,14 @@ class Terminal {
   ///
   /// If the cancel request succeeds returns the updated [SetupIntent] object with status
   /// [SetupIntentStatus.cancelled].
-  Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
-      await _platform.cancelSetupIntent(setupIntent.id);
+  Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async {
+    final setupIntentID = setupIntent.id;
+    if (setupIntentID == null) {
+      throw ArgumentError('SetupIntent must have a valid id to cancel the setup.');
+    }
+
+    return await _platform.cancelSetupIntent(setupIntentID);
+  }
 
 //endregion
 

@@ -235,7 +235,12 @@ class TerminalPlatformPlugin(
             callback =
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    paymentIntents[paymentIntent.id!!] = paymentIntent
+                    val paymentIntentID = paymentIntent.id
+                    if (paymentIntentID == null) {
+                        result.error(createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError())
+                        return
+                    }
+                    paymentIntents[paymentIntentID] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
             }
@@ -247,7 +252,12 @@ class TerminalPlatformPlugin(
             clientSecret,
             object : TerminalErrorHandler(result::error), PaymentIntentCallback {
                 override fun onSuccess(paymentIntent: PaymentIntent) {
-                    paymentIntents[paymentIntent.id!!] = paymentIntent
+                    val paymentIntentID = paymentIntent.id
+                    if (paymentIntentID == null) {
+                        result.error(createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError())
+                        return
+                    }
+                    paymentIntents[paymentIntentID] = paymentIntent
                     result.success(paymentIntent.toApi())
                 }
             }
@@ -293,7 +303,13 @@ class TerminalPlatformPlugin(
                     override fun onSuccess(paymentIntent: PaymentIntent) {
                         cancelablesCollectPaymentMethod.remove(operationId)
                         result.success(paymentIntent.toApi())
-                        paymentIntents[paymentIntent.id!!] = paymentIntent
+                        
+                        val paymentIntentID = paymentIntent.id
+                        if (paymentIntentID == null) {
+                            result.error(createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError())
+                            return
+                        }
+                        paymentIntents[paymentIntentID] = paymentIntent
                     }
                 }
             )
@@ -324,7 +340,13 @@ class TerminalPlatformPlugin(
                 override fun onFailure(e: TerminalException) {
                     val paymentIntentUpdated = e.paymentIntent
                     if (paymentIntentUpdated != null) {
-                        paymentIntents[paymentIntentUpdated.id!!] = paymentIntentUpdated
+                        val paymentIntentUpdatedID = paymentIntentUpdated.id
+                        if (paymentIntentUpdatedID == null) {
+                            result.error(createApiError(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED).toPlatformError())
+                            super.onFailure(e)
+                            return
+                        }
+                        paymentIntents[paymentIntentUpdatedID] = paymentIntentUpdated
                     }
                     super.onFailure(e)
                 }
@@ -381,7 +403,12 @@ class TerminalPlatformPlugin(
                 .build(),
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id!!] = setupIntent
+                    val setupIntentID = setupIntent.id
+                    if (setupIntentID == null) {
+                        result.error(createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError())
+                        return
+                    }
+                    setupIntents[setupIntentID] = setupIntent
                     result.success(setupIntent.toApi())
                 }
             }
@@ -393,7 +420,12 @@ class TerminalPlatformPlugin(
             clientSecret,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id!!] = setupIntent
+                    val setupIntentID = setupIntent.id
+                    if (setupIntentID == null) {
+                        result.error(createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError())
+                        return
+                    }
+                    setupIntents[setupIntentID] = setupIntent
                     result.success(setupIntent.toApi())
                 }
             }
@@ -427,7 +459,12 @@ class TerminalPlatformPlugin(
 
                     override fun onSuccess(setupIntent: SetupIntent) {
                         cancelablesCollectSetupIntentPaymentMethod.remove(operationId)
-                        setupIntents[setupIntent.id!!] = setupIntent
+                        val setupIntentID = setupIntent.id
+                        if (setupIntentID == null) {
+                            result.error(createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError())
+                            return
+                        }
+                        setupIntents[setupIntentID] = setupIntent
                         result.success(setupIntent.toApi())
                     }
                 }
@@ -455,7 +492,12 @@ class TerminalPlatformPlugin(
             setupIntent,
             object : TerminalErrorHandler(result::error), SetupIntentCallback {
                 override fun onSuccess(setupIntent: SetupIntent) {
-                    setupIntents[setupIntent.id!!] = setupIntent
+                    val setupIntentID = setupIntent.id
+                    if (setupIntentID == null) {
+                        result.error(createApiError(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED).toPlatformError())
+                        return
+                    }
+                    setupIntents[setupIntentID] = setupIntent
                     result.success(setupIntent.toApi())
                 }
             }

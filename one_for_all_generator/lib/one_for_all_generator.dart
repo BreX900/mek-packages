@@ -76,29 +76,56 @@ class OneForAll {
         .map((e) => path_.absolute(path_.normalize(e)))
         .toList();
 
+    report('[DEBUG] apiAbsolutePaths: $apiAbsolutePaths');
+
     final collection = AnalysisContextCollection(
       includedPaths: apiAbsolutePaths,
     );
 
     final scanner = LibraryScanner(options: options);
+    var fileCount = 0;
 
     await Future.wait(collection.contexts.expand((context) {
-      return context.contextRoot.analyzedFiles().map((filePath) async {
-        report('Reading... $filePath');
-        final session = context.currentSession;
-        final result = await session.getLibraryByUri('file://$filePath');
-        if (result is! LibraryElementResult) {
-          report(result);
-          return;
-        }
+      report('[DEBUG] Context root: ${context.contextRoot.root.path}');
+      final analyzedFiles = context.contextRoot.analyzedFiles().toList();
+      report('[DEBUG] Analyzed files in context: ${analyzedFiles.length}');
+      for (final f in analyzedFiles) {
+        report('[DEBUG] -> File: $f');
+      }
+      return analyzedFiles.map((filePath) async {
+        try {
+          report('Reading... $filePath');
+          final session = context.currentSession;
+          final fileUri = Uri.file(filePath);
+          report('[DEBUG] Converted to URI: $fileUri');
+          final result = await session.getLibraryByUri(fileUri.toString());
+          if (result is! LibraryElementResult) {
+            report('[DEBUG] NOT LibraryElementResult: ${result.runtimeType}');
+            report(result);
+            return;
+          }
 
-        report('Scanning... ${result.element2.uri}');
-        scanner.scan(result.element2);
+          report('Scanning... ${result.element2.uri}');
+          report('[DEBUG] Library name: ${result.element2.name}');
+          scanner.scan(result.element2);
+          fileCount++;
+        } catch (e, st) {
+          report('[ERROR] Failed to process $filePath: $e\n$st');
+        }
       });
     }));
 
+    report('[DEBUG] Total files scanned: $fileCount');
+
     report('Building...');
     final scanResult = scanner.result;
+    report(
+        '[DEBUG] Found: hostApiHandles=${scanResult.hostApiHandles.length}, flutterApiHandlers=${scanResult.flutterApiHandlers.length}, serializableHandlers=${scanResult.serializableHandlers.length}');
+    if (scanResult.hostApiHandles.isEmpty &&
+        scanResult.flutterApiHandlers.isEmpty &&
+        scanResult.serializableHandlers.isEmpty) {
+      report('[WARNING] No APIs or serializable models found!');
+    }
     final builders = buildersCreator(options);
 
     for (final builder in builders) {

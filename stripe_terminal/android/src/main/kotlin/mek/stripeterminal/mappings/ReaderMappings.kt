@@ -51,7 +51,7 @@ fun Reader.toApi(): ReaderApi {
         locationId = location?.id,
         location = location?.toApi(),
         label = label,
-        serialNumber = serialNumber!!,
+        serialNumber = serialNumber,
         ipAddress = ipAddress,
         networkStatus = networkStatus?.toApi()
     )

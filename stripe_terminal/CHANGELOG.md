@@ -1,4 +1,8 @@
 
+
+## 4.6.3
+- fix: deleted a trailing comma that was causing a compilation error on  Xcode versions priors to 16.3
+
 ## 4.6.2
 - feat(terminal): Added `id`, `ipAddress`, and `networkStatus` fields to the `Reader` object. Added by [@mahmoud-othmane](https://github.com/mahmoud-othmane).
 - build: bumped `mek_data_class` package to `2.0.0`

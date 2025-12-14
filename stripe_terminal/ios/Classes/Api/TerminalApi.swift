@@ -1257,7 +1257,7 @@ struct PaymentMethodOptionsParametersApi {
 enum PaymentMethodTypeApi: Int {
     case cardPresent
     case card
-    case interactPresent
+    case interacPresent
 }
 
 enum PaymentStatusApi: Int {

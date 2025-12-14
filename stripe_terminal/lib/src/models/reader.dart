@@ -63,7 +63,7 @@ class Reader with _$Reader {
   // TODO: Add location field
 
   /// The reader’s serial number.
-  final String serialNumber;
+  final String? serialNumber;
 
   // TODO: Add deviceSoftwareVersion field
 
@@ -76,10 +76,10 @@ class Reader with _$Reader {
   ///
   /// calls to [Terminal.installAvailableUpdate] when availableUpdate is `null` will result in
   /// [PhysicalReaderDelegate.onFinishInstallingUpdate] called immediately with a `null` update and `null` error.
-  final bool availableUpdate;
+  final bool? availableUpdate;
 
   /// The reader’s battery level, represented as a boxed float in the range [0, 1]. If the reader does not have a battery, or the battery level is unknown, this value is nil.
-  final double batteryLevel;
+  final double? batteryLevel;
 
   BatteryStatus? get batteryStatus => BatteryStatus.from(batteryLevel);
 
@@ -208,8 +208,8 @@ enum BatteryStatus {
 
   const BatteryStatus(this.minLevel, this.maxLevel);
 
-  static BatteryStatus? from(double level) {
-    if (level == -1) return null;
+  static BatteryStatus? from(double? level) {
+    if (level == null || level == -1) return null;
     return BatteryStatus.values.singleWhere((e) => level > e.minLevel && level < e.maxLevel);
   }
 }

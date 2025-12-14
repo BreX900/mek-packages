@@ -6,9 +6,9 @@ extension SetupIntent {
         return SetupIntentApi(
             created: created,
             customerId: customer,
-            id: stripeId!,
+            id: stripeId,
             latestAttempt: latestAttempt?.toApi(),
-            metadata: metadata ?? [:],
+            metadata: metadata,
             status: status.toApi(),
             usage: usage.toApi()
         )

@@ -22,11 +22,11 @@ import mek.stripeterminal.toHashMap
 
 fun PaymentIntent.toApi(): PaymentIntentApi {
     return PaymentIntentApi(
-        id = id!!,
+        id = id,
         created = created * 1000,
-        status = status!!.toApi(),
-        amount = amount.toDouble(),
-        captureMethod = when (captureMethod!!) {
+        status = status?.toApi(),
+        amount = amount,
+        captureMethod = when (captureMethod ?: "") {
             "automatic" -> CaptureMethodApi.AUTOMATIC
             "manual" -> CaptureMethodApi.MANUAL
             else ->
@@ -34,20 +34,20 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
                     "Not supported CaptureMethod '$captureMethod' on PaymentIntent $id"
                 )
         },
-        currency = currency!!,
-        metadata = metadata?.toHashMap() ?: hashMapOf(),
+        currency = currency,
+        metadata = metadata?.toHashMap(),
         charges = getCharges().map { it.toApi() },
         paymentMethod = paymentMethod?.toApi(),
         amountDetails = amountDetails?.toApi(),
         paymentMethodId = paymentMethodId,
-        amountTip = amountTip?.toDouble(),
+        amountTip = amountTip,
         statementDescriptor = statementDescriptor,
         statementDescriptorSuffix = statementDescriptorSuffix,
         // Only Android
-        amountCapturable = amountCapturable.toDouble(),
-        amountReceived = amountReceived.toDouble(),
+        amountCapturable = amountCapturable,
+        amountReceived = amountReceived,
         applicationId = application,
-        applicationFeeAmount = applicationFeeAmount.toDouble(),
+        applicationFeeAmount = applicationFeeAmount,
         canceledAt = canceledAt,
         cancellationReason = cancellationReason,
         clientSecret = clientSecret,
@@ -115,7 +115,7 @@ fun PaymentIntentParametersApi.toHost(): PaymentIntentParameters {
                 }
             }
         )
-    b.setMetadata(metadata)
+    b.setMetadata(metadata ?: hashMapOf())
     description?.let(b::setDescription)
     statementDescriptor?.let(b::setStatementDescriptor)
     statementDescriptorSuffix?.let(b::setStatementDescriptorSuffix)

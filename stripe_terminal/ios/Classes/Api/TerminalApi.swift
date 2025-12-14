@@ -776,10 +776,10 @@ struct ChargeApi {
     let amount: Int
     let authorizationCode: String?
     let calculatedStatementDescriptor: String?
-    let currency: String
+    let currency: String?
     let description: String?
     let id: String
-    let metadata: [String: String]
+    let metadata: [String: String]?
     let paymentMethodDetails: PaymentMethodDetailsApi?
     let statementDescriptorSuffix: String?
     let status: ChargeStatusApi
@@ -792,7 +792,7 @@ struct ChargeApi {
             currency,
             description,
             id,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
             paymentMethodDetails?.serialize(),
             statementDescriptorSuffix,
             status.rawValue,
@@ -1062,7 +1062,7 @@ struct LocationApi {
     let displayName: String?
     let id: String?
     let livemode: Bool?
-    let metadata: [String: String]
+    let metadata: [String: String]?
 
     func serialize() -> [Any?] {
         return [
@@ -1070,7 +1070,7 @@ struct LocationApi {
             displayName,
             id,
             livemode,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
         ]
     }
 }
@@ -1086,12 +1086,12 @@ enum NetworkStatusApi: Int {
 }
 
 struct PaymentIntentApi {
-    let amount: Double
-    let amountCapturable: Double?
+    let amount: Int
+    let amountCapturable: Int?
     let amountDetails: AmountDetailsApi?
-    let amountReceived: Double?
-    let amountTip: Double?
-    let applicationFeeAmount: Double?
+    let amountReceived: Int?
+    let amountTip: Int?
+    let applicationFeeAmount: Int?
     let applicationId: String?
     let canceledAt: Date?
     let cancellationReason: String?
@@ -1100,12 +1100,12 @@ struct PaymentIntentApi {
     let clientSecret: String?
     let confirmationMethod: ConfirmationMethodApi?
     let created: Date
-    let currency: String
+    let currency: String?
     let customerId: String?
     let description: String?
-    let id: String
+    let id: String?
     let invoiceId: String?
-    let metadata: [String: String]
+    let metadata: [String: String]?
     let onBehalfOf: String?
     let paymentMethod: PaymentMethodApi?
     let paymentMethodId: String?
@@ -1114,7 +1114,7 @@ struct PaymentIntentApi {
     let setupFutureUsage: PaymentIntentUsageApi?
     let statementDescriptor: String?
     let statementDescriptorSuffix: String?
-    let status: PaymentIntentStatusApi
+    let status: PaymentIntentStatusApi?
     let transferGroup: String?
 
     func serialize() -> [Any?] {
@@ -1138,7 +1138,7 @@ struct PaymentIntentApi {
             description,
             id,
             invoiceId,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
             onBehalfOf,
             paymentMethod?.serialize(),
             paymentMethodId,
@@ -1147,7 +1147,7 @@ struct PaymentIntentApi {
             setupFutureUsage?.rawValue,
             statementDescriptor,
             statementDescriptorSuffix,
-            status.rawValue,
+            status?.rawValue,
             transferGroup,
         ]
     }
@@ -1160,7 +1160,7 @@ struct PaymentIntentParametersApi {
     let currency: String
     let customerId: String?
     let description: String?
-    let metadata: [String: String]
+    let metadata: [String: String]?
     let onBehalfOf: String?
     let paymentMethodOptionsParameters: PaymentMethodOptionsParametersApi?
     let paymentMethodTypes: [PaymentMethodTypeApi]
@@ -1181,7 +1181,7 @@ struct PaymentIntentParametersApi {
             currency: serialized[3] as! String,
             customerId: serialized[4] as? String,
             description: serialized[5] as? String,
-            metadata: Dictionary(uniqueKeysWithValues: (serialized[6] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }),
+            metadata: !(serialized[6] is NSNull) ? Dictionary(uniqueKeysWithValues: (serialized[6] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil,
             onBehalfOf: serialized[7] as? String,
             paymentMethodOptionsParameters: !(serialized[8] is NSNull) ? PaymentMethodOptionsParametersApi.deserialize(serialized[8] as! [Any?]) : nil,
             paymentMethodTypes: (serialized[9] as! [Any?]).map { PaymentMethodTypeApi(rawValue: $0 as! Int)! },
@@ -1216,7 +1216,7 @@ struct PaymentMethodApi {
     let customerId: String?
     let id: String
     let interacPresent: CardPresentDetailsApi?
-    let metadata: [String: String]
+    let metadata: [String: String]?
 
     func serialize() -> [Any?] {
         return [
@@ -1225,7 +1225,7 @@ struct PaymentMethodApi {
             customerId,
             id,
             interacPresent?.serialize(),
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
         ]
     }
 }
@@ -1268,8 +1268,8 @@ enum PaymentStatusApi: Int {
 }
 
 struct ReaderApi {
-    let availableUpdate: Bool
-    let batteryLevel: Double
+    let availableUpdate: Bool?
+    let batteryLevel: Double?
     let deviceType: DeviceTypeApi?
     let id: String?
     let ipAddress: String?
@@ -1278,7 +1278,7 @@ struct ReaderApi {
     let locationId: String?
     let locationStatus: LocationStatusApi?
     let networkStatus: NetworkStatusApi?
-    let serialNumber: String
+    let serialNumber: String?
     let simulated: Bool
 
     func serialize() -> [Any?] {
@@ -1410,7 +1410,7 @@ struct ReceiptDetailsApi {
     let applicationCryptogram: String?
     let applicationPreferredName: String?
     let authorizationCode: String?
-    let authorizationResponseCode: String
+    let authorizationResponseCode: String?
     let dedicatedFileName: String?
     let terminalVerificationResults: String?
     let transactionStatusInformation: String?
@@ -1430,13 +1430,13 @@ struct ReceiptDetailsApi {
 }
 
 struct RefundApi {
-    let amount: Int
-    let chargeId: String
-    let created: Date
-    let currency: String
+    let amount: Int?
+    let chargeId: String?
+    let created: Date?
+    let currency: String?
     let failureReason: String?
     let id: String
-    let metadata: [String: String]
+    let metadata: [String: String]?
     let paymentMethodDetails: PaymentMethodDetailsApi?
     let reason: String?
     let status: RefundStatusApi?
@@ -1445,11 +1445,11 @@ struct RefundApi {
         return [
             amount,
             chargeId,
-            Int(created.timeIntervalSince1970 * 1000),
+            created != nil ? Int(created!.timeIntervalSince1970 * 1000) : nil,
             currency,
             failureReason,
             id,
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
             paymentMethodDetails?.serialize(),
             reason,
             status?.rawValue,
@@ -1471,7 +1471,7 @@ struct SetupAttemptApi {
     let onBehalfOf: String?
     let paymentMethodDetails: SetupAttemptPaymentMethodDetailsApi?
     let paymentMethodId: String?
-    let setupIntentId: String
+    let setupIntentId: String?
     let status: SetupAttemptStatusApi
 
     func serialize() -> [Any?] {
@@ -1490,8 +1490,8 @@ struct SetupAttemptApi {
 }
 
 struct SetupAttemptCardPresentDetailsApi {
-    let emvAuthData: String
-    let generatedCard: String
+    let emvAuthData: String?
+    let generatedCard: String?
 
     func serialize() -> [Any?] {
         return [
@@ -1525,11 +1525,11 @@ enum SetupAttemptStatusApi: Int {
 struct SetupIntentApi {
     let created: Date
     let customerId: String?
-    let id: String
+    let id: String?
     let latestAttempt: SetupAttemptApi?
-    let metadata: [String: String]
-    let status: SetupIntentStatusApi
-    let usage: SetupIntentUsageApi
+    let metadata: [String: String]?
+    let status: SetupIntentStatusApi?
+    let usage: SetupIntentUsageApi?
 
     func serialize() -> [Any?] {
         return [
@@ -1537,9 +1537,9 @@ struct SetupIntentApi {
             customerId,
             id,
             latestAttempt?.serialize(),
-            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata.map { k, v in (k, v) }) : nil,
-            status.rawValue,
-            usage.rawValue,
+            metadata != nil ? Dictionary(uniqueKeysWithValues: metadata!.map { k, v in (k, v) }) : nil,
+            status?.rawValue,
+            usage?.rawValue,
         ]
     }
 }

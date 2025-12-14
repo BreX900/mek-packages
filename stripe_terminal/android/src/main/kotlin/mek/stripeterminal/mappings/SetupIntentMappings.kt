@@ -20,12 +20,12 @@ import mek.stripeterminal.toHashMap
 
 fun SetupIntent.toApi(): SetupIntentApi {
     return SetupIntentApi(
-        id = id!!,
+        id = id,
         created = created,
         customerId = customerId,
         metadata = metadata.toHashMap(),
-        usage = usage!!.toApi(),
-        status = status!!.toApi(),
+        usage = usage?.toApi(),
+        status = status?.toApi(),
         latestAttempt = latestAttempt?.toApi()
     )
 }
@@ -57,7 +57,7 @@ fun SetupAttempt.toApi(): SetupAttemptApi {
         onBehalfOf = onBehalfOfId,
         paymentMethodId = paymentMethodId,
         paymentMethodDetails = paymentMethodDetails.toApi(),
-        setupIntentId = setupIntentId!!,
+        setupIntentId = setupIntentId,
         status = status.toApi()
     )
 }
@@ -82,8 +82,8 @@ fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi
 
 fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
     return SetupAttemptCardPresentDetailsApi(
-        emvAuthData = emvAuthData!!,
-        generatedCard = generatedCard!!
+        emvAuthData = emvAuthData,
+        generatedCard = generatedCard
     )
 }
 

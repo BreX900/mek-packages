@@ -563,10 +563,10 @@ Charge _$deserializeCharge(List<Object?> serialized) => Charge(
     amount: serialized[0] as int,
     authorizationCode: serialized[1] as String?,
     calculatedStatementDescriptor: serialized[2] as String?,
-    currency: serialized[3] as String,
+    currency: serialized[3] as String?,
     description: serialized[4] as String?,
     id: serialized[5] as String,
-    metadata: (serialized[6] as Map).map((k, v) => MapEntry(k as String, v as String)),
+    metadata: (serialized[6] as Map?)?.map((k, v) => MapEntry(k as String, v as String)),
     paymentMethodDetails:
         serialized[7] != null ? _$deserializePaymentMethodDetails(serialized[7] as List) : null,
     statementDescriptorSuffix: serialized[8] as String?,
@@ -650,14 +650,14 @@ Location _$deserializeLocation(List<Object?> serialized) => Location(
     displayName: serialized[1] as String?,
     id: serialized[2] as String?,
     livemode: serialized[3] as bool?,
-    metadata: (serialized[4] as Map).map((k, v) => MapEntry(k as String, v as String)));
+    metadata: (serialized[4] as Map?)?.map((k, v) => MapEntry(k as String, v as String)));
 PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentIntent(
-    amount: serialized[0] as double,
-    amountCapturable: serialized[1] as double?,
+    amount: serialized[0] as int,
+    amountCapturable: serialized[1] as int?,
     amountDetails: serialized[2] != null ? _$deserializeAmountDetails(serialized[2] as List) : null,
-    amountReceived: serialized[3] as double?,
-    amountTip: serialized[4] as double?,
-    applicationFeeAmount: serialized[5] as double?,
+    amountReceived: serialized[3] as int?,
+    amountTip: serialized[4] as int?,
+    applicationFeeAmount: serialized[5] as int?,
     applicationId: serialized[6] as String?,
     canceledAt:
         serialized[7] != null ? DateTime.fromMillisecondsSinceEpoch(serialized[7] as int) : null,
@@ -668,12 +668,12 @@ PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentInt
     confirmationMethod:
         serialized[12] != null ? ConfirmationMethod.values[serialized[12] as int] : null,
     created: DateTime.fromMillisecondsSinceEpoch(serialized[13] as int),
-    currency: serialized[14] as String,
+    currency: serialized[14] as String?,
     customerId: serialized[15] as String?,
     description: serialized[16] as String?,
-    id: serialized[17] as String,
+    id: serialized[17] as String?,
     invoiceId: serialized[18] as String?,
-    metadata: (serialized[19] as Map).map((k, v) => MapEntry(k as String, v as String)),
+    metadata: (serialized[19] as Map?)?.map((k, v) => MapEntry(k as String, v as String)),
     onBehalfOf: serialized[20] as String?,
     paymentMethod:
         serialized[21] != null ? _$deserializePaymentMethod(serialized[21] as List) : null,
@@ -684,7 +684,7 @@ PaymentIntent _$deserializePaymentIntent(List<Object?> serialized) => PaymentInt
         serialized[25] != null ? PaymentIntentUsage.values[serialized[25] as int] : null,
     statementDescriptor: serialized[26] as String?,
     statementDescriptorSuffix: serialized[27] as String?,
-    status: PaymentIntentStatus.values[serialized[28] as int],
+    status: serialized[28] != null ? PaymentIntentStatus.values[serialized[28] as int] : null,
     transferGroup: serialized[29] as String?);
 List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deserialized) => [
       deserialized.amount,
@@ -693,7 +693,7 @@ List<Object?> _$serializePaymentIntentParameters(PaymentIntentParameters deseria
       deserialized.currency,
       deserialized.customerId,
       deserialized.description,
-      deserialized.metadata.map((k, v) => MapEntry(k, v)),
+      deserialized.metadata?.map((k, v) => MapEntry(k, v)),
       deserialized.onBehalfOf,
       deserialized.paymentMethodOptionsParameters != null
           ? _$serializePaymentMethodOptionsParameters(deserialized.paymentMethodOptionsParameters!)
@@ -714,7 +714,7 @@ PaymentMethod _$deserializePaymentMethod(List<Object?> serialized) => PaymentMet
     id: serialized[3] as String,
     interacPresent:
         serialized[4] != null ? _$deserializeCardPresentDetails(serialized[4] as List) : null,
-    metadata: (serialized[5] as Map).map((k, v) => MapEntry(k as String, v as String)));
+    metadata: (serialized[5] as Map?)?.map((k, v) => MapEntry(k as String, v as String)));
 PaymentMethodDetails _$deserializePaymentMethodDetails(List<Object?> serialized) =>
     PaymentMethodDetails(
         cardPresent:
@@ -725,8 +725,8 @@ List<Object?> _$serializePaymentMethodOptionsParameters(
         PaymentMethodOptionsParameters deserialized) =>
     [_$serializeCardPresentParameters(deserialized.cardPresentParameters)];
 Reader _$deserializeReader(List<Object?> serialized) => Reader(
-    availableUpdate: serialized[0] as bool,
-    batteryLevel: serialized[1] as double,
+    availableUpdate: serialized[0] as bool?,
+    batteryLevel: serialized[1] as double?,
     deviceType: serialized[2] != null ? DeviceType.values[serialized[2] as int] : null,
     id: serialized[3] as String?,
     ipAddress: serialized[4] as String?,
@@ -735,7 +735,7 @@ Reader _$deserializeReader(List<Object?> serialized) => Reader(
     locationId: serialized[7] as String?,
     locationStatus: serialized[8] != null ? LocationStatus.values[serialized[8] as int] : null,
     networkStatus: serialized[9] != null ? NetworkStatus.values[serialized[9] as int] : null,
-    serialNumber: serialized[10] as String,
+    serialNumber: serialized[10] as String?,
     simulated: serialized[11] as bool);
 List<Object?> _$serializeReaderDelegateAbstract(ReaderDelegateAbstract deserialized) =>
     switch (deserialized) {
@@ -766,18 +766,19 @@ ReceiptDetails _$deserializeReceiptDetails(List<Object?> serialized) => ReceiptD
     applicationCryptogram: serialized[1] as String?,
     applicationPreferredName: serialized[2] as String?,
     authorizationCode: serialized[3] as String?,
-    authorizationResponseCode: serialized[4] as String,
+    authorizationResponseCode: serialized[4] as String?,
     dedicatedFileName: serialized[5] as String?,
     terminalVerificationResults: serialized[6] as String?,
     transactionStatusInformation: serialized[7] as String?);
 Refund _$deserializeRefund(List<Object?> serialized) => Refund(
-    amount: serialized[0] as int,
-    chargeId: serialized[1] as String,
-    created: DateTime.fromMillisecondsSinceEpoch(serialized[2] as int),
-    currency: serialized[3] as String,
+    amount: serialized[0] as int?,
+    chargeId: serialized[1] as String?,
+    created:
+        serialized[2] != null ? DateTime.fromMillisecondsSinceEpoch(serialized[2] as int) : null,
+    currency: serialized[3] as String?,
     failureReason: serialized[4] as String?,
     id: serialized[5] as String,
-    metadata: (serialized[6] as Map).map((k, v) => MapEntry(k as String, v as String)),
+    metadata: (serialized[6] as Map?)?.map((k, v) => MapEntry(k as String, v as String)),
     paymentMethodDetails:
         serialized[7] != null ? _$deserializePaymentMethodDetails(serialized[7] as List) : null,
     reason: serialized[8] as String?,
@@ -792,12 +793,12 @@ SetupAttempt _$deserializeSetupAttempt(List<Object?> serialized) => SetupAttempt
         ? _$deserializeSetupAttemptPaymentMethodDetails(serialized[5] as List)
         : null,
     paymentMethodId: serialized[6] as String?,
-    setupIntentId: serialized[7] as String,
+    setupIntentId: serialized[7] as String?,
     status: SetupAttemptStatus.values[serialized[8] as int]);
 SetupAttemptCardPresentDetails _$deserializeSetupAttemptCardPresentDetails(
         List<Object?> serialized) =>
     SetupAttemptCardPresentDetails(
-        emvAuthData: serialized[0] as String, generatedCard: serialized[1] as String);
+        emvAuthData: serialized[0] as String?, generatedCard: serialized[1] as String?);
 SetupAttemptPaymentMethodDetails _$deserializeSetupAttemptPaymentMethodDetails(
         List<Object?> serialized) =>
     SetupAttemptPaymentMethodDetails(
@@ -810,11 +811,11 @@ SetupAttemptPaymentMethodDetails _$deserializeSetupAttemptPaymentMethodDetails(
 SetupIntent _$deserializeSetupIntent(List<Object?> serialized) => SetupIntent(
     created: DateTime.fromMillisecondsSinceEpoch(serialized[0] as int),
     customerId: serialized[1] as String?,
-    id: serialized[2] as String,
+    id: serialized[2] as String?,
     latestAttempt: serialized[3] != null ? _$deserializeSetupAttempt(serialized[3] as List) : null,
-    metadata: (serialized[4] as Map).map((k, v) => MapEntry(k as String, v as String)),
-    status: SetupIntentStatus.values[serialized[5] as int],
-    usage: SetupIntentUsage.values[serialized[6] as int]);
+    metadata: (serialized[4] as Map?)?.map((k, v) => MapEntry(k as String, v as String)),
+    status: serialized[5] != null ? SetupIntentStatus.values[serialized[5] as int] : null,
+    usage: serialized[6] != null ? SetupIntentUsage.values[serialized[6] as int] : null);
 List<Object?> _$serializeSimulatedCard(SimulatedCard deserialized) =>
     [deserialized.testCardNumber, deserialized.type?.index];
 List<Object?> _$serializeSimulatorConfiguration(SimulatorConfiguration deserialized) => [

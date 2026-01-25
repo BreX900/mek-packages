@@ -1,3 +1,7 @@
+
+## 1.1.2
+- build: removed analyzer dependency
+
 ## 1.1.1
 - build: bumped `open_api_specification` to `3.0.0`
 

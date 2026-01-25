@@ -1,3 +1,7 @@
+
+## 3.2.2
+- build: allow `analyzer: '>=8.1.1 <11.0.0'`
+
 ## 3.2.1
 - build: bumped `analyzer: ^9.0.0`
 - build: bumped `build: ^4.0.3`

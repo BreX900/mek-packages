@@ -3,7 +3,7 @@ description: OpenApi Client Generator allows generation of API client libraries 
 repository: https://github.com/BreX900/mek-packages
 issue_tracker: https://github.com/BreX900/mek-packages/issues
 homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/open_api_client_generator
-version: 1.1.1
+version: 1.1.2
 
 environment:
   sdk: ^3.8.0
@@ -23,7 +23,6 @@ dependencies:
   http: ^1.2.2
   yaml: ^3.0.0
 
-  analyzer: '>=7.4.0 <9.0.0'
   code_builder: ^4.4.0
   dart_style: ^3.0.0
   recase: ^4.1.0

@@ -24,7 +24,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
-        if (Terminal.hasTokenProvider()) { self._clean() }
+        if (Terminal.isInitialized()) { self._clean() }
         
         self._discoverReadersController.removeHandler()
         removeTerminalPlatformApiHandler()
@@ -32,14 +32,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     
     func onInit(_ shouldPrintLogs: Bool) async throws {
         // If a hot restart is performed in flutter the terminal is already initialized but we need to clean it up
-        if Terminal.hasTokenProvider() {
+        if Terminal.isInitialized() {
             _clean()
             return
         }
         
         let delegate = TerminalDelegatePlugin(handlers)
-        Terminal.setTokenProvider(delegate)
-        Terminal.shared.delegate = delegate
+        Terminal.initWithTokenProvider(delegate, delegate: delegate)
         if (shouldPrintLogs) { Terminal.setLogListener { message in print(message) } }
     }
     
@@ -206,13 +205,13 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ allowRedisplay: AllowRedisplayApi
     ) throws {
         let paymentIntent = try _findPaymentIntent(paymentIntentId)
-        let config = CollectConfigurationBuilder()
+        let config = CollectPaymentIntentConfigurationBuilder()
             .setSurchargeNotice(surchargeNotice)
             .setRequestDynamicCurrencyConversion(requestDynamicCurrencyConversion)
             .setSkipTipping(skipTipping)
             .setTippingConfiguration(try tippingConfiguration?.toHost())
             .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
-            .setEnableCustomerCancellation(customerCancellationEnabled)
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
             .setAllowRedisplay(allowRedisplay.toHost())
             
         self._cancelablesCollectPaymentMethod[operationId] = Terminal.shared.collectPaymentMethod(
@@ -313,8 +312,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         _ customerCancellationEnabled: Bool
     ) throws {
         let setupIntent = try _findSetupIntent(setupIntentId)
-        let config = SetupIntentConfigurationBuilder()
-            .setEnableCustomerCancellation(customerCancellationEnabled)
+        let config = CollectSetupIntentConfigurationBuilder()
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
         
         _cancelablesCollectSetupIntentPaymentMethod[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
             setupIntent,
@@ -387,8 +386,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         reverseTransfer.apply(params.setReverseTransfer)
         params.setMetadata(metadata)
         
-        let config = RefundConfigurationBuilder()
-            .setEnableCustomerCancellation(customerCancellationEnabled)
+        let config = CollectRefundConfigurationBuilder()
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
         
         _cancelablesCollectRefundPaymentMethod[operationId] = Terminal.shared.collectRefundPaymentMethod(
             try params.build(),
@@ -448,6 +447,20 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     
     func onSetTapToPayUXConfiguration(_ configuration: TapToPayUxConfigurationApi) throws {
         throw PlatformError("mek_stripe_terminal", "setTapToPayUXConfiguration method not supported on ios device");
+    }
+
+    func onIsTapToPayAccountLinked(_ result: Result<Bool>, _ onBehalfOf: String?) throws {
+        if #available(iOS 16.4, *) {
+            Terminal.shared.isTapToPayAccountLinked(onBehalfOf) { linked, error in
+                if let error = error {
+                    result.error((error as NSError).toPlatformError())
+                } else {
+                    result.success(linked?.boolValue ?? false)
+                }
+            }
+        } else {
+            result.success(false)
+        }
     }
     
 // MARK: - PRIVATE METHODS

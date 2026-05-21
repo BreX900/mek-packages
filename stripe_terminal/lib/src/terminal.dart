@@ -438,6 +438,10 @@ class Terminal {
   /// Configure Tap to Pay UX
   Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async =>
       await _platform.setTapToPayUXConfiguration(configuration);
+
+  /// Checks if the current Stripe account has a linked Tap to Pay on iPhone account (iOS only).
+  Future<bool> isTapToPayAccountLinked({String? onBehalfOf}) async =>
+      await _platform.isTapToPayAccountLinked(onBehalfOf: onBehalfOf);
   //endregion
 
   StreamController<T> _handleStream<T>(

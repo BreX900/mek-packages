@@ -1,7 +1,7 @@
 import Foundation
 import StripeTerminal
 
-extension SCPTip {
+extension Tip {
     func toApi() -> TipApi {
         return TipApi(
             amount: amount?.intValue

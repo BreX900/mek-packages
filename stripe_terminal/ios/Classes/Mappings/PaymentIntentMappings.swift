@@ -74,7 +74,7 @@ extension CaptureMethod {
     }
 }
 
-extension SCPAmountDetails {
+extension AmountDetails {
     func toApi() -> AmountDetailsApi {
         return AmountDetailsApi(
             tip: tip?.toApi()

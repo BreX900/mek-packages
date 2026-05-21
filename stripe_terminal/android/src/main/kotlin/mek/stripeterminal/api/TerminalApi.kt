@@ -215,6 +215,10 @@ interface TerminalPlatformApi {
         operationId: Long,
     )
 
+    fun onIsTapToPayAccountLinked(
+        onBehalfOf: String?,
+    ): Boolean
+
     private fun onMethodCall(
         call: MethodCall,
         result: MethodChannel.Result,
@@ -351,6 +355,10 @@ interface TerminalPlatformApi {
                 "stopEasyConnect" -> {
                     val res = Result<Unit>(result) { null }
                     onStopEasyConnect(res, (args[0] as Number).toLong())
+                }
+                "isTapToPayAccountLinked" -> {
+                    val res = onIsTapToPayAccountLinked(args[0] as String?)
+                    result.success(res)
                 }
             }
         } catch (e: PlatformError) {

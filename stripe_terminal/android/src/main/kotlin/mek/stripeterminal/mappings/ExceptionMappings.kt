@@ -2,6 +2,8 @@ package mek.stripeterminal.mappings
 
 import com.stripe.stripeterminal.external.models.TerminalErrorCode
 import com.stripe.stripeterminal.external.models.TerminalException
+import android.nfc.NfcAdapter
+import mek.stripeterminal.TerminalPlugin
 import mek.stripeterminal.api.PlatformError
 import mek.stripeterminal.api.TerminalExceptionApi
 import mek.stripeterminal.api.TerminalExceptionCodeApi
@@ -15,7 +17,21 @@ fun TerminalExceptionApi.toPlatformError(): PlatformError {
 }
 
 fun TerminalException.toApi(): TerminalExceptionApi {
-    val code = errorCode.toApiCode()
+    var code = errorCode.toApiCode()
+
+    if (errorMessage.contains("unexpected reader failure", ignoreCase = true) ||
+        errorMessage.contains("nfc", ignoreCase = true)) {
+        try {
+            val ctx = TerminalPlugin.context
+            if (ctx != null) {
+                val nfcAdapter = NfcAdapter.getDefaultAdapter(ctx)
+                if (nfcAdapter != null && !nfcAdapter.isEnabled) {
+                    code = TerminalExceptionCodeApi.NFC_DISABLED
+                }
+            }
+        } catch (ignored: Exception) {}
+    }
+
     return TerminalExceptionApi(
         code = code ?: TerminalExceptionCodeApi.UNKNOWN,
         message = errorMessage,
@@ -135,5 +151,6 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.BARCODE_REQUESTED_SCANNER_NOT_FOUND -> TerminalExceptionCodeApi.BARCODE_REQUESTED_SCANNER_NOT_FOUND
         TerminalErrorCode.BARCODE_SCANNING_UNSUPPORTED_DEVICE -> TerminalExceptionCodeApi.BARCODE_SCANNING_UNSUPPORTED_DEVICE
         TerminalErrorCode.SIMULATED_OFFLINE_MODE_NOT_AVAILABLE_IN_LIVEMODE -> TerminalExceptionCodeApi.SIMULATED_OFFLINE_MODE_NOT_AVAILABLE_IN_LIVEMODE
+        else -> TerminalExceptionCodeApi.UNKNOWN
     }
 }

@@ -448,6 +448,17 @@ class _$TerminalPlatform implements TerminalPlatform {
       rethrow;
     }
   }
+
+  @override
+  Future<bool> isTapToPayAccountLinked({required String? onBehalfOf}) async {
+    try {
+      final result = await _$channel.invokeMethod('isTapToPayAccountLinked', [onBehalfOf]);
+      return result as bool;
+    } on PlatformException catch (exception) {
+      TerminalPlatform._throwIfIsHostException(exception);
+      rethrow;
+    }
+  }
 }
 
 void _$setupTerminalHandlers(TerminalHandlers hostApi) {

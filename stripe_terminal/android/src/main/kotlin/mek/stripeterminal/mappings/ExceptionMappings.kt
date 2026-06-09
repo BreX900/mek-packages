@@ -130,8 +130,11 @@ private fun TerminalErrorCode.toApiCode(): TerminalExceptionCodeApi? {
         TerminalErrorCode.PRINTER_UNAVAILABLE -> TerminalExceptionCodeApi.PRINTER_UNAVAILABLE
         TerminalErrorCode.PRINTER_ERROR -> TerminalExceptionCodeApi.PRINTER_ERROR
         TerminalErrorCode.TAP_TO_PAY_UNSUPPORTED_PROCESSOR -> TerminalExceptionCodeApi.TAP_TO_PAY_UNSUPPORTED_PROCESSOR
-        // Added in Stripe Terminal 5.3–5.6; no matching TerminalExceptionCodeApi value
-        // yet, so map to null (surfaces as UNKNOWN on the Dart side).
+        // Added in Stripe Terminal 5.3–5.6. The TerminalExceptionCode enum carries
+        // iOS-only values that Kotlin lacks, and the channel serializes by ordinal —
+        // so a hand-added Api enum value would land at a mismatched index and decode
+        // as the wrong code on Dart. Map to null (UNKNOWN) until a platform-aware
+        // code generator run can add these safely.
         TerminalErrorCode.TAP_TO_PAY_PIN_UNAVAILABLE -> null
         TerminalErrorCode.BARCODE_SCANNER_UNAVAILABLE -> null
         TerminalErrorCode.BARCODE_REQUESTED_SCANNER_NOT_FOUND -> null

@@ -100,12 +100,11 @@ fun DeviceType.toApi(): DeviceTypeApi? {
         DeviceType.VERIFONE_UX700_DEVKIT -> DeviceTypeApi.VERIFONE_UX700_DEVKIT
         DeviceType.VERIFONE_VM100 -> DeviceTypeApi.VERIFONE_VM100
         DeviceType.VERIFONE_VP100 -> DeviceTypeApi.VERIFONE_VP100
-        // Added in Stripe Terminal 5.3–5.6; no matching DeviceTypeApi value yet,
-        // so map to null (treated as unknown device type on the Dart side).
-        DeviceType.STRIPE_U200 -> null
-        DeviceType.VERIFONE_VM110 -> null
-        DeviceType.VERIFONE_VP110 -> null
-        DeviceType.VERIFONE_VL110 -> null
+        // Added in Stripe Terminal 5.3–5.6.
+        DeviceType.STRIPE_U200 -> DeviceTypeApi.STRIPE_U200
+        DeviceType.VERIFONE_VM110 -> DeviceTypeApi.VERIFONE_VM110
+        DeviceType.VERIFONE_VP110 -> DeviceTypeApi.VERIFONE_VP110
+        DeviceType.VERIFONE_VL110 -> DeviceTypeApi.VERIFONE_VL110
         DeviceType.UNKNOWN -> null
     }
 }
@@ -285,6 +284,10 @@ fun DeviceTypeApi.toHost(): DeviceType? {
         DeviceTypeApi.VERIFONE_UX700_DEVKIT -> DeviceType.VERIFONE_UX700_DEVKIT
         DeviceTypeApi.VERIFONE_VM100 -> DeviceType.VERIFONE_VM100
         DeviceTypeApi.VERIFONE_VP100 -> DeviceType.VERIFONE_VP100
+        DeviceTypeApi.STRIPE_U200 -> DeviceType.STRIPE_U200
+        DeviceTypeApi.VERIFONE_VM110 -> DeviceType.VERIFONE_VM110
+        DeviceTypeApi.VERIFONE_VP110 -> DeviceType.VERIFONE_VP110
+        DeviceTypeApi.VERIFONE_VL110 -> DeviceType.VERIFONE_VL110
         DeviceTypeApi.VERIFONE_P400 -> null
     }
 }

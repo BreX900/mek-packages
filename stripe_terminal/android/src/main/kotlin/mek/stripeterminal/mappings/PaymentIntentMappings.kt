@@ -82,10 +82,9 @@ fun PaymentIntentStatus.toApi(): PaymentIntentStatusApi {
         PaymentIntentStatus.REQUIRES_PAYMENT_METHOD -> PaymentIntentStatusApi.REQUIRES_PAYMENT_METHOD
         PaymentIntentStatus.SUCCEEDED -> PaymentIntentStatusApi.SUCCEEDED
         PaymentIntentStatus.REQUIRES_ACTION -> PaymentIntentStatusApi.REQUIRES_ACTION
-        // Added in Stripe Terminal 5.4 (reauthorization). PaymentIntentStatusApi has no
-        // dedicated value, so map to REQUIRES_ACTION — "further action required" before
-        // the intent can proceed (it is not captured/succeeded).
-        PaymentIntentStatus.REQUIRES_REAUTHORIZATION -> PaymentIntentStatusApi.REQUIRES_ACTION
+        // Added in Stripe Terminal 5.4 (reauthorization): authorized but the capture
+        // window lapsed, so it must be authorized again before capture.
+        PaymentIntentStatus.REQUIRES_REAUTHORIZATION -> PaymentIntentStatusApi.REQUIRES_REAUTHORIZATION
     }
 }
 

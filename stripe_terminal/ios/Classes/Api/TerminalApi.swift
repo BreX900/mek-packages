@@ -1203,6 +1203,7 @@ enum PaymentIntentStatusApi: Int {
     case requiresPaymentMethod
     case requiresAction
     case succeeded
+    case requiresReauthorization
 }
 
 enum PaymentIntentUsageApi: Int {

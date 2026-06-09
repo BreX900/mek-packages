@@ -584,6 +584,21 @@ enum TerminalExceptionCode {
 
   /// The SDK is running on a device with a non-ARM processor (usually x86).
   tapToPayUnsupportedProcessor,
+
+  /// Only Android. Tap to Pay PIN entry is unavailable on this device.
+  tapToPayPinUnavailable,
+
+  /// Only Android. No barcode scanner is available on this device.
+  barcodeScannerUnavailable,
+
+  /// Only Android. The requested barcode scanner could not be found.
+  barcodeRequestedScannerNotFound,
+
+  /// Only Android. Barcode scanning is not supported on this device.
+  barcodeScanningUnsupportedDevice,
+
+  /// Only Android. Simulated offline mode is not available in live mode.
+  simulatedOfflineModeNotAvailableInLivemode,
   ;
 
   final String? message;

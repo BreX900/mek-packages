@@ -1203,7 +1203,6 @@ enum PaymentIntentStatusApi: Int {
     case requiresPaymentMethod
     case requiresAction
     case succeeded
-    case requiresReauthorization
 }
 
 enum PaymentIntentUsageApi: Int {
@@ -1865,11 +1864,6 @@ enum TerminalExceptionCodeApi: Int {
     case surchargeNoticeRequiresUpdatePaymentIntent
     case surchargeUnavailableWithDynamicCurrencyConversion
     case tapToPayUnsupportedProcessor
-    case tapToPayPinUnavailable
-    case barcodeScannerUnavailable
-    case barcodeRequestedScannerNotFound
-    case barcodeScanningUnsupportedDevice
-    case simulatedOfflineModeNotAvailableInLivemode
 }
 
 struct TipApi {

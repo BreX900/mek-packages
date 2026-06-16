@@ -7,6 +7,7 @@ extension Reader {
         return ReaderApi(
             availableUpdate: availableUpdate != nil,
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
+            deviceSoftwareVersion: deviceSoftwareVersion,
             deviceType: deviceType.toApi(),
             id: stripeId,
             ipAddress: ipAddress,

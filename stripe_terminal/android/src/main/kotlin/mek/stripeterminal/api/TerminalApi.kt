@@ -1327,6 +1327,7 @@ enum class PaymentStatusApi {
 data class ReaderApi(
     val availableUpdate: Boolean,
     val batteryLevel: Double,
+    val deviceSoftwareVersion: String?,
     val deviceType: DeviceTypeApi?,
     val id: String?,
     val ipAddress: String?,
@@ -1342,6 +1343,7 @@ data class ReaderApi(
         return listOf(
             availableUpdate,
             batteryLevel,
+            deviceSoftwareVersion,
             deviceType?.ordinal,
             id,
             ipAddress,

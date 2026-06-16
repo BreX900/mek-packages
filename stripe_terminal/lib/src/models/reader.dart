@@ -66,7 +66,9 @@ class Reader with _$Reader {
   /// The reader’s serial number.
   final String serialNumber;
 
-  // TODO: Add deviceSoftwareVersion field
+  /// The reader's current device software version, or `null` if this
+  /// information is unavailable.
+  final String? deviceSoftwareVersion;
 
   /// LocalMobile, Bluetooth and Usb readers properties
 
@@ -107,6 +109,7 @@ class Reader with _$Reader {
     required this.simulated,
     required this.availableUpdate,
     required this.serialNumber,
+    required this.deviceSoftwareVersion,
     required this.locationId,
     required this.location,
     required this.ipAddress,

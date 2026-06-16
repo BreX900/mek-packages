@@ -794,16 +794,17 @@ List<Object?> _$serializePaymentMethodOptionsParameters(
 Reader _$deserializeReader(List<Object?> serialized) => Reader(
   availableUpdate: serialized[0] as bool,
   batteryLevel: serialized[1] as double,
-  deviceType: serialized[2] != null ? DeviceType.values[serialized[2] as int] : null,
-  id: serialized[3] as String?,
-  ipAddress: serialized[4] as String?,
-  label: serialized[5] as String?,
-  location: serialized[6] != null ? _$deserializeLocation(serialized[6] as List) : null,
-  locationId: serialized[7] as String?,
-  locationStatus: serialized[8] != null ? LocationStatus.values[serialized[8] as int] : null,
-  networkStatus: serialized[9] != null ? NetworkStatus.values[serialized[9] as int] : null,
-  serialNumber: serialized[10] as String,
-  simulated: serialized[11] as bool,
+  deviceSoftwareVersion: serialized[2] as String?,
+  deviceType: serialized[3] != null ? DeviceType.values[serialized[3] as int] : null,
+  id: serialized[4] as String?,
+  ipAddress: serialized[5] as String?,
+  label: serialized[6] as String?,
+  location: serialized[7] != null ? _$deserializeLocation(serialized[7] as List) : null,
+  locationId: serialized[8] as String?,
+  locationStatus: serialized[9] != null ? LocationStatus.values[serialized[9] as int] : null,
+  networkStatus: serialized[10] != null ? NetworkStatus.values[serialized[10] as int] : null,
+  serialNumber: serialized[11] as String,
+  simulated: serialized[12] as bool,
 );
 List<Object?> _$serializeReaderDelegateAbstract(ReaderDelegateAbstract deserialized) =>
     switch (deserialized) {

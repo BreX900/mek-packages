@@ -40,6 +40,8 @@ fun cardBrandToApi(value: String?): CardBrandApi? {
         "mastercard" -> CardBrandApi.MASTER_CARD
         "unionpay" -> CardBrandApi.UNION_PAY
         "visa" -> CardBrandApi.VISA
+        "interac" -> CardBrandApi.INTERAC
+        "eftpos_au" -> CardBrandApi.EFTPOS_AU
         "unknown" -> null
         else -> null
     }
@@ -77,7 +79,7 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
         accountType = accountType,
         applicationPreferredName = applicationPreferredName,
         authorizationCode = authorizationCode,
-        authorizationResponseCode = authorizationResponseCode!!,
+        authorizationResponseCode = authorizationResponseCode ?: "",
         applicationCryptogram = applicationCryptogram,
         dedicatedFileName = dedicatedFileName,
         transactionStatusInformation = tsi,
@@ -88,7 +90,7 @@ fun ReceiptDetails.toApi(): ReceiptDetailsApi {
 fun CardNetworks.toApi(): CardNetworksApi {
     return CardNetworksApi(
         available =
-        available.map { cardBrandToApi(it)!! },
+        available.mapNotNull { cardBrandToApi(it) },
         preferred = preferred
     )
 }

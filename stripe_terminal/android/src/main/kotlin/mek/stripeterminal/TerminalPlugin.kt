@@ -67,6 +67,10 @@ class TerminalPlugin : FlutterPlugin, ActivityAware {
     private lateinit var platform: TerminalPlatformPlugin
     private lateinit var discoverReadersController: DiscoverReadersControllerApi
 
+    companion object {
+        private var handlerOwner: TerminalPlugin? = null
+    }
+
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         val discoverReadersSubject = DiscoverReadersSubject()
         discoverReadersController = DiscoverReadersControllerApi(binding.binaryMessenger);
@@ -80,12 +84,16 @@ class TerminalPlugin : FlutterPlugin, ActivityAware {
             discoverReadersSubject = discoverReadersSubject,
         )
         TerminalPlatformApi.setHandler(binding.binaryMessenger, platform)
+        handlerOwner = this
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         if (Terminal.isInitialized()) platform.clean()
         discoverReadersController.removeHandler()
-        TerminalPlatformApi.removeHandler()
+        if (handlerOwner === this) {
+            TerminalPlatformApi.removeHandler()
+            handlerOwner = null
+        }
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

@@ -7,6 +7,7 @@ extension Reader {
         return ReaderApi(
             availableUpdate: availableUpdate != nil,
             batteryLevel: batteryLevel?.doubleValue ?? -1.0,
+            deviceSoftwareVersion: deviceSoftwareVersion,
             deviceType: deviceType.toApi(),
             id: stripeId,
             ipAddress: ipAddress,
@@ -89,8 +90,6 @@ extension DeviceType {
             return .stripeM2
         case .tapToPay:
             return .tapToPay
-        case .verifoneP400:
-            return .verifoneP400
         case .wisePad3:
             return .wisePad3
         case .wisePosE:
@@ -311,7 +310,7 @@ extension DeviceTypeApi {
         case .chipper2X:
             return .chipper2X
         case .verifoneP400:
-            return .verifoneP400
+            return nil
         case .wisePad3:
             return .wisePad3
         case .stripeM2:
@@ -388,7 +387,7 @@ extension ConnectionStatus {
         case .connected:
             return .connected
         @unknown default:
-            fatalError("WTF")
+            return .connecting
         }
     }
 }

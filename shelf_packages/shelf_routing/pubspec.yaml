@@ -3,13 +3,15 @@ description: Annotations for routing class methods with support for path paramet
 repository: https://github.com/BreX900/mek-packages
 issue_tracker: https://github.com/BreX900/mek-packages/issues
 homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/shelf_routing
-version: 1.0.0
+version: 1.1.1
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.12.0
 
 scripts:
-  publish: dart pub publish
+  format: dart format .
+
+  publish: dart format . && dart pub publish
 
 dependencies:
   shelf: ^1.4.2
@@ -18,4 +20,4 @@ dependencies:
   shelf_router: ^1.1.4
 
 dev_dependencies:
-  mek_lints: ^4.0.0
+  mek_lints: ^7.0.0

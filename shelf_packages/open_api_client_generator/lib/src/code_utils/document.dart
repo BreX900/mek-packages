@@ -4,10 +4,7 @@ abstract final class Docs {
     return lines.map((line) => '/// $line');
   }
 
-  static Iterable<String> documentClass({
-    String? description,
-    Object? example,
-  }) sync* {
+  static Iterable<String> documentClass({String? description, Object? example}) sync* {
     if (description != null) yield* description.split('\n');
     if (example != null) yield 'Ex. $example';
   }

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic
+// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic, unnecessary_null_checks
 
 part of 'security_open_api.dart';
 

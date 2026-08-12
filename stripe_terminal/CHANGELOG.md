@@ -1,33 +1,49 @@
+## 5.6.0
 
+- chore!: renamed `Terminal.initTerminal` to `Terminal.init`
+- feat: bump Android and iOS Stripe Terminal SDKs to `5.6.0`
+- feat: add support for `ConnectionStatus.reconnecting` and new reader device types
+- feat: add support for `DisconnectReason.bluetoothPeerRemovedPairingInformation`
+- change: customer cancellation is enabled by default in collect flows to match SDK defaults
+- build(ios): update minimum supported iOS version to 15.0
 
 ## 4.6.3
-- fix: deleted a trailing comma that was causing a compilation error on  Xcode versions priors to 16.3
+
+- fix: deleted a trailing comma that was causing a compilation error on Xcode versions priors to 16.3
 
 ## 4.6.2
+
 - feat(terminal): Added `id`, `ipAddress`, and `networkStatus` fields to the `Reader` object. Added by [@mahmoud-othmane](https://github.com/mahmoud-othmane).
 - build: bumped `mek_data_class` package to `2.0.0`
 
 ## 4.6.1
+
 - feat: added support for optional ios parameters on internet and tap-to-pay connection configurations
 
 ## 4.6.0
+
 - feat: bumped android and ios sdk version to `4.6.0`
 
 ## 4.4.1
+
 - feat: added `allowRedisplay` param on `collectPaymentMethod` method
 
 ## 4.4.0
+
 - feat: bumped android and ios sdk version to `4.4.0`
 - fix(ios): fixed wrong mapping tap to pay configuration
 - feat(android): configure tap to pay UX. Thanks [@hrueger](https://github.com/hrueger)
 
 ## 4.0.4
+
 - chore(android): when plugin si attached to activity the `Terminal.onCreate` method is called [#104](https://github.com/BreX900/mek-packages/issues/104)
 
 ## 4.0.3
+
 - chore(android): removed permission check when initializing terminal
 
 ## 4.0.2
+
 - build: updated `meta` to `1.15.0` and `one_for_all` to `1.1.1` dependency
 - build: updated `dart` constraints to `>=3.5.0 <4.0.0` and `flutter` to `>=3.24.0`
 - docs: updated README.md file

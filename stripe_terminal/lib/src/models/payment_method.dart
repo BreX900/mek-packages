@@ -13,7 +13,7 @@ enum PaymentMethodType {
   card,
 
   /// An Interac Present payment method.
-  interactPresent
+  interacPresent,
 }
 
 /// PaymentMethod objects represent your customer’s payment instruments. They can be used with

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/handlers.dart';
 import 'package:one_for_all_generator/src/options.dart';
@@ -17,7 +17,7 @@ abstract class ApiBuilder {
 
   void writeFlutterApiClass(FlutterApiHandler handler);
 
-  void writeException(EnumElement2 element);
+  void writeException(EnumElement element);
 
   void writeSerializableClass(SerializableClassHandler handler);
 
@@ -65,7 +65,7 @@ extension SupportedDartType on DartType {
   bool get isSupported => isPrimitive || isDartCoreList || isDartCoreMap;
 }
 
-extension SupportedMethodElement on MethodElement2 {
+extension SupportedMethodElement on MethodElement {
   bool get isHostApiMethod => isAbstract && returnType.isDartAsyncFuture;
   bool get isHostApiEvent => isAbstract && returnType.isDartAsyncStream;
   bool get isFlutterApiMethod => displayName.startsWith('on') || displayName.startsWith('_on');

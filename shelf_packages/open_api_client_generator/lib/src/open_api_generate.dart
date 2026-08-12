@@ -12,6 +12,7 @@ import 'package:open_api_client_generator/src/options/context.dart';
 import 'package:open_api_client_generator/src/options/options.dart';
 import 'package:open_api_client_generator/src/plugins/plugin.dart';
 import 'package:open_api_client_generator/src/serialization_codec/serialization_codec.dart';
+import 'package:open_api_client_generator/src/type_codec.dart';
 import 'package:open_api_client_generator/src/utils/lg.dart';
 import 'package:open_api_specification/open_api.dart';
 import 'package:open_api_specification/open_api_spec.dart';
@@ -21,6 +22,7 @@ Future<void> generateApi({
   required Options options,
   required SerializationCodec serializationCodec,
   required ClientCodec clientCodec,
+  List<TypeCodec> typeCodecs = const [],
   List<Plugin> plugins = const [],
   String? partFolder,
   DartFormatter? formatter,
@@ -36,7 +38,7 @@ Future<void> generateApi({
     ...plugins,
   ];
   await Future.wait(allPlugins.map((plugin) async => await plugin.onStart()));
-  var specs = await readOpenApiWithRefs(options.input);
+  var specs = await readOpenApi(options.input);
   specs = allPlugins.fold(specs, (specs, plugin) => plugin.onSpecifications(specs));
   lg.finest('ReadSpecs: ${DateTime.now().difference(timer)}');
 
@@ -61,7 +63,12 @@ Future<void> generateApi({
 
   final codecs = ApiCodecs(options: options);
 
-  final context = Context(options: options, codecs: codecs, components: openApi.components);
+  final context = Context(
+    options: options,
+    codecs: codecs,
+    components: openApi.components,
+    typeCodecs: typeCodecs,
+  );
 
   // Api Class and data classes
 
@@ -96,10 +103,12 @@ Future<void> generateApi({
   var librarySpec = Library(
     (b) => b
       ..ignoreForFile.addAll([
+        'unnecessary_ignore',
         'unnecessary_brace_in_string_interps',
         'no_leading_underscores_for_local_identifiers',
         'always_use_package_imports',
         'cast_nullable_to_non_nullable',
+        'unnecessary_cast',
       ])
       ..directives.add(Directive.part(partPath))
       ..body.add(apiSpec)
@@ -107,8 +116,11 @@ Future<void> generateApi({
   );
   librarySpec = allPlugins.fold(librarySpec, (spec, plugin) => plugin.onLibrary(openApi, spec));
 
+  final outputDirectory = Directory(options.outputFolder);
+  if (!outputDirectory.existsSync()) outputDirectory.createSync(recursive: true);
+
   final page = formatter.format('${librarySpec.accept(emitter)}');
-  works.add(File('${options.outputFolder}/$apiFileName').writeAsString(page));
+  works.add(File('${outputDirectory.path}/$apiFileName').writeAsString(page));
 
   for (final plugin in allPlugins) {
     final result = plugin.onFinish();

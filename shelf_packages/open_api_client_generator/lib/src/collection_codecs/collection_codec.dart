@@ -25,17 +25,21 @@ abstract class CollectionCodecBase extends CollectionCodec with Plugin {
 
   @override
   Class onApiClass(OpenApi openApi, Class spec) {
-    return spec.rebuild((b) => b
-      ..methods.map((e) {
-        return e.rebuild((b) => b
-          ..returns = _mapType(b.returns)
-          ..requiredParameters.map((e) {
-            return e.rebuild((b) => b..type = _mapType(b.type));
-          })
-          ..optionalParameters.map((e) {
-            return e.rebuild((b) => b..type = _mapType(b.type));
-          }));
-      }));
+    return spec.rebuild(
+      (b) => b
+        ..methods.map((e) {
+          return e.rebuild(
+            (b) => b
+              ..returns = _mapType(b.returns)
+              ..requiredParameters.map((e) {
+                return e.rebuild((b) => b..type = _mapType(b.type));
+              })
+              ..optionalParameters.map((e) {
+                return e.rebuild((b) => b..type = _mapType(b.type));
+              }),
+          );
+        }),
+    );
   }
 
   @override
@@ -46,15 +50,19 @@ abstract class CollectionCodecBase extends CollectionCodec with Plugin {
   Reference _mapType(Reference? reference) {
     reference!;
     final types = reference.types.map(_mapType);
-    if (reference.isList) {
-      return reference.rebuild((b) => b
-        ..symbol = onMapTypeSymbol(reference)
-        ..types.replace(types));
+    if (reference.isList || reference.isSet) {
+      return reference.rebuild(
+        (b) => b
+          ..symbol = onMapTypeSymbol(reference)
+          ..types.replace(types),
+      );
     }
     if (reference.isMap) {
-      return reference.rebuild((b) => b
-        ..symbol = onMapTypeSymbol(reference)
-        ..types.replace(types));
+      return reference.rebuild(
+        (b) => b
+          ..symbol = onMapTypeSymbol(reference)
+          ..types.replace(types),
+      );
     }
     if (reference.types.isNotEmpty) return reference.rebuild((b) => b..types.replace(types));
     return reference;

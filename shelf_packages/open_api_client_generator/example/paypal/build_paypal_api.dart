@@ -11,7 +11,8 @@ void main(List<String> args) async {
   final options = Options(
     // input: Uri.file('$root/specification/index.yml'),
     input: Uri.parse(
-        'https://raw.githubusercontent.com/paypal/paypal-rest-api-specifications/main/openapi/checkout_orders_v2.json'),
+      'https://raw.githubusercontent.com/paypal/paypal-rest-api-specifications/main/openapi/checkout_orders_v2.json',
+    ),
     outputFolder: codeDir.path,
     apiClassName: 'PayPalApi',
   );
@@ -23,7 +24,7 @@ void main(List<String> args) async {
     ),
     plugins: [
       OpenApiIgnore(overrideFilePath: '$root/.openapiignore'),
-      WriteOpenApiPlugin(options: options)
+      WriteOpenApiPlugin(options: options),
     ],
   );
 }

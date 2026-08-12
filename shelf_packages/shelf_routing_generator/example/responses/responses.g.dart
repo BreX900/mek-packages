@@ -9,7 +9,7 @@ part of 'responses.dart';
 // **************************************************************************
 
 Router _$ResponsesControllerRouter(ResponsesController service) => Router()
-  ..add('GET', '/sync', (Request request) async {
+  ..add('GET', '/sync', (Request request) {
     return service.sync(request);
   })
   ..add('POST', '/async', (Request request) async {

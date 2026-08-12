@@ -32,12 +32,13 @@ mixin _$PaymentMethod {
   }
 
   @override
-  String toString() => (ClassToString('PaymentMethod')
-        ..add('id', _self.id)
-        ..add('card', _self.card)
-        ..add('cardPresent', _self.cardPresent)
-        ..add('interacPresent', _self.interacPresent)
-        ..add('customerId', _self.customerId)
-        ..add('metadata', _self.metadata))
-      .toString();
+  String toString() =>
+      (ClassToString('PaymentMethod')
+            ..add('id', _self.id)
+            ..add('card', _self.card)
+            ..add('cardPresent', _self.cardPresent)
+            ..add('interacPresent', _self.interacPresent)
+            ..add('customerId', _self.customerId)
+            ..add('metadata', _self.metadata))
+          .toString();
 }

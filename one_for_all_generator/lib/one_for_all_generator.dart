@@ -26,10 +26,7 @@ class OneForAll {
   final OneForAllOptions options;
   final ApiBuildersCreator buildersCreator;
 
-  const OneForAll({
-    required this.options,
-    required this.buildersCreator,
-  });
+  const OneForAll({required this.options, required this.buildersCreator});
 
   factory OneForAll.from({
     required OneForAllOptions options,
@@ -39,63 +36,68 @@ class OneForAll {
     SwiftOptions? swiftOptions,
     ApiBuildersCreator? buildersCreator,
   }) {
-    final platformsCodecs = Map.fromEntries(LanguageApi.values.map((platform) {
-      final entries = codecs.map((e) => (TypeChecker.typeNamed(e.type), e));
-      return MapEntry(platform, entries.map((e) => (e.$1, e.$2.read(platform))).toList());
-    }));
+    final platformsCodecs = Map.fromEntries(
+      LanguageApi.values.map((platform) {
+        final entries = codecs.map((e) => (TypeChecker.typeNamed(e.type), e));
+        return MapEntry(platform, entries.map((e) => (e.$1, e.$2.read(platform))).toList());
+      }),
+    );
     return OneForAll(
       options: options,
-      buildersCreator: (options) => [
-        if (dartOptions != null)
-          DartApiBuilder(
-            options,
-            dartOptions,
-            DartApiCodes(options, platformsCodecs[LanguageApi.dart]!),
-          ),
-        if (kotlinOptions != null)
-          KotlinApiBuilder(
-            options,
-            kotlinOptions,
-            KotlinApiCodes(options, platformsCodecs[LanguageApi.kotlin]!),
-          ),
-        if (swiftOptions != null)
-          SwiftApiBuilder(
-            options,
-            swiftOptions,
-            SwiftApiCodes(options, platformsCodecs[LanguageApi.swift]!),
-          ),
-        ...?buildersCreator?.call(options),
-      ],
+      buildersCreator:
+          (options) => [
+            if (dartOptions != null)
+              DartApiBuilder(
+                options,
+                dartOptions,
+                DartApiCodes(options, platformsCodecs[LanguageApi.dart]!),
+              ),
+            if (kotlinOptions != null)
+              KotlinApiBuilder(
+                options,
+                kotlinOptions,
+                KotlinApiCodes(options, platformsCodecs[LanguageApi.kotlin]!),
+              ),
+            if (swiftOptions != null)
+              SwiftApiBuilder(
+                options,
+                swiftOptions,
+                SwiftApiCodes(options, platformsCodecs[LanguageApi.swift]!),
+              ),
+            ...?buildersCreator?.call(options),
+          ],
     );
   }
 
   Future<void> build() async {
     report('Scanning...');
     // TODO: Check if file exists
-    final apiAbsolutePaths = [options.apiFile, ...options.extraApiFiles]
-        .map((e) => path_.absolute(path_.normalize(e)))
-        .toList();
+    final apiAbsolutePaths =
+        [
+          options.apiFile,
+          ...options.extraApiFiles,
+        ].map((e) => path_.absolute(path_.normalize(e))).toList();
 
-    final collection = AnalysisContextCollection(
-      includedPaths: apiAbsolutePaths,
-    );
+    final collection = AnalysisContextCollection(includedPaths: apiAbsolutePaths);
 
     final scanner = LibraryScanner(options: options);
 
-    await Future.wait(collection.contexts.expand((context) {
-      return context.contextRoot.analyzedFiles().map((filePath) async {
-        report('Reading... $filePath');
-        final session = context.currentSession;
-        final result = await session.getLibraryByUri('file://$filePath');
-        if (result is! LibraryElementResult) {
-          report(result);
-          return;
-        }
+    await Future.wait(
+      collection.contexts.expand((context) {
+        return context.contextRoot.analyzedFiles().map((filePath) async {
+          report('Reading... $filePath');
+          final session = context.currentSession;
+          final result = await session.getLibraryByUri('file://$filePath');
+          if (result is! LibraryElementResult) {
+            report(result);
+            return;
+          }
 
-        report('Scanning... ${result.element2.uri}');
-        scanner.scan(result.element2);
-      });
-    }));
+          report('Scanning... ${result.element.uri}');
+          scanner.scan(result.element);
+        });
+      }),
+    );
 
     report('Building...');
     final scanResult = scanner.result;
@@ -108,8 +110,10 @@ class OneForAll {
     }
 
     report('Writing...');
-    await Future.wait(builders.map((builder) async {
-      await File(builder.outputFile).writeAsString(await builder.build());
-    }));
+    await Future.wait(
+      builders.map((builder) async {
+        await File(builder.outputFile).writeAsString(await builder.build());
+      }),
+    );
   }
 }

@@ -3,13 +3,14 @@ import 'package:one_for_all_generator/one_for_all_generator.dart';
 import 'package:one_for_all_generator/src/utils.dart';
 
 void main(List<String> arguments) async {
-  final argParser = ArgParser()
-    ..addOption('api-path', help: 'Scheme path', mandatory: true)
-    ..addOption('host-class-suffix')
-    ..addOption('kotlin-output-file')
-    ..addOption('kotlin-package')
-    ..addOption('swift-output-file')
-    ..addFlag('help');
+  final argParser =
+      ArgParser()
+        ..addOption('api-path', help: 'Scheme path', mandatory: true)
+        ..addOption('host-class-suffix')
+        ..addOption('kotlin-output-file')
+        ..addOption('kotlin-package')
+        ..addOption('swift-output-file')
+        ..addFlag('help');
   final args = argParser.parse(arguments);
 
   if (args['help'] as bool) {
@@ -21,18 +22,13 @@ void main(List<String> arguments) async {
   final kotlinPackage = args['kotlin-package'] as String?;
   KotlinOptions? kotlinOptions;
   if (kotlinOutputFile != null && kotlinPackage != null) {
-    kotlinOptions = KotlinOptions(
-      outputFile: kotlinOutputFile,
-      package: kotlinPackage,
-    );
+    kotlinOptions = KotlinOptions(outputFile: kotlinOutputFile, package: kotlinPackage);
   }
 
   final swiftOutputFile = args['swift-output-file'] as String?;
   SwiftOptions? swiftOptions;
   if (swiftOutputFile != null) {
-    swiftOptions = SwiftOptions(
-      outputFile: swiftOutputFile,
-    );
+    swiftOptions = SwiftOptions(outputFile: swiftOutputFile);
   }
 
   await OneForAll.from(

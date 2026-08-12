@@ -20,6 +20,7 @@ mixin _$Reader {
           _self.locationId == other.locationId &&
           _self.location == other.location &&
           _self.serialNumber == other.serialNumber &&
+          _self.deviceSoftwareVersion == other.deviceSoftwareVersion &&
           _self.availableUpdate == other.availableUpdate &&
           _self.batteryLevel == other.batteryLevel &&
           _self.ipAddress == other.ipAddress &&
@@ -35,6 +36,7 @@ mixin _$Reader {
     hashCode = $hashCombine(hashCode, _self.locationId.hashCode);
     hashCode = $hashCombine(hashCode, _self.location.hashCode);
     hashCode = $hashCombine(hashCode, _self.serialNumber.hashCode);
+    hashCode = $hashCombine(hashCode, _self.deviceSoftwareVersion.hashCode);
     hashCode = $hashCombine(hashCode, _self.availableUpdate.hashCode);
     hashCode = $hashCombine(hashCode, _self.batteryLevel.hashCode);
     hashCode = $hashCombine(hashCode, _self.ipAddress.hashCode);
@@ -44,18 +46,20 @@ mixin _$Reader {
   }
 
   @override
-  String toString() => (ClassToString('Reader')
-        ..add('id', _self.id)
-        ..add('locationStatus', _self.locationStatus)
-        ..add('deviceType', _self.deviceType)
-        ..add('simulated', _self.simulated)
-        ..add('locationId', _self.locationId)
-        ..add('location', _self.location)
-        ..add('serialNumber', _self.serialNumber)
-        ..add('availableUpdate', _self.availableUpdate)
-        ..add('batteryLevel', _self.batteryLevel)
-        ..add('ipAddress', _self.ipAddress)
-        ..add('networkStatus', _self.networkStatus)
-        ..add('label', _self.label))
-      .toString();
+  String toString() =>
+      (ClassToString('Reader')
+            ..add('id', _self.id)
+            ..add('locationStatus', _self.locationStatus)
+            ..add('deviceType', _self.deviceType)
+            ..add('simulated', _self.simulated)
+            ..add('locationId', _self.locationId)
+            ..add('location', _self.location)
+            ..add('serialNumber', _self.serialNumber)
+            ..add('deviceSoftwareVersion', _self.deviceSoftwareVersion)
+            ..add('availableUpdate', _self.availableUpdate)
+            ..add('batteryLevel', _self.batteryLevel)
+            ..add('ipAddress', _self.ipAddress)
+            ..add('networkStatus', _self.networkStatus)
+            ..add('label', _self.label))
+          .toString();
 }

@@ -1,6 +1,1 @@
-enum PaymentStatus {
-  notReady,
-  ready,
-  waitingForInput,
-  processing;
-}
+enum PaymentStatus { notReady, ready, waitingForInput, processing }

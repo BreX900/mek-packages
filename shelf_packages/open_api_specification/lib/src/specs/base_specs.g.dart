@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic
+// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic, unnecessary_null_checks
 
 part of 'base_specs.dart';
 
@@ -173,54 +173,46 @@ Map<String, dynamic> _$OperationOpenApiToJson(OperationOpenApi instance) =>
       'servers': ?$nullIfEmpty(instance.servers),
     };
 
-ParameterOpenApi _$ParameterOpenApiFromJson(
-  Map json,
-) => $checkedCreate('ParameterOpenApi', json, ($checkedConvert) {
-  final val = ParameterOpenApi(
-    description: $checkedConvert('description', (v) => v as String?),
-    example: $checkedConvert('example', (v) => v),
-    name: $checkedConvert('name', (v) => v as String),
-    in$: $checkedConvert(
-      'in',
-      (v) => $enumDecode(_$ParameterInOpenApiEnumMap, v),
-    ),
-    required: $checkedConvert('required', (v) => v as bool? ?? false),
-    deprecated: $checkedConvert('deprecated', (v) => v as bool? ?? false),
-    style: $checkedConvert('style', (v) => v as String?),
-    explode: $checkedConvert('explode', (v) => v as bool?),
-    schema: $checkedConvert(
-      'schema',
-      (v) =>
-          _$JsonConverterFromJson<Map<dynamic, dynamic>, RefOr<SchemaOpenApi>>(
-            v,
-            const RefOrSchemaJsonConverter().fromJson,
-          ),
-    ),
-    examples: $checkedConvert(
-      'examples',
-      (v) => (v as Map?)?.map((k, e) => MapEntry(k as String, e)) ?? const {},
-    ),
-  );
-  return val;
-}, fieldKeyMap: const {r'in$': 'in'});
+ParameterOpenApi _$ParameterOpenApiFromJson(Map json) =>
+    $checkedCreate('ParameterOpenApi', json, ($checkedConvert) {
+      final val = ParameterOpenApi(
+        description: $checkedConvert('description', (v) => v as String?),
+        example: $checkedConvert('example', (v) => v),
+        name: $checkedConvert('name', (v) => v as String),
+        in$: $checkedConvert(
+          'in',
+          (v) => $enumDecode(_$ParameterInOpenApiEnumMap, v),
+        ),
+        required: $checkedConvert('required', (v) => v as bool? ?? false),
+        deprecated: $checkedConvert('deprecated', (v) => v as bool? ?? false),
+        style: $checkedConvert('style', (v) => v as String?),
+        explode: $checkedConvert('explode', (v) => v as bool?),
+        schema: $checkedConvert(
+          'schema',
+          (v) => v == null ? null : SchemaOrRef.fromJson(v as Map),
+        ),
+        examples: $checkedConvert(
+          'examples',
+          (v) =>
+              (v as Map?)?.map((k, e) => MapEntry(k as String, e)) ?? const {},
+        ),
+      );
+      return val;
+    }, fieldKeyMap: const {r'in$': 'in'});
 
-Map<String, dynamic> _$ParameterOpenApiToJson(
-  ParameterOpenApi instance,
-) => <String, dynamic>{
-  'description': ?instance.description,
-  'example': ?instance.example,
-  'examples': ?$nullIfEmpty(instance.examples),
-  'name': instance.name,
-  'in': _$ParameterInOpenApiEnumMap[instance.in$]!,
-  'required': instance.required,
-  'deprecated': ?$nullIfFalse(instance.deprecated),
-  'style': ?instance.style,
-  'explode': ?instance.explode,
-  'schema': ?_$JsonConverterToJson<Map<dynamic, dynamic>, RefOr<SchemaOpenApi>>(
-    instance.schema,
-    const RefOrSchemaJsonConverter().toJson,
-  ),
-};
+Map<String, dynamic> _$ParameterOpenApiToJson(ParameterOpenApi instance) =>
+    <String, dynamic>{
+      'description': ?instance.description,
+      'example': ?instance.example,
+      'examples': ?$nullIfEmpty(instance.examples),
+      'name': instance.name,
+      'in': _$ParameterInOpenApiEnumMap[instance.in$]!,
+      'required': instance.required,
+      'deprecated': ?$nullIfFalse(instance.deprecated),
+      'style': ?instance.style,
+      'explode': ?instance.explode,
+      'schema': ?instance.schema?.toJson(),
+    };
 
 const _$ParameterInOpenApiEnumMap = {
   ParameterInOpenApi.path: 'path',
@@ -228,16 +220,6 @@ const _$ParameterInOpenApiEnumMap = {
   ParameterInOpenApi.header: 'header',
   ParameterInOpenApi.cookie: 'cookie',
 };
-
-Value? _$JsonConverterFromJson<Json, Value>(
-  Object? json,
-  Value? Function(Json json) fromJson,
-) => json == null ? null : fromJson(json as Json);
-
-Json? _$JsonConverterToJson<Json, Value>(
-  Value? value,
-  Json? Function(Value value) toJson,
-) => value == null ? null : toJson(value);
 
 RequestBodyOpenApi _$RequestBodyOpenApiFromJson(Map json) =>
     $checkedCreate('RequestBodyOpenApi', json, ($checkedConvert) {

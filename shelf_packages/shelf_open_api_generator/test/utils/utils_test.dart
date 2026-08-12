@@ -29,10 +29,10 @@ void main() {
   });
 
   group('parse documentation', () {
-    final summary = 'This is summary';
-    final description = 'This is description\nThis is description';
-    final exampleValue = 'example@email.com';
-    final example = 'Example: `$exampleValue`';
+    const summary = 'This is summary';
+    const description = 'This is description\nThis is description';
+    const exampleValue = 'example@email.com';
+    const example = 'Example: `$exampleValue`';
 
     test('empty', () {
       final doc = Doc.from('');

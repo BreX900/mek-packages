@@ -8,6 +8,7 @@ class YamlEncoder extends Converter<Map<String, dynamic>, String> {
   final int indent;
   final bool shouldMultilineStringInBlock;
   final int? maxStringLineWidth; // TODO: Add support to maxStringLineWidth
+  // ignore: avoid_annotating_with_dynamic
   final Object? Function(dynamic)? toEncodable;
 
   const YamlEncoder({
@@ -30,12 +31,14 @@ class YamlEncoder extends Converter<Map<String, dynamic>, String> {
   }
 }
 
+// ignore: comment_references
 /// Please dev follow [_JsonStringStringifier] code style
 class _YamlWriter {
   final StringSink _sink;
 
   final int indent;
   final bool shouldMultilineStringInBlock;
+  // ignore: avoid_annotating_with_dynamic
   final Object? Function(dynamic)? toEncodable;
 
   bool _canWriteBlock = false;
@@ -47,8 +50,8 @@ class _YamlWriter {
     required this.indent,
     required this.shouldMultilineStringInBlock,
     required this.toEncodable,
-    required StringSink sink,
-  }) : _sink = sink;
+    required this._sink,
+  });
 
   void write(Object? object) {
     if (object == null) {
@@ -66,10 +69,11 @@ class _YamlWriter {
     } else if (toEncodable != null) {
       write(toEncodable!(object));
     } else {
-      throw 'Not support $object';
+      throw StateError('Not support $object');
     }
   }
 
+  // ignore: avoid_positional_boolean_parameters
   void writeBoolean(bool boolean) {
     if (!isInitialLine) _writeValueIndentation();
     _sink.write(boolean);

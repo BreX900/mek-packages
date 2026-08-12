@@ -58,7 +58,7 @@ interface TerminalPlatformApi {
         shouldPrintLogs: Boolean,
     )
 
-    fun onClearCachedCredentials()
+    fun onClearCachedCredentials(): ClearCachedCredentialsResultApi
 
     fun onGetConnectionStatus(): ConnectionStatusApi
 
@@ -116,7 +116,7 @@ interface TerminalPlatformApi {
         clientSecret: String,
     )
 
-    fun onStartCollectPaymentMethod(
+    fun onStartProcessPaymentIntent(
         result: Result<PaymentIntentApi>,
         operationId: Long,
         paymentIntentId: String,
@@ -127,20 +127,10 @@ interface TerminalPlatformApi {
         shouldUpdatePaymentIntent: Boolean,
         customerCancellationEnabled: Boolean,
         allowRedisplay: AllowRedisplayApi,
+        confirmConfiguration: ConfirmPaymentIntentConfigurationApi?,
     )
 
-    fun onStopCollectPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    )
-
-    fun onStartConfirmPaymentIntent(
-        result: Result<PaymentIntentApi>,
-        operationId: Long,
-        paymentIntentId: String,
-    )
-
-    fun onStopConfirmPaymentIntent(
+    fun onStopProcessPaymentIntent(
         result: Result<Unit>,
         operationId: Long,
     )
@@ -164,7 +154,7 @@ interface TerminalPlatformApi {
         clientSecret: String,
     )
 
-    fun onStartCollectSetupIntentPaymentMethod(
+    fun onStartProcessSetupIntent(
         result: Result<SetupIntentApi>,
         operationId: Long,
         setupIntentId: String,
@@ -172,18 +162,7 @@ interface TerminalPlatformApi {
         customerCancellationEnabled: Boolean,
     )
 
-    fun onStopCollectSetupIntentPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    )
-
-    fun onStartConfirmSetupIntent(
-        result: Result<SetupIntentApi>,
-        operationId: Long,
-        setupIntentId: String,
-    )
-
-    fun onStopConfirmSetupIntent(
+    fun onStopProcessSetupIntent(
         result: Result<Unit>,
         operationId: Long,
     )
@@ -193,10 +172,12 @@ interface TerminalPlatformApi {
         setupIntentId: String,
     )
 
-    fun onStartCollectRefundPaymentMethod(
-        result: Result<Unit>,
+    fun onStartProcessRefund(
+        result: Result<RefundApi>,
         operationId: Long,
-        chargeId: String,
+        chargeId: String?,
+        paymentIntentId: String?,
+        paymentIntentClientSecret: String?,
         amount: Long,
         currency: String,
         metadata: HashMap<String, String>?,
@@ -205,17 +186,7 @@ interface TerminalPlatformApi {
         customerCancellationEnabled: Boolean,
     )
 
-    fun onStopCollectRefundPaymentMethod(
-        result: Result<Unit>,
-        operationId: Long,
-    )
-
-    fun onStartConfirmRefund(
-        result: Result<RefundApi>,
-        operationId: Long,
-    )
-
-    fun onStopConfirmRefund(
+    fun onStopProcessRefund(
         result: Result<Unit>,
         operationId: Long,
     )
@@ -232,6 +203,21 @@ interface TerminalPlatformApi {
     fun onSetTapToPayUXConfiguration(
         configuration: TapToPayUxConfigurationApi,
     )
+
+    fun onStartEasyConnect(
+        result: Result<ReaderApi>,
+        operationId: Long,
+        configuration: EasyConnectConfigurationApi,
+    )
+
+    fun onStopEasyConnect(
+        result: Result<Unit>,
+        operationId: Long,
+    )
+
+    fun onIsTapToPayAccountLinked(
+        onBehalfOf: String?,
+    ): Boolean
 
     private fun onMethodCall(
         call: MethodCall,
@@ -251,8 +237,8 @@ interface TerminalPlatformApi {
                     result.success(null)
                 }
                 "clearCachedCredentials" -> {
-                    onClearCachedCredentials()
-                    result.success(null)
+                    val res = onClearCachedCredentials()
+                    result.success(res.serialize())
                 }
                 "getConnectionStatus" -> {
                     val res = onGetConnectionStatus()
@@ -310,21 +296,13 @@ interface TerminalPlatformApi {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
                     onRetrievePaymentIntent(res, args[0] as String)
                 }
-                "startCollectPaymentMethod" -> {
+                "startProcessPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartCollectPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as String?, args[4] as Boolean, (args[5] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) }, args[6] as Boolean, args[7] as Boolean, (args[8] as Int).let { AllowRedisplayApi.values()[it] })
+                    onStartProcessPaymentIntent(res, (args[0] as Number).toLong(), args[1] as String, args[2] as Boolean, args[3] as String?, args[4] as Boolean, (args[5] as List<Any?>?)?.let { TippingConfigurationApi.deserialize(it) }, args[6] as Boolean, args[7] as Boolean, (args[8] as Int).let { AllowRedisplayApi.values()[it] }, (args[9] as List<Any?>?)?.let { ConfirmPaymentIntentConfigurationApi.deserialize(it) })
                 }
-                "stopCollectPaymentMethod" -> {
+                "stopProcessPaymentIntent" -> {
                     val res = Result<Unit>(result) { null }
-                    onStopCollectPaymentMethod(res, (args[0] as Number).toLong())
-                }
-                "startConfirmPaymentIntent" -> {
-                    val res = Result<PaymentIntentApi>(result) { it.serialize() }
-                    onStartConfirmPaymentIntent(res, (args[0] as Number).toLong(), args[1] as String)
-                }
-                "stopConfirmPaymentIntent" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStopConfirmPaymentIntent(res, (args[0] as Number).toLong())
+                    onStopProcessPaymentIntent(res, (args[0] as Number).toLong())
                 }
                 "cancelPaymentIntent" -> {
                     val res = Result<PaymentIntentApi>(result) { it.serialize() }
@@ -338,41 +316,25 @@ interface TerminalPlatformApi {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
                     onRetrieveSetupIntent(res, args[0] as String)
                 }
-                "startCollectSetupIntentPaymentMethod" -> {
+                "startProcessSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onStartCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Int).let { AllowRedisplayApi.values()[it] }, args[3] as Boolean)
+                    onStartProcessSetupIntent(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Int).let { AllowRedisplayApi.values()[it] }, args[3] as Boolean)
                 }
-                "stopCollectSetupIntentPaymentMethod" -> {
+                "stopProcessSetupIntent" -> {
                     val res = Result<Unit>(result) { null }
-                    onStopCollectSetupIntentPaymentMethod(res, (args[0] as Number).toLong())
-                }
-                "startConfirmSetupIntent" -> {
-                    val res = Result<SetupIntentApi>(result) { it.serialize() }
-                    onStartConfirmSetupIntent(res, (args[0] as Number).toLong(), args[1] as String)
-                }
-                "stopConfirmSetupIntent" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStopConfirmSetupIntent(res, (args[0] as Number).toLong())
+                    onStopProcessSetupIntent(res, (args[0] as Number).toLong())
                 }
                 "cancelSetupIntent" -> {
                     val res = Result<SetupIntentApi>(result) { it.serialize() }
                     onCancelSetupIntent(res, args[0] as String)
                 }
-                "startCollectRefundPaymentMethod" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStartCollectRefundPaymentMethod(res, (args[0] as Number).toLong(), args[1] as String, (args[2] as Number).toLong(), args[3] as String, args[4]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[5] as Boolean?, args[6] as Boolean?, args[7] as Boolean)
-                }
-                "stopCollectRefundPaymentMethod" -> {
-                    val res = Result<Unit>(result) { null }
-                    onStopCollectRefundPaymentMethod(res, (args[0] as Number).toLong())
-                }
-                "startConfirmRefund" -> {
+                "startProcessRefund" -> {
                     val res = Result<RefundApi>(result) { it.serialize() }
-                    onStartConfirmRefund(res, (args[0] as Number).toLong())
+                    onStartProcessRefund(res, (args[0] as Number).toLong(), args[1] as String?, args[2] as String?, args[3] as String?, (args[4] as Number).toLong(), args[5] as String, args[6]?.let { hashMapOf(*(it as HashMap<*, *>).map { (k, v) -> k as String to v as String }.toTypedArray()) }, args[7] as Boolean?, args[8] as Boolean?, args[9] as Boolean)
                 }
-                "stopConfirmRefund" -> {
+                "stopProcessRefund" -> {
                     val res = Result<Unit>(result) { null }
-                    onStopConfirmRefund(res, (args[0] as Number).toLong())
+                    onStopProcessRefund(res, (args[0] as Number).toLong())
                 }
                 "setReaderDisplay" -> {
                     val res = Result<Unit>(result) { null }
@@ -385,6 +347,18 @@ interface TerminalPlatformApi {
                 "setTapToPayUXConfiguration" -> {
                     onSetTapToPayUXConfiguration((args[0] as List<Any?>).let { TapToPayUxConfigurationApi.deserialize(it) })
                     result.success(null)
+                }
+                "startEasyConnect" -> {
+                    val res = Result<ReaderApi>(result) { it.serialize() }
+                    onStartEasyConnect(res, (args[0] as Number).toLong(), (args[1] as List<Any?>).let { EasyConnectConfigurationApi.deserialize(it) })
+                }
+                "stopEasyConnect" -> {
+                    val res = Result<Unit>(result) { null }
+                    onStopEasyConnect(res, (args[0] as Number).toLong())
+                }
+                "isTapToPayAccountLinked" -> {
+                    val res = onIsTapToPayAccountLinked(args[0] as String?)
+                    result.success(res)
                 }
             }
         } catch (e: PlatformError) {
@@ -588,6 +562,18 @@ data class AmountDetailsApi(
     }
 }
 
+data class ClearCachedCredentialsResultApi(
+    val isSuccessful: Boolean,
+    val error: TerminalExceptionApi?,
+) {
+    fun serialize(): List<Any?> {
+        return listOf(
+            isSuccessful,
+            error?.serialize(),
+        )
+    }
+}
+
 enum class BatteryStatusApi {
     CRITICAL, LOW, NOMINAL;
 }
@@ -766,6 +752,20 @@ enum class ChargeStatusApi {
     SUCCEEDED, PENDING, FAILED;
 }
 
+data class ConfirmPaymentIntentConfigurationApi(
+    val returnUrl: String?,
+) {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): ConfirmPaymentIntentConfigurationApi {
+            return ConfirmPaymentIntentConfigurationApi(
+                returnUrl = serialized[0] as String?,
+            )
+        }
+    }
+}
+
 enum class ConfirmationMethodApi {
     AUTOMATIC, MANUAL;
 }
@@ -777,6 +777,7 @@ sealed class ConnectionConfigurationApi {
         ): ConnectionConfigurationApi {
             return when (serialized[0]) {
                 "BluetoothConnectionConfiguration" -> BluetoothConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "AppsOnDevicesConnectionConfiguration" -> AppsOnDevicesConnectionConfigurationApi.deserialize(serialized.drop(1))
                 "HandoffConnectionConfiguration" -> HandoffConnectionConfigurationApi.deserialize(serialized.drop(1))
                 "InternetConnectionConfiguration" -> InternetConnectionConfigurationApi.deserialize(serialized.drop(1))
                 "TapToPayConnectionConfiguration" -> TapToPayConnectionConfigurationApi.deserialize(serialized.drop(1))
@@ -798,6 +799,17 @@ data class BluetoothConnectionConfigurationApi(
             return BluetoothConnectionConfigurationApi(
                 autoReconnectOnUnexpectedDisconnect = serialized[0] as Boolean,
                 locationId = serialized[1] as String,
+            )
+        }
+    }
+}
+
+class AppsOnDevicesConnectionConfigurationApi: ConnectionConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): AppsOnDevicesConnectionConfigurationApi {
+            return AppsOnDevicesConnectionConfigurationApi(
             )
         }
     }
@@ -871,15 +883,15 @@ data class UsbConnectionConfigurationApi(
 }
 
 enum class ConnectionStatusApi {
-    NOT_CONNECTED, CONNECTED, CONNECTING, DISCOVERING;
+    NOT_CONNECTED, CONNECTED, CONNECTING, DISCOVERING, RECONNECTING;
 }
 
 enum class DeviceTypeApi {
-    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, TAP_TO_PAY, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, STRIPE_S710, STRIPE_S710_DEVKIT, VERIFONE_V660P, VERIFONE_M425, VERIFONE_M450, VERIFONE_P630, VERIFONE_UX700, VERIFONE_V660P_DEVKIT, VERIFONE_UX700_DEVKIT;
+    CHIPPER1_X, CHIPPER2_X, STRIPE_M2, TAP_TO_PAY, VERIFONE_P400, WISE_CUBE, WISE_PAD3, WISE_PAD3S, WISE_POS_E, WISE_POS_E_DEVKIT, ETNA, STRIPE_S700, STRIPE_S700_DEVKIT, STRIPE_S710, STRIPE_S710_DEVKIT, STRIPE_T600, STRIPE_T600_DEVKIT, STRIPE_T610, STRIPE_T610_DEVKIT, VERIFONE_V660P, VERIFONE_V660PA, VERIFONE_M425, VERIFONE_M450, VERIFONE_P630, VERIFONE_UX700, VERIFONE_V660P_DEVKIT, VERIFONE_UX700_DEVKIT, VERIFONE_VM100, VERIFONE_VP100, STRIPE_U200, VERIFONE_VM110, VERIFONE_VP110, VERIFONE_VL110;
 }
 
 enum class DisconnectReasonApi {
-    UNKNOWN, DISCONNECT_REQUESTED, REBOOT_REQUESTED, SECURITY_REBOOT, CRITICALLY_LOW_BATTERY, POWERED_OFF, BLUETOOTH_DISABLED, USB_DISCONNECTED, IDLE_POWER_DOWN, BLUETOOTH_SIGNAL_LOST;
+    UNKNOWN, DISCONNECT_REQUESTED, REBOOT_REQUESTED, SECURITY_REBOOT, CRITICALLY_LOW_BATTERY, POWERED_OFF, BLUETOOTH_DISABLED, USB_DISCONNECTED, IDLE_POWER_DOWN, BLUETOOTH_SIGNAL_LOST, BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION;
 }
 
 sealed class DiscoveryConfigurationApi {
@@ -890,6 +902,7 @@ sealed class DiscoveryConfigurationApi {
             return when (serialized[0]) {
                 "BluetoothDiscoveryConfiguration" -> BluetoothDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "BluetoothProximityDiscoveryConfiguration" -> BluetoothProximityDiscoveryConfigurationApi.deserialize(serialized.drop(1))
+                "AppsOnDevicesDiscoveryConfiguration" -> AppsOnDevicesDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "HandoffDiscoveryConfiguration" -> HandoffDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "InternetDiscoveryConfiguration" -> InternetDiscoveryConfigurationApi.deserialize(serialized.drop(1))
                 "TapToPayDiscoveryConfiguration" -> TapToPayDiscoveryConfigurationApi.deserialize(serialized.drop(1))
@@ -930,6 +943,17 @@ data class BluetoothProximityDiscoveryConfigurationApi(
     }
 }
 
+class AppsOnDevicesDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): AppsOnDevicesDiscoveryConfigurationApi {
+            return AppsOnDevicesDiscoveryConfigurationApi(
+            )
+        }
+    }
+}
+
 class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
     companion object {
         fun deserialize(
@@ -942,6 +966,7 @@ class HandoffDiscoveryConfigurationApi: DiscoveryConfigurationApi() {
 }
 
 data class InternetDiscoveryConfigurationApi(
+    val discoveryFilter: DiscoveryFilterApi?,
     val isSimulated: Boolean,
     val locationId: String?,
     val timeout: Long?,
@@ -951,9 +976,10 @@ data class InternetDiscoveryConfigurationApi(
             serialized: List<Any?>,
         ): InternetDiscoveryConfigurationApi {
             return InternetDiscoveryConfigurationApi(
-                isSimulated = serialized[0] as Boolean,
-                locationId = serialized[1] as String?,
-                timeout = serialized[2] as Long?,
+                discoveryFilter = (serialized[0] as List<Any?>?)?.let { DiscoveryFilterApi.deserialize(it) },
+                isSimulated = serialized[1] as Boolean,
+                locationId = serialized[2] as String?,
+                timeout = serialized[3] as Long?,
             )
         }
     }
@@ -984,6 +1010,119 @@ data class UsbDiscoveryConfigurationApi(
             return UsbDiscoveryConfigurationApi(
                 isSimulated = serialized[0] as Boolean,
                 timeout = serialized[1] as Long?,
+            )
+        }
+    }
+}
+
+sealed class DiscoveryFilterApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): DiscoveryFilterApi {
+            return when (serialized[0]) {
+                "DiscoveryFilterByReaderId" -> DiscoveryFilterByReaderIdApi.deserialize(serialized.drop(1))
+                "DiscoveryFilterBySerialNumber" -> DiscoveryFilterBySerialNumberApi.deserialize(serialized.drop(1))
+                else -> throw Error()
+            }
+        }
+    }
+}
+
+data class DiscoveryFilterByReaderIdApi(
+    val readerId: String,
+): DiscoveryFilterApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): DiscoveryFilterByReaderIdApi {
+            return DiscoveryFilterByReaderIdApi(
+                readerId = serialized[0] as String,
+            )
+        }
+    }
+}
+
+
+data class DiscoveryFilterBySerialNumberApi(
+    val serialNumber: String,
+): DiscoveryFilterApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): DiscoveryFilterBySerialNumberApi {
+            return DiscoveryFilterBySerialNumberApi(
+                serialNumber = serialized[0] as String,
+            )
+        }
+    }
+}
+
+
+sealed class EasyConnectConfigurationApi {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): EasyConnectConfigurationApi {
+            return when (serialized[0]) {
+                "InternetEasyConnectConfiguration" -> InternetEasyConnectConfigurationApi.deserialize(serialized.drop(1))
+                "AppsOnDevicesEasyConnectionConfiguration" -> AppsOnDevicesEasyConnectionConfigurationApi.deserialize(serialized.drop(1))
+                "TapToPayEasyConnectConfiguration" -> TapToPayEasyConnectConfigurationApi.deserialize(serialized.drop(1))
+                else -> throw Error()
+            }
+        }
+    }
+}
+
+data class InternetEasyConnectConfigurationApi(
+    val connectionConfiguration: InternetConnectionConfigurationApi,
+    val discoveryConfiguration: InternetDiscoveryConfigurationApi,
+): EasyConnectConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): InternetEasyConnectConfigurationApi {
+            return InternetEasyConnectConfigurationApi(
+                connectionConfiguration = (serialized[0] as List<Any?>).let { ConnectionConfigurationApi.deserialize(it) }
+                    as InternetConnectionConfigurationApi,
+                discoveryConfiguration = (serialized[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) }
+                    as InternetDiscoveryConfigurationApi,
+            )
+        }
+    }
+}
+
+data class AppsOnDevicesEasyConnectionConfigurationApi(
+    val connectionConfiguration: AppsOnDevicesConnectionConfigurationApi,
+    val discoveryConfiguration: AppsOnDevicesDiscoveryConfigurationApi,
+): EasyConnectConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): AppsOnDevicesEasyConnectionConfigurationApi {
+            return AppsOnDevicesEasyConnectionConfigurationApi(
+                connectionConfiguration = (serialized[0] as List<Any?>).let { ConnectionConfigurationApi.deserialize(it) }
+                    as AppsOnDevicesConnectionConfigurationApi,
+                discoveryConfiguration = (serialized[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) }
+                    as AppsOnDevicesDiscoveryConfigurationApi,
+            )
+        }
+    }
+}
+
+data class TapToPayEasyConnectConfigurationApi(
+    val connectionConfiguration: TapToPayConnectionConfigurationApi,
+    val discoveryConfiguration: TapToPayDiscoveryConfigurationApi,
+): EasyConnectConfigurationApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): TapToPayEasyConnectConfigurationApi {
+            return TapToPayEasyConnectConfigurationApi(
+                connectionConfiguration = (serialized[0] as List<Any?>).let { ConnectionConfigurationApi.deserialize(it) }
+                    as TapToPayConnectionConfigurationApi,
+                discoveryConfiguration = (serialized[1] as List<Any?>).let { DiscoveryConfigurationApi.deserialize(it) }
+                    as TapToPayDiscoveryConfigurationApi,
             )
         }
     }
@@ -1132,7 +1271,7 @@ data class PaymentIntentParametersApi(
 }
 
 enum class PaymentIntentStatusApi {
-    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, REQUIRES_ACTION, SUCCEEDED;
+    CANCELED, PROCESSING, REQUIRES_CAPTURE, REQUIRES_CONFIRMATION, REQUIRES_PAYMENT_METHOD, REQUIRES_ACTION, SUCCEEDED, REQUIRES_REAUTHORIZATION;
 }
 
 enum class PaymentIntentUsageApi {
@@ -1196,6 +1335,7 @@ enum class PaymentStatusApi {
 data class ReaderApi(
     val availableUpdate: Boolean,
     val batteryLevel: Double,
+    val deviceSoftwareVersion: String?,
     val deviceType: DeviceTypeApi?,
     val id: String?,
     val ipAddress: String?,
@@ -1211,6 +1351,7 @@ data class ReaderApi(
         return listOf(
             availableUpdate,
             batteryLevel,
+            deviceSoftwareVersion,
             deviceType?.ordinal,
             id,
             ipAddress,
@@ -1232,6 +1373,7 @@ sealed class ReaderDelegateAbstractApi {
         ): ReaderDelegateAbstractApi {
             return when (serialized[0]) {
                 "MobileReaderDelegate" -> MobileReaderDelegateApi.deserialize(serialized.drop(1))
+                "AppsOnDevicesReaderDelegate" -> AppsOnDevicesReaderDelegateApi.deserialize(serialized.drop(1))
                 "HandoffReaderDelegate" -> HandoffReaderDelegateApi.deserialize(serialized.drop(1))
                 "InternetReaderDelegate" -> InternetReaderDelegateApi.deserialize(serialized.drop(1))
                 "TapToPayReaderDelegate" -> TapToPayReaderDelegateApi.deserialize(serialized.drop(1))
@@ -1247,6 +1389,17 @@ class MobileReaderDelegateApi: ReaderDelegateAbstractApi() {
             serialized: List<Any?>,
         ): MobileReaderDelegateApi {
             return MobileReaderDelegateApi(
+            )
+        }
+    }
+}
+
+class AppsOnDevicesReaderDelegateApi: ReaderDelegateAbstractApi() {
+    companion object {
+        fun deserialize(
+            serialized: List<Any?>,
+        ): AppsOnDevicesReaderDelegateApi {
+            return AppsOnDevicesReaderDelegateApi(
             )
         }
     }
@@ -1558,7 +1711,7 @@ data class TapToPayUxConfigurationTapZoneApi(
 }
 
 enum class TapToPayUxConfigurationTapZoneIndicatorApi {
-    ABOVE, BELOW, FRONT, BEHIND;
+    ABOVE, BELOW, FRONT, BEHIND, LEFT, RIGHT;
 }
 
 data class TapToPayUxConfigurationTapZonePositionApi(
@@ -1596,7 +1749,7 @@ data class TerminalExceptionApi(
 }
 
 enum class TerminalExceptionCodeApi {
-    UNKNOWN, READER_NOT_RECOVERED, PAYMENT_INTENT_NOT_RECOVERED, SETUP_INTENT_NOT_RECOVERED, CANCEL_FAILED, CANCEL_FAILED_UNAVAILABLE, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_DISABLED, BLUETOOTH_PERMISSION_DENIED, CONFIRM_INVALID_PAYMENT_INTENT, CONFIRM_INVALID_SETUP_INTENT, INVALID_CLIENT_SECRET, INVALID_READER_FOR_UPDATE, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, FEATURE_NOT_AVAILABLE_WITH_CONNECTED_READER, USB_PERMISSION_DENIED, USB_DISCOVERY_TIMED_OUT, INVALID_PARAMETER, REQUEST_DYNAMIC_CURRENCY_CONVERSION_REQUIRES_UPDATE_PAYMENT_INTENT, DYNAMIC_CURRENCY_CONVERSION_NOT_AVAILABLE, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, TAP_TO_PAY_UNSUPPORTED_DEVICE, TAP_TO_PAY_UNSUPPORTED_OPERATING_SYSTEM_VERSION, TAP_TO_PAY_DEVICE_TAMPERED, TAP_TO_PAY_DEBUG_NOT_SUPPORTED, TAP_TO_PAY_INSECURE_ENVIRONMENT, OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, READER_SOFTWARE_UPDATE_FAILED_EXPIRED_UPDATE, READER_BATTERY_CRITICALLY_LOW, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, FEATURE_NOT_ENABLED_ON_ACCOUNT, PASSCODE_NOT_ENABLED, COMMAND_NOT_ALLOWED_DURING_CALL, INVALID_AMOUNT, INVALID_CURRENCY, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_REQUIRESI_CLOUD_SIGN_IN, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_CANCELED, TAP_TO_PAY_READER_FAILED_TO_PREPARE, TAP_TO_PAY_READER_DEVICE_BANNED, TAP_TO_PAY_READER_T_O_S_NOT_YET_ACCEPTED, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_FAILED, TAP_TO_PAY_READER_MERCHANT_BLOCKED, TAP_TO_PAY_READER_INVALID_MERCHANT, TAP_TO_PAY_READER_ACCOUNT_DEACTIVATED, READER_MISSING_ENCRYPTION_KEYS, READER_BUSY, INCOMPATIBLE_READER, READER_COMMUNICATION_ERROR, READER_TAMPERED, UNKNOWN_READER_IP_ADDRESS, INTERNET_CONNECT_TIME_OUT, CONNECT_FAILED_READER_IS_IN_USE, READER_NOT_ACCESSIBLE_IN_BACKGROUND, BLUETOOTH_ERROR, BLUETOOTH_CONNECT_TIMED_OUT, BLUETOOTH_DISCONNECTED, BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION, BLUETOOTH_ALREADY_PAIRED_WITH_ANOTHER_DEVICE, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, UNEXPECTED_READER_ERROR, ENCRYPTION_KEY_FAILURE, ENCRYPTION_KEY_STILL_INITIALIZING, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, COMMAND_INVALID_ALLOW_REDISPLAY, NOT_CONNECTED_TO_INTERNET, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, INTERNAL_NETWORK_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION, COMMAND_NOT_ALLOWED, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, READER_CONNECTION_OFFLINE_NEEDS_UPDATE, LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, REFUND_FAILED, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, MOBILE_WALLET_NOT_SUPPORTED_ON_SETUP_INTENTS, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_CONFIRM_MISMATCH, FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE, FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE_MODE_ENABLED, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, CONNECTION_TOKEN_PROVIDER_TIMED_OUT, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE, TEST_CARD_IN_LIVE_MODE, COLLECT_INPUTS_APPLICATION_ERROR, COLLECT_INPUTS_TIMED_OUT, CANCELED_DUE_TO_INTEGRATION_ERROR, PRINTER_BUSY, PRINTER_PAPERJAM, PRINTER_OUT_OF_PAPER, PRINTER_COVER_OPEN, PRINTER_ABSENT, PRINTER_UNAVAILABLE, PRINTER_ERROR, COLLECT_INPUTS_UNSUPPORTED, READER_SETTINGS_ERROR, INVALID_SURCHARGE_PARAMETER, READER_COMMUNICATION_SSL_ERROR, ALLOW_REDISPLAY_INVALID, SURCHARGING_NOT_AVAILABLE, SURCHARGE_NOTICE_REQUIRES_UPDATE_PAYMENT_INTENT, SURCHARGE_UNAVAILABLE_WITH_DYNAMIC_CURRENCY_CONVERSION, TAP_TO_PAY_UNSUPPORTED_PROCESSOR;
+    UNKNOWN, READER_NOT_RECOVERED, PAYMENT_INTENT_NOT_RECOVERED, SETUP_INTENT_NOT_RECOVERED, CANCEL_FAILED, CANCEL_FAILED_UNAVAILABLE, NOT_CONNECTED_TO_READER, ALREADY_CONNECTED_TO_READER, BLUETOOTH_DISABLED, BLUETOOTH_PERMISSION_DENIED, CONFIRM_INVALID_PAYMENT_INTENT, CONFIRM_INVALID_SETUP_INTENT, INVALID_CLIENT_SECRET, INVALID_READER_FOR_UPDATE, UNSUPPORTED_OPERATION, UNEXPECTED_OPERATION, UNSUPPORTED_SDK, FEATURE_NOT_AVAILABLE_WITH_CONNECTED_READER, USB_PERMISSION_DENIED, USB_DISCOVERY_TIMED_OUT, INVALID_PARAMETER, REQUEST_DYNAMIC_CURRENCY_CONVERSION_REQUIRES_UPDATE_PAYMENT_INTENT, DYNAMIC_CURRENCY_CONVERSION_NOT_AVAILABLE, INVALID_REQUIRED_PARAMETER, INVALID_TIP_PARAMETER, TAP_TO_PAY_UNSUPPORTED_DEVICE, TAP_TO_PAY_UNSUPPORTED_OPERATING_SYSTEM_VERSION, TAP_TO_PAY_DEVICE_TAMPERED, TAP_TO_PAY_DEBUG_NOT_SUPPORTED, TAP_TO_PAY_INSECURE_ENVIRONMENT, OFFLINE_MODE_UNSUPPORTED_OPERATING_SYSTEM_VERSION, CANCELED, LOCATION_SERVICES_DISABLED, BLUETOOTH_SCAN_TIMED_OUT, BLUETOOTH_LOW_ENERGY_UNSUPPORTED, READER_SOFTWARE_UPDATE_FAILED_BATTERY_LOW, READER_SOFTWARE_UPDATE_FAILED_INTERRUPTED, READER_SOFTWARE_UPDATE_FAILED_EXPIRED_UPDATE, READER_BATTERY_CRITICALLY_LOW, CARD_INSERT_NOT_READ, CARD_SWIPE_NOT_READ, CARD_READ_TIMED_OUT, CARD_REMOVED, CUSTOMER_CONSENT_REQUIRED, CARD_LEFT_IN_READER, FEATURE_NOT_ENABLED_ON_ACCOUNT, PASSCODE_NOT_ENABLED, COMMAND_NOT_ALLOWED_DURING_CALL, INVALID_AMOUNT, INVALID_CURRENCY, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_REQUIRESI_CLOUD_SIGN_IN, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_CANCELED, TAP_TO_PAY_READER_FAILED_TO_PREPARE, TAP_TO_PAY_READER_DEVICE_BANNED, TAP_TO_PAY_READER_T_O_S_NOT_YET_ACCEPTED, TAP_TO_PAY_READER_T_O_S_ACCEPTANCE_FAILED, TAP_TO_PAY_READER_MERCHANT_BLOCKED, TAP_TO_PAY_READER_INVALID_MERCHANT, TAP_TO_PAY_READER_ACCOUNT_DEACTIVATED, READER_MISSING_ENCRYPTION_KEYS, READER_BUSY, INCOMPATIBLE_READER, READER_COMMUNICATION_ERROR, READER_TAMPERED, UNKNOWN_READER_IP_ADDRESS, INTERNET_CONNECT_TIME_OUT, CONNECT_FAILED_READER_IS_IN_USE, READER_NOT_ACCESSIBLE_IN_BACKGROUND, BLUETOOTH_ERROR, BLUETOOTH_CONNECT_TIMED_OUT, BLUETOOTH_DISCONNECTED, BLUETOOTH_PEER_REMOVED_PAIRING_INFORMATION, BLUETOOTH_ALREADY_PAIRED_WITH_ANOTHER_DEVICE, BLUETOOTH_RECONNECT_STARTED, USB_DISCONNECTED, USB_RECONNECT_STARTED, READER_CONNECTED_TO_ANOTHER_DEVICE, READER_SOFTWARE_UPDATE_FAILED, READER_SOFTWARE_UPDATE_FAILED_READER_ERROR, READER_SOFTWARE_UPDATE_FAILED_SERVER_ERROR, NFC_DISABLED, UNSUPPORTED_READER_VERSION, UNEXPECTED_SDK_ERROR, UNEXPECTED_READER_ERROR, ENCRYPTION_KEY_FAILURE, ENCRYPTION_KEY_STILL_INITIALIZING, DECLINED_BY_STRIPE_API, DECLINED_BY_READER, COMMAND_INVALID_ALLOW_REDISPLAY, NOT_CONNECTED_TO_INTERNET, REQUEST_TIMED_OUT, STRIPE_API_CONNECTION_ERROR, STRIPE_API_ERROR, STRIPE_API_RESPONSE_DECODING_ERROR, INTERNAL_NETWORK_ERROR, CONNECTION_TOKEN_PROVIDER_ERROR, SESSION_EXPIRED, UNSUPPORTED_MOBILE_DEVICE_CONFIGURATION, COMMAND_NOT_ALLOWED, AMOUNT_EXCEEDS_MAX_OFFLINE_AMOUNT, OFFLINE_PAYMENTS_DATABASE_TOO_LARGE, READER_CONNECTION_NOT_AVAILABLE_OFFLINE, READER_CONNECTION_OFFLINE_LOCATION_MISMATCH, READER_CONNECTION_OFFLINE_NEEDS_UPDATE, LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE, NO_LAST_SEEN_ACCOUNT, INVALID_OFFLINE_CURRENCY, REFUND_FAILED, CARD_SWIPE_NOT_AVAILABLE, INTERAC_NOT_SUPPORTED_OFFLINE, ONLINE_PIN_NOT_SUPPORTED_OFFLINE, MOBILE_WALLET_NOT_SUPPORTED_ON_SETUP_INTENTS, OFFLINE_AND_CARD_EXPIRED, OFFLINE_TRANSACTION_DECLINED, OFFLINE_COLLECT_AND_CONFIRM_MISMATCH, FORWARDING_TEST_MODE_PAYMENT_IN_LIVE_MODE, FORWARDING_LIVE_MODE_PAYMENT_IN_TEST_MODE, OFFLINE_PAYMENT_INTENT_NOT_FOUND, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE, UPDATE_PAYMENT_INTENT_UNAVAILABLE_WHILE_OFFLINE_MODE_ENABLED, MISSING_EMV_DATA, CONNECTION_TOKEN_PROVIDER_ERROR_WHILE_FORWARDING, CONNECTION_TOKEN_PROVIDER_TIMED_OUT, ACCOUNT_ID_MISMATCH_WHILE_FORWARDING, OFFLINE_BEHAVIOR_FORCE_OFFLINE_WITH_FEATURE_DISABLED, NOT_CONNECTED_TO_INTERNET_AND_OFFLINE_BEHAVIOR_REQUIRE_ONLINE, TEST_CARD_IN_LIVE_MODE, COLLECT_INPUTS_APPLICATION_ERROR, COLLECT_INPUTS_TIMED_OUT, CANCELED_DUE_TO_INTEGRATION_ERROR, PRINTER_BUSY, PRINTER_PAPERJAM, PRINTER_OUT_OF_PAPER, PRINTER_COVER_OPEN, PRINTER_ABSENT, PRINTER_UNAVAILABLE, PRINTER_ERROR, COLLECT_INPUTS_UNSUPPORTED, READER_SETTINGS_ERROR, INVALID_SURCHARGE_PARAMETER, READER_COMMUNICATION_SSL_ERROR, ALLOW_REDISPLAY_INVALID, SURCHARGING_NOT_AVAILABLE, SURCHARGE_NOTICE_REQUIRES_UPDATE_PAYMENT_INTENT, SURCHARGE_UNAVAILABLE_WITH_DYNAMIC_CURRENCY_CONVERSION, TAP_TO_PAY_UNSUPPORTED_PROCESSOR, TAP_TO_PAY_PIN_UNAVAILABLE, BARCODE_SCANNER_UNAVAILABLE, BARCODE_REQUESTED_SCANNER_NOT_FOUND, BARCODE_SCANNING_UNSUPPORTED_DEVICE, SIMULATED_OFFLINE_MODE_NOT_AVAILABLE_IN_LIVEMODE;
 }
 
 data class TipApi(

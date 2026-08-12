@@ -11,15 +11,14 @@ class Tip with _$Tip {
   /// Portion of the amount that corresponds to a tip
   ///
   /// The value will be null in the following scenarios:
-  /// - tipping is skipped by using the CollectConfiguration.skipTipping flag or by setting TippingConfiguration.eligibleAmount to 0
+  /// - tipping is skipped by using the skipTipping flag in processPaymentIntent or by setting
+  ///   TippingConfiguration.eligibleAmount to 0
   /// - current reader location does not have a tipping config set
   /// If “No tip” is selected on the reader, the value will be 0
   final int? amount;
 
   @internal
-  const Tip({
-    required this.amount,
-  });
+  const Tip({required this.amount});
 }
 
 // PARAMETERS
@@ -30,7 +29,5 @@ class TippingConfiguration with _$TippingConfiguration {
   /// The amount of the payment total eligible for tips.
   final int eligibleAmount;
 
-  const TippingConfiguration({
-    required this.eligibleAmount,
-  });
+  const TippingConfiguration({required this.eligibleAmount});
 }

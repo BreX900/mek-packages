@@ -80,7 +80,7 @@ extension CardPresentDetails {
     }
 }
 
-extension SCPIncrementalAuthorizationStatus {
+extension IncrementalAuthorizationStatus {
     func toApi() -> IncrementalAuthorizationStatusApi? {
         switch self {
         case .unknown:

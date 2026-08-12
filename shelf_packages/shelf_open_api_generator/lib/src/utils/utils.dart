@@ -7,13 +7,6 @@ extension MapFromIterable<T> on Iterable<T> {
   Iterable<R> mapWhereNotNull<R extends Object>(R? Function(T e) mapper) => map(mapper).nonNulls;
 }
 
-extension ElementExtensions on Element {
-  String get requireName {
-    if (name case final name?) return name;
-    throw InvalidGenerationSourceError('The parameter name is required!', element: this);
-  }
-}
-
 extension ClassElementExtensions on ClassElement {
   ConstructorElement get requireUnnamedConstructor {
     if (unnamedConstructor case final constructor?) return constructor;

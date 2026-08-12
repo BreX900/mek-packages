@@ -5,7 +5,6 @@ import 'package:open_api_client_generator/src/client_codecs/client_codec.dart';
 import 'package:open_api_client_generator/src/code_utils/code_buffer.dart';
 import 'package:open_api_client_generator/src/code_utils/document.dart';
 import 'package:open_api_client_generator/src/code_utils/reference_utils.dart';
-import 'package:open_api_client_generator/src/code_utils/schema_to_reference.dart';
 import 'package:open_api_client_generator/src/collection_codecs/collection_codec.dart';
 import 'package:open_api_client_generator/src/options/context.dart';
 import 'package:open_api_client_generator/src/serialization_codec/serialization_codec.dart';
@@ -59,9 +58,14 @@ class BuildApiClass with ContextMixin {
         queryParameters.map((e) {
           final key = codecs.encodeDartValue(e.name);
           final varName = codecs.encodeName(e.name);
-          final schema = e.schema!.resolve(components);
-          final varEncoder = collectionCodec.encodeToCore(ref(schema).toNullable(!e.required));
-          return '$key: $varName$varEncoder,\n';
+          final varEncoder = dataCodec.encodeSerialization(
+            buildSchemaClass(varName, e.schema!).toNullable(false),
+            varName,
+          );
+
+          final code = '$key: $varEncoder,\n';
+          if (e.required) return code;
+          return 'if ($varName != null) $code';
         }),
       );
       b.write('};\n');
@@ -119,7 +123,7 @@ class BuildApiClass with ContextMixin {
           ? '${methodName}Response'
           : '${methodName}Exception';
       final responseClass = responseSchema != null
-          ? buildSchemaClass.call(responseClassName, responseSchema.resolve(components))
+          ? buildSchemaClass.call(responseClassName, responseSchema)
           : References.void$;
       return MapEntry(code, responseClass);
     });
@@ -139,7 +143,7 @@ class BuildApiClass with ContextMixin {
     final requestSchema = request?.content.jsonOrAny?.schema;
     final requestClassName = '${methodName}Request';
     final requestClass = requestSchema != null
-        ? buildSchemaClass.call(requestClassName, requestSchema.resolve(components))
+        ? buildSchemaClass.call(requestClassName, requestSchema)
         : null;
     final requestType = requestClass?.type.toNullable(!(request?.required ?? false));
 
@@ -158,7 +162,7 @@ class BuildApiClass with ContextMixin {
       responses: responses,
     );
 
-    return Method(
+    final method = Method(
       (b) => b
         ..docs.addAll(
           Docs.format(
@@ -181,7 +185,7 @@ class BuildApiClass with ContextMixin {
           pathParameters.map((param) {
             return Parameter(
               (b) => b
-                ..type = ref(param.schema!.resolve(components)).toNullable(!param.required)
+                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),
@@ -195,19 +199,20 @@ class BuildApiClass with ContextMixin {
             ),
         ])
         ..optionalParameters.addAll(
-          queryParameters.map((e) {
+          queryParameters.map((param) {
             return Parameter(
               (b) => b
                 ..named = true
-                ..required = e.required
-                ..type = ref(e.schema!.resolve(components)).toNullable(!e.required)
-                ..name = codecs.encodeName(e.name),
+                ..required = param.required
+                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
+                ..name = codecs.encodeName(param.name),
             );
           }),
         )
         ..modifier = MethodModifier.async
         ..body = Code(operationCode),
     );
+    return clientCodec.rebuildMethod(method, path, name.toUpperCase(), operation);
   }
 
   Class call(Map<String, ItemPathOpenApi> paths) {
@@ -226,7 +231,7 @@ class BuildApiClass with ContextMixin {
       });
     });
 
-    return Class(
+    final class$ = Class(
       (b) => b
         ..name = options.apiClassName
         ..fields.addAll(fields)
@@ -248,5 +253,6 @@ class BuildApiClass with ContextMixin {
         )
         ..methods.addAll(methods),
     );
+    return clientCodec.rebuildClass(class$, paths);
   }
 }

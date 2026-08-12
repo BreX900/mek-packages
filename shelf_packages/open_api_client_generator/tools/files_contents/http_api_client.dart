@@ -1,4 +1,4 @@
-// ignore_for_file: always_use_package_imports
+// ignore_for_file: unnecessary_ignore, always_use_package_imports
 
 import 'dart:convert';
 
@@ -13,8 +13,9 @@ class HttpApiClient extends ApiClient {
 
   @override
   Future<ApiClientResponse> onSend(ApiClientRequest request) async {
-    final response = await httpClient
-        .send(Request(request.method, request.uri)..body = jsonEncode(request.data));
+    final response = await httpClient.send(
+      Request(request.method, request.uri)..body = jsonEncode(request.data),
+    );
 
     return ApiClientResponse(
       request: request,

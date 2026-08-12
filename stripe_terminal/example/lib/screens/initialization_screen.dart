@@ -12,10 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 class InitializationScreen extends StatefulWidget {
   final VoidCallback onInitialized;
 
-  const InitializationScreen({
-    super.key,
-    required this.onInitialized,
-  });
+  const InitializationScreen({super.key, required this.onInitialized});
 
   @override
   State<InitializationScreen> createState() => _InitializationScreenState();
@@ -26,10 +23,7 @@ class _InitializationScreenState extends State<InitializationScreen> with StateT
     final permissions = [
       Permission.locationWhenInUse,
       Permission.bluetooth,
-      if (Platform.isAndroid) ...[
-        Permission.bluetoothScan,
-        Permission.bluetoothConnect,
-      ],
+      if (Platform.isAndroid) ...[Permission.bluetoothScan, Permission.bluetoothConnect],
     ];
 
     for (final permission in permissions) {
@@ -54,7 +48,7 @@ class _InitializationScreenState extends State<InitializationScreen> with StateT
       }
     }
 
-    await Terminal.initTerminal(
+    await Terminal.init(
       shouldPrintLogs: true,
       fetchToken: StripeApi.instance.createTerminalConnectionToken,
     );

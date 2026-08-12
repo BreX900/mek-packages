@@ -28,12 +28,13 @@ mixin _$Cart {
   }
 
   @override
-  String toString() => (ClassToString('Cart')
-        ..add('currency', _self.currency)
-        ..add('tax', _self.tax)
-        ..add('total', _self.total)
-        ..add('lineItems', _self.lineItems))
-      .toString();
+  String toString() =>
+      (ClassToString('Cart')
+            ..add('currency', _self.currency)
+            ..add('tax', _self.tax)
+            ..add('total', _self.total)
+            ..add('lineItems', _self.lineItems))
+          .toString();
 }
 
 mixin _$CartLineItem {
@@ -56,9 +57,10 @@ mixin _$CartLineItem {
   }
 
   @override
-  String toString() => (ClassToString('CartLineItem')
-        ..add('description', _self.description)
-        ..add('quantity', _self.quantity)
-        ..add('amount', _self.amount))
-      .toString();
+  String toString() =>
+      (ClassToString('CartLineItem')
+            ..add('description', _self.description)
+            ..add('quantity', _self.quantity)
+            ..add('amount', _self.amount))
+          .toString();
 }

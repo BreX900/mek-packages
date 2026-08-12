@@ -11,11 +11,7 @@ class WriteOpenApiPlugin with Plugin {
   final String? outputFolder;
   final String? outputFileName;
 
-  WriteOpenApiPlugin({
-    required this.options,
-    this.outputFolder,
-    this.outputFileName,
-  });
+  WriteOpenApiPlugin({required this.options, this.outputFolder, this.outputFileName});
 
   late String? _fileName;
   late Map<dynamic, dynamic> _specifications;
@@ -34,7 +30,11 @@ class WriteOpenApiPlugin with Plugin {
 
   @override
   Future<void> onFinish() async {
-    await File('${outputFolder ?? options.outputFolder}/${_fileName ?? outputFileName}.yaml')
-        .writeAsString(FileUtils.yamlFrom(_specifications));
+    final file = File(
+      '${outputFolder ?? options.outputFolder}/${outputFileName ?? _fileName}.yaml',
+    );
+    // ignore: avoid_print
+    print('Writing file to ${file.path}');
+    await file.writeAsString(FileUtils.yamlFrom(_specifications));
   }
 }

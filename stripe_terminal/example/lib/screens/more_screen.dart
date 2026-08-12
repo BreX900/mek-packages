@@ -8,10 +8,7 @@ import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 class MoreScreen extends ConsumerStatefulWidget {
   final ValueListenable<ConnectionStatus> connectionStatusListenable;
 
-  const MoreScreen({
-    super.key,
-    required this.connectionStatusListenable,
-  });
+  const MoreScreen({super.key, required this.connectionStatusListenable});
 
   @override
   State<MoreScreen> createState() => _MoreScreenState();
@@ -33,13 +30,21 @@ class _MoreScreenState extends ConsumerState<MoreScreen> with StateTools {
       body: Column(
         children: [
           FilledButton.tonal(
-            onPressed: !isMutating && connectionStatus == ConnectionStatus.notConnected
-                ? () => mutate(Terminal.instance.clearCachedCredentials)
-                : null,
+            onPressed:
+                !isMutating && connectionStatus == ConnectionStatus.notConnected
+                    ? () => mutate(() async {
+                      final result = await Terminal.instance.clearCachedCredentials();
+                      if (!result.isSuccessful) {
+                        throw result.error ?? Exception('Clear cached credentials failed.');
+                      }
+                    })
+                    : null,
             child: const Text('Clear cached credentials'),
           ),
-          Text('You can use this method to switch Stripe accounts in your app.',
-              style: textTheme.bodySmall),
+          Text(
+            'You can use this method to switch Stripe accounts in your app.',
+            style: textTheme.bodySmall,
+          ),
           const Divider(height: 32.0),
           OutlinedButton(
             onPressed: () async => StripeApi.instance.createReader(),

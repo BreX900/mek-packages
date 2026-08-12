@@ -44,15 +44,15 @@ class TerminalHandlers {
   void _onPaymentStatusChange(PaymentStatus paymentStatus) =>
       _paymentStatusChangeController.add(paymentStatus);
 
-//region ReaderDelegate
+  //region ReaderDelegate
   void _onReaderReportEvent(ReaderEvent event) {
     _runInZone<ReaderDelegate>(_readerDelegate, (delegate) {
       delegate.onReportReaderEvent(event);
     });
   }
-//endregion
+  //endregion
 
-//region ReaderReconnectionDelegate
+  //region ReaderReconnectionDelegate
   void _onReaderReconnectFailed(Reader reader) {
     _runInZone<ReaderReconnectionDelegate>(_readerDelegate, (delegate) {
       delegate.onReaderReconnectFailed(reader);
@@ -70,17 +70,17 @@ class TerminalHandlers {
       delegate.onReaderReconnectSucceeded(reader);
     });
   }
-//endregion
+  //endregion
 
-//region ReaderDisconnectDelegate
+  //region ReaderDisconnectDelegate
   void _onDisconnect(DisconnectReason reason) {
     _runInZone<ReaderDisconnectDelegate>(_readerDelegate, (delegate) {
       delegate.onDisconnect(reason);
     });
   }
-//endregion
+  //endregion
 
-//region ReaderPortableDelegate
+  //region ReaderPortableDelegate
   void _onReaderStartInstallingUpdate(ReaderSoftwareUpdate update) {
     _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
       delegate.onStartInstallingUpdate(update, _platform.cancelReaderUpdate);
@@ -93,10 +93,7 @@ class TerminalHandlers {
     });
   }
 
-  void _onReaderFinishInstallingUpdate(
-    ReaderSoftwareUpdate? update,
-    TerminalException? exception,
-  ) {
+  void _onReaderFinishInstallingUpdate(ReaderSoftwareUpdate? update, TerminalException? exception) {
     _runInZone<ReaderPortableDelegate>(_readerDelegate, (delegate) {
       delegate.onFinishInstallingUpdate(update, exception);
     });
@@ -113,9 +110,9 @@ class TerminalHandlers {
       delegate.onRequestReaderInput(options);
     });
   }
-//endregion
+  //endregion
 
-//region MobileReaderDelegate
+  //region MobileReaderDelegate
   void _onReaderBatteryLevelUpdate(
     double batteryLevel,
     BatteryStatus? batteryStatus,
@@ -137,24 +134,21 @@ class TerminalHandlers {
       delegate.onReportAvailableUpdate(update);
     });
   }
-//endRegion
+  //endRegion
 
-//region TapToPayReaderDelegate
+  //region TapToPayReaderDelegate
   void _onReaderAcceptTermsOfService() {
     _runInZone<TapToPayReaderDelegate>(_readerDelegate, (delegate) {
       delegate.onAcceptTermsOfService();
     });
   }
-//endRegion
+  //endRegion
 
-  void _runInZone<T>(
-    ReaderDelegateAbstract? delegate,
-    void Function(T delegate) body,
-  ) {
+  void _runInZone<T>(ReaderDelegateAbstract? delegate, void Function(T delegate) body) {
     if (delegate == null) return;
     if (delegate is! T) return;
     Zone.current.runUnary(body, delegate as T);
   }
 
-//endregion
+  //endregion
 }

@@ -58,32 +58,27 @@ class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
     setState(() => _readers = const []);
 
     final configuration = switch (_discoveryMethod) {
-      DiscoveryMethod.bluetoothScan => BluetoothDiscoveryConfiguration(
-          isSimulated: _isSimulated,
-        ),
+      DiscoveryMethod.bluetoothScan => BluetoothDiscoveryConfiguration(isSimulated: _isSimulated),
       DiscoveryMethod.bluetoothProximity => BluetoothProximityDiscoveryConfiguration(
-          isSimulated: _isSimulated,
-        ),
-      DiscoveryMethod.handOff => const HandoffDiscoveryConfiguration(),
-      DiscoveryMethod.internet => InternetDiscoveryConfiguration(
-          isSimulated: _isSimulated,
-        ),
-      DiscoveryMethod.tapToPay => TapToPayDiscoveryConfiguration(
-          isSimulated: _isSimulated,
-        ),
-      DiscoveryMethod.usb => UsbDiscoveryConfiguration(
-          isSimulated: _isSimulated,
-        ),
+        isSimulated: _isSimulated,
+      ),
+      DiscoveryMethod.appsOnDevices => const AppsOnDevicesDiscoveryConfiguration(),
+      DiscoveryMethod.internet => InternetDiscoveryConfiguration(isSimulated: _isSimulated),
+      DiscoveryMethod.tapToPay => TapToPayDiscoveryConfiguration(isSimulated: _isSimulated),
+      DiscoveryMethod.usb => UsbDiscoveryConfiguration(isSimulated: _isSimulated),
     };
 
     final discoverReaderStream = Terminal.instance.discoverReaders(configuration);
 
     setState(() {
-      _discoverReaderSub = discoverReaderStream.listen((readers) {
-        setState(() => _readers = readers);
-      }, onDone: () {
-        setState(() => _discoverReaderSub = null);
-      });
+      _discoverReaderSub = discoverReaderStream.listen(
+        (readers) {
+          setState(() => _readers = readers);
+        },
+        onDone: () {
+          setState(() => _discoverReaderSub = null);
+        },
+      );
     });
   }
 
@@ -103,32 +98,34 @@ class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
     try {
       final connectionConfiguration = switch (_discoveryMethod) {
         DiscoveryMethod.bluetoothScan ||
-        DiscoveryMethod.bluetoothProximity =>
-          BluetoothConnectionConfiguration(
-            locationId: getLocationId(),
-            readerDelegate: LoggingMobileReaderDelegate(showSnackBar),
-          ),
+        DiscoveryMethod.bluetoothProximity => BluetoothConnectionConfiguration(
+          locationId: getLocationId(),
+          readerDelegate: LoggingMobileReaderDelegate(showSnackBar),
+        ),
         DiscoveryMethod.tapToPay => TapToPayConnectionConfiguration(
-            locationId: getLocationId(),
-            readerDelegate: LoggingTapToPayReaderDelegate(showSnackBar),
-          ),
+          locationId: getLocationId(),
+          readerDelegate: LoggingTapToPayReaderDelegate(showSnackBar),
+        ),
         DiscoveryMethod.internet => InternetConnectionConfiguration(
-            readerDelegate: LoggingInternetReaderDelegate(showSnackBar),
-          ),
-        DiscoveryMethod.handOff => HandoffConnectionConfiguration(
-            readerDelegate: LoggingHandoffReaderDelegate(showSnackBar),
-          ),
+          readerDelegate: LoggingInternetReaderDelegate(showSnackBar),
+        ),
+        DiscoveryMethod.appsOnDevices => AppsOnDevicesConnectionConfiguration(
+          readerDelegate: LoggingAppsOnDevicesReaderDelegate(showSnackBar),
+        ),
         DiscoveryMethod.usb => UsbConnectionConfiguration(
-            locationId: getLocationId(),
-            readerDelegate: LoggingMobileReaderDelegate(showSnackBar),
-          ),
+          locationId: getLocationId(),
+          readerDelegate: LoggingMobileReaderDelegate(showSnackBar),
+        ),
       };
 
-      final connectedReader =
-          await Terminal.instance.connectReader(reader, configuration: connectionConfiguration);
+      final connectedReader = await Terminal.instance.connectReader(
+        reader,
+        configuration: connectionConfiguration,
+      );
 
       showSnackBar(
-          'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}');
+        'Connected to a device: ${connectedReader.label ?? connectedReader.serialNumber}',
+      );
       widget.connectedReaderNotifier.value = connectedReader;
     } on NotFoundLocationException {
       showSnackBar('Location not selected!');
@@ -164,25 +161,25 @@ class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: DropdownButtonFormField<DiscoveryMethod>(
-                value: _discoveryMethod,
-                onChanged: !isMutating && connectionStatus == ConnectionStatus.notConnected
-                    ? _changeDiscoveryMethod
-                    : null,
+                initialValue: _discoveryMethod,
+                onChanged:
+                    !isMutating && connectionStatus == ConnectionStatus.notConnected
+                        ? _changeDiscoveryMethod
+                        : null,
                 isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Discovery method'),
-                items: DiscoveryMethod.values.map((e) {
-                  return DropdownMenuItem(
-                    value: e,
-                    child: Text(e.name),
-                  );
-                }).toList(),
+                items:
+                    DiscoveryMethod.values.map((e) {
+                      return DropdownMenuItem(value: e, child: Text(e.name));
+                    }).toList(),
               ),
             ),
             if (_discoveryMethod.canSimulate)
               SwitchListTile(
-                onChanged: !isMutating && connectionStatus == ConnectionStatus.notConnected
-                    ? (_) => mutate(_changeMode)
-                    : null,
+                onChanged:
+                    !isMutating && connectionStatus == ConnectionStatus.notConnected
+                        ? (_) => mutate(_changeMode)
+                        : null,
                 value: _isSimulated,
                 title: const Text('Is simulate scanning mode?'),
               ),
@@ -194,55 +191,56 @@ class _ReadersScreenState extends ConsumerState<ReadersScreen> with StateTools {
               )
             else if (_discoverReaderSub == null)
               FilledButton(
-                onPressed: !isMutating && connectionStatus == ConnectionStatus.notConnected
-                    ? _startDiscoverReaders
-                    : null,
+                onPressed:
+                    !isMutating && connectionStatus == ConnectionStatus.notConnected
+                        ? _startDiscoverReaders
+                        : null,
                 child: const Text('Scan Devices'),
               )
             else
               FilledButton(
-                onPressed: !isMutating && connectionStatus == ConnectionStatus.discovering
-                    ? _stopDiscoverReaders
-                    : null,
+                onPressed:
+                    !isMutating && connectionStatus == ConnectionStatus.discovering
+                        ? _stopDiscoverReaders
+                        : null,
                 child: const Text('Stop Scanning'),
               ),
             const Divider(height: 32.0),
             ...(connectedReader != null ? [connectedReader] : _readers).map((reader) {
               return ListTile(
                 selected: reader.serialNumber == connectedReader?.serialNumber,
-                enabled: !isMutating &&
+                enabled:
+                    !isMutating &&
                     connectionStatus != ConnectionStatus.connecting &&
                     (connectedReader == null ||
                         connectedReader.serialNumber == reader.serialNumber),
                 onTap: () => mutate(() async => _connectReader(reader)),
                 title: Text(reader.serialNumber),
                 subtitle: Text(
-                    '${reader.deviceType?.name ?? 'Unknown'} ${reader.locationId ?? 'NoLocation'}'),
+                  '${reader.deviceType?.name ?? 'Unknown'} ${reader.locationId ?? 'NoLocation'}',
+                ),
                 trailing: Text('${(reader.batteryLevel * 100).toInt()}'),
               );
             }),
             if (connectedReader != null) ...[
               const SizedBox(height: 8.0),
               FilledButton.tonal(
-                onPressed: !isMutating
-                    ? () => mutate(() async => await Terminal.instance.setReaderDisplay(const Cart(
-                          currency: K.currency,
-                          tax: 130,
-                          total: 1000,
-                          lineItems: [
-                            CartLineItem(
-                              description: 'hello 1',
-                              quantity: 1,
-                              amount: 500,
+                onPressed:
+                    !isMutating
+                        ? () => mutate(
+                          () async => await Terminal.instance.setReaderDisplay(
+                            const Cart(
+                              currency: K.currency,
+                              tax: 130,
+                              total: 1000,
+                              lineItems: [
+                                CartLineItem(description: 'hello 1', quantity: 1, amount: 500),
+                                CartLineItem(description: 'hello 2', quantity: 1, amount: 500),
+                              ],
                             ),
-                            CartLineItem(
-                              description: 'hello 2',
-                              quantity: 1,
-                              amount: 500,
-                            ),
-                          ],
-                        )))
-                    : null,
+                          ),
+                        )
+                        : null,
                 child: const Text('Set reader display'),
               ),
             ],

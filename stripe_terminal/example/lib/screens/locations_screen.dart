@@ -6,10 +6,7 @@ import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 class LocationsScreen extends ConsumerStatefulWidget {
   final ValueNotifier<Location?> locationNotifier;
 
-  const LocationsScreen({
-    super.key,
-    required this.locationNotifier,
-  });
+  const LocationsScreen({super.key, required this.locationNotifier});
 
   @override
   State<LocationsScreen> createState() => _LocationsScreenState();

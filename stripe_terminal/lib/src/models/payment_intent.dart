@@ -43,7 +43,8 @@ class PaymentIntent with _$PaymentIntent {
   /// Charges that were created by this PaymentIntent, if any.
   final List<Charge> charges;
 
-  /// The payment method to be used in this PaymentIntent. Only valid in the intent returned during collectPaymentMethod when using the updatePaymentIntent option in the SCPCollectConfiguration.
+  /// The payment method to be used in this PaymentIntent. Only valid in the intent returned during
+  /// processPaymentIntent when updatePaymentIntent is enabled.
   final PaymentMethod? paymentMethod;
 
   /// ID of the payment method used in this PaymentIntent.
@@ -54,9 +55,9 @@ class PaymentIntent with _$PaymentIntent {
 
   /// Indicates how much the user intends to tip in addition to the amount by at confirmation time.
   /// This is only non-null in the [PaymentIntent] instance returned during collect when using
-  /// updatePaymentIntent set to true in the CollectConfiguration.
+  /// updatePaymentIntent set to true in processPaymentIntent.
   ///
-  /// After [Terminal.confirmPaymentIntent] the amount will have this tip amount added
+  /// After [Terminal.processPaymentIntent] the amount will have this tip amount added
   /// to it and the [amountDetails] will contain the breakdown of how much of the amount was a tip.
   final double? amountTip;
 
@@ -173,10 +174,10 @@ enum PaymentIntentStatus {
   /// Next step: capture the [PaymentIntent] on your backend via the Stripe API.
   requiresCapture,
 
-  /// Next step: confirm the payment by calling [Terminal.confirmPaymentIntent].
+  /// Next step: process the payment by calling [Terminal.processPaymentIntent].
   requiresConfirmation,
 
-  /// Next step: collect a payment method by calling [Terminal.collectPaymentMethod].
+  /// Next step: process the payment by calling [Terminal.processPaymentIntent].
   requiresPaymentMethod,
 
   /// Next step: the payment requires additional actions, such as authenticating with 3D Secure.
@@ -186,6 +187,10 @@ enum PaymentIntentStatus {
 
   /// The [PaymentIntent] succeeded.
   succeeded,
+
+  /// The [PaymentIntent] was authorized but its capture window lapsed, so it
+  /// must be authorized again before it can be captured (extended/reauthorization).
+  requiresReauthorization,
 }
 
 /// Contains details about items included in the [PaymentIntent] amount
@@ -194,9 +199,7 @@ class AmountDetails {
   final Tip? tip;
 
   @internal
-  const AmountDetails({
-    required this.tip,
-  });
+  const AmountDetails({required this.tip});
 }
 
 // PARAMETERS
@@ -305,7 +308,7 @@ enum CaptureMethod {
   /// Place a hold on the funds when the customer authorizes the payment, but don’t capture
   /// the funds until later. Will require an explicit call to capture payments.
   /// (Not all payment methods support this.)
-  manual
+  manual,
 }
 
 enum ConfirmationMethod {
@@ -324,7 +327,7 @@ enum PaymentIntentUsage {
   onSession,
 
   /// Use “off_session” if your customer may or may not be present in your checkout flow.
-  offSession
+  offSession,
 }
 
 /// The PaymentMethodOptionsParameters contains options for PaymentMethod creation.
@@ -333,7 +336,14 @@ class PaymentMethodOptionsParameters with _$PaymentMethodOptionsParameters {
   /// Card-present-specific configuration for this PaymentMethod.
   final CardPresentParameters cardPresentParameters;
 
-  const PaymentMethodOptionsParameters({
-    required this.cardPresentParameters,
-  });
+  const PaymentMethodOptionsParameters({required this.cardPresentParameters});
+}
+
+/// Configuration for confirming a payment intent.
+@immutable
+class ConfirmPaymentIntentConfiguration {
+  /// The URL to redirect the customer back to after authentication.
+  final String? returnUrl;
+
+  const ConfirmPaymentIntentConfiguration({this.returnUrl});
 }

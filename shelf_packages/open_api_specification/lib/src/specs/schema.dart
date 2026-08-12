@@ -1,3 +1,5 @@
+// ignore_for_file: unintended_html_in_doc_comment
+
 import 'package:json_annotation/json_annotation.dart';
 import 'package:open_api_specification/src/specs/base_specs.dart';
 import 'package:open_api_specification/src/specs/ref_or_specs.dart';
@@ -50,7 +52,7 @@ class MediaOpenApi with PrettyJsonToString {
   @JsonKey(toJson: $nullIfEmpty)
   final Map<String, dynamic> examples;
 
-  final RefOr<SchemaOpenApi> schema;
+  final SchemaOrRef schema;
 
   const MediaOpenApi({this.example, this.examples = const {}, required this.schema});
 
@@ -63,10 +65,12 @@ class MediaOpenApi with PrettyJsonToString {
 @JsonEnum()
 enum TypeOpenApi { boolean, number, integer, string, array, object }
 
+/// https://spec.openapis.org/registry/format/
 enum FormatOpenApi {
   int32,
   int64,
   double,
+  decimal,
   float,
   string,
 
@@ -85,7 +89,7 @@ enum FormatOpenApi {
 }
 
 @SpecsSerializable()
-class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
+class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
   final String? name;
   final String? title;
   final String? description;
@@ -101,16 +105,17 @@ class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
   final List<Object>? enum$;
 
   /// Must be present if the type is [TypeOpenApi.array]
-  final RefOr<SchemaOpenApi>? items;
+  final SchemaOrRef? items;
 
   /// With [TypeOpenApi.object]
-  final Map<String, RefOr<SchemaOpenApi>>? properties;
+  final Map<String, SchemaOrRef>? properties;
 
   /// With [TypeOpenApi.object]. It define a Map<String, *>
+  final SchemaOrRef? propertyNames;
   @JsonKey(readValue: _readAdditionalProperties)
-  final RefOr<SchemaOpenApi>? additionalProperties;
+  final SchemaOrRef? additionalProperties;
 
-  final List<RefOr<SchemaOpenApi>>? allOf;
+  final List<SchemaOrRef>? allOf;
 
   // final List<SchemaOrRefOpenApi> anyOf;
 
@@ -129,7 +134,6 @@ class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
 
   /// Json Properties
 
-  // title
   // multipleOf
   // maximum
   // exclusiveMaximum
@@ -140,6 +144,7 @@ class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
   // pattern (This string SHOULD be a valid regular expression, according to the Ecma-262 Edition 5.1 regular expression dialect)
   // maxItems
   // minItems
+  @JsonKey(toJson: $nullIfFalse)
   final bool? uniqueItems;
   // maxProperties
   // minProperties
@@ -158,6 +163,7 @@ class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
     this.items,
     this.properties,
     this.additionalProperties,
+    this.propertyNames,
     this.allOf,
     this.required,
     this.nullable = false,
@@ -185,6 +191,47 @@ class SchemaOpenApi extends OriginalJson implements RefOr<SchemaOpenApi> {
   Map<String, dynamic> toJson() => _$SchemaOpenApiToJson(this);
 }
 
+class SchemaRef extends SchemaOrRef {
+  final String ref;
+
+  factory SchemaRef(String ref) {
+    final segments = ref.split('/');
+    if (segments[0] != '#' ||
+        segments[1] != 'components' ||
+        segments[2] != 'schemas' ||
+        segments.length != 4) {
+      throw ArgumentError.value(ref, 'SchemaOpenApi', 'Invalid reference!');
+    }
+    return SchemaRef._(ref);
+  }
+
+  factory SchemaRef.from(String identifier) => SchemaRef('#/components/schemas/$identifier');
+
+  const SchemaRef._(this.ref);
+
+  @override
+  SchemaOpenApi resolve(ComponentsOpenApi components) {
+    final schema = components.schemas[ref.split('/').last];
+    return ArgumentError.checkNotNull(schema, ref);
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {r'$ref': ref};
+}
+
+sealed class SchemaOrRef extends RefOr<SchemaOpenApi> {
+  const SchemaOrRef();
+
+  factory SchemaOrRef.fromJson(Map<dynamic, dynamic> map) {
+    final ref = map[r'$ref'] as String?;
+    if (ref == null) return SchemaOpenApi.fromJson(map);
+
+    return SchemaRef(ref);
+  }
+  @override
+  Map<String, dynamic> toJson();
+}
+
 extension SchemaOpenApiX on SchemaOpenApi {
   /// A [schema] contains this property
   /// A property [name]
@@ -204,24 +251,4 @@ extension SchemaOpenApiX on SchemaOpenApi {
   bool get isClass => properties != null || allOf != null;
 
   bool get isEnum => enum$ != null;
-
-  List<SchemaOpenApi>? resolveAllOf(ComponentsOpenApi components) {
-    return allOf?.map((v) => v.resolve(components)).toList();
-  }
-
-  Map<String, SchemaOpenApi>? resolveProperties(ComponentsOpenApi components) {
-    return properties?.map((k, v) => MapEntry(k, v.resolve(components)));
-  }
-
-  Map<String, SchemaOpenApi> resolveAllProperties(ComponentsOpenApi components) {
-    final allOfProperties = allOf
-        ?.map((e) => e.resolve(components).resolveProperties(components))
-        .nonNulls;
-
-    return {
-      if (allOfProperties != null)
-        for (final properties in allOfProperties) ...properties,
-      ...?resolveProperties(components),
-    };
-  }
 }

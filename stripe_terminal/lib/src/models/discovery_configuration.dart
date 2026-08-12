@@ -1,10 +1,12 @@
+import 'package:mek_stripe_terminal/src/models/discovery_filter.dart';
+
 /// Protocol for classes to conform to that apply configuration options for discovering readers.
 ///
 /// You should not implement this protocol yourself; instead, use one of the following:
 ///
 /// - [BluetoothDiscoveryConfiguration]
 /// - [BluetoothProximityDiscoveryConfiguration]
-/// - [HandoffDiscoveryConfiguration]
+/// - [AppsOnDevicesDiscoveryConfiguration]
 /// - [InternetDiscoveryConfiguration]
 /// - [LocalMobileDiscoveryConfiguration]
 /// - [UsbDiscoveryConfiguration]
@@ -23,10 +25,7 @@ class BluetoothDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
   final Duration? timeout;
 
-  const BluetoothDiscoveryConfiguration({
-    this.isSimulated = false,
-    this.timeout,
-  });
+  const BluetoothDiscoveryConfiguration({this.isSimulated = false, this.timeout});
 }
 
 /// ONLY ON IOS
@@ -53,13 +52,18 @@ class BluetoothDiscoveryConfiguration extends DiscoveryConfiguration {
 class BluetoothProximityDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
 
-  const BluetoothProximityDiscoveryConfiguration({
-    this.isSimulated = false,
-  });
+  const BluetoothProximityDiscoveryConfiguration({this.isSimulated = false});
 }
 
 /// ONLY ON ANDROID
-class HandoffDiscoveryConfiguration extends DiscoveryConfiguration {
+class AppsOnDevicesDiscoveryConfiguration extends DiscoveryConfiguration {
+  const AppsOnDevicesDiscoveryConfiguration();
+}
+
+/// ONLY ON ANDROID
+@Deprecated('Use AppsOnDevicesDiscoveryConfiguration')
+class HandoffDiscoveryConfiguration extends AppsOnDevicesDiscoveryConfiguration {
+  @Deprecated('Use AppsOnDevicesDiscoveryConfiguration')
   const HandoffDiscoveryConfiguration();
 }
 
@@ -77,11 +81,13 @@ class InternetDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
   final String? locationId;
   final Duration? timeout;
+  final DiscoveryFilter? discoveryFilter;
 
   const InternetDiscoveryConfiguration({
     this.isSimulated = false,
     this.locationId,
     this.timeout,
+    this.discoveryFilter,
   });
 }
 
@@ -93,9 +99,7 @@ class InternetDiscoveryConfiguration extends DiscoveryConfiguration {
 class TapToPayDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
 
-  const TapToPayDiscoveryConfiguration({
-    this.isSimulated = false,
-  });
+  const TapToPayDiscoveryConfiguration({this.isSimulated = false});
 }
 
 /// ONLY ON ANDROID
@@ -103,8 +107,5 @@ class UsbDiscoveryConfiguration extends DiscoveryConfiguration {
   final bool isSimulated;
   final Duration? timeout;
 
-  const UsbDiscoveryConfiguration({
-    this.isSimulated = false,
-    this.timeout,
-  });
+  const UsbDiscoveryConfiguration({this.isSimulated = false, this.timeout});
 }

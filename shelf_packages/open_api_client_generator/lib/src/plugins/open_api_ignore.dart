@@ -8,9 +8,7 @@ import 'package:yaml/yaml.dart';
 class OpenApiIgnore with Plugin {
   final String? overrideFilePath;
 
-  OpenApiIgnore({
-    this.overrideFilePath,
-  });
+  OpenApiIgnore({this.overrideFilePath});
 
   @override
   Map<dynamic, dynamic> onSpecifications(Map<dynamic, dynamic> specifications) {
@@ -19,10 +17,7 @@ class OpenApiIgnore with Plugin {
 
     final lines = overrideFile.readAsStringSync().split('\n');
     final paths = specifications['paths'] as Map;
-    return {
-      ...specifications,
-      'paths': Map.fromEntries(lines.map((e) => MapEntry(e, paths[e]!))),
-    };
+    return {...specifications, 'paths': Map.fromEntries(lines.map((e) => MapEntry(e, paths[e])))};
   }
 }
 
@@ -30,10 +25,7 @@ class OpenApiOverride with Plugin {
   final Options options;
   final String overrideFilePath;
 
-  OpenApiOverride({
-    required this.options,
-    required this.overrideFilePath,
-  });
+  OpenApiOverride({required this.options, required this.overrideFilePath});
 
   @override
   Map<dynamic, dynamic> onSpecifications(Map<dynamic, dynamic> specifications) {
@@ -45,9 +37,11 @@ class OpenApiOverride with Plugin {
     if (override is Map) {
       if (override.containsKey(r'$ref')) return override;
       if (original is Map) {
-        return Map<dynamic, dynamic>.fromEntries({...override.keys, ...original.keys}.map((key) {
-          return MapEntry(key, _merge(original[key], override[key]));
-        }));
+        return Map<dynamic, dynamic>.fromEntries(
+          {...override.keys, ...original.keys}.map((key) {
+            return MapEntry(key, _merge(original[key], override[key]));
+          }),
+        );
       }
     }
     return override ?? original;

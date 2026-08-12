@@ -39,9 +39,10 @@ class _AppState extends State<App> {
           seedColor: Colors.amber,
         ),
       ),
-      home: _isInitialized
-          ? const TerminalArea()
-          : InitializationScreen(onInitialized: _onInitialized),
+      home:
+          _isInitialized
+              ? const TerminalArea()
+              : InitializationScreen(onInitialized: _onInitialized),
     );
   }
 }

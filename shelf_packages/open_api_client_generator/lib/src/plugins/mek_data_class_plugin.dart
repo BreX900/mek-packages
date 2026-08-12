@@ -8,14 +8,17 @@ class MekDataClassPlugin with Plugin {
 
   @override
   Class onDataClass(SchemaOpenApi schema, Class spec) {
-    return spec.rebuild((b) => b
-      ..annotations.add(const CodeExpression(Code('DataClass()')))
-      ..mixins.add(Reference('_\$${spec.name.pascalCase}')));
+    return spec.rebuild(
+      (b) => b
+        ..annotations.add(const CodeExpression(Code('DataClass()')))
+        ..mixins.add(Reference('_\$${spec.name.pascalCase}')),
+    );
   }
 
   @override
   Library onLibrary(OpenApi openApi, Library spec) {
     return spec.rebuild(
-        (b) => b..directives.add(Directive.import('package:mek_data_class/mek_data_class.dart')));
+      (b) => b..directives.add(Directive.import('package:mek_data_class/mek_data_class.dart')),
+    );
   }
 }

@@ -39,8 +39,5 @@ class PaymentMethodDetails with _$PaymentMethodDetails {
   final CardPresentDetails? cardPresent;
   final CardPresentDetails? interacPresent;
 
-  PaymentMethodDetails({
-    required this.cardPresent,
-    required this.interacPresent,
-  });
+  PaymentMethodDetails({required this.cardPresent, required this.interacPresent});
 }

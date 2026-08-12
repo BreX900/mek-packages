@@ -26,7 +26,7 @@ class OpenApiBuilder implements Builder {
   OpenApiBuilder({required this.buildExtensions, required this.config});
 
   @override
-  FutureOr<void> build(BuildStep buildStep) async {
+  Future<void> build(BuildStep buildStep) async {
     if (!await buildStep.resolver.isLibrary(buildStep.inputId)) return;
 
     final apiHandler = await OpenApiHandler.from(config, buildStep);

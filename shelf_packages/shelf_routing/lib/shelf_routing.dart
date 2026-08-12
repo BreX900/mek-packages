@@ -1,4 +1,4 @@
-library shelf_routing;
+library;
 
 import 'package:meta/meta_meta.dart';
 import 'package:shelf_router/shelf_router.dart';

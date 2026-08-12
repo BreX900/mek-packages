@@ -74,7 +74,7 @@ extension CaptureMethod {
     }
 }
 
-extension SCPAmountDetails {
+extension AmountDetails {
     func toApi() -> AmountDetailsApi {
         return AmountDetailsApi(
             tip: tip?.toApi()
@@ -116,7 +116,7 @@ extension PaymentMethodTypeApi {
             return .cardPresent
         case .card:
             return .card
-        case .interactPresent:
+        case .interacPresent:
             return .interacPresent
         }
     }

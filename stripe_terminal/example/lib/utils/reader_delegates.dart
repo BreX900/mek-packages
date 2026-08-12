@@ -74,7 +74,8 @@ class LoggingMobileReaderDelegate extends MobileReaderDelegate
   @override
   void onBatteryLevelUpdate(double batteryLevel, BatteryStatus? batteryStatus, bool isCharging) {
     onLog(
-        'onBatteryLevelUpdate: batteryLevel: $batteryLevel $batteryStatus isCharging: $isCharging');
+      'onBatteryLevelUpdate: batteryLevel: $batteryLevel $batteryStatus isCharging: $isCharging',
+    );
   }
 
   @override
@@ -85,12 +86,12 @@ class LoggingMobileReaderDelegate extends MobileReaderDelegate
       onLog('onReportAvailableUpdate: ${update.version}');
 }
 
-class LoggingHandoffReaderDelegate extends HandoffReaderDelegate
+class LoggingAppsOnDevicesReaderDelegate extends AppsOnDevicesReaderDelegate
     with _LoggingReaderDelegate, _LoggingReaderDisconnectDelegate {
   @override
   final LogListener onLog;
 
-  LoggingHandoffReaderDelegate(this.onLog);
+  LoggingAppsOnDevicesReaderDelegate(this.onLog);
 }
 
 class LoggingInternetReaderDelegate extends InternetReaderDelegate

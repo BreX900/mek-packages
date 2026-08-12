@@ -9,38 +9,23 @@ class TapToPayUxConfiguration {
   final TapToPayUxConfigurationColorScheme? colors;
   final TapToPayUxConfigurationDarkMode? darkMode;
 
-  const TapToPayUxConfiguration({
-    this.tapZone,
-    this.colors,
-    this.darkMode,
-  });
+  const TapToPayUxConfiguration({this.tapZone, this.colors, this.darkMode});
 }
 
 class TapToPayUxConfigurationTapZone {
   final TapToPayUxConfigurationTapZoneIndicator? indicator;
   final TapToPayUxConfigurationTapZonePosition? position;
 
-  const TapToPayUxConfigurationTapZone({
-    this.indicator,
-    this.position,
-  });
+  const TapToPayUxConfigurationTapZone({this.indicator, this.position});
 }
 
-enum TapToPayUxConfigurationTapZoneIndicator {
-  above,
-  below,
-  front,
-  behind,
-}
+enum TapToPayUxConfigurationTapZoneIndicator { above, below, front, behind, left, right }
 
 class TapToPayUxConfigurationTapZonePosition {
   final double xBias;
   final double yBias;
 
-  const TapToPayUxConfigurationTapZonePosition({
-    required this.xBias,
-    required this.yBias,
-  });
+  const TapToPayUxConfigurationTapZonePosition({required this.xBias, required this.yBias});
 }
 
 class TapToPayUxConfigurationColorScheme {
@@ -53,15 +38,7 @@ class TapToPayUxConfigurationColorScheme {
   /// The color value in the form 0xAARRGGBB.
   final int? error;
 
-  const TapToPayUxConfigurationColorScheme({
-    this.primary,
-    this.success,
-    this.error,
-  });
+  const TapToPayUxConfigurationColorScheme({this.primary, this.success, this.error});
 }
 
-enum TapToPayUxConfigurationDarkMode {
-  system,
-  light,
-  dark,
-}
+enum TapToPayUxConfigurationDarkMode { system, light, dark }

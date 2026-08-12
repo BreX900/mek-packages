@@ -34,4 +34,7 @@ enum DisconnectReason {
   /// The mobile reader’s Bluetooth signal has been lost, either because it is out of range, or due
   /// to wireless interference.
   bluetoothSignalLost,
+
+  /// The mobile reader's Bluetooth pairing has been cleared. Forget the reader in system settings.
+  bluetoothPeerRemovedPairingInformation,
 }

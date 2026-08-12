@@ -2,6 +2,7 @@ package mek.stripeterminal.mappings
 
 import com.stripe.stripeterminal.external.models.AmountDetails
 import com.stripe.stripeterminal.external.models.CaptureMethod
+import com.stripe.stripeterminal.external.models.ConfirmPaymentIntentConfiguration
 import com.stripe.stripeterminal.external.models.PaymentIntent
 import com.stripe.stripeterminal.external.models.PaymentIntentParameters
 import com.stripe.stripeterminal.external.models.PaymentIntentStatus
@@ -11,6 +12,7 @@ import com.stripe.stripeterminal.external.models.PaymentStatus
 import mek.stripeterminal.api.AmountDetailsApi
 import mek.stripeterminal.api.CaptureMethodApi
 import mek.stripeterminal.api.ConfirmationMethodApi
+import mek.stripeterminal.api.ConfirmPaymentIntentConfigurationApi
 import mek.stripeterminal.api.PaymentIntentApi
 import mek.stripeterminal.api.PaymentIntentParametersApi
 import mek.stripeterminal.api.PaymentIntentStatusApi
@@ -80,6 +82,7 @@ fun PaymentIntentStatus.toApi(): PaymentIntentStatusApi {
         PaymentIntentStatus.REQUIRES_PAYMENT_METHOD -> PaymentIntentStatusApi.REQUIRES_PAYMENT_METHOD
         PaymentIntentStatus.SUCCEEDED -> PaymentIntentStatusApi.SUCCEEDED
         PaymentIntentStatus.REQUIRES_ACTION -> PaymentIntentStatusApi.REQUIRES_ACTION
+        PaymentIntentStatus.REQUIRES_REAUTHORIZATION -> PaymentIntentStatusApi.REQUIRES_REAUTHORIZATION
     }
 }
 
@@ -134,6 +137,12 @@ fun PaymentMethodOptionsParametersApi.toHost(): PaymentMethodOptionsParameters {
     return PaymentMethodOptionsParameters.Builder()
         .setCardPresentParameters(cardPresentParameters.toHost())
         .build()
+}
+
+fun ConfirmPaymentIntentConfigurationApi.toHost(): ConfirmPaymentIntentConfiguration {
+    val builder = ConfirmPaymentIntentConfiguration.Builder()
+    returnUrl?.let { builder.setReturnUrl(it) }
+    return builder.build()
 }
 
 // EXTRA

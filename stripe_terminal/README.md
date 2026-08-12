@@ -202,14 +202,10 @@ You can see the usage example in the [example folder](example/lib/main.dart)
     ```dart
     final paymentIntent = await Terminal.instance.retrievePaymentIntent(backendPaymentIntent.clientSecret);
     ```
-3. Collect payment method
+3. Process payment intent (collect and confirm in one call)
     ```dart
-    final processablePaymentIntent = await Terminal.instance.collectPaymentMethod(paymentIntent);
-    ```
-4. Collect payment method
-    ```dart
-    final capturablePaymentIntent = await Terminal.instance.confirmPaymentIntent(processablePaymentIntent)
-    print("A payment intent has captured a payment method, send this payment intent to you backend to capture the payment");
+    final processedPaymentIntent = await Terminal.instance.processPaymentIntent(paymentIntent);
+    print("Payment processed. Send this PaymentIntent to your backend to capture if needed.");
     ```
 
 ## Contributing

@@ -8,8 +8,8 @@ enum DiscoveryMethod {
   /// [BluetoothProximityDiscoveryConfiguration]
   bluetoothProximity(canSimulate: true),
 
-  /// [HandoffDiscoveryConfiguration]
-  handOff(),
+  /// [AppsOnDevicesDiscoveryConfiguration]
+  appsOnDevices(),
 
   /// [InternetDiscoveryConfiguration]
   internet(canSimulate: true),

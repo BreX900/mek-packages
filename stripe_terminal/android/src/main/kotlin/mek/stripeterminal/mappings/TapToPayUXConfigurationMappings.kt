@@ -5,7 +5,6 @@ import com.stripe.stripeterminal.external.models.TapToPayUxConfiguration
 import mek.stripeterminal.api.TapToPayUxConfigurationColorSchemeApi
 import mek.stripeterminal.api.TapToPayUxConfigurationTapZoneApi
 import mek.stripeterminal.api.TapToPayUxConfigurationTapZoneIndicatorApi
-import mek.stripeterminal.api.TapToPayUxConfigurationTapZonePositionApi
 import mek.stripeterminal.api.TapToPayUxConfigurationDarkModeApi
 
 
@@ -18,23 +17,29 @@ fun TapToPayUxConfigurationApi.toHost(): TapToPayUxConfiguration {
 }
 
 fun TapToPayUxConfigurationTapZoneApi.toHost(): TapToPayUxConfiguration.TapZone {
-    val builder = TapToPayUxConfiguration.TapZone.Manual.Builder()
-    if (indicator != null) builder.indicator(indicator.toHost())
-    if (position != null) builder.position(position.toHost())
-    return builder.build()
-}
-
-fun TapToPayUxConfigurationTapZoneIndicatorApi.toHost(): TapToPayUxConfiguration.TapZoneIndicator {
-    return when (this) {
-        TapToPayUxConfigurationTapZoneIndicatorApi.ABOVE -> TapToPayUxConfiguration.TapZoneIndicator.ABOVE
-        TapToPayUxConfigurationTapZoneIndicatorApi.BELOW -> TapToPayUxConfiguration.TapZoneIndicator.BELOW
-        TapToPayUxConfigurationTapZoneIndicatorApi.FRONT -> TapToPayUxConfiguration.TapZoneIndicator.FRONT
-        TapToPayUxConfigurationTapZoneIndicatorApi.BEHIND -> TapToPayUxConfiguration.TapZoneIndicator.BEHIND
+    val xBias = position?.xBias?.toFloat()
+    val yBias = position?.yBias?.toFloat()
+    return when (indicator) {
+        TapToPayUxConfigurationTapZoneIndicatorApi.LEFT ->
+            if (yBias != null) TapToPayUxConfiguration.TapZone.Left(yBias)
+            else TapToPayUxConfiguration.TapZone.Left()
+        TapToPayUxConfigurationTapZoneIndicatorApi.RIGHT ->
+            if (yBias != null) TapToPayUxConfiguration.TapZone.Right(yBias)
+            else TapToPayUxConfiguration.TapZone.Right()
+        TapToPayUxConfigurationTapZoneIndicatorApi.ABOVE ->
+            if (xBias != null) TapToPayUxConfiguration.TapZone.Above(xBias)
+            else TapToPayUxConfiguration.TapZone.Above()
+        TapToPayUxConfigurationTapZoneIndicatorApi.BELOW ->
+            if (xBias != null) TapToPayUxConfiguration.TapZone.Below(xBias)
+            else TapToPayUxConfiguration.TapZone.Below()
+        TapToPayUxConfigurationTapZoneIndicatorApi.FRONT ->
+            if (xBias != null && yBias != null) TapToPayUxConfiguration.TapZone.Front(xBias, yBias)
+            else TapToPayUxConfiguration.TapZone.Front()
+        TapToPayUxConfigurationTapZoneIndicatorApi.BEHIND ->
+            if (xBias != null && yBias != null) TapToPayUxConfiguration.TapZone.Behind(xBias, yBias)
+            else TapToPayUxConfiguration.TapZone.Behind()
+        null -> TapToPayUxConfiguration.TapZone.Default
     }
-}
-
-fun TapToPayUxConfigurationTapZonePositionApi.toHost(): TapToPayUxConfiguration.TapZonePosition {
-    return TapToPayUxConfiguration.TapZonePosition.Manual(xBias.toFloat(), yBias.toFloat());
 }
 
 fun TapToPayUxConfigurationColorSchemeApi.toHost(): TapToPayUxConfiguration.ColorScheme {

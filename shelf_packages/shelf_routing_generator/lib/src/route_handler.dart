@@ -101,12 +101,14 @@ class MountRouteHandler extends RouteHandler {
 
 class HttpRouteHandler extends RouteHandler {
   final String verb;
-  final FormalParameterElement? bodyParameter;
+  final RouteAccept? bodyParameter;
   final bool hasRequest;
   final List<FormalParameterElement> pathParameters;
   final List<RouteHeaderHandler> headers;
   final List<FormalParameterElement> queryParameters;
   final RouteReturns returns;
+
+  bool get isAsync => bodyParameter != null || returns.isAsync;
 
   static HttpRouteHandler? from(MethodElement element, {bool strict = true}) {
     final route = _Route.from(element);
@@ -188,7 +190,7 @@ class HttpRouteHandler extends RouteHandler {
       pathParameters.add(parameter);
     }
 
-    FormalParameterElement? bodyParameter;
+    RouteAccept? bodyParameter;
     if (strict && parametersIterator.moveNext()) {
       if (route.verb == 'GET') {
         throw InvalidGenerationSourceError('"GET" endpoint cannot have a body.', element: element);
@@ -196,8 +198,14 @@ class HttpRouteHandler extends RouteHandler {
       final parameter = parametersIterator.current;
 
       bool check(DartType type) {
-        if (type.isDartCoreBool || type.isDartCoreString) return true;
-        if (type.isDartCoreInt || type.isDartCoreDouble || type.isDartCoreNum) return true;
+        if (type.isDartCoreString) return true;
+
+        if (type.isDartCoreBool ||
+            type.isDartCoreInt ||
+            type.isDartCoreDouble ||
+            type.isDartCoreNum) {
+          return true;
+        }
 
         if (type is! InterfaceType) return false;
 
@@ -214,7 +222,15 @@ class HttpRouteHandler extends RouteHandler {
         }
       }
 
-      if (!check(parameter.type)) {
+      if (byteStreamChecker.isExactlyType(parameter.type)) {
+        bodyParameter = RouteAcceptBytes(parameter.type);
+      } else if (parameter.type.isDartCoreString) {
+        bodyParameter = RouteAcceptText(parameter.type);
+      } else {
+        bodyParameter = check(parameter.type) ? RouteAcceptJson(parameter.type) : null;
+      }
+
+      if (bodyParameter == null) {
         final parameterTypeName = parameter.type.getDisplayString();
         throw InvalidGenerationSourceError(
           'invalid body parameter type.\n'
@@ -223,7 +239,6 @@ class HttpRouteHandler extends RouteHandler {
           element: parameter.enclosingElement,
         );
       }
-      bodyParameter = parameter;
     }
 
     if (parametersIterator.moveNext()) {
@@ -266,29 +281,34 @@ class HttpRouteHandler extends RouteHandler {
   }
 
   static RouteReturns _parseReturnsType(MethodElement element) {
+    var isAsync = false;
     var type = element.returnType;
     if (type.isDartAsyncFuture || type.isDartAsyncFuture) {
+      isAsync = true;
       type = (type as InterfaceType).typeArguments.single;
     }
     if (responseChecker.isAssignableFromType(type)) {
       if (jsonResponseChecker.isAssignableFromType(type)) {
-        return RouteReturnsJsonResponse((type as InterfaceType).typeArguments.single);
+        return RouteReturnsJsonResponse(
+          isAsync: isAsync,
+          (type as InterfaceType).typeArguments.single,
+        );
       }
-      return const RouteReturnsResponse();
+      return RouteReturnsResponse(isAsync: isAsync);
     }
 
     if (type is VoidType) {
-      return const RouteReturnsVoid();
+      return RouteReturnsVoid(isAsync: isAsync);
     }
     if (type.isDartAsyncStream || bytesChecker.isAssignableFromType(type)) {
-      return const RouteReturnsBytes();
+      return RouteReturnsBytes(isAsync: isAsync);
     }
     if (type.isJson) {
-      return RouteReturnsJson(type);
+      return RouteReturnsJson(isAsync: isAsync, type);
     }
     if (type is InterfaceType ? type.getMethod('toJson') : null case final toJsonMethod?
         when toJsonMethod.returnType.isJson && toJsonMethod.formalParameters.isEmpty) {
-      return RouteReturnsJson(type);
+      return RouteReturnsJson(isAsync: isAsync, type);
     }
 
     throw InvalidGenerationSourceError(
@@ -313,33 +333,53 @@ class HttpRouteHandler extends RouteHandler {
 }
 
 sealed class RouteReturns {
-  const RouteReturns();
+  final bool isAsync;
+
+  const RouteReturns({required this.isAsync});
 }
 
 class RouteReturnsVoid extends RouteReturns {
-  const RouteReturnsVoid();
+  const RouteReturnsVoid({required super.isAsync});
 }
 
 class RouteReturnsResponse extends RouteReturns {
-  const RouteReturnsResponse();
+  const RouteReturnsResponse({required super.isAsync});
 }
 
 class RouteReturnsJsonResponse extends RouteReturns {
   final DartType type;
 
-  const RouteReturnsJsonResponse(this.type);
+  const RouteReturnsJsonResponse(this.type, {required super.isAsync});
 }
 
 class RouteReturnsBytes extends RouteReturns {
-  const RouteReturnsBytes();
+  const RouteReturnsBytes({required super.isAsync});
 }
 
 class RouteReturnsText extends RouteReturns {
-  const RouteReturnsText();
+  const RouteReturnsText({required super.isAsync});
 }
 
 class RouteReturnsJson extends RouteReturns {
   final DartType type;
 
-  RouteReturnsJson(this.type);
+  const RouteReturnsJson(this.type, {required super.isAsync});
+}
+
+sealed class RouteAccept {
+  final DartType type;
+
+  const RouteAccept(this.type);
+}
+
+class RouteAcceptText extends RouteAccept {
+  const RouteAcceptText(super.type);
+}
+
+class RouteAcceptBytes extends RouteAccept {
+  const RouteAcceptBytes(super.type);
+}
+
+class RouteAcceptJson extends RouteAccept {
+  const RouteAcceptJson(super.type);
 }

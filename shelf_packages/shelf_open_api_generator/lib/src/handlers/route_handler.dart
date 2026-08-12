@@ -37,7 +37,7 @@ class OpenRouteHandler {
   });
 
   OperationOpenApi buildOperation() {
-    final classElement = element.enclosingElement as ClassElement;
+    final classElement = element.enclosingElement! as ClassElement;
     final doc = Doc.from(element.documentationComment);
 
     return OperationOpenApi(
@@ -54,38 +54,44 @@ class OpenRouteHandler {
 
   List<ParameterOpenApi> _buildParameters() {
     final pathParams = handler.pathParameters.map((parameter) {
-      final schema = schemasRegistry.tryRegisterV2(
-        object: false,
-        iterables: false,
-        dartType: parameter.type,
-      );
       return ParameterOpenApi(
-        name: parameter.requireName,
+        name: parameter.displayName,
         in$: ParameterInOpenApi.path,
         required: true,
-        schema: schema ?? SchemaOpenApi(type: TypeOpenApi.string),
+        schema: schemasRegistry.register(
+          object: false,
+          iterables: false,
+          dartType: parameter.type,
+          fallback: const SchemaOpenApi(type: TypeOpenApi.string),
+        ),
       );
     });
     // TODO: check client generation
     final queryParams =
         (requestQuery?.element as ClassElement?)?.requireUnnamedConstructor.formalParameters.map((
-          e,
+          parameter,
         ) {
           return ParameterOpenApi(
-            name: e.requireName,
+            name: parameter.displayName,
             in$: ParameterInOpenApi.query,
-            // TODO: throw if detect a nested object
-            schema: schemasRegistry.tryRegister(dartType: e.type),
-            required: e.type.nullabilitySuffix == NullabilitySuffix.none,
+            required: parameter.type.nullabilitySuffix == NullabilitySuffix.none,
+            schema: schemasRegistry.register(
+              object: false,
+              dartType: parameter.type,
+              fallback: const SchemaOpenApi(type: TypeOpenApi.string),
+            ),
           );
         }) ??
         handler.queryParameters.map((parameter) {
           return ParameterOpenApi(
-            name: parameter.requireName,
+            name: parameter.displayName,
             in$: ParameterInOpenApi.query,
-            schema:
-                schemasRegistry.tryRegisterV2(object: false, dartType: parameter.type) ??
-                SchemaOpenApi(type: TypeOpenApi.string),
+            required: parameter.type.nullabilitySuffix == NullabilitySuffix.none,
+            schema: schemasRegistry.register(
+              object: false,
+              dartType: parameter.type,
+              fallback: const SchemaOpenApi(type: TypeOpenApi.string),
+            ),
           );
         });
     return [...pathParams, ...queryParams];
@@ -97,7 +103,7 @@ class OpenRouteHandler {
     return RequestBodyOpenApi(
       required: true,
       content: GroupMediaOpenApi(
-        json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: requestBody)),
+        json: MediaOpenApi(schema: schemasRegistry.register(dartType: requestBody)),
       ),
     );
   }
@@ -108,7 +114,7 @@ class OpenRouteHandler {
       return ResponseOpenApi(
         description: 'Operation completed!',
         content: GroupMediaOpenApi(
-          json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: responseBody)),
+          json: MediaOpenApi(schema: schemasRegistry.register(dartType: responseBody)),
         ),
       );
     }
@@ -117,18 +123,18 @@ class OpenRouteHandler {
       description: 'Operation completed!',
       content: switch (handler.returns) {
         RouteReturnsVoid() => null,
-        RouteReturnsResponse() || RouteReturnsBytes() => GroupMediaOpenApi(
+        RouteReturnsResponse() || RouteReturnsBytes() => const GroupMediaOpenApi(
           octetStream: MediaOpenApi(
             schema: SchemaOpenApi(type: TypeOpenApi.string, format: FormatOpenApi.binary),
           ),
         ),
-        RouteReturnsText() => GroupMediaOpenApi(
+        RouteReturnsText() => const GroupMediaOpenApi(
           textPlain: MediaOpenApi(schema: SchemaOpenApi(type: TypeOpenApi.string)),
         ),
         RouteReturnsJsonResponse(:final type) || RouteReturnsJson(:final type) =>
           type is! VoidType
               ? GroupMediaOpenApi(
-                  json: MediaOpenApi(schema: schemasRegistry.tryRegister(dartType: type)),
+                  json: MediaOpenApi(schema: schemasRegistry.register(dartType: type)),
                 )
               : null,
       },
@@ -141,15 +147,15 @@ class OpenRouteHandler {
 }
 
 class OpenRouteFinder {
-  static final _openApiRouteHttpChecker = TypeChecker.typeNamed(
+  static const _openApiRouteHttpChecker = TypeChecker.typeNamed(
     OpenApiRouteHttp,
     inPackage: 'shelf_open_api',
   );
-  static final _openApiRouteMountChecker = TypeChecker.typeNamed(
+  static const _openApiRouteMountChecker = TypeChecker.typeNamed(
     OpenApiRouteMount,
     inPackage: 'shelf_open_api',
   );
-  static final _openApiRouteIgnoreChecker = TypeChecker.typeNamed(
+  static const _openApiRouteIgnoreChecker = TypeChecker.typeNamed(
     OpenApiRouteIgnore,
     inPackage: 'shelf_open_api',
   );
@@ -175,7 +181,7 @@ class OpenRouteFinder {
 
           ClassElement? classElement;
           if (serviceType != null) classElement = serviceType.element as ClassElement?;
-          if (isRouterMixin) classElement = element.returnType.element as ClassElement;
+          if (isRouterMixin) classElement = element.returnType.element! as ClassElement;
           if (classElement == null) return;
 
           yield* _find(classElement, pathPrefix: path);

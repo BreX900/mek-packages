@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
@@ -46,12 +46,13 @@ class KotlinApiCodes extends HostApiCodecs {
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
+      final serializer =
+          'hashMapOf(*(${type.isNullable ? 'it' : varAccess} as HashMap<*, *>)'
           '.map { (k, v) -> ${encodeDeserialization(typesArgs.$1, 'k')} to ${encodeDeserialization(typesArgs.$2, 'v')} }'
           '.toTypedArray())';
       return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
-    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
+    if (type.isDartCoreEnum || type.element is EnumElement) {
       return '($varAccess as Int$questionOrEmpty)'
           '$questionOrEmpty.let { ${encodeName(type.displayName)}.values()[it] }';
     }
@@ -82,12 +83,13 @@ class KotlinApiCodes extends HostApiCodecs {
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final serializer = 'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
+      final serializer =
+          'hashMapOf(*${type.isNullable ? 'it' : varAccess}'
           '.map { (k, v) -> ${encodeSerialization(typesArgs.$1, 'k')} to ${encodeSerialization(typesArgs.$2, 'v')} }'
           '.toTypedArray())';
       return type.isNullable ? '$varAccess?.let { $serializer }' : serializer;
     }
-    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
+    if (type.isDartCoreEnum || type.element is EnumElement) {
       return '$varAccess$questionOrEmpty.ordinal';
     }
 

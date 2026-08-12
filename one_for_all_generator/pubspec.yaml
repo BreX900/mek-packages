@@ -10,9 +10,11 @@ topics:
   - mek-packages
 
 environment:
-  sdk: ^3.0.0
+  sdk: '>=3.7.0 <4.0.0'
 
 scripts:
+  format: dart format .
+
   publish: dart pub publish
 
 dependencies:
@@ -27,10 +29,10 @@ dependencies:
   path: ^1.8.3
   glob: ^2.1.2
 
-  analyzer: '>=7.4.0 <9.0.0'
-  source_gen: '>=3.1.0 <5.0.0'
+  analyzer: '>=10.0.0 <14.0.0'
+  source_gen: ^4.1.2
   code_builder: ^4.4.0
-  dart_style: ^3.0.0
+  dart_style: ^3.1.7
 
   one_for_all: ^1.1.0
 

@@ -14,8 +14,9 @@ void main() {
         "\n''';";
   });
 
-  File('./lib/src/utils/files_contents.dart')
-      .writeAsStringSync('abstract final class FilesContents {\n'
-          '${variables.join('\n')}'
-          '\n}\n');
+  File('./lib/src/utils/files_contents.dart').writeAsStringSync(
+    'abstract final class FilesContents {\n'
+    '${variables.join('\n')}'
+    '\n}\n',
+  );
 }

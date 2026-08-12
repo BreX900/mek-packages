@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_futureor_void
+
 import 'dart:async';
 
 import 'package:code_builder/code_builder.dart';

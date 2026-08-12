@@ -6,7 +6,7 @@ info:
 servers:
   - url: "http://localhost:8080"
 paths:
-  /api-v1/chats/:
+  /api-v1/chats:
     put:
       tags:
         - ChatsController
@@ -37,7 +37,7 @@ paths:
       responses:
         200:
           description: "Operation completed!"
-  /api-v1/messages/:
+  /api-v1/messages:
     get:
       tags:
         - MessagesController
@@ -58,7 +58,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MessageDto"
-  /api-v1/messages/<messageId>:
+  /api-v1/messages/{messageId}:
     get:
       tags:
         - MessagesController

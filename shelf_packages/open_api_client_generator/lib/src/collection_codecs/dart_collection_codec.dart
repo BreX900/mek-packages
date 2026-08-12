@@ -8,12 +8,13 @@ class DartCollectionCodec extends CollectionCodec {
   @override
   String encodeToPackage(Reference type) {
     if (type.isList) return '.toList()';
+    if (type.isSet) return '.toSet()';
     return '';
   }
 
   @override
   String encodeToCore(Reference type) {
-    // if (type.isList) return '.toList()';
+    if (type.isSet) return '.toList()';
     return '';
   }
 }

@@ -1,4 +1,15 @@
 
+## 3.3.1
+- build: require `analyzer: '>=10.0.0 <15.0.0'`
+
+## 3.3.0
+- feat: allow Dart `Set` type
+- feat: added support to `Decimal`, `Rational` and `Fixed` types
+- feat: added support enums for query parameters
+- feat: added support for custom type are using `fromJson` constructor or `toJson` method
+- fix: parsing named path parameters
+- feat: added support for extension types
+
 ## 3.2.3
 - build: allow `analyzer: '>=10.0.0 <13.0.0'`
 - build: allow `build: ^4.0.4`

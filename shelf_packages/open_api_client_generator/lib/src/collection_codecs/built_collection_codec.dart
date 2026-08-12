@@ -11,13 +11,14 @@ class BuiltCollectionCodec extends CollectionCodecBase {
   @override
   String encodeToPackage(Reference type) {
     if (type.isList) return '.toBuiltList()';
+    if (type.isSet) return '.toBuiltSet()';
     if (type.isMap) return '.toBuiltMap()';
     return '';
   }
 
   @override
   String encodeToCore(Reference type) {
-    if (type.isList) return '.toList()';
+    if (type.isList || type.isSet) return '.toList()';
     if (type.isMap) return '.asMap()';
     return '';
   }
@@ -25,6 +26,7 @@ class BuiltCollectionCodec extends CollectionCodecBase {
   @override
   String onMapTypeSymbol(Reference reference) {
     if (reference.isList) return 'BuiltList';
+    if (reference.isSet) return 'BuiltSet';
     if (reference.isMap) return 'BuiltMap';
     return reference.symbol!;
   }

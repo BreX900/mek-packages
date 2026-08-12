@@ -94,7 +94,7 @@ void main(List<String> arguments) async {
     clientCodec: client,
     serializationCodec: data,
     plugins: plugins,
-    partFolder: args['part-folder'] as String,
+    partFolder: args['part-folder'] as String?,
   );
 }
 

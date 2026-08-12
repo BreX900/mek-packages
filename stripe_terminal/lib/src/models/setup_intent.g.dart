@@ -34,15 +34,16 @@ mixin _$SetupIntent {
   }
 
   @override
-  String toString() => (ClassToString('SetupIntent')
-        ..add('id', _self.id)
-        ..add('created', _self.created)
-        ..add('customerId', _self.customerId)
-        ..add('metadata', _self.metadata)
-        ..add('usage', _self.usage)
-        ..add('status', _self.status)
-        ..add('latestAttempt', _self.latestAttempt))
-      .toString();
+  String toString() =>
+      (ClassToString('SetupIntent')
+            ..add('id', _self.id)
+            ..add('created', _self.created)
+            ..add('customerId', _self.customerId)
+            ..add('metadata', _self.metadata)
+            ..add('usage', _self.usage)
+            ..add('status', _self.status)
+            ..add('latestAttempt', _self.latestAttempt))
+          .toString();
 }
 
 mixin _$SetupAttempt {
@@ -77,22 +78,22 @@ mixin _$SetupAttempt {
   }
 
   @override
-  String toString() => (ClassToString('SetupAttempt')
-        ..add('id', _self.id)
-        ..add('applicationId', _self.applicationId)
-        ..add('created', _self.created)
-        ..add('customerId', _self.customerId)
-        ..add('onBehalfOf', _self.onBehalfOf)
-        ..add('paymentMethodId', _self.paymentMethodId)
-        ..add('paymentMethodDetails', _self.paymentMethodDetails)
-        ..add('setupIntentId', _self.setupIntentId)
-        ..add('status', _self.status))
-      .toString();
+  String toString() =>
+      (ClassToString('SetupAttempt')
+            ..add('id', _self.id)
+            ..add('applicationId', _self.applicationId)
+            ..add('created', _self.created)
+            ..add('customerId', _self.customerId)
+            ..add('onBehalfOf', _self.onBehalfOf)
+            ..add('paymentMethodId', _self.paymentMethodId)
+            ..add('paymentMethodDetails', _self.paymentMethodDetails)
+            ..add('setupIntentId', _self.setupIntentId)
+            ..add('status', _self.status))
+          .toString();
 }
 
 mixin _$SetupAttemptPaymentMethodDetails {
-  SetupAttemptPaymentMethodDetails get _self =>
-      this as SetupAttemptPaymentMethodDetails;
+  SetupAttemptPaymentMethodDetails get _self => this as SetupAttemptPaymentMethodDetails;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -109,15 +110,15 @@ mixin _$SetupAttemptPaymentMethodDetails {
   }
 
   @override
-  String toString() => (ClassToString('SetupAttemptPaymentMethodDetails')
-        ..add('cardPresent', _self.cardPresent)
-        ..add('interacPresent', _self.interacPresent))
-      .toString();
+  String toString() =>
+      (ClassToString('SetupAttemptPaymentMethodDetails')
+            ..add('cardPresent', _self.cardPresent)
+            ..add('interacPresent', _self.interacPresent))
+          .toString();
 }
 
 mixin _$SetupAttemptCardPresentDetails {
-  SetupAttemptCardPresentDetails get _self =>
-      this as SetupAttemptCardPresentDetails;
+  SetupAttemptCardPresentDetails get _self => this as SetupAttemptCardPresentDetails;
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -134,8 +135,9 @@ mixin _$SetupAttemptCardPresentDetails {
   }
 
   @override
-  String toString() => (ClassToString('SetupAttemptCardPresentDetails')
-        ..add('emvAuthData', _self.emvAuthData)
-        ..add('generatedCard', _self.generatedCard))
-      .toString();
+  String toString() =>
+      (ClassToString('SetupAttemptCardPresentDetails')
+            ..add('emvAuthData', _self.emvAuthData)
+            ..add('generatedCard', _self.generatedCard))
+          .toString();
 }

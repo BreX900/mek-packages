@@ -31,16 +31,11 @@ class KotlinOptions {
   final String outputFile;
   final String package;
 
-  const KotlinOptions({
-    required this.outputFile,
-    required this.package,
-  });
+  const KotlinOptions({required this.outputFile, required this.package});
 }
 
 class SwiftOptions {
   final String outputFile;
 
-  const SwiftOptions({
-    required this.outputFile,
-  });
+  const SwiftOptions({required this.outputFile});
 }

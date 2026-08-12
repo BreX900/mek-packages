@@ -1,4 +1,5 @@
 import 'package:code_builder/code_builder.dart';
+import 'package:open_api_client_generator/open_api_client_generator.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 
 typedef Updates<T> = void Function(T b);
@@ -7,10 +8,7 @@ sealed class ApiSpec {
   final SchemaOpenApi schema;
   final String name;
 
-  const ApiSpec({
-    required this.schema,
-    required this.name,
-  });
+  const ApiSpec({required this.schema, required this.name});
 }
 
 class ApiClass extends ApiSpec {
@@ -27,11 +25,13 @@ class ApiClass extends ApiSpec {
   });
 
   Class toSpec(Updates<ClassBuilder> updates) {
-    return Class((b) => b
-      ..docs.addAll(docs)
-      ..name = name
-      ..implements.replace(implements.map(Reference.new))
-      ..update(updates));
+    return Class(
+      (b) => b
+        ..docs.addAll(docs)
+        ..name = name
+        ..implements.replace(implements.map(Reference.new))
+        ..update(updates),
+    );
   }
 }
 
@@ -51,19 +51,23 @@ class ApiField {
   });
 
   Parameter toParameter(Updates<ParameterBuilder> updates) {
-    return Parameter((b) => b
-      ..named = true
-      ..required = isRequired
-      ..name = name
-      ..update(updates));
+    return Parameter(
+      (b) => b
+        ..named = true
+        ..required = isRequired
+        ..name = name
+        ..update(updates),
+    );
   }
 
   Field toField(Updates<FieldBuilder> updates) {
-    return Field((b) => b
-      ..docs.addAll(docs)
-      ..type = type
-      ..name = name
-      ..update(updates));
+    return Field(
+      (b) => b
+        ..docs.addAll(docs)
+        ..type = type
+        ..name = name
+        ..update(updates),
+    );
   }
 }
 
@@ -79,10 +83,38 @@ class ApiEnum extends ApiSpec {
   });
 
   Enum toSpec(Updates<EnumBuilder> updates) {
-    return Enum((b) => b
-      ..docs.addAll(docs)
-      ..name = name
-      ..update(updates));
+    return Enum(
+      (b) => b
+        ..annotations.add(const CodeExpression(Code('JsonEnum(alwaysCreate: true)')))
+        ..docs.addAll(docs)
+        ..name = name
+        ..constructors.add(
+          Constructor(
+            (b) => b
+              ..factory = true
+              ..name = 'fromJson'
+              ..requiredParameters.add(
+                Parameter(
+                  (b) => b
+                    ..type = References.string
+                    ..name = 'source',
+                ),
+              )
+              ..lambda = true
+              ..body = Code('\$enumDecode(_\$${name}EnumMap, source)'),
+          ),
+        )
+        ..methods.add(
+          Method(
+            (b) => b
+              ..returns = References.string
+              ..name = 'toJson'
+              ..lambda = true
+              ..body = Code('_\$${name}EnumMap[this]!'),
+          ),
+        )
+        ..update(updates),
+    );
   }
 }
 
@@ -90,14 +122,13 @@ class ApiEnumValue {
   final String name;
   final String value;
 
-  const ApiEnumValue({
-    required this.name,
-    required this.value,
-  });
+  const ApiEnumValue({required this.name, required this.value});
 
   EnumValue toSpec(Updates<EnumValueBuilder> updates) {
-    return EnumValue((b) => b
-      ..name = name
-      ..update(updates));
+    return EnumValue(
+      (b) => b
+        ..name = name
+        ..update(updates),
+    );
   }
 }

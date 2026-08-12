@@ -3,15 +3,17 @@ description: OpenApi Client Generator allows generation of API client libraries 
 repository: https://github.com/BreX900/mek-packages
 issue_tracker: https://github.com/BreX900/mek-packages/issues
 homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/open_api_client_generator
-version: 1.2.0
+version: 1.3.0
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.12.0
 
 scripts:
   generate-library: index_generator
   # To generate .g files:
   generate-code: dart run build_runner watch --delete-conflicting-outputs --verbose
+
+  format: dart format .
 
   publish: dart pub publish
 
@@ -30,12 +32,12 @@ dependencies:
 
   logging: ^1.3.0
 
-  open_api_specification: '>=3.0.0 <3.1.0'
+  open_api_specification: '>=4.0.0 <4.1.0'
 
   args: ^2.4.2
 
 dev_dependencies:
-  mek_lints: ^3.0.0
+  mek_lints: ^7.0.0
 
   # EXAMPLE
   build_runner: ^2.4.6

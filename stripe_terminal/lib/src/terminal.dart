@@ -4,8 +4,10 @@ import 'dart:async';
 
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
+import 'package:mek_stripe_terminal/src/models/clear_cached_credentials_result.dart';
 import 'package:mek_stripe_terminal/src/models/connection_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/discovery_configuration.dart';
+import 'package:mek_stripe_terminal/src/models/easy_connect_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/location.dart';
 import 'package:mek_stripe_terminal/src/models/payment.dart';
 import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
@@ -16,14 +18,15 @@ import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/platform/terminal_platform.dart';
-import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 
 /// Parts documented with "???" are not yet validated
 class Terminal {
   static Terminal? _instance;
   static Terminal get instance {
-    assert(_instance != null,
-        'Please before use a Terminal instance init it with [Terminal.initTerminal] static method');
+    assert(
+      _instance != null,
+      'Please before use a Terminal instance init it with [Terminal.initTerminal] static method',
+    );
     return _instance!;
   }
 
@@ -35,7 +38,7 @@ class Terminal {
   static bool get isInitialized => _instance != null;
 
   /// Initializes the terminal SDK
-  static Future<void> initTerminal({
+  static Future<void> init({
     bool shouldPrintLogs = false,
 
     /// A callback function that returns a Future which resolves to a connection token from your backend
@@ -43,8 +46,10 @@ class Terminal {
     required Future<String> Function() fetchToken,
   }) async {
     if (_instance != null) {
-      throw StateError('Already initialized!\n'
-          'Retrieve it with [Terminal.instance] static getter or use [Terminal.clearCachedCredentials] method to re-fetch the token.');
+      throw StateError(
+        'Already initialized!\n'
+        'Retrieve it with [Terminal.instance] static getter or use [Terminal.clearCachedCredentials] method to re-fetch the token.',
+      );
     }
     if (_handlers.fetchToken != null) {
       throw StateError('Already initializing!\nWait a initialization!');
@@ -64,6 +69,9 @@ class Terminal {
   /// You can use this method to switch accounts in your app, e.g. to switch between live and test
   /// Stripe API keys on your backend.
   ///
+  /// A reader must not be connected when this method is called. If a reader is connected, the
+  /// operation will fail with an [TerminalExceptionCode.unexpectedOperation] error.
+  ///
   /// In order to switch accounts in your app:
   /// - if a reader is connected, call [disconnectReader]
   /// - call [clearCachedCredentials]
@@ -77,13 +85,16 @@ class Terminal {
   ///   create a reader session.
   /// - Subsequent calls to [connectReader] require a new connection token. If you disconnect from a
   ///   reader, and then call [connectReader] again, the SDK will fetch another connection token.
-  Future<void> clearCachedCredentials() async {
-    await _platform.clearCachedCredentials();
-    _handlers.handleReaderDisconnection();
-    _controller = null;
+  Future<ClearCachedCredentialsResult> clearCachedCredentials() async {
+    final result = await _platform.clearCachedCredentials();
+    if (result.isSuccessful) {
+      _handlers.handleReaderDisconnection();
+      _controller = null;
+    }
+    return result;
   }
 
-//region Reader discovery, connection and updates
+  //region Reader discovery, connection and updates
   /// The currently connected reader’s connectionStatus changed.
   ///
   /// You should not use this stream to detect when a reader unexpectedly disconnects from your app,
@@ -142,6 +153,13 @@ class Terminal {
       return _platform.discoverReaders(discoveryConfiguration);
     });
     return _controller!.stream;
+  }
+
+  /// Discovers and connects to a reader in a single call.
+  CancelableFuture<Reader> easyConnect(EasyConnectConfiguration configuration) {
+    return CancelableFuture(_platform.stopEasyConnect, (id) async {
+      return await _platform.startEasyConnect(operationId: id, configuration: configuration);
+    });
   }
 
   /// Attempts to connect to the given reader, with the connection type dependent on config.
@@ -223,9 +241,9 @@ class Terminal {
   /// with a simulated reader.
   Future<void> setSimulatorConfiguration(SimulatorConfiguration configuration) async =>
       await _platform.setSimulatorConfiguration(configuration);
-//endregion
+  //endregion
 
-//region Taking payments
+  //region Taking payments
   /// The currently connected reader’s [PaymentStatus] changed.
   Stream<PaymentStatus> get onPaymentStatusChange => _handlers.paymentStatusChangeStream;
 
@@ -248,37 +266,22 @@ class Terminal {
   Future<PaymentIntent> retrievePaymentIntent(String clientSecret) async =>
       await _platform.retrievePaymentIntent(clientSecret);
 
-  /// Collects a payment method for the given [PaymentIntent].
+  /// Processes a PaymentIntent by collecting a payment method and confirming it.
   ///
-  /// Note: [collectPaymentMethod] does not apply any changes to the [PaymentIntent] API object. Updates
-  ///   to the [PaymentIntent] are local to the SDK, and persisted in-memory.
-  ///
-  /// After resolving the error, you may call [collectPaymentMethod] again to either try the same
-  /// card again, or try a different card.
-  ///
-  /// If collecting a payment method succeeds, the method complete with a [PaymentIntent] with status
-  /// [PaymentIntentStatus.requiresConfirmation], indicating that you should call [confirmPaymentIntent] to finish the payment.
-  ///
-  /// Note that if [collectPaymentMethod] is canceled, the future will be complete with a [TerminalExceptionCode.canceled] error.
-  ///
-  /// - [skipTipping] Bypass tipping selection if it would have otherwise been shown.
-  /// - [tippingConfiguration] The tipping configuration for this payment collection.
-  /// - [shouldUpdatePaymentIntent] Whether or not to update the [PaymentIntent] server side during
-  ///   [collectPaymentMethod]. Attempting to collect with [shouldUpdatePaymentIntent] enabled and
-  ///   a [PaymentIntent] created while offline will error with SCPErrorUpdatePaymentIntentUnavailableWhileOffline.
-  /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
-  CancelableFuture<PaymentIntent> collectPaymentMethod(
+  /// This method collects a payment method and confirms it in one call.
+  CancelableFuture<PaymentIntent> processPaymentIntent(
     PaymentIntent paymentIntent, {
     bool requestDynamicCurrencyConversion = false,
     String? surchargeNotice,
     bool skipTipping = false,
     TippingConfiguration? tippingConfiguration,
     bool shouldUpdatePaymentIntent = false,
-    bool customerCancellationEnabled = false,
+    bool customerCancellationEnabled = true,
     AllowRedisplay allowRedisplay = AllowRedisplay.unspecified,
+    ConfirmPaymentIntentConfiguration? confirmConfiguration,
   }) {
-    return CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
-      return await _platform.startCollectPaymentMethod(
+    return CancelableFuture(_platform.stopProcessPaymentIntent, (id) async {
+      return await _platform.startProcessPaymentIntent(
         operationId: id,
         paymentIntentId: paymentIntent.id,
         requestDynamicCurrencyConversion: requestDynamicCurrencyConversion,
@@ -288,38 +291,8 @@ class Terminal {
         shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
         customerCancellationEnabled: customerCancellationEnabled,
         allowRedisplay: allowRedisplay,
+        confirmConfiguration: confirmConfiguration,
       );
-    });
-  }
-
-  /// Processes a payment after collecting a payment method succeeds.
-  ///
-  /// **Synchronous capture**
-  /// Stripe Terminal uses two-step card payments to prevent unintended and duplicate payments. When
-  /// processPayment completes successfully, a charge has been authorized on the customer’s card,
-  /// but not yet been “captured”. Your app must synchronously notify your backend to capture
-  /// the [PaymentIntent] in order to settle the funds to your account.
-  ///
-  /// **Handling failures**
-  /// ??? When processPayment fails, the SDK returns an error that includes the updated [PaymentIntent].
-  /// Your app should inspect the updated [PaymentIntent] to decide how to retry the payment.
-  ///
-  /// If the updated PaymentIntent is nil, the request to Stripe’s servers timed out and
-  /// the [PaymentIntent]’s status is unknown. We recommend that you retry [confirmPaymentIntent] with
-  /// the original [PaymentIntent]. If you instead choose to abandon the original [PaymentIntent]
-  /// and create a new one, do not capture the original [PaymentIntent]. If you do, you might
-  /// charge your customer twice.
-  ///
-  /// If the updated [PaymentIntent]’s status is still [PaymentIntentStatus.requiresConfirmation]
-  ///   (e.g., the request failed because your app is not connected to the internet), you can call
-  ///   [confirmPaymentIntent] again with the updated [PaymentIntent] to retry the request.
-  ///
-  /// If the updated [PaymentIntent]’s status changes to [PaymentIntentStatus.requiresPaymentMethod]
-  ///   (e.g., the request failed because the card was declined), call [collectPaymentMethod]
-  ///   with the updated [PaymentIntent] to try charging another card.
-  CancelableFuture<PaymentIntent> confirmPaymentIntent(PaymentIntent paymentIntent) {
-    return CancelableFuture(_platform.stopConfirmPaymentIntent, (id) async {
-      return await _platform.startConfirmPaymentIntent(id, paymentIntent.id);
     });
   }
 
@@ -331,9 +304,9 @@ class Terminal {
   /// Note: This cannot be used with the Verifone P400 reader.
   Future<void> cancelPaymentIntent(PaymentIntent paymentIntent) async =>
       await _platform.cancelPaymentIntent(paymentIntent.id);
-//endregion
+  //endregion
 
-//region Saving payment details for later use
+  //region Saving payment details for later use
 
   /// Creates a new [SetupIntent] with the given parameters.
   ///
@@ -363,63 +336,23 @@ class Terminal {
   /// Retrieves an [SetupIntent] with a client secret.
   ///
   /// If you’ve created a SetupIntent on your backend, you must retrieve it in the Stripe Terminal
-  /// SDK before calling [collectSetupIntentPaymentMethod].
+  /// SDK before calling [processSetupIntent].
   Future<SetupIntent> retrieveSetupIntent(String clientSecret) async =>
       await _platform.retrieveSetupIntent(clientSecret);
 
-  /// Collects a payment method for the given [SetupIntent].
-  ///
-  /// This method does not update the [SetupIntent] API object. All updates are local to the SDK
-  /// and only persisted in memory. You must confirm the [SetupIntent] to create a PaymentMethod
-  /// API object and (optionally) attach that PaymentMethod to a customer.
-  ///
-  /// After resolving the error, you may call [collectSetupIntentPaymentMethod] again to either
-  /// try the same card again, or try a different card.
-  ///
-  /// If collecting a payment method succeeds returns with a [SetupIntent] with status
-  /// [SetupIntentStatus.requiresConfirmation], indicating that you should call [confirmSetupIntent]
-  /// to finish the payment.
-  ///
-  /// Note that if [collectSetupIntentPaymentMethod] is canceled returns [TerminalExceptionCode.canceled] error.
-  ///
-  /// Collecting cardholder consent
-  ///   Card networks require that you collect consent from the customer before saving and reusing
-  ///   their card information. The SetupIntent confirmation API method normally takes a mandate_data hash that lets you specify details about the customer’s consent. The Stripe Terminal SDK will fill in the mandate_data hash with relevant information, but in order for it to do so, you must specify whether you have gathered consent from the cardholder to collect their payment information in this method’s second parameter.
-  ///
-  ///   The payment method will not be collected without the cardholder’s consent.
-  ///
-  /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
-  CancelableFuture<SetupIntent> collectSetupIntentPaymentMethod(
+  /// Processes a SetupIntent by collecting a payment method and confirming it.
+  CancelableFuture<SetupIntent> processSetupIntent(
     SetupIntent setupIntent, {
     required AllowRedisplay allowRedisplay,
-    bool customerCancellationEnabled = false,
+    bool customerCancellationEnabled = true,
   }) {
-    return CancelableFuture(_platform.stopCollectSetupIntentPaymentMethod, (id) async {
-      return await _platform.startCollectSetupIntentPaymentMethod(
+    return CancelableFuture(_platform.stopProcessSetupIntent, (id) async {
+      return await _platform.startProcessSetupIntent(
         operationId: id,
         setupIntentId: setupIntent.id,
         allowRedisplay: allowRedisplay,
         customerCancellationEnabled: customerCancellationEnabled,
       );
-    });
-  }
-
-  /// Confirms a [SetupIntent] after the payment method has been successfully collected.
-  ///
-  /// Handling failures
-  ///   When confirmSetupIntent fails, the SDK returns an error that includes the updated [SetupIntent].
-  ///   Your app should inspect the updated [SetupIntent] to decide how to proceed.
-  ///   1. If the updated [SetupIntent] is null, the request to Stripe’s servers timed out and the
-  ///     [SetupIntent]’s status is null. We recommend that you retry [confirmSetupIntent] with
-  ///     the original [SetupIntent].
-  ///   2. If the updated [SetupIntent]’s status is still [SetupIntentStatus.requiresConfirmation]
-  ///     (e.g., the request failed because your app is not connected to the internet), you can call
-  ///     [confirmSetupIntent] again with the updated [SetupIntent] to retry the request.
-  ///   3. If the updated [SetupIntent]’s status is [SetupIntentStatus.requiresAction], there might
-  ///     be authentication the cardholder must perform offline before the saved PaymentMethod can be used.
-  CancelableFuture<SetupIntent> confirmSetupIntent(SetupIntent setupIntent) {
-    return CancelableFuture(_platform.stopConfirmSetupIntent, (id) async {
-      return await _platform.startConfirmSetupIntent(id, setupIntent.id);
     });
   }
 
@@ -430,34 +363,21 @@ class Terminal {
   Future<SetupIntent> cancelSetupIntent(SetupIntent setupIntent) async =>
       await _platform.cancelSetupIntent(setupIntent.id);
 
-//endregion
+  //endregion
 
-//region Card-present refunds
+  //region Card-present refunds
 
-  /// Initiates an in-person refund by collecting the payment method that is to be refunded.
+  /// Processes an in-person refund by collecting the payment method and confirming it.
   ///
   /// Some payment methods, like Interac Debit payments, require that in-person payments
   /// also be refunded while the cardholder is present. The cardholder must present
   /// the Interac card to the card reader; these payments cannot be refunded via the dashboard or the API.
   ///
-  /// For payment methods that don’t require the cardholder be present,
+  /// For payment methods that don't require the cardholder be present,
   /// see https://stripe.com/docs/terminal/payments/refunds
   ///
-  /// This method, along with confirmRefund, allow you to design an in-person refund flow into your app.
-  ///
-  /// After resolving with the error, you may call [collectRefundPaymentMethod] again to either
-  /// try the same card again, or try a different card.
-  ///
-  /// If collecting a payment method collected, you can call [confirmRefund] to finish refunding
-  /// the payment method.
-  ///
-  /// Calling any other SDK methods between [collectRefundPaymentMethod] and [confirmRefund]
-  /// will result in undefined behavior.
-  ///
-  /// Note that if [collectRefundPaymentMethod] is canceled, this method throw a [TerminalExceptionCode.canceled] error.
-  ///
   /// - [chargeId] The ID of the charge to be refunded.
-  /// - [amount] The amount of the refund, provided in the currency’s smallest unit.
+  /// - [amount] The amount of the refund, provided in the currency's smallest unit.
   /// - [currency] Three-letter ISO currency code. Must be a supported currency.
   /// - [metadata] Set of key-value pairs that you can attach to an object. This can be useful
   ///   for storing additional information about the object in a structured format.
@@ -469,19 +389,28 @@ class Terminal {
   ///   the full application fee will be refunded. Otherwise, the application fee will be refunded
   ///   in an amount proportional to the amount of the charge refunded.
   /// - [customerCancellationEnabled] Whether to show a cancel button in transaction UI on Stripe smart readers.
-  CancelableFuture<void> collectRefundPaymentMethod({
-    required String chargeId,
+  CancelableFuture<Refund> processRefund({
+    String? chargeId,
+    String? paymentIntentId,
+    String? paymentIntentClientSecret,
     required int amount,
     required String currency,
     Map<String, String>? metadata,
     bool? reverseTransfer,
     bool? refundApplicationFee,
-    bool customerCancellationEnabled = false,
+    bool customerCancellationEnabled = true,
   }) {
-    return CancelableFuture(_platform.stopCollectRefundPaymentMethod, (id) async {
-      return await _platform.startCollectRefundPaymentMethod(
+    _validateRefundParameters(
+      chargeId: chargeId,
+      paymentIntentId: paymentIntentId,
+      paymentIntentClientSecret: paymentIntentClientSecret,
+    );
+    return CancelableFuture(_platform.stopProcessRefund, (id) async {
+      return await _platform.startProcessRefund(
         operationId: id,
         chargeId: chargeId,
+        paymentIntentId: paymentIntentId,
+        paymentIntentClientSecret: paymentIntentClientSecret,
         amount: amount,
         currency: currency,
         metadata: metadata,
@@ -491,26 +420,9 @@ class Terminal {
       );
     });
   }
+  //endregion
 
-  /// Confirms an in-person refund after the refund payment method has been collected.
-  ///
-  /// When [confirmRefund] fails, the SDK returns an error that either includes the failed [Refund].
-  ///
-  /// 1. If the refund property is null, the request to Stripe’s servers timed out and the refund’s
-  ///   status is null. We recommend that you retry [confirmRefund] with the original parameters.
-  /// 2. If the ConfirmRefundError has a failure_reason, the refund was declined. We recommend
-  ///   that you take action based on the decline code you received.
-  ///
-  /// Note: collectRefundPaymentMethod:completion and confirmRefund are only available for payment
-  ///   methods that require in-person refunds. For all other refunds, use the Stripe Dashboard or the Stripe API.
-  CancelableFuture<Refund> confirmRefund() {
-    return CancelableFuture(_platform.stopConfirmRefund, (id) async {
-      return await _platform.startConfirmRefund(id);
-    });
-  }
-//endregion
-
-//region Display information to customers
+  //region Display information to customers
   /// Updates the reader display with transaction information. This method is for display purposes
   /// only and has no correlation with what the customer is actually charged. Tax and total
   /// are also not automatically calculated and must be set in [Cart].
@@ -526,7 +438,11 @@ class Terminal {
   /// Configure Tap to Pay UX
   Future<void> setTapToPayUXConfiguration(TapToPayUxConfiguration configuration) async =>
       await _platform.setTapToPayUXConfiguration(configuration);
-//endregion
+
+  /// Checks if the current Stripe account has a linked Tap to Pay on iPhone account (iOS only).
+  Future<bool> isTapToPayAccountLinked({String? onBehalfOf}) async =>
+      await _platform.isTapToPayAccountLinked(onBehalfOf: onBehalfOf);
+  //endregion
 
   StreamController<T> _handleStream<T>(
     StreamController<T>? oldController,
@@ -544,5 +460,20 @@ class Terminal {
     };
     newController.onCancel = () async => await subscription.cancel();
     return newController;
+  }
+
+  void _validateRefundParameters({
+    String? chargeId,
+    String? paymentIntentId,
+    String? paymentIntentClientSecret,
+  }) {
+    if (chargeId == null && paymentIntentId == null) {
+      throw ArgumentError('Either chargeId or paymentIntentId must be provided to refund.');
+    }
+    if (paymentIntentId != null && paymentIntentClientSecret == null) {
+      throw ArgumentError(
+        'paymentIntentClientSecret is required when paymentIntentId is provided.',
+      );
+    }
   }
 }

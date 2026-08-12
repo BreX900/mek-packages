@@ -12,10 +12,7 @@ class MethodApi {
   final MethodApiType? kotlin;
   final MethodApiType? swift;
 
-  const MethodApi({
-    this.kotlin,
-    this.swift,
-  });
+  const MethodApi({this.kotlin, this.swift});
 }
 
 @Target({TargetKind.classType})
@@ -38,10 +35,7 @@ class FlutterApi {
   final MethodApiType kotlinMethod;
   final MethodApiType swiftMethod;
 
-  const FlutterApi({
-    this.kotlinMethod = MethodApiType.sync,
-    this.swiftMethod = MethodApiType.sync,
-  });
+  const FlutterApi({this.kotlinMethod = MethodApiType.sync, this.swiftMethod = MethodApiType.sync});
 }
 
 @Target({TargetKind.classType})

@@ -24,7 +24,7 @@ class Doc {
 
     final lastLine = lines.lastOrNull;
     if (lastLine != null) {
-      final examples = RegExp(r'`([^`]+)`').allMatches(lastLine).toList();
+      final examples = RegExp('`([^`]+)`').allMatches(lastLine).toList();
 
       example = examples.singleOrNull?.group(1);
       if (example != null) {

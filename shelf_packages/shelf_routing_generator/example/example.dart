@@ -1,5 +1,3 @@
-// ignore_for_file: unreachable_from_main
-
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_routing/shelf_routing.dart';

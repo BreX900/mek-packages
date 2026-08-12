@@ -14,19 +14,18 @@ class Api {
 
   /// fetchMessages
   Future<List<MessageDto>> fetchMessages({required String chatId}) async {
-    final _queryParameters = <String, Object?>{
-      'chatId': chatId,
-    };
+    final _queryParameters = <String, Object?>{'chatId': chatId};
     final _response = await client.get('/v1/messages', queryParameters: _queryParameters);
     return switch (_response.statusCode) {
-      200 => (_response.data as List<Object?>)
-          .map((e) => MessageDto.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      200 =>
+        (_response.data as List<Object?>)
+            .map((e) => MessageDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
       _ => throw DioException.badResponse(
-          statusCode: _response.statusCode!,
-          requestOptions: _response.requestOptions,
-          response: _response,
-        ),
+        statusCode: _response.statusCode!,
+        requestOptions: _response.requestOptions,
+        response: _response,
+      ),
     };
   }
 
@@ -37,20 +36,17 @@ class Api {
     return switch (_response.statusCode) {
       200 => null,
       _ => throw DioException.badResponse(
-          statusCode: _response.statusCode!,
-          requestOptions: _response.requestOptions,
-          response: _response,
-        ),
+        statusCode: _response.statusCode!,
+        requestOptions: _response.requestOptions,
+        response: _response,
+      ),
     };
   }
 }
 
 @JsonSerializable()
 class MessageDto {
-  const MessageDto({
-    required this.chatId,
-    required this.content,
-  });
+  const MessageDto({required this.chatId, required this.content});
 
   final String chatId;
 

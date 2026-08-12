@@ -1,7 +1,7 @@
 package mek.stripeterminal.plugin
 
 import com.stripe.stripeterminal.external.callable.Cancelable
-import com.stripe.stripeterminal.external.callable.HandoffReaderListener
+import com.stripe.stripeterminal.external.callable.AppsOnDevicesListener
 import com.stripe.stripeterminal.external.callable.InternetReaderListener
 import com.stripe.stripeterminal.external.callable.MobileReaderListener
 import com.stripe.stripeterminal.external.callable.TapToPayReaderListener
@@ -19,7 +19,7 @@ import mek.stripeterminal.runOnMainThread
 import com.stripe.stripeterminal.external.callable.Callback
 
 class ReaderDelegatePlugin(private val _handlers: TerminalHandlersApi) :
-    MobileReaderListener, HandoffReaderListener, InternetReaderListener, TapToPayReaderListener {
+    MobileReaderListener, AppsOnDevicesListener, InternetReaderListener, TapToPayReaderListener {
     private var cancelableReconnect: Cancelable? = null
     private var cancelableUpdate: Cancelable? = null
 

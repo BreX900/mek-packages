@@ -4,6 +4,10 @@ targets:
       exclude:
         - example/**
     builders:
+      source_gen:combining_builder:
+        options:
+          ignore_for_file:
+            - cast_nullable_to_non_nullable
       shelf_open_api_generator:
         enabled: false
       shelf_routing_generator:

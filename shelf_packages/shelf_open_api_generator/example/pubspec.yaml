@@ -1,12 +1,14 @@
 name: example
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.12.0
 
 scripts:
   # To generate .g files:
   # Comment `builders` key on build.yaml before launch this command
   generate-code: dart run build_runner watch --delete-conflicting-outputs --verbose
+
+  format: dart format .
 
 dependencies:
   shelf: ^1.4.2

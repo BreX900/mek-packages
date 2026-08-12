@@ -2,7 +2,6 @@ import 'dart:convert';
 
 abstract class FileUtils {
   static String yamlFrom(Object? json) {
-    // ignore: avoid_dynamic_calls
     return YamlEncoder(toEncodable: (vl) => (vl as dynamic)?.toJson()).convert(json);
     // return json2yaml(_jsonToYaml(json));
   }
@@ -76,8 +75,8 @@ class _YamlSink implements ChunkedConversionSink<Object?> {
     required this.indent,
     required this.shouldMultilineStringInBlock,
     required this.toEncodable,
-    required StringConversionSink sink,
-  }) : _sink = sink;
+    required this._sink,
+  });
 
   @override
   void add(Object? object) {
@@ -96,7 +95,9 @@ class _YamlSink implements ChunkedConversionSink<Object?> {
   }
 
   @override
-  void close() {/* do nothing */}
+  void close() {
+    /* do nothing */
+  }
 }
 
 /// Please dev follow `_JsonStringStringifier` code style
@@ -116,8 +117,8 @@ class _YamlWriter {
     required this.indent,
     required this.shouldMultilineStringInBlock,
     required this.toEncodable,
-    required StringSink sink,
-  }) : _sink = sink;
+    required this._sink,
+  });
 
   void write(Object? object) {
     if (object == null) {

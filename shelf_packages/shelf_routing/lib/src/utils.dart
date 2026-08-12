@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
@@ -35,6 +36,15 @@ Future<T> $readBodyAs<T>(Request request, T Function(Object? data) converter) as
   try {
     final data = jsonDecode(await request.readAsString());
     return converter(data);
+  } catch (error, stackTrace) {
+    throw BadRequestException.body(error, stackTrace);
+  }
+}
+
+/// Generator utils
+Future<String> $readBodyAsString(Request request) async {
+  try {
+    return await request.readAsString();
   } catch (error, stackTrace) {
     throw BadRequestException.body(error, stackTrace);
   }

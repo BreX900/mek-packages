@@ -1,6 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:source_gen/source_gen.dart';
 
 abstract final class JsonAnnotation {
@@ -30,6 +29,6 @@ abstract final class JsonAnnotation {
         return valueReader.literalValue!;
       }
     }
-    return fieldElement.requireName;
+    return fieldElement.displayName;
   }
 }

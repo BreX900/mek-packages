@@ -6,11 +6,17 @@ homepage: https://github.com/BreX900/mek-packages/tree/main/shelf_packages/shelf
 version: 3.0.0
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.12.0
+
+scripts:
+  format: dart format .
+
+  publish: dart format . && dart pub publish
+
 
 dependencies:
   meta: ^1.16.0
 
 dev_dependencies:
-  mek_lints: ^3.0.0
+  mek_lints: ^7.0.0
 

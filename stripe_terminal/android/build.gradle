@@ -6,6 +6,7 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:8.7.2'
+
     }
 }
 
@@ -70,8 +71,9 @@ android {
 }
 
 dependencies {
-    implementation "com.stripe:stripeterminal-taptopay:4.6.0"
-    implementation "com.stripe:stripeterminal-core:4.6.0"
+    implementation "com.stripe:stripeterminal-taptopay:5.6.0"
+    implementation "com.stripe:stripeterminal-core:5.6.0"
+    implementation "com.stripe:stripeterminal-appsondevices:5.6.0"
 }
 
 spotless {

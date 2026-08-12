@@ -30,13 +30,14 @@ mixin _$Location {
   }
 
   @override
-  String toString() => (ClassToString('Location')
-        ..add('address', _self.address)
-        ..add('displayName', _self.displayName)
-        ..add('id', _self.id)
-        ..add('livemode', _self.livemode)
-        ..add('metadata', _self.metadata))
-      .toString();
+  String toString() =>
+      (ClassToString('Location')
+            ..add('address', _self.address)
+            ..add('displayName', _self.displayName)
+            ..add('id', _self.id)
+            ..add('livemode', _self.livemode)
+            ..add('metadata', _self.metadata))
+          .toString();
 }
 
 mixin _$Address {
@@ -65,12 +66,13 @@ mixin _$Address {
   }
 
   @override
-  String toString() => (ClassToString('Address')
-        ..add('city', _self.city)
-        ..add('country', _self.country)
-        ..add('line1', _self.line1)
-        ..add('line2', _self.line2)
-        ..add('postalCode', _self.postalCode)
-        ..add('state', _self.state))
-      .toString();
+  String toString() =>
+      (ClassToString('Address')
+            ..add('city', _self.city)
+            ..add('country', _self.country)
+            ..add('line1', _self.line1)
+            ..add('line2', _self.line2)
+            ..add('postalCode', _self.postalCode)
+            ..add('state', _self.state))
+          .toString();
 }

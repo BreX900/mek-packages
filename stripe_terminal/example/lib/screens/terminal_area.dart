@@ -56,11 +56,12 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
   }
 
   Future<void> _restoreStateAfterHotRestart() async {
-    final (connectionStatus, paymentStatys, connectedReader) = await (
-      Terminal.instance.getConnectionStatus(),
-      Terminal.instance.getPaymentStatus(),
-      Terminal.instance.getConnectedReader()
-    ).wait;
+    final (connectionStatus, paymentStatys, connectedReader) =
+        await (
+          Terminal.instance.getConnectionStatus(),
+          Terminal.instance.getPaymentStatus(),
+          Terminal.instance.getConnectedReader(),
+        ).wait;
     _connectionStatusNotifier.value = connectionStatus;
     _paymentStatusNotifier.value = paymentStatys;
     _connectedReaderNotifier.value = connectedReader;
@@ -74,11 +75,7 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
   @override
   Widget build(BuildContext context) {
     if (isMutating) {
-      return const Material(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Material(child: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -86,9 +83,7 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
       body: IndexedStack(
         index: _destinationIndex,
         children: [
-          LocationsScreen(
-            locationNotifier: _locationNotifier,
-          ),
+          LocationsScreen(locationNotifier: _locationNotifier),
           ReadersScreen(
             connectionStatusListenable: _connectionStatusNotifier,
             locationListenable: _locationNotifier,
@@ -102,35 +97,18 @@ class _TerminalAreaState extends State<TerminalArea> with StateTools {
             paymentStatusListenable: _paymentStatusNotifier,
             connectedReaderListenable: _connectedReaderNotifier,
           ),
-          MoreScreen(
-            connectionStatusListenable: _connectionStatusNotifier,
-          ),
+          MoreScreen(connectionStatusListenable: _connectionStatusNotifier),
         ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _destinationIndex,
         onDestinationSelected: _changeDestination,
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.location_pin),
-            label: 'Locations',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.barcode_reader),
-            label: 'Readers',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Configuration',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.payment),
-            label: 'Payments',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.more_horiz),
-            label: 'More',
-          ),
+          NavigationDestination(icon: Icon(Icons.location_pin), label: 'Locations'),
+          NavigationDestination(icon: Icon(Icons.barcode_reader), label: 'Readers'),
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Configuration'),
+          NavigationDestination(icon: Icon(Icons.payment), label: 'Payments'),
+          NavigationDestination(icon: Icon(Icons.more_horiz), label: 'More'),
         ],
       ),
     );

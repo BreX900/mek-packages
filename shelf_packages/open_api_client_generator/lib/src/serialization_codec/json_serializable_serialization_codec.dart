@@ -4,6 +4,7 @@ import 'package:open_api_client_generator/src/code_utils/reference_utils.dart';
 import 'package:open_api_client_generator/src/collection_codecs/dart_collection_codec.dart';
 import 'package:open_api_client_generator/src/plugins/plugin.dart';
 import 'package:open_api_client_generator/src/serialization_codec/serialization_codec.dart';
+import 'package:open_api_client_generator/src/type_codec.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:recase/recase.dart';
 
@@ -32,6 +33,7 @@ enum FieldRename {
 }
 
 class JsonSerializableSerializationCodec extends SerializationCodec with Plugin {
+  final List<JsonSerializableTypeCodec> typeCodecs;
   final bool implicitCreate;
   final Type? classAnnotation;
   final FieldRename? classFieldRename;
@@ -40,6 +42,7 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
 
   const JsonSerializableSerializationCodec({
     super.collectionCodec = const DartCollectionCodec(),
+    this.typeCodecs = const [],
     this.implicitCreate = true,
     this.classAnnotation,
     this.classFieldRename,
@@ -49,8 +52,13 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
 
   @override
   String encodeDeserialization(Reference type, String varAccess) {
+    for (final typeCodec in typeCodecs) {
+      if (!typeCodec.acceptReference(type)) continue;
+      return typeCodec.encodeDeserialization(varAccess);
+    }
+
     if (type.isJsonPrimitive) return '$varAccess as ${type.symbol!}';
-    if (type.isList) {
+    if (type.isList || type.isSet) {
       final eDeserialized = encodeDeserialization(type.types.single, 'e');
       return '($varAccess as List<Object?>)'
           '.map((e) => $eDeserialized)'
@@ -70,8 +78,13 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
 
   @override
   String encodeSerialization(Reference type, String varAccess) {
+    for (final typeCodec in typeCodecs) {
+      if (!typeCodec.acceptReference(type)) continue;
+      return typeCodec.encodeSerialization(varAccess);
+    }
+
     if (type.isJsonPrimitive) return varAccess;
-    if (type.isList) {
+    if (type.isList || type.isSet) {
       return '$varAccess'
           '.map((e) => ${encodeSerialization(type.types.single, 'e')})'
           '${collectionCodec.encodeToCore(type)}';
@@ -178,7 +191,9 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
   @override
   Library onLibrary(OpenApi openApi, Library spec) {
     return spec.rebuild(
-      (b) => b..directives.add(Directive.import('package:json_annotation/json_annotation.dart')),
+      (b) => b
+        ..directives.add(Directive.import('package:json_annotation/json_annotation.dart'))
+        ..directives.addAll(typeCodecs.map((e) => e.reference.url).nonNulls.map(Directive.import)),
     );
   }
 

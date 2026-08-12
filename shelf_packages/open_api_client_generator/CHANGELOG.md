@@ -1,4 +1,15 @@
 
+## 1.3.0
+- fix: auto create output folder
+- feat: added support to customize `part` path to generate files in another directory
+- feat: allow Dart `Set` type
+- feat: added support to `Decimal`, `Rational` and `Fixed` types using `TypeCodec` class
+- feat: added support enums for query parameters
+- feat: generate api class for dio client with optionals `fetch` dio method parameters
+
+## 1.2.1
+- fix: fixed issue with `part-folder` cli arg
+
 ## 1.2.0
 - feat: added support to specify 'part' folder to handle the redirect generation code via build_runner
 - build: allow `open_api_specification` to `>=3.0.0 <3.1.0`

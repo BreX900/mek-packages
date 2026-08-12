@@ -69,9 +69,7 @@ class ApiClientResponse {
 class ApiClientException implements Exception {
   final ApiClientResponse response;
 
-  const ApiClientException({
-    required this.response,
-  });
+  const ApiClientException({required this.response});
 
   factory ApiClientException.of(ApiClientResponse response) =>
       ApiClientException(response: response);

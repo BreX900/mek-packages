@@ -17,6 +17,7 @@ const routerChecker = TypeChecker.typeNamed(Router, inPackage: 'shelf_router');
 const routerMixinChecker = TypeChecker.typeNamed(RouterMixin, inPackage: 'shelf_routing');
 
 const bytesChecker = TypeChecker.typeNamed(Uint8List, inSdk: true);
+const byteStreamChecker = TypeChecker.typeNamed(Stream<List<int>>, inSdk: true);
 
 bool isHandlerFunctionAssignableFromType(DartType type) {
   if (type is! FunctionType) return false;
@@ -55,11 +56,4 @@ extension JsonType on DartType {
 
 extension InterfaceTypeExtensions on InterfaceType {
   DartType get typeArgument => typeArguments.single;
-}
-
-extension RequireNameElementExtension on Element {
-  String get requireName {
-    if (name case final name?) return name;
-    throw InvalidGenerationSourceError('The parameter name is required!', element: this);
-  }
 }

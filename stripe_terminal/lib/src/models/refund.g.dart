@@ -40,18 +40,19 @@ mixin _$Refund {
   }
 
   @override
-  String toString() => (ClassToString('Refund')
-        ..add('id', _self.id)
-        ..add('amount', _self.amount)
-        ..add('chargeId', _self.chargeId)
-        ..add('created', _self.created)
-        ..add('currency', _self.currency)
-        ..add('metadata', _self.metadata)
-        ..add('reason', _self.reason)
-        ..add('status', _self.status)
-        ..add('paymentMethodDetails', _self.paymentMethodDetails)
-        ..add('failureReason', _self.failureReason))
-      .toString();
+  String toString() =>
+      (ClassToString('Refund')
+            ..add('id', _self.id)
+            ..add('amount', _self.amount)
+            ..add('chargeId', _self.chargeId)
+            ..add('created', _self.created)
+            ..add('currency', _self.currency)
+            ..add('metadata', _self.metadata)
+            ..add('reason', _self.reason)
+            ..add('status', _self.status)
+            ..add('paymentMethodDetails', _self.paymentMethodDetails)
+            ..add('failureReason', _self.failureReason))
+          .toString();
 }
 
 mixin _$PaymentMethodDetails {
@@ -72,8 +73,9 @@ mixin _$PaymentMethodDetails {
   }
 
   @override
-  String toString() => (ClassToString('PaymentMethodDetails')
-        ..add('cardPresent', _self.cardPresent)
-        ..add('interacPresent', _self.interacPresent))
-      .toString();
+  String toString() =>
+      (ClassToString('PaymentMethodDetails')
+            ..add('cardPresent', _self.cardPresent)
+            ..add('interacPresent', _self.interacPresent))
+          .toString();
 }

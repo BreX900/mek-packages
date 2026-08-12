@@ -96,9 +96,15 @@ abstract class MobileReaderDelegate extends ReaderDelegateAbstract
   void onReportAvailableUpdate(ReaderSoftwareUpdate update);
 }
 
+/// The [AppsOnDevicesReaderDelegate] class is a listener that should exist for the entire duration of
+/// your connection to a reader. It will receive events related to the status of the reader.
+abstract class AppsOnDevicesReaderDelegate extends ReaderDelegateAbstract
+    with ReaderDelegate, ReaderDisconnectDelegate {}
+
 /// The [HandoffReaderDelegate] class is a listener that should exist for the entire duration of
 /// your connection to a reader. It will receive events related to the status of the reader.
-abstract class HandoffReaderDelegate extends ReaderDelegateAbstract
+@Deprecated('Use AppsOnDevicesReaderDelegate')
+abstract class HandoffReaderDelegate extends AppsOnDevicesReaderDelegate
     with ReaderDelegate, ReaderDisconnectDelegate {}
 
 /// The [InternetReaderDelegate] class is a listener that should exist for the entire duration of

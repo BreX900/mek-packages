@@ -2,7 +2,6 @@ import 'package:code_builder/code_builder.dart';
 import 'package:open_api_client_generator/src/api_specs.dart';
 import 'package:open_api_client_generator/src/code_utils/document.dart';
 import 'package:open_api_client_generator/src/code_utils/reference_utils.dart';
-import 'package:open_api_client_generator/src/code_utils/schema_to_reference.dart';
 import 'package:open_api_client_generator/src/options/context.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 
@@ -16,9 +15,12 @@ class BuildSchemaClass with ContextMixin {
 
   Iterable<ApiSpec> get apiSpecs => _cache.values.map((e) => e.spec);
 
-  Reference call(String name, SchemaOpenApi schema) {
-    // ignore: parameter_assignments
-    name = schema.name ?? name;
+  Reference call(String name, SchemaOrRef schemaOrRef) {
+    final schema = schemaOrRef.resolve(components);
+    name = switch (schemaOrRef) {
+      SchemaOpenApi() => schema.name ?? schema.title ?? name,
+      SchemaRef() => schemaOrRef.ref.split('/').last,
+    };
 
     final cacheEntry = _cache[name];
     if (cacheEntry != null) return cacheEntry.type;
@@ -28,24 +30,17 @@ class BuildSchemaClass with ContextMixin {
     final newCacheEntry = builtSchema.toCache();
     if (newCacheEntry != null) _cache[name] = newCacheEntry;
 
-    builtSchema.children.forEach(call);
-
     return builtSchema.type;
   }
 
   _BuiltSchema _build(String name, SchemaOpenApi schema) {
+    for (final codec in context.typeCodecs) {
+      if (codec.acceptSchema(schema)) return _BuiltSchema(type: codec.reference);
+    }
+
     final docs = Docs.format(
       Docs.documentClass(description: schema.description, example: schema.example),
     );
-
-    final items = schema.items;
-    if (items != null) {
-      return _BuiltSchema(
-        // docs: docs.followedBy(built.docs ?? const []),
-        type: ref(schema),
-        children: {name: items.resolve(components)},
-      );
-    }
 
     if (schema.isEnum) {
       final values = schema.enum$!;
@@ -64,46 +59,93 @@ class BuildSchemaClass with ContextMixin {
       );
     }
 
-    if (schema.isClass) {
-      final properties = schema.resolveAllProperties(components);
-      final allOf = schema.resolveAllOf(components) ?? const [];
-      final implements = allOf.where((e) => e.name != null).toList();
-      final implementsNames = implements.map((e) => codecs.encodeType(e.name!)).toList();
+    switch (schema.format) {
+      case FormatOpenApi.int32:
+      case FormatOpenApi.int64:
+        return const _BuiltSchema(type: References.int);
+      case FormatOpenApi.float:
+      case FormatOpenApi.double:
+        return const _BuiltSchema(type: References.double);
+      case FormatOpenApi.string:
+        return const _BuiltSchema(type: References.string);
+      case FormatOpenApi.date:
+      case FormatOpenApi.dateTime:
+        return const _BuiltSchema(type: References.dateTime);
+      case FormatOpenApi.uuid:
+      case FormatOpenApi.email:
+      case FormatOpenApi.decimal:
+        return const _BuiltSchema(type: References.string);
 
-      final className = codecs.encodeType(name);
-
-      return _BuiltSchema(
-        type: Reference(className).toNullable(schema.nullable),
-        spec: ApiClass(
-          schema: schema,
-          docs: docs,
-          name: className,
-          implements: implementsNames,
-          fields: properties.entries.map((entry) {
-            final MapEntry(key: name, value: prop) = entry;
-
-            return ApiField(
-              key: name,
-              docs: const [], // TODO:  prop.docs ??
-              isRequired: schema.isRequired(name),
-              type: ref(prop).toNullable(schema.canNull(name, properties[name]!)),
-              name: codecs.encodeName(name),
-            );
-          }).toList(),
-        ),
-        children: {...Map.fromEntries(implements.map((e) => MapEntry(e.name!, e))), ...properties},
-      );
-    }
-    final reference = ref(schema);
-    if (!reference.isDartCore) {
-      // ignore: avoid_print
-      print('Not resolved: $name($reference) $schema');
+      case FormatOpenApi.url:
+      case FormatOpenApi.uri:
+        return const _BuiltSchema(type: References.uri);
+      case FormatOpenApi.binary:
+      case FormatOpenApi.base64:
+        // TODO: Handle this case.
+        break;
+      case null:
+        break;
     }
 
-    return _BuiltSchema(
-      // docs: docs,
-      type: reference,
-    );
+    switch (schema.type) {
+      case TypeOpenApi.boolean:
+        return const _BuiltSchema(type: References.boolean);
+      case TypeOpenApi.integer:
+        return const _BuiltSchema(type: References.int);
+      case TypeOpenApi.number:
+        return const _BuiltSchema(type: References.num);
+      case TypeOpenApi.string:
+        return const _BuiltSchema(type: References.string);
+      case TypeOpenApi.array:
+        final itemsReference = call(name, schema.items!);
+        return _BuiltSchema(
+          type: (schema.uniqueItems ?? false)
+              ? References.set(itemsReference)
+              : References.list(itemsReference),
+        );
+      case TypeOpenApi.object:
+        if (schema.isClass) {
+          final allOf = (schema.allOf ?? []).map((schema) => call('Unknown', schema));
+
+          final className = codecs.encodeType(name);
+
+          return _BuiltSchema(
+            type: Reference(className).toNullable(schema.nullable),
+            spec: ApiClass(
+              schema: schema,
+              docs: docs,
+              name: className,
+              implements: allOf.map((reference) => reference.symbol!).toList(),
+              fields: (schema.properties ?? {}).entries.map((entry) {
+                final MapEntry(key: name, value: propertySchema) = entry;
+                final resolvedPropertySchema = propertySchema.resolve(components);
+
+                return ApiField(
+                  key: name,
+                  docs: const [], // TODO:  prop.docs ??
+                  isRequired: schema.isRequired(name),
+                  type: call(
+                    name,
+                    propertySchema,
+                  ).toNullable(schema.canNull(name, resolvedPropertySchema)),
+                  name: codecs.encodeName(name),
+                );
+              }).toList(),
+            ),
+          );
+        }
+
+        return _BuiltSchema(
+          type: References.map(
+            key: References.string,
+            value: schema.additionalProperties != null
+                ? call(name, schema.additionalProperties!)
+                : null,
+          ),
+        );
+      case null:
+        return _BuiltSchema(type: References.jsonValue);
+    }
   }
 }
 
@@ -117,9 +159,8 @@ class _CacheEntry {
 class _BuiltSchema {
   final Reference type;
   final ApiSpec? spec;
-  final Map<String, SchemaOpenApi> children;
 
-  const _BuiltSchema({required this.type, this.spec, this.children = const {}});
+  const _BuiltSchema({required this.type, this.spec});
 
   _CacheEntry? toCache() {
     final spec = this.spec;

@@ -12,17 +12,20 @@ enum TerminalExceptionCode {
 
   /// See [message] field
   readerNotRecovered(
-      'Call this method with the [Reader] returned from the [StripeTerminal.discoverReaders] method.'),
+    'Call this method with the [Reader] returned from the [StripeTerminal.discoverReaders] method.',
+  ),
 
   /// See [message] field
   paymentIntentNotRecovered(
-      'Call this method with the [PaymentIntent] returned from the [StripeTerminal.createPaymentIntent] '
-      'or [StripeTerminal.retrievePaymentIntent] methods.'),
+    'Call this method with the [PaymentIntent] returned from the [StripeTerminal.createPaymentIntent] '
+    'or [StripeTerminal.retrievePaymentIntent] methods.',
+  ),
 
   /// See [message] field
   setupIntentNotRecovered(
-      'Call this method with the [SetupIntent] returned from the [StripeTerminal.createSetupIntent] '
-      'or [StripeTerminal.retrieveSetupIntent] methods.'),
+    'Call this method with the [SetupIntent] returned from the [StripeTerminal.createSetupIntent] '
+    'or [StripeTerminal.retrieveSetupIntent] methods.',
+  ),
 
   // Android/IOS sdk
 
@@ -49,14 +52,13 @@ enum TerminalExceptionCode {
   ///   The user needs to go to Settings > Your App > and enable Bluetooth
   bluetoothPermissionDenied,
 
-  /// [StripeTerminal.confirmPaymentIntent] was called with an unknown or invalid PaymentIntent.
-  /// You must confirm a payment after collecting a payment method. Successfully confirmed payments
-  /// may not be confirmed again.
+  /// [StripeTerminal.processPaymentIntent] was called with an unknown or invalid PaymentIntent.
+  /// You must process a payment after retrieving a PaymentIntent. Successfully processed payments
+  /// may not be processed again.
   confirmInvalidPaymentIntent,
 
-  /// Only Android. [Terminal.confirmPaymentIntent] was called with an unknown or invalid
-  /// [PaymentIntent]. You must confirm a payment after collecting a payment method. Successfully
-  /// confirmed payments may not be confirmed again.
+  /// Only Android. [Terminal.processSetupIntent] was called with an unknown or invalid
+  /// [SetupIntent]. Successfully processed setup intents may not be processed again.
   confirmInvalidSetupIntent,
 
   /// A [PaymentIntent] or [SetupIntent] was referenced using an invalid client secret.
@@ -104,8 +106,8 @@ enum TerminalExceptionCode {
   ///   inputs operation.
   invalidParameter,
 
-  /// Error reported when calling collectPaymentMethod with request dynamic currency conversion and
-  /// a CollectConfiguration with updatePaymentIntent set to false.
+  /// Error reported when calling processPaymentIntent with request dynamic currency conversion and
+  /// updatePaymentIntent set to false.
   /// IOS(SCPErrorRequestDynamicCurrencyConversionRequiresUpdatePaymentIntent)
   requestDynamicCurrencyConversionRequiresUpdatePaymentIntent,
 
@@ -194,7 +196,7 @@ enum TerminalExceptionCode {
   customerConsentRequired,
 
   /// A card can only be used for one transaction, and must be removed after being read. Otherwise,
-  /// subsequent collectPaymentMethod attempts will fail with this error.
+  /// subsequent processPaymentIntent attempts will fail with this error.
   /// Your terminal delegate will receive [ReaderDelegate.onReportReaderEvent] with
   /// [ReaderEventCardRemoved] when the card is removed.
   /// The Chipper 2x and WisePad 3 will beep until the card is removed.
@@ -327,7 +329,7 @@ enum TerminalExceptionCode {
   /// permission to use NFC.
   nfcDisabled,
 
-  /// [StripeTerminal.confirmPaymentIntent] was called from a reader with an unsupported reader version.
+  /// [StripeTerminal.processPaymentIntent] was called from a reader with an unsupported reader version.
   /// You will need to update your reader to the most recent version in order to accept payments.
   /// We suggest you prompt your user to disconnect and reconnect their reader in order to update the reader.
   unsupportedReaderVersion,
@@ -388,7 +390,7 @@ enum TerminalExceptionCode {
   /// to disconnect manually by turning the reader off.
   ///
   /// NOTE: This error will only occur in one of the following calls: [StripeTerminal.createPaymentIntent],
-  /// [StripeTerminal.retrievePaymentIntent], [StripeTerminal.confirmPaymentIntent], and [StripeTerminal.cancelPaymentIntent].
+  /// [StripeTerminal.retrievePaymentIntent], [StripeTerminal.processPaymentIntent], and [StripeTerminal.cancelPaymentIntent].
   sessionExpired,
 
   /// Android:
@@ -444,22 +446,22 @@ enum TerminalExceptionCode {
   /// it correctly (e.g., a closed bank account or a problem with the card)
   refundFailed,
 
-  /// Error reported when collectPaymentMethod or confirmPaymentIntent was called while offline
+  /// Error reported when processPaymentIntent was called while offline
   /// and the card was read using the swipe method.
   /// Payment method data collected using the Swipe card read method cannot be processed online.
-  /// Retry the payment by calling collectPaymentMethod() again.
+  /// Retry the payment by calling processPaymentIntent() again.
   cardSwipeNotAvailable,
 
-  /// Error reported when collectPaymentMethod or confirmPaymentIntent was called while offline
+  /// Error reported when processPaymentIntent was called while offline
   /// and the presented card was an Interac card.
-  /// Retry the payment by calling collectPaymentMethod() again.
+  /// Retry the payment by calling processPaymentIntent() again.
   interacNotSupportedOffline,
 
-  /// Only Android. Error reported when confirmPaymentIntent was called while offline and the
-  /// presented card was authenticated with an online PIN. Retry the payment by calling collectPaymentMethod() again.
+  /// Only Android. Error reported when processPaymentIntent was called while offline and the
+  /// presented card was authenticated with an online PIN. Retry the payment by calling processPaymentIntent() again.
   onlinePinNotSupportedOffline,
 
-  /// Only Android. [Terminal.confirmPaymentIntent] was called with an unknown or invalid
+  /// Only Android. [Terminal.processPaymentIntent] was called with an unknown or invalid
   /// [PaymentIntent]. You must confirm a payment after collecting a payment method. Successfully
   /// confirmed payments may not be confirmed again.
   mobileWalletNotSupportedOnSetupIntents,
@@ -468,11 +470,11 @@ enum TerminalExceptionCode {
   offlineAndCardExpired,
 
   /// Confirming a payment while offline and the card’s verification failed.
-  /// Retry the payment by calling collectPaymentMethod() again and try a different card if the error persists.
+  /// Retry the payment by calling processPaymentIntent() again and try a different card if the error persists.
   offlineTransactionDeclined,
 
-  /// Error reported when collectPaymentMethod was called while online and confirmPaymentIntent was called while offline.
-  /// Retry the payment by calling collectPaymentMethod() again.
+  /// Error reported when processPaymentIntent was called while online and completed while offline.
+  /// Retry the payment by calling processPaymentIntent() again.
   offlineCollectAndConfirmMismatch,
 
   /// Error reported when a test payment attempted to forward while operating in livemode.
@@ -490,12 +492,12 @@ enum TerminalExceptionCode {
   /// 3. Your application attempted to process the PaymentIntent, but it was already forwarded.
   offlinePaymentIntentNotFound,
 
-  /// Only IOS. Error reported when calling collectPaymentMethod with an offline PaymentIntent
-  /// and a CollectConfiguration with updatePaymentIntent set to true.
+  /// Only IOS. Error reported when calling processPaymentIntent with an offline PaymentIntent
+  /// and processPaymentIntent with updatePaymentIntent set to true.
   updatePaymentIntentUnavailableWhileOffline,
 
-  /// Only IOS. Error reported when calling collectPaymentMethod with offline mode enabled and
-  /// a CollectConfiguration with updatePaymentIntent set to true.
+  /// Only IOS. Error reported when calling processPaymentIntent with offline mode enabled and
+  /// processPaymentIntent with updatePaymentIntent set to true.
   updatePaymentIntentUnavailableWhileOfflineModeEnabled,
 
   /// The reader failed to read the data from the presented payment method. If you encounter
@@ -577,7 +579,7 @@ enum TerminalExceptionCode {
   /// Only Ios. Surcharging is not currently available.
   surchargingNotAvailable,
 
-  /// Only Ios. `surchargeNotice` was specified with a CollectConfiguration with updatePaymentIntent set to false.
+  /// Only Ios. `surchargeNotice` was specified with a CollectPaymentIntentConfiguration with updatePaymentIntent set to false.
   surchargeNoticeRequiresUpdatePaymentIntent,
 
   /// Only Ios. Surcharging was attempted while also using dynamic currency conversion.
@@ -585,7 +587,21 @@ enum TerminalExceptionCode {
 
   /// The SDK is running on a device with a non-ARM processor (usually x86).
   tapToPayUnsupportedProcessor,
-  ;
+
+  /// Only Android. Tap to Pay PIN entry is unavailable on this device.
+  tapToPayPinUnavailable,
+
+  /// Only Android. No barcode scanner is available on this device.
+  barcodeScannerUnavailable,
+
+  /// Only Android. The requested barcode scanner could not be found.
+  barcodeRequestedScannerNotFound,
+
+  /// Only Android. Barcode scanning is not supported on this device.
+  barcodeScanningUnsupportedDevice,
+
+  /// Only Android. Simulated offline mode is not available in live mode.
+  simulatedOfflineModeNotAvailableInLivemode;
 
   final String? message;
 
@@ -610,10 +626,10 @@ class TerminalException implements Exception {
 
   @override
   String toString() => [
-        'TerminalException: ${code.name}',
-        message,
-        if (paymentIntent != null) paymentIntent,
-        if (apiError != null) apiError,
-        if (stackTrace != null) stackTrace,
-      ].join('\n');
+    'TerminalException: ${code.name}',
+    message,
+    if (paymentIntent != null) paymentIntent,
+    if (apiError != null) apiError,
+    if (stackTrace != null) stackTrace,
+  ].join('\n');
 }

@@ -1,6 +1,7 @@
+// ignore_for_file: unintended_html_in_doc_comment
+
 import 'package:json_annotation/json_annotation.dart';
 import 'package:open_api_specification/src/specs/info_specs.dart';
-import 'package:open_api_specification/src/specs/ref_or_specs.dart';
 import 'package:open_api_specification/src/specs/schema.dart';
 import 'package:open_api_specification/src/specs/security_open_api.dart';
 import 'package:open_api_specification/src/utils/specs_serialization.dart';
@@ -224,7 +225,7 @@ class ParameterOpenApi with PrettyJsonToString {
   final String? style;
   final bool? explode;
 
-  final RefOr<SchemaOpenApi>? schema; // Property
+  final SchemaOrRef? schema; // Property
 
   // final Map<String, MediaOpenApi> content;
 

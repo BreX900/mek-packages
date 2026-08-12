@@ -36,10 +36,7 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
       TapToPayUxConfiguration(
         tapZone: TapToPayUxConfigurationTapZone(
           indicator: _indicator,
-          position: TapToPayUxConfigurationTapZonePosition(
-            xBias: _xBias,
-            yBias: _yBias,
-          ),
+          position: TapToPayUxConfigurationTapZonePosition(xBias: _xBias, yBias: _yBias),
         ),
         colors: TapToPayUxConfigurationColorScheme(
           primary: _primaryColor,
@@ -50,9 +47,7 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
       ),
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Configured!'),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configured!')));
   }
 
   Widget _buildConfigForm() {
@@ -60,11 +55,12 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         DropdownButtonFormField<TapToPayUxConfigurationTapZoneIndicator>(
-          value: _indicator,
+          initialValue: _indicator,
           decoration: const InputDecoration(labelText: 'Tap Zone Indicator'),
-          items: TapToPayUxConfigurationTapZoneIndicator.values
-              .map((e) => DropdownMenuItem(value: e, child: Text(e.toString().split('.').last)))
-              .toList(),
+          items:
+              TapToPayUxConfigurationTapZoneIndicator.values
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e.toString().split('.').last)))
+                  .toList(),
           onChanged: (v) => setState(() => _indicator = v!),
         ),
         if (_indicator == TapToPayUxConfigurationTapZoneIndicator.front ||
@@ -103,18 +99,16 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
           onColorChanged: (color) => setState(() => _errorColor = color),
         ),
         DropdownButtonFormField<TapToPayUxConfigurationDarkMode>(
-          value: _darkMode,
+          initialValue: _darkMode,
           decoration: const InputDecoration(labelText: 'Dark Mode'),
-          items: TapToPayUxConfigurationDarkMode.values
-              .map((e) => DropdownMenuItem(value: e, child: Text(e.toString().split('.').last)))
-              .toList(),
+          items:
+              TapToPayUxConfigurationDarkMode.values
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e.toString().split('.').last)))
+                  .toList(),
           onChanged: (v) => setState(() => _darkMode = v!),
         ),
         const SizedBox(height: 16),
-        FilledButton.tonal(
-          onPressed: () => mutate(_setConfig),
-          child: const Text('Set Config'),
-        ),
+        FilledButton.tonal(onPressed: () => mutate(_setConfig), child: const Text('Set Config')),
       ],
     );
   }
@@ -127,19 +121,18 @@ class _PaymentsScreenState extends ConsumerState<ConfigurationScreen> with State
         title: const Text('Configuration'),
         bottom: isMutating ? const LinearProgressIndicatorBar() : null,
       ),
-      body: connectedReader == null
-          ? const Center(child: Text('No reader connected.'))
-          : connectedReader.deviceType == DeviceType.tapToPay
+      body:
+          connectedReader == null
+              ? const Center(child: Text('No reader connected.'))
+              : connectedReader.deviceType == DeviceType.tapToPay
               ? SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildConfigForm(),
-                  ),
-                )
+                child: Padding(padding: const EdgeInsets.all(16.0), child: _buildConfigForm()),
+              )
               : Center(
-                  child: Text(
-                      'Connected reader is not a Tap to Pay reader. Type: ${connectedReader.deviceType}'),
+                child: Text(
+                  'Connected reader is not a Tap to Pay reader. Type: ${connectedReader.deviceType}',
                 ),
+              ),
     );
   }
 }
@@ -149,11 +142,7 @@ class _ColorPickerField extends StatefulWidget {
   final int color;
   final ValueChanged<int> onColorChanged;
 
-  const _ColorPickerField({
-    required this.label,
-    required this.color,
-    required this.onColorChanged,
-  });
+  const _ColorPickerField({required this.label, required this.color, required this.onColorChanged});
 
   @override
   State<_ColorPickerField> createState() => _ColorPickerFieldState();
@@ -202,23 +191,25 @@ class _ColorPickerFieldState extends State<_ColorPickerField> {
             var pickerColor = Color(widget.color);
             final pickedColor = await showDialog<Color>(
               context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Pick ${widget.label}'),
-                content: SingleChildScrollView(
-                  child: ColorPicker(
-                      onColorChanged: (c) {
-                        pickerColor = c;
-                      },
-                      hexInputBar: true,
-                      pickerColor: pickerColor),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(pickerColor),
-                    child: const Text('OK'),
+              builder:
+                  (context) => AlertDialog(
+                    title: Text('Pick ${widget.label}'),
+                    content: SingleChildScrollView(
+                      child: ColorPicker(
+                        onColorChanged: (c) {
+                          pickerColor = c;
+                        },
+                        hexInputBar: true,
+                        pickerColor: pickerColor,
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(pickerColor),
+                        child: const Text('OK'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
             );
             if (pickedColor != null) {
               widget.onColorChanged(pickedColor.toARGB32());

@@ -11,6 +11,7 @@ class FastImmutableCollectionCodec extends CollectionCodecBase {
   @override
   String encodeToPackage(Reference type) {
     if (type.isList) return '.toIList()';
+    if (type.isSet) return '.toISet()';
     if (type.isMap) return '.toIMap()';
     return '';
   }
@@ -18,7 +19,7 @@ class FastImmutableCollectionCodec extends CollectionCodecBase {
   @override
   String encodeToCore(Reference type) {
     final questionOrEmpty = type.isNullable ? '?' : '';
-    if (type.isList) return '$questionOrEmpty.toList()';
+    if (type.isList || type.isSet) return '$questionOrEmpty.toList()';
     if (type.isMap) return '$questionOrEmpty.unlockView';
     return '';
   }
@@ -26,6 +27,7 @@ class FastImmutableCollectionCodec extends CollectionCodecBase {
   @override
   String onMapTypeSymbol(Reference reference) {
     if (reference.isList) return 'IList';
+    if (reference.isSet) return 'ISet';
     if (reference.isMap) return 'IMap';
     return reference.symbol!;
   }

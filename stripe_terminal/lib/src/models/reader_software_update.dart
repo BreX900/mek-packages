@@ -31,16 +31,11 @@ class ReaderSoftwareUpdate with _$ReaderSoftwareUpdate {
   bool get hasKeyUpdate => components.contains(UpdateComponent.keys);
 }
 
-enum UpdateComponent {
-  incremental,
-  firmware,
-  config,
-  keys;
-}
+enum UpdateComponent { incremental, firmware, config, keys }
 
 enum UpdateTimeEstimate {
   lessThanOneMinute,
   oneToTwoMinutes,
   twoToFiveMinutes,
-  fiveToFifteenMinutes;
+  fiveToFifteenMinutes,
 }

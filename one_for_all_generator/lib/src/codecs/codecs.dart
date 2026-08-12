@@ -11,9 +11,9 @@ import 'package:source_gen/source_gen.dart';
 extension IsNullableDartTypeExtension on DartType {
   bool get isNullable => nullabilitySuffix != NullabilitySuffix.none;
 
-  String get displayName => getDisplayString(withNullability: false);
+  String get displayName => getDisplayString();
   // ignore: avoid_redundant_argument_values
-  String get displayNameNullable => getDisplayString(withNullability: true);
+  String get displayNameNullable => '${getDisplayString()}?';
 }
 
 abstract class ApiCodec<T> {
@@ -38,11 +38,7 @@ class ApiPlatformCodec<T> {
   final ApiCodec<T> kotlin;
   final ApiCodec<T> swift;
 
-  const ApiPlatformCodec({
-    required this.dart,
-    required this.kotlin,
-    required this.swift,
-  });
+  const ApiPlatformCodec({required this.dart, required this.kotlin, required this.swift});
 
   ApiCodec<T> read(LanguageApi platform) {
     return switch (platform) {
@@ -100,7 +96,7 @@ abstract class HostApiCodecs extends ApiCodecs {
     if (codec != null) return codec.encodeType(this, type);
 
     // ignore: avoid_redundant_argument_values
-    return type.getDisplayString(withNullability: true).replaceFirstMapped(RegExp(r'\w+'), (match) {
+    return '${type.getDisplayString()}?'.replaceFirstMapped(RegExp(r'\w+'), (match) {
       return '${match.group(0)}${pluginOptions.hostClassSuffix}';
     });
   }

@@ -81,9 +81,6 @@ mixin StateTools<T extends StatefulWidget> on State<T> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        behavior: SnackBarBehavior.floating,
-        content: Text(message),
-      ));
+      ..showSnackBar(SnackBar(behavior: SnackBarBehavior.floating, content: Text(message)));
   }
 }

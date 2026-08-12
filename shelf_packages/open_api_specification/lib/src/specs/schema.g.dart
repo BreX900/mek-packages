@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic
+// ignore_for_file: cast_nullable_to_non_nullable, avoid_annotating_with_dynamic, unnecessary_null_checks
 
 part of 'schema.dart';
 
@@ -68,28 +68,27 @@ Map<String, dynamic> _$GroupMediaOpenApiToJson(GroupMediaOpenApi instance) =>
       '*/*': ?instance.any?.toJson(),
     };
 
-MediaOpenApi _$MediaOpenApiFromJson(Map json) =>
-    $checkedCreate('MediaOpenApi', json, ($checkedConvert) {
-      final val = MediaOpenApi(
-        example: $checkedConvert('example', (v) => v as String?),
-        examples: $checkedConvert(
-          'examples',
-          (v) =>
-              (v as Map?)?.map((k, e) => MapEntry(k as String, e)) ?? const {},
-        ),
-        schema: $checkedConvert(
-          'schema',
-          (v) => const RefOrSchemaJsonConverter().fromJson(v as Map),
-        ),
-      );
-      return val;
-    });
+MediaOpenApi _$MediaOpenApiFromJson(Map json) => $checkedCreate(
+  'MediaOpenApi',
+  json,
+  ($checkedConvert) {
+    final val = MediaOpenApi(
+      example: $checkedConvert('example', (v) => v as String?),
+      examples: $checkedConvert(
+        'examples',
+        (v) => (v as Map?)?.map((k, e) => MapEntry(k as String, e)) ?? const {},
+      ),
+      schema: $checkedConvert('schema', (v) => SchemaOrRef.fromJson(v as Map)),
+    );
+    return val;
+  },
+);
 
 Map<String, dynamic> _$MediaOpenApiToJson(MediaOpenApi instance) =>
     <String, dynamic>{
       'example': ?instance.example,
       'examples': ?$nullIfEmpty(instance.examples),
-      'schema': const RefOrSchemaJsonConverter().toJson(instance.schema),
+      'schema': instance.schema.toJson(),
     };
 
 SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
@@ -120,34 +119,27 @@ SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
       ),
       items: $checkedConvert(
         'items',
-        (v) =>
-            _$JsonConverterFromJson<
-              Map<dynamic, dynamic>,
-              RefOr<SchemaOpenApi>
-            >(v, const RefOrSchemaJsonConverter().fromJson),
+        (v) => v == null ? null : SchemaOrRef.fromJson(v as Map),
       ),
       properties: $checkedConvert(
         'properties',
         (v) => (v as Map?)?.map(
-          (k, e) => MapEntry(
-            k as String,
-            const RefOrSchemaJsonConverter().fromJson(e as Map),
-          ),
+          (k, e) => MapEntry(k as String, SchemaOrRef.fromJson(e as Map)),
         ),
       ),
       additionalProperties: $checkedConvert(
         'additionalProperties',
-        (v) =>
-            _$JsonConverterFromJson<
-              Map<dynamic, dynamic>,
-              RefOr<SchemaOpenApi>
-            >(v, const RefOrSchemaJsonConverter().fromJson),
+        (v) => v == null ? null : SchemaOrRef.fromJson(v as Map),
         readValue: SchemaOpenApi._readAdditionalProperties,
+      ),
+      propertyNames: $checkedConvert(
+        'propertyNames',
+        (v) => v == null ? null : SchemaOrRef.fromJson(v as Map),
       ),
       allOf: $checkedConvert(
         'allOf',
         (v) => (v as List<dynamic>?)
-            ?.map((e) => const RefOrSchemaJsonConverter().fromJson(e as Map))
+            ?.map((e) => SchemaOrRef.fromJson(e as Map))
             .toList(),
       ),
       required: $checkedConvert(
@@ -178,26 +170,16 @@ Map<String, dynamic> _$SchemaOpenApiToJson(
   'type': ?_$TypeOpenApiEnumMap[instance.type],
   'format': ?_$FormatOpenApiEnumMap[instance.format],
   'enum': ?instance.enum$,
-  'items': ?_$JsonConverterToJson<Map<dynamic, dynamic>, RefOr<SchemaOpenApi>>(
-    instance.items,
-    const RefOrSchemaJsonConverter().toJson,
-  ),
-  'properties': ?instance.properties?.map(
-    (k, e) => MapEntry(k, const RefOrSchemaJsonConverter().toJson(e)),
-  ),
-  'additionalProperties':
-      ?_$JsonConverterToJson<Map<dynamic, dynamic>, RefOr<SchemaOpenApi>>(
-        instance.additionalProperties,
-        const RefOrSchemaJsonConverter().toJson,
-      ),
-  'allOf': ?instance.allOf
-      ?.map(const RefOrSchemaJsonConverter().toJson)
-      .toList(),
+  'items': ?instance.items?.toJson(),
+  'properties': ?instance.properties?.map((k, e) => MapEntry(k, e.toJson())),
+  'propertyNames': ?instance.propertyNames?.toJson(),
+  'additionalProperties': ?instance.additionalProperties?.toJson(),
+  'allOf': ?instance.allOf?.map((e) => e.toJson()).toList(),
   'required': ?instance.required,
   'nullable': ?$nullIfFalse(instance.nullable),
   'default': ?instance.default$,
   r'$original': ?instance.$original,
-  'uniqueItems': ?instance.uniqueItems,
+  'uniqueItems': ?$nullIfFalse(instance.uniqueItems),
 };
 
 const _$TypeOpenApiEnumMap = {
@@ -213,6 +195,7 @@ const _$FormatOpenApiEnumMap = {
   FormatOpenApi.int32: 'int32',
   FormatOpenApi.int64: 'int64',
   FormatOpenApi.double: 'double',
+  FormatOpenApi.decimal: 'decimal',
   FormatOpenApi.float: 'float',
   FormatOpenApi.string: 'string',
   FormatOpenApi.date: 'date',
@@ -224,13 +207,3 @@ const _$FormatOpenApiEnumMap = {
   FormatOpenApi.binary: 'binary',
   FormatOpenApi.base64: 'base64',
 };
-
-Value? _$JsonConverterFromJson<Json, Value>(
-  Object? json,
-  Value? Function(Json json) fromJson,
-) => json == null ? null : fromJson(json as Json);
-
-Json? _$JsonConverterToJson<Json, Value>(
-  Value? value,
-  Json? Function(Value value) toJson,
-) => value == null ? null : toJson(value);

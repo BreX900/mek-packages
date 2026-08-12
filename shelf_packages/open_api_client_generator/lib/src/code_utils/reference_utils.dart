@@ -14,6 +14,7 @@ abstract final class References {
   static const Reference dateTime = Reference('DateTime');
   static const Reference uri = Reference('Uri');
   static Reference list([Reference? typeArg]) => _ref('List', types: [typeArg ?? References.void$]);
+  static Reference set([Reference? typeArg]) => _ref('Set', types: [typeArg ?? References.void$]);
   static Reference map({Reference? key, Reference? value}) =>
       _ref('Map', types: [key ?? jsonValue, value ?? jsonValue]);
   static Reference future([Reference? typeArg]) =>
@@ -44,12 +45,14 @@ extension ReferenceExtensions on Reference {
   bool get isVoid => symbol == 'void';
   bool get isMap => symbol == 'Map';
   bool get isList => symbol == 'List';
+  bool get isSet => symbol == 'Set';
   bool get isDateTime => symbol == 'DateTime';
   bool get isUri => symbol == 'Uri';
 
   bool get isJsonPrimitive => isObject || isBool || isNum || isDouble || isInt || isString;
 
-  bool get isDartCore => isVoid || isJsonPrimitive || isMap || isList || isDateTime || isUri;
+  bool get isDartCore =>
+      isVoid || isJsonPrimitive || isMap || isList || isSet || isDateTime || isUri;
 
   bool get isNullable {
     final self = this;

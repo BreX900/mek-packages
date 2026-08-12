@@ -205,12 +205,12 @@ class KotlinEmitter {
     final buffer = StringBuffer();
     final title = switch (spec) {
       KotlinClass() => switch (spec.modifier) {
-          KotlinClassModifier.abstract => 'abstract class',
-          KotlinClassModifier.data => 'data class',
-          KotlinClassModifier.sealed => 'sealed class',
-          KotlinClassModifier.companion => 'companion',
-          null => 'class',
-        },
+        KotlinClassModifier.abstract => 'abstract class',
+        KotlinClassModifier.data => 'data class',
+        KotlinClassModifier.sealed => 'sealed class',
+        KotlinClassModifier.companion => 'companion',
+        null => 'class',
+      },
       KotlinEnum() => 'enum class',
       KotlinInterface() => 'interface',
     };
@@ -255,9 +255,12 @@ class KotlinEmitter {
     if (spec.body.isNotEmpty) {
       buffer.write('\n');
       _indent += 1;
-      buffer.writeAll(spec.body.map((e) {
-        return _encodeTopLevelSpec(e, isInInterface: spec.isInterface);
-      }), '\n\n');
+      buffer.writeAll(
+        spec.body.map((e) {
+          return _encodeTopLevelSpec(e, isInInterface: spec.isInterface);
+        }),
+        '\n\n',
+      );
       _indent -= 1;
       buffer.write('\n');
     }

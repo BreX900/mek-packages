@@ -1,6 +1,7 @@
 package mek.stripeterminal.mappings
 
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
+import mek.stripeterminal.api.AppsOnDevicesConnectionConfigurationApi
 import mek.stripeterminal.api.BluetoothConnectionConfigurationApi
 import mek.stripeterminal.api.ConnectionConfigurationApi
 import mek.stripeterminal.api.HandoffConnectionConfigurationApi
@@ -24,8 +25,11 @@ fun ConnectionConfigurationApi.toHost(readerDelegate: ReaderDelegatePlugin): Con
 //            shouldActivateWithExpandedLocation = shouldActivateWithExpandedLocation,
 //            shouldGenerateOfflineSessionToken = shouldGenerateOfflineSessionToken,
 //        )
-        is HandoffConnectionConfigurationApi -> ConnectionConfiguration.HandoffConnectionConfiguration(
-            handoffReaderListener = readerDelegate,
+        is AppsOnDevicesConnectionConfigurationApi -> ConnectionConfiguration.AppsOnDevicesConnectionConfiguration(
+            appsOnDevicesListener = readerDelegate,
+        )
+        is HandoffConnectionConfigurationApi -> ConnectionConfiguration.AppsOnDevicesConnectionConfiguration(
+            appsOnDevicesListener = readerDelegate,
         )
         is InternetConnectionConfigurationApi -> ConnectionConfiguration.InternetConnectionConfiguration(
             failIfInUse = failIfInUse,

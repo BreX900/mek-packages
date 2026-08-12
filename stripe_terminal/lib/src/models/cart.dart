@@ -27,12 +27,7 @@ class Cart with _$Cart {
   /// The cart’s line items. Default’s to an empty array of line items.
   final List<CartLineItem> lineItems;
 
-  const Cart({
-    required this.currency,
-    this.tax = 0,
-    required this.total,
-    required this.lineItems,
-  });
+  const Cart({required this.currency, this.tax = 0, required this.total, required this.lineItems});
 }
 
 /// Represents a single line item in an [Cart], displayed on the reader’s screen during checkout.
@@ -52,9 +47,5 @@ class CartLineItem with _$CartLineItem {
   /// assume the currency of the parent [Cart].
   final int amount;
 
-  const CartLineItem({
-    required this.description,
-    required this.quantity,
-    required this.amount,
-  });
+  const CartLineItem({required this.description, required this.quantity, required this.amount});
 }

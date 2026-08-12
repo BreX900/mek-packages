@@ -7,6 +7,7 @@ import com.stripe.stripeterminal.external.models.CartLineItem
 import com.stripe.stripeterminal.external.models.ConnectionStatus
 import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
+import com.stripe.stripeterminal.external.models.DiscoveryFilter
 import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.LocationStatus
 import com.stripe.stripeterminal.external.models.Reader
@@ -16,11 +17,15 @@ import com.stripe.stripeterminal.external.models.ReaderInputOptions
 import com.stripe.stripeterminal.external.models.ReaderSoftwareUpdate
 import mek.stripeterminal.api.AddressApi
 import mek.stripeterminal.api.BatteryStatusApi
+import mek.stripeterminal.api.AppsOnDevicesDiscoveryConfigurationApi
 import mek.stripeterminal.api.BluetoothDiscoveryConfigurationApi
 import mek.stripeterminal.api.BluetoothProximityDiscoveryConfigurationApi
 import mek.stripeterminal.api.CartApi
 import mek.stripeterminal.api.CartLineItemApi
 import mek.stripeterminal.api.ConnectionStatusApi
+import mek.stripeterminal.api.DiscoveryFilterApi
+import mek.stripeterminal.api.DiscoveryFilterByReaderIdApi
+import mek.stripeterminal.api.DiscoveryFilterBySerialNumberApi
 import mek.stripeterminal.api.DeviceTypeApi
 import mek.stripeterminal.api.DiscoveryConfigurationApi
 import mek.stripeterminal.api.HandoffDiscoveryConfigurationApi
@@ -52,6 +57,7 @@ fun Reader.toApi(): ReaderApi {
         location = location?.toApi(),
         label = label,
         serialNumber = serialNumber!!,
+        deviceSoftwareVersion = softwareVersion,
         ipAddress = ipAddress,
         networkStatus = networkStatus?.toApi()
     )
@@ -71,7 +77,6 @@ fun DeviceType.toApi(): DeviceTypeApi? {
         DeviceType.CHIPPER_2X -> DeviceTypeApi.CHIPPER2_X
         DeviceType.STRIPE_M2 -> DeviceTypeApi.STRIPE_M2
         DeviceType.TAP_TO_PAY_DEVICE -> DeviceTypeApi.TAP_TO_PAY
-        DeviceType.VERIFONE_P400 -> DeviceTypeApi.VERIFONE_P400
         DeviceType.WISECUBE -> DeviceTypeApi.WISE_CUBE
         DeviceType.WISEPAD_3 -> DeviceTypeApi.WISE_PAD3
         DeviceType.WISEPAD_3S -> DeviceTypeApi.WISE_PAD3S
@@ -82,13 +87,24 @@ fun DeviceType.toApi(): DeviceTypeApi? {
         DeviceType.STRIPE_S700_DEVKIT -> DeviceTypeApi.STRIPE_S700_DEVKIT
         DeviceType.STRIPE_S710 -> DeviceTypeApi.STRIPE_S710
         DeviceType.STRIPE_S710_DEVKIT -> DeviceTypeApi.STRIPE_S710_DEVKIT
+        DeviceType.STRIPE_T600 -> DeviceTypeApi.STRIPE_T600
+        DeviceType.STRIPE_T600_DEVKIT -> DeviceTypeApi.STRIPE_T600_DEVKIT
+        DeviceType.STRIPE_T610 -> DeviceTypeApi.STRIPE_T610
+        DeviceType.STRIPE_T610_DEVKIT -> DeviceTypeApi.STRIPE_T610_DEVKIT
         DeviceType.VERIFONE_V660P -> DeviceTypeApi.VERIFONE_V660P
+        DeviceType.VERIFONE_V660PA -> DeviceTypeApi.VERIFONE_V660PA
         DeviceType.VERIFONE_M425 -> DeviceTypeApi.VERIFONE_M425
         DeviceType.VERIFONE_M450 -> DeviceTypeApi.VERIFONE_M450
         DeviceType.VERIFONE_P630 -> DeviceTypeApi.VERIFONE_P630
         DeviceType.VERIFONE_UX700 -> DeviceTypeApi.VERIFONE_UX700
         DeviceType.VERIFONE_V660P_DEVKIT -> DeviceTypeApi.VERIFONE_V660P_DEVKIT
         DeviceType.VERIFONE_UX700_DEVKIT -> DeviceTypeApi.VERIFONE_UX700_DEVKIT
+        DeviceType.VERIFONE_VM100 -> DeviceTypeApi.VERIFONE_VM100
+        DeviceType.VERIFONE_VP100 -> DeviceTypeApi.VERIFONE_VP100
+        DeviceType.STRIPE_U200 -> DeviceTypeApi.STRIPE_U200
+        DeviceType.VERIFONE_VM110 -> DeviceTypeApi.VERIFONE_VM110
+        DeviceType.VERIFONE_VP110 -> DeviceTypeApi.VERIFONE_VP110
+        DeviceType.VERIFONE_VL110 -> DeviceTypeApi.VERIFONE_VL110
         DeviceType.UNKNOWN -> null
     }
 }
@@ -208,12 +224,14 @@ fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
                 timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0
             )
         is BluetoothProximityDiscoveryConfigurationApi -> null
-        is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.HandoffDiscoveryConfiguration()
+        is AppsOnDevicesDiscoveryConfigurationApi -> DiscoveryConfiguration.AppsOnDevicesDiscoveryConfiguration()
+        is HandoffDiscoveryConfigurationApi -> DiscoveryConfiguration.AppsOnDevicesDiscoveryConfiguration()
         is InternetDiscoveryConfigurationApi ->
             DiscoveryConfiguration.InternetDiscoveryConfiguration(
                 isSimulated = isSimulated,
                 location = locationId,
-                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0
+                timeout = timeout?.let { microsecondsToSeconds(it) } ?: 0,
+                discoveryFilter = discoveryFilter.toHost()
             )
         is TapToPayDiscoveryConfigurationApi ->
             DiscoveryConfiguration.TapToPayDiscoveryConfiguration(
@@ -227,13 +245,21 @@ fun DiscoveryConfigurationApi.toHost(): DiscoveryConfiguration? {
     }
 }
 
+fun DiscoveryFilterApi?.toHost(): DiscoveryFilter {
+    return when (this) {
+        is DiscoveryFilterByReaderIdApi -> DiscoveryFilter.ByReaderId(readerId)
+        is DiscoveryFilterBySerialNumberApi -> DiscoveryFilter.BySerial(serialNumber)
+        null -> DiscoveryFilter.None
+        else -> DiscoveryFilter.None
+    }
+}
+
 fun DeviceTypeApi.toHost(): DeviceType? {
     return when (this) {
         DeviceTypeApi.CHIPPER1_X -> DeviceType.CHIPPER_1X
         DeviceTypeApi.CHIPPER2_X -> DeviceType.CHIPPER_2X
         DeviceTypeApi.STRIPE_M2 -> DeviceType.STRIPE_M2
         DeviceTypeApi.TAP_TO_PAY -> DeviceType.TAP_TO_PAY_DEVICE
-        DeviceTypeApi.VERIFONE_P400 -> DeviceType.VERIFONE_P400
         DeviceTypeApi.WISE_CUBE -> DeviceType.WISECUBE
         DeviceTypeApi.WISE_PAD3 -> DeviceType.WISEPAD_3
         DeviceTypeApi.WISE_POS_E -> DeviceType.WISEPOS_E
@@ -244,13 +270,25 @@ fun DeviceTypeApi.toHost(): DeviceType? {
         DeviceTypeApi.STRIPE_S700_DEVKIT -> DeviceType.STRIPE_S700_DEVKIT
         DeviceTypeApi.STRIPE_S710 -> DeviceType.STRIPE_S710
         DeviceTypeApi.STRIPE_S710_DEVKIT -> DeviceType.STRIPE_S710_DEVKIT
+        DeviceTypeApi.STRIPE_T600 -> DeviceType.STRIPE_T600
+        DeviceTypeApi.STRIPE_T600_DEVKIT -> DeviceType.STRIPE_T600_DEVKIT
+        DeviceTypeApi.STRIPE_T610 -> DeviceType.STRIPE_T610
+        DeviceTypeApi.STRIPE_T610_DEVKIT -> DeviceType.STRIPE_T610_DEVKIT
         DeviceTypeApi.VERIFONE_V660P -> DeviceType.VERIFONE_V660P
+        DeviceTypeApi.VERIFONE_V660PA -> DeviceType.VERIFONE_V660PA
         DeviceTypeApi.VERIFONE_M425 -> DeviceType.VERIFONE_M425
         DeviceTypeApi.VERIFONE_M450 -> DeviceType.VERIFONE_M450
         DeviceTypeApi.VERIFONE_P630 -> DeviceType.VERIFONE_P630
         DeviceTypeApi.VERIFONE_UX700 -> DeviceType.VERIFONE_UX700
         DeviceTypeApi.VERIFONE_V660P_DEVKIT -> DeviceType.VERIFONE_V660P_DEVKIT
         DeviceTypeApi.VERIFONE_UX700_DEVKIT -> DeviceType.VERIFONE_UX700_DEVKIT
+        DeviceTypeApi.VERIFONE_VM100 -> DeviceType.VERIFONE_VM100
+        DeviceTypeApi.VERIFONE_VP100 -> DeviceType.VERIFONE_VP100
+        DeviceTypeApi.STRIPE_U200 -> DeviceType.STRIPE_U200
+        DeviceTypeApi.VERIFONE_VM110 -> DeviceType.VERIFONE_VM110
+        DeviceTypeApi.VERIFONE_VP110 -> DeviceType.VERIFONE_VP110
+        DeviceTypeApi.VERIFONE_VL110 -> DeviceType.VERIFONE_VL110
+        DeviceTypeApi.VERIFONE_P400 -> null
     }
 }
 
@@ -281,5 +319,6 @@ fun ConnectionStatus.toApi(): ConnectionStatusApi {
         ConnectionStatus.CONNECTING -> ConnectionStatusApi.CONNECTING
         ConnectionStatus.CONNECTED -> ConnectionStatusApi.CONNECTED
         ConnectionStatus.DISCOVERING -> ConnectionStatusApi.DISCOVERING
+        ConnectionStatus.RECONNECTING -> ConnectionStatusApi.RECONNECTING
     }
 }

@@ -16,6 +16,9 @@ enum ConnectionStatus {
   connecting,
 
   discovering,
+
+  /// The SDK is reconnecting to a reader.
+  reconnecting,
 }
 
 /// Information about a card reader that has been discovered by or connected to the SDK.
@@ -60,12 +63,12 @@ class Reader with _$Reader {
 
   final Location? location;
 
-  // TODO: Add location field
-
   /// The reader’s serial number.
   final String serialNumber;
 
-  // TODO: Add deviceSoftwareVersion field
+  /// The reader's current device software version, or `null` if this
+  /// information is unavailable.
+  final String? deviceSoftwareVersion;
 
   /// LocalMobile, Bluetooth and Usb readers properties
 
@@ -106,6 +109,7 @@ class Reader with _$Reader {
     required this.simulated,
     required this.availableUpdate,
     required this.serialNumber,
+    required this.deviceSoftwareVersion,
     required this.locationId,
     required this.location,
     required this.ipAddress,
@@ -120,7 +124,7 @@ enum LocationStatus {
   set,
 
   /// This location is known to be not set. location will be null.
-  notSet
+  notSet,
 }
 
 /// The reader’s device type.
@@ -170,8 +174,23 @@ enum DeviceType {
   /// Stripe Reader S710 DevKit.
   stripeS710Devkit,
 
+  /// Stripe Reader T600.
+  stripeT600,
+
+  /// Stripe Reader T600 DevKit.
+  stripeT600Devkit,
+
+  /// Stripe Reader T610.
+  stripeT610,
+
+  /// Stripe Reader T610 DevKit.
+  stripeT610Devkit,
+
   /// Verifone V660p
   verifoneV660p,
+
+  /// Verifone V660pa
+  verifoneV660pa,
 
   /// Verifone M425
   verifoneM425,
@@ -190,6 +209,24 @@ enum DeviceType {
 
   /// Verifone UX700 DevKit
   verifoneUx700Devkit,
+
+  /// Verifone VM100
+  verifoneVm100,
+
+  /// Verifone VP100
+  verifoneVp100,
+
+  /// Stripe U200
+  stripeU200,
+
+  /// Verifone VM110
+  verifoneVm110,
+
+  /// Verifone VP110
+  verifoneVp110,
+
+  /// Verifone VL110
+  verifoneVl110,
 }
 
 /// A categorization of a reader’s battery charge level.
@@ -263,7 +300,7 @@ enum ReaderInputOption {
   tapCard,
 
   /// Manually enter the card information (MOTO).
-  manualEntry
+  manualEntry,
 }
 
 enum NetworkStatus {

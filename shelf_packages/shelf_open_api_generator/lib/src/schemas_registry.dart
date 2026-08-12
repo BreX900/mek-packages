@@ -10,94 +10,112 @@ import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:source_gen/source_gen.dart';
 
 class SchemasRegistry {
-  final Map<String, Set<DartType>> _schemas = {};
+  static const _dateTimeType = TypeChecker.typeNamed(DateTime, inSdk: true);
+  static const _uriType = TypeChecker.typeNamed(Uri, inSdk: true);
+  static const _decimalType = TypeChecker.any([
+    TypeChecker.typeNamedLiterally('Decimal', inPackage: 'decimal'),
+    TypeChecker.typeNamedLiterally('Rational', inPackage: 'rational'),
+    TypeChecker.typeNamedLiterally('Fixed', inPackage: 'fixed'),
+  ]);
 
-  RefOr<SchemaOpenApi> tryRegister({
-    bool isBidirectional = true,
-    Doc doc = Doc.none,
-    required DartType dartType,
-  }) {
-    return _SchemaResolver(
-      object: true,
-      iterables: true,
-      isBidirectional: isBidirectional,
-      registry: this,
-    ).resolve(dartType: dartType, doc: doc);
-  }
+  final Map<String, InterfaceElement> _elements = {};
+  final Map<String, SchemaOpenApi> _schemas = {};
 
-  RefOr<SchemaOpenApi>? tryRegisterV2({
+  Map<String, SchemaOpenApi> get schemas => _schemas;
+
+  SchemaOrRef register({
     bool object = true,
     bool iterables = true,
-    bool isBidirectional = true,
     Doc doc = Doc.none,
-    required DartType? dartType,
+    required DartType dartType,
+    SchemaOpenApi fallback = const SchemaOpenApi(description: 'Unknown value type.'),
   }) {
-    if (dartType == null) return null;
-    try {
-      return _SchemaResolver(
-        object: object,
-        iterables: iterables,
-        isBidirectional: isBidirectional,
-        registry: this,
-      ).resolve(dartType: dartType, doc: doc);
-    } on _UnsupportedRegistrationType {
-      return null;
-    }
+    final schema = _buildAndRegister(_Context(object: object, iterables: iterables), doc, dartType);
+    if (schema != null) return schema;
+
+    log.warning('I cant create "$dartType" component schema!');
+    return fallback;
   }
 
-  void _checkRegistration({required DartType dartType, required String name}) {
-    final prevDartTypes = _schemas[name];
+  SchemaOrRef? _buildAndRegister(_Context context, Doc doc, DartType dartType) {
+    final simpleSchema = _buildSimpleSchema(context, doc, dartType);
+    if (simpleSchema != null) return simpleSchema;
 
-    if (prevDartTypes == null) {
-      _schemas[name] = {dartType};
-    } else if (!prevDartTypes.contains(dartType)) {
-      log.warning(
-        'Already exist $name component schema with different type!\n'
-        '$prevDartTypes | $dartType',
+    if (dartType.element case final InterfaceElement element) {
+      final identifier = element.displayName;
+
+      if (_elements[identifier] case final previousElement?) {
+        if (element != previousElement) {
+          throw InvalidGenerationSourceError(
+            'Already exist schema with "$identifier" name but have different dart type',
+            element: element,
+          );
+        }
+      } else {
+        _elements[identifier] = element;
+        _schemas[identifier] =
+            _buildComplexSchema(context, doc, element.thisType) ??
+            const SchemaOpenApi(description: 'Unknown value type.');
+      }
+      return SchemaRef.from(identifier);
+    }
+
+    return null;
+  }
+
+  SchemaOpenApi? _buildSimpleSchema(_Context context, Doc doc, DartType dartType) {
+    final result = _resolveSingleType(dartType);
+    if (result != null) {
+      return SchemaOpenApi(
+        description: doc.summaryAndDescription, // ?? 'Support any json value type.',
+        example: doc.example,
+        type: result.$1,
+        format: result.$2,
       );
-      _schemas[name] = {...prevDartTypes, dartType};
     }
+
+    if (context.iterables && (dartType.isDartCoreList || dartType.isDartCoreSet)) {
+      final typeArgument = (dartType as ParameterizedType).typeArguments.single;
+
+      return SchemaOpenApi(
+        description: doc.summaryAndDescription,
+        example: doc.example,
+        type: TypeOpenApi.array,
+        uniqueItems: dartType.isDartCoreSet,
+        items: _buildAndRegister(context, Doc.none, typeArgument),
+      );
+    }
+
+    if (context.object && dartType.isDartCoreMap) {
+      final [keyType, valueType] = (dartType as ParameterizedType).typeArguments;
+
+      if (!keyType.isDartCoreString && keyType.element is! EnumElement) {
+        throw StateError('Invalid map type. The key type must be a `String` type.');
+      }
+
+      return SchemaOpenApi(
+        description: doc.summaryAndDescription,
+        example: doc.example,
+        type: TypeOpenApi.object,
+        propertyNames: _buildAndRegister(context, doc, keyType),
+        additionalProperties: _buildAndRegister(context, doc, valueType),
+      );
+    }
+
+    return null;
   }
-}
 
-class _SchemaResolver {
-  static final _dateTimeType = TypeChecker.typeNamed(DateTime, inSdk: true);
-  static final _uriType = TypeChecker.typeNamed(Uri, inSdk: true);
-
-  final bool object;
-  final bool iterables;
-  final bool isBidirectional;
-  final SchemasRegistry registry;
-
-  _SchemaResolver({
-    required this.object,
-    required this.iterables,
-    required this.isBidirectional,
-    required this.registry,
-  });
-
-  RefOr<SchemaOpenApi> resolve({Doc doc = Doc.none, required DartType dartType}) {
-    final element = dartType.element;
-
-    if (registry._schemas[element?.requireName]?.contains(dartType) ?? false) {
-      return RefOpenApi('#/components/schemas/${element!.requireName}', (_) {
-        throw UnsupportedError('');
-      });
-    }
-
-    final description = doc.summaryAndDescription;
-    final example = doc.example;
+  SchemaOpenApi? _buildComplexSchema(_Context context, Doc doc, InterfaceType dartType) {
+    final element = _resolveElement(dartType.element);
 
     if (element is EnumElement) {
-      registry._checkRegistration(dartType: dartType, name: element.requireName);
-
       final doc = Doc.from(element.documentationComment);
       final values = element.constants.map((field) {
         return JsonAnnotation.getEnumValue(element, field);
       }).toList();
 
       return SchemaOpenApi(
-        title: element.requireName,
+        title: element.displayName,
         description: doc.summaryAndDescription,
         example: doc.example,
         type: switch (values) {
@@ -109,88 +127,42 @@ class _SchemaResolver {
       );
     }
 
-    if (dartType.isDartCoreObject) {
-      return SchemaOpenApi(
-        description: description ?? 'Support any json value type.',
-        example: example,
-      );
-    } else if (dartType.isDartCoreBool) {
-      return SchemaOpenApi(description: description, example: example, type: TypeOpenApi.boolean);
-    } else if (dartType.isDartCoreNum || dartType.isDartCoreDouble) {
-      return SchemaOpenApi(
-        description: description,
-        example: example,
-        type: TypeOpenApi.number,
-        format: dartType.isDartCoreDouble ? FormatOpenApi.double : null,
-      );
-    } else if (dartType.isDartCoreInt) {
-      return SchemaOpenApi(
-        description: description,
-        example: example,
-        type: TypeOpenApi.integer,
-        format: FormatOpenApi.int64,
-      );
-    } else if (dartType.isDartCoreString ||
-        _uriType.isAssignableFromType(dartType) ||
-        _dateTimeType.isAssignableFromType(dartType)) {
-      return SchemaOpenApi(
-        description: description,
-        example: example,
-        type: TypeOpenApi.string,
-        format: _dateTimeType.isAssignableFromType(dartType)
-            ? FormatOpenApi.dateTime
-            : (_uriType.isAssignableFromType(dartType) ? FormatOpenApi.uri : null),
-      );
-    }
+    if (context.object && element is ClassElement) {
+      final doc = Doc.from(element.documentationComment);
 
-    if (!iterables) throw _UnsupportedRegistrationType();
-    if (dartType.isDartCoreIterable || dartType.isDartCoreList) {
-      final typeArgument = (dartType as ParameterizedType).typeArguments.single;
+      final toJsonType = element.getMethod('toJson')?.returnType;
+      final fromJsonType = element.getMethod('fromJson')?.formalParameters.single.type;
+      if (toJsonType != null || fromJsonType != null) {
+        if (toJsonType != null && fromJsonType != null && toJsonType != fromJsonType) {
+          log.warning('Unknown serialization type for "toJson"/"fromJson" methods on "$element" ');
+        }
 
-      return SchemaOpenApi(
-        description: description,
-        example: example,
-        type: TypeOpenApi.array,
-        items: resolve(doc: Doc.none, dartType: typeArgument),
-      );
-    }
-
-    if (!object) throw _UnsupportedRegistrationType();
-    if (dartType.isDartCoreMap) {
-      final typeArguments = (dartType as ParameterizedType).typeArguments;
-
-      if (!typeArguments[0].isDartCoreString) {
-        throw StateError('Invalid map type. The key type must be a `String` type.');
+        if (!(toJsonType?.isDartCoreMap ?? true) || !(fromJsonType?.isDartCoreMap ?? true)) {
+          final dartType = (toJsonType ?? fromJsonType)!;
+          return _buildComplexSchema(context, doc, dartType as InterfaceType);
+        }
       }
 
-      return SchemaOpenApi(
-        description: description,
-        example: example,
-        type: TypeOpenApi.object,
-        additionalProperties: resolve(dartType: typeArguments[1]),
-      );
-    } else if (element is ClassElement) {
-      final doc = Doc.from(element.documentationComment);
       final parameters = element.requireUnnamedConstructor.formalParameters;
       final fields = element.getters;
       final names = <String, String>{
         for (final e in parameters)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
+          if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
         for (final e in element.fields)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
+          if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
         for (final e in fields)
-          if (JsonAnnotation.getFieldName(e) case final name?) e.requireName: name,
+          if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
       };
 
       final List<_ClassProperty> properties;
 
-      if (isBidirectional) {
+      if (fromJsonType != null) {
         final parameters = element.requireUnnamedConstructor.formalParameters;
 
         properties = parameters.map((e) {
           return _ClassProperty(
             isRequired: e.type.nullabilitySuffix == NullabilitySuffix.none,
-            name: e.requireName,
+            name: e.displayName,
             type: e.type,
           );
         }).toList();
@@ -198,40 +170,75 @@ class _SchemaResolver {
         properties = element.getters.map((e) {
           return _ClassProperty(
             isRequired: e.returnType.nullabilitySuffix == NullabilitySuffix.none,
-            name: e.requireName,
+            name: e.displayName,
             type: e.returnType,
           );
         }).toList();
       }
 
-      registry._checkRegistration(dartType: dartType, name: element.requireName);
-
       return SchemaOpenApi(
-        title: element.requireName,
+        title: element.displayName,
         type: TypeOpenApi.object,
         description: doc.summaryAndDescription,
         example: doc.example,
-        format: null,
         required: properties
             .where((e) => e.isRequired)
             .map((e) => names[e.name] ?? e.name)
             .toList(),
         properties: {
           for (final property in properties)
-            names[property.name] ?? property.name: resolve(
-              doc: Doc.from(
-                element.fields
-                    .firstWhereOrNull((e) => e.name == property.name)
-                    ?.documentationComment,
-              ),
-              dartType: property.type,
-            ),
+            names[property.name] ?? property.name:
+                _buildAndRegister(
+                  context,
+                  Doc.from(
+                    element.fields
+                        .firstWhereOrNull((e) => e.name == property.name)
+                        ?.documentationComment,
+                  ),
+                  property.type,
+                ) ??
+                const SchemaOpenApi(description: 'Unknown value type.'),
         },
       );
     }
 
-    log.warning('I cant create $dartType component schema!');
-    return SchemaOpenApi(description: 'Unknown value type.');
+    return null;
+  }
+
+  Element? _resolveElement(Element? element) {
+    if (element is ExtensionTypeElement) return element.typeErasure.element;
+    return element;
+  }
+
+  (TypeOpenApi?, FormatOpenApi?)? _resolveSingleType(DartType dartType) {
+    if (dartType.isDartCoreEnum) {
+      return null;
+    }
+    if (dartType.isDartCoreObject) {
+      return (null, null);
+    }
+    if (dartType.isDartCoreBool) {
+      return (TypeOpenApi.boolean, null);
+    }
+    if (dartType.isDartCoreNum || dartType.isDartCoreDouble) {
+      return (TypeOpenApi.number, dartType.isDartCoreDouble ? FormatOpenApi.double : null);
+    }
+    if (dartType.isDartCoreInt) {
+      return (TypeOpenApi.integer, FormatOpenApi.int64);
+    }
+    if (dartType.isDartCoreString && !dartType.isDartCoreEnum) {
+      return (TypeOpenApi.string, null);
+    }
+    if (_uriType.isAssignableFromType(dartType)) {
+      return (TypeOpenApi.string, FormatOpenApi.uri);
+    }
+    if (_dateTimeType.isAssignableFromType(dartType)) {
+      return (TypeOpenApi.string, FormatOpenApi.dateTime);
+    }
+    if (_decimalType.isAssignableFromType(dartType)) {
+      return (TypeOpenApi.string, FormatOpenApi.decimal);
+    }
+    return null;
   }
 }
 
@@ -243,4 +250,9 @@ class _ClassProperty {
   const _ClassProperty({required this.isRequired, required this.type, required this.name});
 }
 
-class _UnsupportedRegistrationType implements Exception {}
+class _Context {
+  final bool object;
+  final bool iterables;
+
+  const _Context({required this.object, required this.iterables});
+}

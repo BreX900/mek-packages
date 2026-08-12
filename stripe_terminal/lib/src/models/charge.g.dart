@@ -21,8 +21,7 @@ mixin _$Charge {
           _self.id == other.id &&
           $mapEquality.equals(_self.metadata, other.metadata) &&
           _self.statementDescriptorSuffix == other.statementDescriptorSuffix &&
-          _self.calculatedStatementDescriptor ==
-              other.calculatedStatementDescriptor &&
+          _self.calculatedStatementDescriptor == other.calculatedStatementDescriptor &&
           _self.authorizationCode == other.authorizationCode;
   @override
   int get hashCode {
@@ -35,24 +34,23 @@ mixin _$Charge {
     hashCode = $hashCombine(hashCode, _self.id.hashCode);
     hashCode = $hashCombine(hashCode, $mapEquality.hash(_self.metadata));
     hashCode = $hashCombine(hashCode, _self.statementDescriptorSuffix.hashCode);
-    hashCode =
-        $hashCombine(hashCode, _self.calculatedStatementDescriptor.hashCode);
+    hashCode = $hashCombine(hashCode, _self.calculatedStatementDescriptor.hashCode);
     hashCode = $hashCombine(hashCode, _self.authorizationCode.hashCode);
     return $hashFinish(hashCode);
   }
 
   @override
-  String toString() => (ClassToString('Charge')
-        ..add('amount', _self.amount)
-        ..add('currency', _self.currency)
-        ..add('status', _self.status)
-        ..add('paymentMethodDetails', _self.paymentMethodDetails)
-        ..add('description', _self.description)
-        ..add('id', _self.id)
-        ..add('metadata', _self.metadata)
-        ..add('statementDescriptorSuffix', _self.statementDescriptorSuffix)
-        ..add('calculatedStatementDescriptor',
-            _self.calculatedStatementDescriptor)
-        ..add('authorizationCode', _self.authorizationCode))
-      .toString();
+  String toString() =>
+      (ClassToString('Charge')
+            ..add('amount', _self.amount)
+            ..add('currency', _self.currency)
+            ..add('status', _self.status)
+            ..add('paymentMethodDetails', _self.paymentMethodDetails)
+            ..add('description', _self.description)
+            ..add('id', _self.id)
+            ..add('metadata', _self.metadata)
+            ..add('statementDescriptorSuffix', _self.statementDescriptorSuffix)
+            ..add('calculatedStatementDescriptor', _self.calculatedStatementDescriptor)
+            ..add('authorizationCode', _self.authorizationCode))
+          .toString();
 }

@@ -4,9 +4,7 @@ void main() async {
   await OneForAll.from(
     options: const OneForAllOptions(
       apiFile: 'lib/src/platform/terminal_platform.dart',
-      extraApiFiles: [
-        'lib/src/terminal_exception.dart',
-      ],
+      extraApiFiles: ['lib/src/terminal_exception.dart', 'lib/src/models/discovery_filter.dart'],
       hostClassSuffix: 'Api',
       packageName: 'mek_stripe_terminal',
       codecs: ApiPlatformCodec.values,
@@ -16,8 +14,6 @@ void main() async {
       package: 'mek.stripeterminal.api',
       outputFile: 'android/src/main/kotlin/mek/stripeterminal/api/TerminalApi.kt',
     ),
-    swiftOptions: const SwiftOptions(
-      outputFile: 'ios/Classes/Api/TerminalApi.swift',
-    ),
+    swiftOptions: const SwiftOptions(outputFile: 'ios/Classes/Api/TerminalApi.swift'),
   ).build();
 }

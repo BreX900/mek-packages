@@ -15,7 +15,7 @@ enum CardBrand {
   interac,
 
   /// Only iOS
-  eftposAu;
+  eftposAu,
 }
 
 enum CardFundingType { credit, debit, prepaid }
@@ -81,10 +81,7 @@ class CardNetworks with _$CardNetworks {
   final List<CardBrand> available;
   final String? preferred;
 
-  const CardNetworks({
-    required this.available,
-    required this.preferred,
-  });
+  const CardNetworks({required this.available, required this.preferred});
 }
 
 @DataClass()
@@ -145,7 +142,4 @@ class CardPresentParameters with _$CardPresentParameters {
 }
 
 /// Transaction routing priorities
-enum CardPresentRouting {
-  domestic,
-  international,
-}
+enum CardPresentRouting { domestic, international }

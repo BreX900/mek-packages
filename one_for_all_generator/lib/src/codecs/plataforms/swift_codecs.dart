@@ -1,4 +1,4 @@
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:one_for_all_generator/src/api_builder.dart';
 import 'package:one_for_all_generator/src/codecs/codecs.dart';
@@ -46,11 +46,12 @@ class SwiftApiCodes extends HostApiCodecs {
     }
     if (type.isDartCoreMap) {
       final typesArgs = type.doubleTypeArgs;
-      final deserializer = 'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable?: Any?])'
+      final deserializer =
+          'Dictionary(uniqueKeysWithValues: ($varAccess as! [AnyHashable?: Any?])'
           '.map { k, v in (${encodeDeserialization(typesArgs.$1, 'k')}, ${encodeDeserialization(typesArgs.$2, 'v')}) })';
       return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
     }
-    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
+    if (type.isDartCoreEnum || type.element is EnumElement) {
       final deserializer = '${encodeName(type.displayName)}(rawValue: $varAccess as! Int)!';
       return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
     }
@@ -64,11 +65,12 @@ class SwiftApiCodes extends HostApiCodecs {
       }
     }
 
-    final element = type.element3;
+    final element = type.element;
 
-    final deserializerMethod = element is ClassElement2 && element.isSealed
-        ? 'deserialize${encodeName(type.displayName)}'
-        : '${encodeName(type.displayName)}.deserialize';
+    final deserializerMethod =
+        element is ClassElement && element.isSealed
+            ? 'deserialize${encodeName(type.displayName)}'
+            : '${encodeName(type.displayName)}.deserialize';
     final deserializer = '$deserializerMethod($varAccess as! [Any?])';
     return type.isNullable ? '!($varAccess is NSNull) ? $deserializer : nil' : deserializer;
   }
@@ -92,7 +94,7 @@ class SwiftApiCodes extends HostApiCodecs {
           '(${encodeSerialization(typesArgs.$1, 'k')}, ${encodeSerialization(typesArgs.$2, 'v')}) })';
       return '$varAccess != nil ? $serializer : nil';
     }
-    if (type.isDartCoreEnum || type.element3 is EnumElement2) {
+    if (type.isDartCoreEnum || type.element is EnumElement) {
       return '$varAccess$questionOrEmpty.rawValue';
     }
 

@@ -24,10 +24,10 @@ class SwiftParameter {
     String? name,
     this.annotation,
     this.defaultTo,
-  })  : fieldName = field.name,
-        label = label ?? name ?? field.name,
-        name = name ?? field.name,
-        type = field.type;
+  }) : fieldName = field.name,
+       label = label ?? name ?? field.name,
+       name = name ?? field.name,
+       type = field.type;
 }
 
 enum SwiftMethodModifier { static, override }
@@ -117,36 +117,23 @@ class SwiftField extends SwiftTopLevelSpec {
     String? name,
     String? annotation,
     String? defaultTo,
-  }) =>
-      SwiftParameter.fromField(
-        this,
-        label: label,
-        name: name,
-        annotation: annotation,
-        defaultTo: defaultTo,
-      );
+  }) => SwiftParameter.fromField(
+    this,
+    label: label,
+    name: name,
+    annotation: annotation,
+    defaultTo: defaultTo,
+  );
 
-  SwiftParameter toParameter({
-    String? label,
-    String? name,
-    String? annotation,
-  }) =>
-      SwiftParameter(
-        type: type,
-        label: label,
-        name: name ?? this.name,
-        annotation: annotation,
-      );
+  SwiftParameter toParameter({String? label, String? name, String? annotation}) =>
+      SwiftParameter(type: type, label: label, name: name ?? this.name, annotation: annotation);
 }
 
 class SwiftInit {
   final List<SwiftParameter> parameters;
   final String? body;
 
-  const SwiftInit({
-    required this.parameters,
-    this.body,
-  });
+  const SwiftInit({required this.parameters, this.body});
 }
 
 class SwiftClass extends SwiftProtocol {
@@ -169,11 +156,7 @@ class SwiftLibrary extends SwiftSpec {
   final List<String> imports;
   final List<SwiftTopLevelSpec> body;
 
-  const SwiftLibrary({
-    this.comments = const [],
-    this.imports = const [],
-    this.body = const [],
-  });
+  const SwiftLibrary({this.comments = const [], this.imports = const [], this.body = const []});
 }
 
 sealed class SwiftTopLevelSpec extends SwiftSpec {

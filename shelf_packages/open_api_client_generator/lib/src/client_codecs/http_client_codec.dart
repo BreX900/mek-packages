@@ -2,13 +2,11 @@ import 'package:open_api_client_generator/src/client_codecs/abstract_client_code
 import 'package:open_api_client_generator/src/utils/files_contents.dart';
 
 class HttpClientCodec extends AbstractClientCodec {
-  const HttpClientCodec({
-    required super.options,
-  });
+  const HttpClientCodec({required super.options});
 
   @override
   Map<String, String> get filesContents => {
-        ...super.filesContents,
-        'http_api_client.dart': FilesContents.httpApiClient,
-      };
+    ...super.filesContents,
+    'http_api_client.dart': FilesContents.httpApiClient,
+  };
 }

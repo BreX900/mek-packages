@@ -244,6 +244,11 @@ protocol TerminalPlatformApi {
     func onSetTapToPayUXConfiguration(
         _ configuration: TapToPayUxConfigurationApi
     ) throws -> Void
+
+    func onIsTapToPayAccountLinked(
+        _ result: Result<Bool>,
+        _ onBehalfOf: String?
+    ) throws
 }
 
 class DiscoverReadersControllerApi {
@@ -444,6 +449,9 @@ func setTerminalPlatformApiHandler(
             case "setTapToPayUXConfiguration":
                 let res = try hostApi.onSetTapToPayUXConfiguration(TapToPayUxConfigurationApi.deserialize(args[0] as! [Any?]))
                 result(nil)
+            case "isTapToPayAccountLinked":
+                let res = Result<Bool>(result) { $0 }
+                try hostApi.onIsTapToPayAccountLinked(res, args[0] as? String)
             default:
                 result(FlutterMethodNotImplemented)
             }
@@ -1257,7 +1265,7 @@ struct PaymentMethodOptionsParametersApi {
 enum PaymentMethodTypeApi: Int {
     case cardPresent
     case card
-    case interactPresent
+    case interacPresent
 }
 
 enum PaymentStatusApi: Int {
@@ -1270,6 +1278,7 @@ enum PaymentStatusApi: Int {
 struct ReaderApi {
     let availableUpdate: Bool
     let batteryLevel: Double
+    let deviceSoftwareVersion: String?
     let deviceType: DeviceTypeApi?
     let id: String?
     let ipAddress: String?
@@ -1285,6 +1294,7 @@ struct ReaderApi {
         return [
             availableUpdate,
             batteryLevel,
+            deviceSoftwareVersion,
             deviceType?.rawValue,
             id,
             ipAddress,

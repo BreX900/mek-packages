@@ -72,6 +72,7 @@ class TerminalPlugin : FlutterPlugin, ActivityAware {
     private lateinit var discoverReadersController: DiscoverReadersControllerApi
 
     companion object {
+        var context: Context? = null
         private var handlerOwner: TerminalPlugin? = null
     }
 

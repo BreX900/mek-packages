@@ -64,14 +64,11 @@ import mek.stripeterminal.plugin.TerminalDelegatePlugin
 import mek.stripeterminal.plugin.TerminalErrorHandler
 
 class TerminalPlugin : FlutterPlugin, ActivityAware {
-    companion object {
-        var context: Context? = null
-    }
-
     private lateinit var platform: TerminalPlatformPlugin
     private lateinit var discoverReadersController: DiscoverReadersControllerApi
 
     companion object {
+        var context: Context? = null
         private var handlerOwner: TerminalPlugin? = null
     }
 

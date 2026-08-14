@@ -256,6 +256,84 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func onStopConfirmPaymentIntent(_ operationId: Int) async throws {
         try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
     }
+
+// MARK: - Process Flow Implementations (PaymentIntent, SetupIntent, Refund)
+
+    private var _processPaymentIntentCancelables: [Int: Cancelable] = [:]
+
+    /// Handles processPaymentIntent on iOS by collecting payment method and automatically confirming the intent upon collection.
+    func onStartProcessPaymentIntent(
+        _ result: Result<PaymentIntentApi>,
+        _ operationId: Int,
+        _ paymentIntentId: String,
+        _ requestDynamicCurrencyConversion: Bool,
+        _ surchargeNotice: String?,
+        _ skipTipping: Bool,
+        _ tippingConfiguration: TippingConfigurationApi?,
+        _ shouldUpdatePaymentIntent: Bool,
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi,
+        _ confirmConfiguration: ConfirmPaymentIntentConfigurationApi?
+    ) throws {
+        let paymentIntent = try _findPaymentIntent(paymentIntentId)
+        let config = CollectPaymentIntentConfigurationBuilder()
+            .setSurchargeNotice(surchargeNotice)
+            .setRequestDynamicCurrencyConversion(requestDynamicCurrencyConversion)
+            .setSkipTipping(skipTipping)
+            .setTippingConfiguration(try tippingConfiguration?.toHost())
+            .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
+            .setAllowRedisplay(allowRedisplay.toHost())
+
+        let hostCollectConfig = try config.build()
+        let hostConfirmConfig = try confirmConfiguration?.toHost()
+
+        self._processPaymentIntentCancelables[operationId] = Terminal.shared.collectPaymentMethod(
+            paymentIntent,
+            collectConfig: hostCollectConfig,
+            completion: { collectedPaymentIntent, collectError in
+                if let collectError = collectError as? NSError {
+                    self._processPaymentIntentCancelables.removeValue(forKey: operationId)
+                    result.error(collectError.toPlatformError())
+                    return
+                }
+                guard let collectedPaymentIntent = collectedPaymentIntent else {
+                    self._processPaymentIntentCancelables.removeValue(forKey: operationId)
+                    return
+                }
+                self._paymentIntents[collectedPaymentIntent.stripeId!] = collectedPaymentIntent
+
+                let confirmCompletion: PaymentIntentCompletionBlock = { confirmedPaymentIntent, confirmError in
+                    self._processPaymentIntentCancelables.removeValue(forKey: operationId)
+                    if let confirmError = confirmError as? NSError {
+                        result.error(confirmError.toPlatformError())
+                        return
+                    }
+                    if let confirmedPaymentIntent = confirmedPaymentIntent {
+                        self._paymentIntents.removeValue(forKey: confirmedPaymentIntent.stripeId!)
+                        result.success(confirmedPaymentIntent.toApi())
+                    }
+                }
+
+                if let hostConfirmConfig = hostConfirmConfig {
+                    self._processPaymentIntentCancelables[operationId] = Terminal.shared.confirmPaymentIntent(
+                        collectedPaymentIntent,
+                        confirmConfig: hostConfirmConfig,
+                        completion: confirmCompletion
+                    )
+                } else {
+                    self._processPaymentIntentCancelables[operationId] = Terminal.shared.confirmPaymentIntent(
+                        collectedPaymentIntent,
+                        completion: confirmCompletion
+                    )
+                }
+            }
+        )
+    }
+
+    func onStopProcessPaymentIntent(_ operationId: Int) async throws {
+        try await _processPaymentIntentCancelables.removeValue(forKey: operationId)?.cancel()
+    }
     
     func onCancelPaymentIntent(_ paymentIntentId: String) async throws -> PaymentIntentApi {
         do {
@@ -367,6 +445,58 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             throw error.toPlatformError()
         }
     }
+
+    private var _processSetupIntentCancelables: [Int: Cancelable] = [:]
+
+    func onStartProcessSetupIntent(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
+        _ setupIntentId: String,
+        _ allowRedisplay: AllowRedisplayApi,
+        _ customerCancellationEnabled: Bool
+    ) throws {
+        let setupIntent = try _findSetupIntent(setupIntentId)
+        let config = CollectSetupIntentConfigurationBuilder()
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
+
+        let hostConfig = try config.build()
+        self._processSetupIntentCancelables[operationId] = Terminal.shared.collectSetupIntentPaymentMethod(
+            setupIntent,
+            allowRedisplay: allowRedisplay.toHost(),
+            setupConfig: hostConfig,
+            completion: { collectedSetupIntent, collectError in
+                if let collectError = collectError as? NSError {
+                    self._processSetupIntentCancelables.removeValue(forKey: operationId)
+                    result.error(collectError.toPlatformError())
+                    return
+                }
+                guard let collectedSetupIntent = collectedSetupIntent else {
+                    self._processSetupIntentCancelables.removeValue(forKey: operationId)
+                    return
+                }
+                self._setupIntents[collectedSetupIntent.stripeId!] = collectedSetupIntent
+
+                self._processSetupIntentCancelables[operationId] = Terminal.shared.confirmSetupIntent(
+                    collectedSetupIntent,
+                    completion: { confirmedSetupIntent, confirmError in
+                        self._processSetupIntentCancelables.removeValue(forKey: operationId)
+                        if let confirmError = confirmError as? NSError {
+                            result.error(confirmError.toPlatformError())
+                            return
+                        }
+                        if let confirmedSetupIntent = confirmedSetupIntent {
+                            self._setupIntents.removeValue(forKey: confirmedSetupIntent.stripeId!)
+                            result.success(confirmedSetupIntent.toApi())
+                        }
+                    }
+                )
+            }
+        )
+    }
+
+    func onStopProcessSetupIntent(_ operationId: Int) async throws {
+        try await _processSetupIntentCancelables.removeValue(forKey: operationId)?.cancel()
+    }
 // MARK: - Card-present refunds
     private var _cancelablesCollectRefundPaymentMethod: [Int: Cancelable] = [:]
 
@@ -421,6 +551,68 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     
     func onStopConfirmRefund(_ operationId: Int) async throws {
         try await _confirmRefundCancelables.removeValue(forKey: operationId)?.cancel()
+    }
+
+    private var _processRefundCancelables: [Int: Cancelable] = [:]
+
+    func onStartProcessRefund(
+        _ result: Result<RefundApi>,
+        _ operationId: Int,
+        _ chargeId: String?,
+        _ paymentIntentId: String?,
+        _ paymentIntentClientSecret: String?,
+        _ amount: Int,
+        _ currency: String,
+        _ metadata: [String: String]?,
+        _ reverseTransfer: Bool?,
+        _ refundApplicationFee: Bool?,
+        _ customerCancellationEnabled: Bool
+    ) throws {
+        let paramsBuilder: RefundParametersBuilder
+        if let chargeId = chargeId, !chargeId.isEmpty {
+            paramsBuilder = RefundParametersBuilder(chargeId: chargeId, amount: UInt(amount), currency: currency)
+        } else if let paymentIntentId = paymentIntentId, !paymentIntentId.isEmpty {
+            let secret = paymentIntentClientSecret ?? ""
+            paramsBuilder = RefundParametersBuilder(paymentIntentId: paymentIntentId, clientSecret: secret, amount: UInt(amount), currency: currency)
+        } else {
+            throw PlatformError("mek_stripe_terminal", "Invalid refund parameters: chargeId or paymentIntentId must be provided.")
+        }
+
+        if let metadata = metadata { paramsBuilder.setMetadata(metadata) }
+        reverseTransfer.apply(paramsBuilder.setReverseTransfer)
+        refundApplicationFee.apply(paramsBuilder.setRefundApplicationFee)
+
+        let config = CollectRefundConfigurationBuilder()
+            .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
+
+        let hostParams = try paramsBuilder.build()
+        let hostConfig = try config.build()
+
+        _processRefundCancelables[operationId] = Terminal.shared.collectRefundPaymentMethod(
+            hostParams,
+            refundConfig: hostConfig,
+            completion: { collectError in
+                if let collectError = collectError as? NSError {
+                    self._processRefundCancelables.removeValue(forKey: operationId)
+                    result.error(collectError.toPlatformError())
+                    return
+                }
+                self._processRefundCancelables[operationId] = Terminal.shared.confirmRefund(completion: { refund, confirmError in
+                    self._processRefundCancelables.removeValue(forKey: operationId)
+                    if let confirmError = confirmError as? NSError {
+                        result.error(confirmError.toPlatformError())
+                        return
+                    }
+                    if let refund = refund {
+                        result.success(refund.toApi())
+                    }
+                })
+            }
+        )
+    }
+
+    func onStopProcessRefund(_ operationId: Int) async throws {
+        try await _processRefundCancelables.removeValue(forKey: operationId)?.cancel()
     }
     
 

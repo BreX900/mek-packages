@@ -249,6 +249,54 @@ protocol TerminalPlatformApi {
         _ result: Result<Bool>,
         _ onBehalfOf: String?
     ) throws
+
+    func onStartProcessPaymentIntent(
+        _ result: Result<PaymentIntentApi>,
+        _ operationId: Int,
+        _ paymentIntentId: String,
+        _ requestDynamicCurrencyConversion: Bool,
+        _ surchargeNotice: String?,
+        _ skipTipping: Bool,
+        _ tippingConfiguration: TippingConfigurationApi?,
+        _ shouldUpdatePaymentIntent: Bool,
+        _ customerCancellationEnabled: Bool,
+        _ allowRedisplay: AllowRedisplayApi,
+        _ confirmConfiguration: ConfirmPaymentIntentConfigurationApi?
+    ) throws
+
+    func onStopProcessPaymentIntent(
+        _ operationId: Int
+    ) async throws -> Void
+
+    func onStartProcessSetupIntent(
+        _ result: Result<SetupIntentApi>,
+        _ operationId: Int,
+        _ setupIntentId: String,
+        _ allowRedisplay: AllowRedisplayApi,
+        _ customerCancellationEnabled: Bool
+    ) throws
+
+    func onStopProcessSetupIntent(
+        _ operationId: Int
+    ) async throws -> Void
+
+    func onStartProcessRefund(
+        _ result: Result<RefundApi>,
+        _ operationId: Int,
+        _ chargeId: String?,
+        _ paymentIntentId: String?,
+        _ paymentIntentClientSecret: String?,
+        _ amount: Int,
+        _ currency: String,
+        _ metadata: [String: String]?,
+        _ reverseTransfer: Bool?,
+        _ refundApplicationFee: Bool?,
+        _ customerCancellationEnabled: Bool
+    ) throws
+
+    func onStopProcessRefund(
+        _ operationId: Int
+    ) async throws -> Void
 }
 
 class DiscoverReadersControllerApi {
@@ -384,6 +432,27 @@ func setTerminalPlatformApiHandler(
                     try await hostApi.onStopConfirmPaymentIntent(args[0] as! Int)
                     return nil
                 }
+            // Process flow MethodChannel handlers (iOS)
+            case "startProcessPaymentIntent":
+                let res = Result<PaymentIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartProcessPaymentIntent(
+                    res,
+                    args[0] as! Int,
+                    args[1] as! String,
+                    args[2] as! Bool,
+                    args[3] as? String,
+                    args[4] as! Bool,
+                    !(args[5] is NSNull) ? TippingConfigurationApi.deserialize(args[5] as! [Any?]) : nil,
+                    args[6] as! Bool,
+                    args[7] as! Bool,
+                    AllowRedisplayApi(rawValue: args[8] as! Int)!,
+                    !(args[9] is NSNull) ? ConfirmPaymentIntentConfigurationApi.deserialize(args[9] as! [Any?]) : nil
+                )
+            case "stopProcessPaymentIntent":
+                runAsync {
+                    try await hostApi.onStopProcessPaymentIntent(args[0] as! Int)
+                    return nil
+                }
             case "cancelPaymentIntent":
                 runAsync {
                     let res = try await hostApi.onCancelPaymentIntent(args[0] as! String)
@@ -434,6 +503,40 @@ func setTerminalPlatformApiHandler(
             case "stopConfirmRefund":
                 runAsync {
                     try await hostApi.onStopConfirmRefund(args[0] as! Int)
+                    return nil
+                }
+            case "startProcessSetupIntent":
+                let res = Result<SetupIntentApi>(result) { $0.serialize() }
+                try hostApi.onStartProcessSetupIntent(
+                    res,
+                    args[0] as! Int,
+                    args[1] as! String,
+                    AllowRedisplayApi(rawValue: args[2] as! Int)!,
+                    args[3] as! Bool
+                )
+            case "stopProcessSetupIntent":
+                runAsync {
+                    try await hostApi.onStopProcessSetupIntent(args[0] as! Int)
+                    return nil
+                }
+            case "startProcessRefund":
+                let res = Result<RefundApi>(result) { $0.serialize() }
+                try hostApi.onStartProcessRefund(
+                    res,
+                    args[0] as! Int,
+                    args[1] as? String,
+                    args[2] as? String,
+                    args[3] as? String,
+                    args[4] as! Int,
+                    args[5] as! String,
+                    !(args[6] is NSNull) ? Dictionary(uniqueKeysWithValues: (args[6] as! [AnyHashable?: Any?]).map { k, v in (k as! String, v as! String) }) : nil,
+                    args[7] as? Bool,
+                    args[8] as? Bool,
+                    args[9] as! Bool
+                )
+            case "stopProcessRefund":
+                runAsync {
+                    try await hostApi.onStopProcessRefund(args[0] as! Int)
                     return nil
                 }
             case "setReaderDisplay":
@@ -1894,6 +1997,18 @@ struct TippingConfigurationApi {
     ) -> TippingConfigurationApi {
         return TippingConfigurationApi(
             eligibleAmount: serialized[0] as! Int
+        )
+    }
+}
+
+struct ConfirmPaymentIntentConfigurationApi {
+    let returnUrl: String?
+
+    static func deserialize(
+        _ serialized: [Any?]
+    ) -> ConfirmPaymentIntentConfigurationApi {
+        return ConfirmPaymentIntentConfigurationApi(
+            returnUrl: serialized[0] as? String
         )
     }
 }

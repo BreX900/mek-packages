@@ -12,7 +12,7 @@ import 'models/reader.dart';
 import 'models/reader_software_update.dart';
 import 'models/refund.dart';
 import 'models/setup_intent.dart';
-import 'models/simultator_configuration.dart';
+import 'models/simulator_configuration.dart';
 import 'models/tap_to_pay_ux_configuration.dart';
 import 'models/tip.dart';
 import 'terminal_exception.dart';

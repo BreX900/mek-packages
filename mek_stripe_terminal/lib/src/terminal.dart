@@ -12,7 +12,7 @@ import 'package:mek_stripe_terminal/src/models/payment_intent.dart';
 import 'package:mek_stripe_terminal/src/models/reader.dart';
 import 'package:mek_stripe_terminal/src/models/refund.dart';
 import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
-import 'package:mek_stripe_terminal/src/models/simultator_configuration.dart';
+import 'package:mek_stripe_terminal/src/models/simulator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
 import 'package:mek_stripe_terminal/src/terminal_api.g.dart' as api;

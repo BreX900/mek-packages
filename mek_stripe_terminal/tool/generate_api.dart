@@ -13,7 +13,7 @@ void main() async {
 
   final entities = Directory('tool/schemas').listSync(recursive: true);
   final contents = await Future.wait(
-    entities.whereType<File>().map((file) async {
+    entities.whereType<File>().where((e) => !e.path.endsWith('/.DS_Store')).map((file) async {
       final content = await file.readAsString();
       return content.split('\n').where((line) => !line.startsWith('import ')).join('\n');
     }),

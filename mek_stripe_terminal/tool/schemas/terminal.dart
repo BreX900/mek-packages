@@ -92,7 +92,7 @@ abstract class TerminalPlatformApi {
     required bool shouldUpdatePaymentIntent,
     required bool customerCancellationEnabled,
     required AllowRedisplayApi allowRedisplay,
-    required ConfirmPaymentIntentConfigurationApi? confirmConfiguration,
+    required ConfirmPaymentIntentConfigurationApi confirmConfiguration,
   });
 
   @async

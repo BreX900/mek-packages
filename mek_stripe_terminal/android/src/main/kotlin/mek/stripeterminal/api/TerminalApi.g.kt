@@ -1081,109 +1081,6 @@ enum class ChargeStatusApi(val raw: Int) {
   }
 }
 
-enum class UpdateComponentApi(val raw: Int) {
-  INCREMENTAL(0),
-  FIRMWARE(1),
-  CONFIG(2),
-  KEYS(3);
-
-  companion object {
-    fun ofRaw(raw: Int): UpdateComponentApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
-enum class UpdateTimeEstimateApi(val raw: Int) {
-  LESS_THAN_ONE_MINUTE(0),
-  ONE_TO_TWO_MINUTES(1),
-  TWO_TO_FIVE_MINUTES(2),
-  FIVE_TO_FIFTEEN_MINUTES(3);
-
-  companion object {
-    fun ofRaw(raw: Int): UpdateTimeEstimateApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
-/**
- * The [SetupIntentApi] usage options tell Stripe how the payment method is intended to be used in the future.
- * Stripe will use the chosen option to pick the most frictionless flow for the customer.
- */
-enum class SetupIntentUsageApi(val raw: Int) {
-  /**
-   * An on-session usage indicates to Stripe that future payments will take place while the customer
-   * is actively in your checkout flow and able to authenticate the payment method.
-   * With the on-session option, you can postpone authenticating the card details
-   * until a future checkout to avoid upfront friction.
-   */
-  ON_SESSION(0),
-  /**
-   * An off-session usage indicates to Stripe that future payments will take place without
-   * the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
-   * initial friction from additional authentication steps, but can reduce customer intervention
-   * in later off-session payments.
-   */
-  OFF_SESSION(1);
-
-  companion object {
-    fun ofRaw(raw: Int): SetupIntentUsageApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
-enum class SetupIntentStatusApi(val raw: Int) {
-  REQUIRES_PAYMENT_METHOD(0),
-  REQUIRES_CONFIRMATION(1),
-  REQUIRES_ACTION(2),
-  PROCESSING(3),
-  SUCCEEDED(4),
-  CANCELLED(5);
-
-  companion object {
-    fun ofRaw(raw: Int): SetupIntentStatusApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
-/** Statuses for a [SetupAttemptApi] */
-enum class SetupAttemptStatusApi(val raw: Int) {
-  REQUIRES_CONFIRMATION(0),
-  REQUIRES_ACTION(1),
-  PROCESSING(2),
-  SUCCEEDED(3),
-  FAILED(4),
-  ABANDONED(5);
-
-  companion object {
-    fun ofRaw(raw: Int): SetupAttemptStatusApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
-/**
- * A field used to indicate whether a payment method can be shown again to its customer in a
- * checkout flow. Consent must be obtained to set this field.
- */
-enum class AllowRedisplayApi(val raw: Int) {
-  /** Use always to indicate that this payment method can always be shown to a customer in a checkout flow. */
-  ALWAYS(0),
-  /** Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription. */
-  LIMITED(1),
-  /** This is the default value for payment methods where allow_redisplay wasn’t set. */
-  UNSPECIFIED(2);
-
-  companion object {
-    fun ofRaw(raw: Int): AllowRedisplayApi? {
-      return values().firstOrNull { it.raw == raw }
-    }
-  }
-}
-
 /**
  * Enum used to simulate various types of reader updates being available for a simulated bluetooth
  * or local mobile reader.
@@ -1293,6 +1190,109 @@ enum class SimulatedCardTypeApi(val raw: Int) {
 
   companion object {
     fun ofRaw(raw: Int): SimulatedCardTypeApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+enum class UpdateComponentApi(val raw: Int) {
+  INCREMENTAL(0),
+  FIRMWARE(1),
+  CONFIG(2),
+  KEYS(3);
+
+  companion object {
+    fun ofRaw(raw: Int): UpdateComponentApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+enum class UpdateTimeEstimateApi(val raw: Int) {
+  LESS_THAN_ONE_MINUTE(0),
+  ONE_TO_TWO_MINUTES(1),
+  TWO_TO_FIVE_MINUTES(2),
+  FIVE_TO_FIFTEEN_MINUTES(3);
+
+  companion object {
+    fun ofRaw(raw: Int): UpdateTimeEstimateApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/**
+ * The [SetupIntentApi] usage options tell Stripe how the payment method is intended to be used in the future.
+ * Stripe will use the chosen option to pick the most frictionless flow for the customer.
+ */
+enum class SetupIntentUsageApi(val raw: Int) {
+  /**
+   * An on-session usage indicates to Stripe that future payments will take place while the customer
+   * is actively in your checkout flow and able to authenticate the payment method.
+   * With the on-session option, you can postpone authenticating the card details
+   * until a future checkout to avoid upfront friction.
+   */
+  ON_SESSION(0),
+  /**
+   * An off-session usage indicates to Stripe that future payments will take place without
+   * the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
+   * initial friction from additional authentication steps, but can reduce customer intervention
+   * in later off-session payments.
+   */
+  OFF_SESSION(1);
+
+  companion object {
+    fun ofRaw(raw: Int): SetupIntentUsageApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+enum class SetupIntentStatusApi(val raw: Int) {
+  REQUIRES_PAYMENT_METHOD(0),
+  REQUIRES_CONFIRMATION(1),
+  REQUIRES_ACTION(2),
+  PROCESSING(3),
+  SUCCEEDED(4),
+  CANCELLED(5);
+
+  companion object {
+    fun ofRaw(raw: Int): SetupIntentStatusApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/** Statuses for a [SetupAttemptApi] */
+enum class SetupAttemptStatusApi(val raw: Int) {
+  REQUIRES_CONFIRMATION(0),
+  REQUIRES_ACTION(1),
+  PROCESSING(2),
+  SUCCEEDED(3),
+  FAILED(4),
+  ABANDONED(5);
+
+  companion object {
+    fun ofRaw(raw: Int): SetupAttemptStatusApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/**
+ * A field used to indicate whether a payment method can be shown again to its customer in a
+ * checkout flow. Consent must be obtained to set this field.
+ */
+enum class AllowRedisplayApi(val raw: Int) {
+  /** Use always to indicate that this payment method can always be shown to a customer in a checkout flow. */
+  ALWAYS(0),
+  /** Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription. */
+  LIMITED(1),
+  /** This is the default value for payment methods where allow_redisplay wasn’t set. */
+  UNSPECIFIED(2);
+
+  companion object {
+    fun ofRaw(raw: Int): AllowRedisplayApi? {
       return values().firstOrNull { it.raw == raw }
     }
   }
@@ -2184,6 +2184,124 @@ data class TapToPayEasyConnectConfigurationApi (
   }
   override fun toString(): String {
     return "TapToPayEasyConnectConfigurationApi(discoveryConfiguration=$discoveryConfiguration, connectionConfiguration=$connectionConfiguration)"
+  }
+}
+
+/**
+ * Simulator specific configurations you can set to test your integration’s behavior in different
+ * scenarios. We recommend changing these properties during testing to ensure your app works as
+ * expected for different reader updates and for different presented cards.
+ *
+ * Do not create new instances of this class. Instead, set the properties via [Terminal.setSimulatorConfiguration].
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SimulatorConfigurationApi (
+  /**
+   * Set this to different values of the [SimulateReaderUpdateApi] enum to test your integration with
+   * different reader software update scenarios.
+   */
+  val update: SimulateReaderUpdateApi,
+  /**
+   * Create a [SimulatedCardApi] and set it on the shared configuration object to test your integration
+   * with different card brands and in error scenarios.
+   *
+   * Note: Simulated Internet reader refunds do not use the specified simulated card.
+   * See: https://stripe.com/docs/terminal/testing#simulated-test-cards
+   */
+  val simulatedCard: SimulatedCardApi,
+  /** Set this to simulate a [Terminal] configuration object with this fixed tip amount for all currencies. */
+  val simulatedTipAmount: Long? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SimulatorConfigurationApi {
+      val update = pigeonVar_list[0] as SimulateReaderUpdateApi
+      val simulatedCard = pigeonVar_list[1] as SimulatedCardApi
+      val simulatedTipAmount = pigeonVar_list[2] as Long?
+      return SimulatorConfigurationApi(update, simulatedCard, simulatedTipAmount)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      update,
+      simulatedCard,
+      simulatedTipAmount,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SimulatorConfigurationApi
+    return TerminalApiPigeonUtils.deepEquals(this.update, other.update) && TerminalApiPigeonUtils.deepEquals(this.simulatedCard, other.simulatedCard) && TerminalApiPigeonUtils.deepEquals(this.simulatedTipAmount, other.simulatedTipAmount)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.update)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.simulatedCard)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.simulatedTipAmount)
+    return result
+  }
+  override fun toString(): String {
+    return "SimulatorConfigurationApi(update=$update, simulatedCard=$simulatedCard, simulatedTipAmount=$simulatedTipAmount)"
+  }
+}
+
+/**
+ * Simulated Card objects can be used with the shared [SimulatorConfigurationApi] to simulate different
+ * card brand and error cases with a simulated Reader.
+ *
+ * Simulated Card objects are backed by one of Stripe’s test card numbers, which are hardcoded to
+ * provide certain behavior within Stripe’s backend. The Terminal SDK provides an [SimulatedCardTypeApi]
+ * enum that automatically maps to the card numbers for convenience.
+ *
+ *
+ * See: https://stripe.com/docs/terminal/testing#simulated-test-cards
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SimulatedCardApi (
+  val type: SimulatedCardTypeApi? = null,
+  val testCardNumber: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SimulatedCardApi {
+      val type = pigeonVar_list[0] as SimulatedCardTypeApi?
+      val testCardNumber = pigeonVar_list[1] as String?
+      return SimulatedCardApi(type, testCardNumber)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      type,
+      testCardNumber,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SimulatedCardApi
+    return TerminalApiPigeonUtils.deepEquals(this.type, other.type) && TerminalApiPigeonUtils.deepEquals(this.testCardNumber, other.testCardNumber)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.type)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.testCardNumber)
+    return result
+  }
+  override fun toString(): String {
+    return "SimulatedCardApi(type=$type, testCardNumber=$testCardNumber)"
   }
 }
 
@@ -3189,124 +3307,6 @@ data class ClearCachedCredentialsResultApi (
   }
   override fun toString(): String {
     return "ClearCachedCredentialsResultApi(isSuccessful=$isSuccessful, error=$error)"
-  }
-}
-
-/**
- * Simulator specific configurations you can set to test your integration’s behavior in different
- * scenarios. We recommend changing these properties during testing to ensure your app works as
- * expected for different reader updates and for different presented cards.
- *
- * Do not create new instances of this class. Instead, set the properties via [Terminal.setSimulatorConfiguration].
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
-data class SimulatorConfigurationApi (
-  /**
-   * Set this to different values of the [SimulateReaderUpdateApi] enum to test your integration with
-   * different reader software update scenarios.
-   */
-  val update: SimulateReaderUpdateApi,
-  /**
-   * Create a [SimulatedCardApi] and set it on the shared configuration object to test your integration
-   * with different card brands and in error scenarios.
-   *
-   * Note: Simulated Internet reader refunds do not use the specified simulated card.
-   * See: https://stripe.com/docs/terminal/testing#simulated-test-cards
-   */
-  val simulatedCard: SimulatedCardApi,
-  /** Set this to simulate a [Terminal] configuration object with this fixed tip amount for all currencies. */
-  val simulatedTipAmount: Long? = null
-)
- {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): SimulatorConfigurationApi {
-      val update = pigeonVar_list[0] as SimulateReaderUpdateApi
-      val simulatedCard = pigeonVar_list[1] as SimulatedCardApi
-      val simulatedTipAmount = pigeonVar_list[2] as Long?
-      return SimulatorConfigurationApi(update, simulatedCard, simulatedTipAmount)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf(
-      update,
-      simulatedCard,
-      simulatedTipAmount,
-    )
-  }
-  override fun equals(other: Any?): Boolean {
-    if (other == null || other.javaClass != javaClass) {
-      return false
-    }
-    if (this === other) {
-      return true
-    }
-    val other = other as SimulatorConfigurationApi
-    return TerminalApiPigeonUtils.deepEquals(this.update, other.update) && TerminalApiPigeonUtils.deepEquals(this.simulatedCard, other.simulatedCard) && TerminalApiPigeonUtils.deepEquals(this.simulatedTipAmount, other.simulatedTipAmount)
-  }
-
-  override fun hashCode(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.update)
-    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.simulatedCard)
-    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.simulatedTipAmount)
-    return result
-  }
-  override fun toString(): String {
-    return "SimulatorConfigurationApi(update=$update, simulatedCard=$simulatedCard, simulatedTipAmount=$simulatedTipAmount)"
-  }
-}
-
-/**
- * Simulated Card objects can be used with the shared [SimulatorConfigurationApi] to simulate different
- * card brand and error cases with a simulated Reader.
- *
- * Simulated Card objects are backed by one of Stripe’s test card numbers, which are hardcoded to
- * provide certain behavior within Stripe’s backend. The Terminal SDK provides an [SimulatedCardTypeApi]
- * enum that automatically maps to the card numbers for convenience.
- *
- *
- * See: https://stripe.com/docs/terminal/testing#simulated-test-cards
- *
- * Generated class from Pigeon that represents data sent in messages.
- */
-data class SimulatedCardApi (
-  val type: SimulatedCardTypeApi? = null,
-  val testCardNumber: String? = null
-)
- {
-  companion object {
-    fun fromList(pigeonVar_list: List<Any?>): SimulatedCardApi {
-      val type = pigeonVar_list[0] as SimulatedCardTypeApi?
-      val testCardNumber = pigeonVar_list[1] as String?
-      return SimulatedCardApi(type, testCardNumber)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf(
-      type,
-      testCardNumber,
-    )
-  }
-  override fun equals(other: Any?): Boolean {
-    if (other == null || other.javaClass != javaClass) {
-      return false
-    }
-    if (this === other) {
-      return true
-    }
-    val other = other as SimulatedCardApi
-    return TerminalApiPigeonUtils.deepEquals(this.type, other.type) && TerminalApiPigeonUtils.deepEquals(this.testCardNumber, other.testCardNumber)
-  }
-
-  override fun hashCode(): Int {
-    var result = javaClass.hashCode()
-    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.type)
-    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.testCardNumber)
-    return result
-  }
-  override fun toString(): String {
-    return "SimulatedCardApi(type=$type, testCardNumber=$testCardNumber)"
   }
 }
 
@@ -4604,42 +4604,42 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
       }
       143.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          UpdateComponentApi.ofRaw(it.toInt())
+          SimulateReaderUpdateApi.ofRaw(it.toInt())
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          UpdateTimeEstimateApi.ofRaw(it.toInt())
+          SimulatedCardTypeApi.ofRaw(it.toInt())
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          SetupIntentUsageApi.ofRaw(it.toInt())
+          UpdateComponentApi.ofRaw(it.toInt())
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          SetupIntentStatusApi.ofRaw(it.toInt())
+          UpdateTimeEstimateApi.ofRaw(it.toInt())
         }
       }
       147.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          SetupAttemptStatusApi.ofRaw(it.toInt())
+          SetupIntentUsageApi.ofRaw(it.toInt())
         }
       }
       148.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          AllowRedisplayApi.ofRaw(it.toInt())
+          SetupIntentStatusApi.ofRaw(it.toInt())
         }
       }
       149.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          SimulateReaderUpdateApi.ofRaw(it.toInt())
+          SetupAttemptStatusApi.ofRaw(it.toInt())
         }
       }
       150.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          SimulatedCardTypeApi.ofRaw(it.toInt())
+          AllowRedisplayApi.ofRaw(it.toInt())
         }
       }
       151.toByte() -> {
@@ -4754,107 +4754,107 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
       }
       173.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ReaderSoftwareUpdateApi.fromList(it)
+          SimulatorConfigurationApi.fromList(it)
         }
       }
       174.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupIntentApi.fromList(it)
+          SimulatedCardApi.fromList(it)
         }
       }
       175.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptApi.fromList(it)
+          ReaderSoftwareUpdateApi.fromList(it)
         }
       }
       176.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptPaymentMethodDetailsApi.fromList(it)
+          SetupIntentApi.fromList(it)
         }
       }
       177.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptCardPresentDetailsApi.fromList(it)
+          SetupAttemptApi.fromList(it)
         }
       }
       178.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          LocationApi.fromList(it)
+          SetupAttemptPaymentMethodDetailsApi.fromList(it)
         }
       }
       179.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AddressApi.fromList(it)
+          SetupAttemptCardPresentDetailsApi.fromList(it)
         }
       }
       180.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothConnectionConfigurationApi.fromList(it)
+          LocationApi.fromList(it)
         }
       }
       181.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppsOnDevicesConnectionConfigurationApi.fromList(it)
+          AddressApi.fromList(it)
         }
       }
       182.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          InternetConnectionConfigurationApi.fromList(it)
+          BluetoothConnectionConfigurationApi.fromList(it)
         }
       }
       183.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayConnectionConfigurationApi.fromList(it)
+          AppsOnDevicesConnectionConfigurationApi.fromList(it)
         }
       }
       184.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UsbConnectionConfigurationApi.fromList(it)
+          InternetConnectionConfigurationApi.fromList(it)
         }
       }
       185.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothDiscoveryConfigurationApi.fromList(it)
+          TapToPayConnectionConfigurationApi.fromList(it)
         }
       }
       186.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothProximityDiscoveryConfigurationApi.fromList(it)
+          UsbConnectionConfigurationApi.fromList(it)
         }
       }
       187.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppsOnDevicesDiscoveryConfigurationApi.fromList(it)
+          BluetoothDiscoveryConfigurationApi.fromList(it)
         }
       }
       188.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          InternetDiscoveryConfigurationApi.fromList(it)
+          BluetoothProximityDiscoveryConfigurationApi.fromList(it)
         }
       }
       189.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayDiscoveryConfigurationApi.fromList(it)
+          AppsOnDevicesDiscoveryConfigurationApi.fromList(it)
         }
       }
       190.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UsbDiscoveryConfigurationApi.fromList(it)
+          InternetDiscoveryConfigurationApi.fromList(it)
         }
       }
       191.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ClearCachedCredentialsResultApi.fromList(it)
+          TapToPayDiscoveryConfigurationApi.fromList(it)
         }
       }
       192.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SimulatorConfigurationApi.fromList(it)
+          UsbDiscoveryConfigurationApi.fromList(it)
         }
       }
       193.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SimulatedCardApi.fromList(it)
+          ClearCachedCredentialsResultApi.fromList(it)
         }
       }
       194.toByte() -> {
@@ -5008,35 +5008,35 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
         stream.write(142)
         writeValue(stream, value.raw.toLong())
       }
-      is UpdateComponentApi -> {
+      is SimulateReaderUpdateApi -> {
         stream.write(143)
         writeValue(stream, value.raw.toLong())
       }
-      is UpdateTimeEstimateApi -> {
+      is SimulatedCardTypeApi -> {
         stream.write(144)
         writeValue(stream, value.raw.toLong())
       }
-      is SetupIntentUsageApi -> {
+      is UpdateComponentApi -> {
         stream.write(145)
         writeValue(stream, value.raw.toLong())
       }
-      is SetupIntentStatusApi -> {
+      is UpdateTimeEstimateApi -> {
         stream.write(146)
         writeValue(stream, value.raw.toLong())
       }
-      is SetupAttemptStatusApi -> {
+      is SetupIntentUsageApi -> {
         stream.write(147)
         writeValue(stream, value.raw.toLong())
       }
-      is AllowRedisplayApi -> {
+      is SetupIntentStatusApi -> {
         stream.write(148)
         writeValue(stream, value.raw.toLong())
       }
-      is SimulateReaderUpdateApi -> {
+      is SetupAttemptStatusApi -> {
         stream.write(149)
         writeValue(stream, value.raw.toLong())
       }
-      is SimulatedCardTypeApi -> {
+      is AllowRedisplayApi -> {
         stream.write(150)
         writeValue(stream, value.raw.toLong())
       }
@@ -5128,87 +5128,87 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
         stream.write(172)
         writeValue(stream, value.toList())
       }
-      is ReaderSoftwareUpdateApi -> {
+      is SimulatorConfigurationApi -> {
         stream.write(173)
         writeValue(stream, value.toList())
       }
-      is SetupIntentApi -> {
+      is SimulatedCardApi -> {
         stream.write(174)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptApi -> {
+      is ReaderSoftwareUpdateApi -> {
         stream.write(175)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptPaymentMethodDetailsApi -> {
+      is SetupIntentApi -> {
         stream.write(176)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptCardPresentDetailsApi -> {
+      is SetupAttemptApi -> {
         stream.write(177)
         writeValue(stream, value.toList())
       }
-      is LocationApi -> {
+      is SetupAttemptPaymentMethodDetailsApi -> {
         stream.write(178)
         writeValue(stream, value.toList())
       }
-      is AddressApi -> {
+      is SetupAttemptCardPresentDetailsApi -> {
         stream.write(179)
         writeValue(stream, value.toList())
       }
-      is BluetoothConnectionConfigurationApi -> {
+      is LocationApi -> {
         stream.write(180)
         writeValue(stream, value.toList())
       }
-      is AppsOnDevicesConnectionConfigurationApi -> {
+      is AddressApi -> {
         stream.write(181)
         writeValue(stream, value.toList())
       }
-      is InternetConnectionConfigurationApi -> {
+      is BluetoothConnectionConfigurationApi -> {
         stream.write(182)
         writeValue(stream, value.toList())
       }
-      is TapToPayConnectionConfigurationApi -> {
+      is AppsOnDevicesConnectionConfigurationApi -> {
         stream.write(183)
         writeValue(stream, value.toList())
       }
-      is UsbConnectionConfigurationApi -> {
+      is InternetConnectionConfigurationApi -> {
         stream.write(184)
         writeValue(stream, value.toList())
       }
-      is BluetoothDiscoveryConfigurationApi -> {
+      is TapToPayConnectionConfigurationApi -> {
         stream.write(185)
         writeValue(stream, value.toList())
       }
-      is BluetoothProximityDiscoveryConfigurationApi -> {
+      is UsbConnectionConfigurationApi -> {
         stream.write(186)
         writeValue(stream, value.toList())
       }
-      is AppsOnDevicesDiscoveryConfigurationApi -> {
+      is BluetoothDiscoveryConfigurationApi -> {
         stream.write(187)
         writeValue(stream, value.toList())
       }
-      is InternetDiscoveryConfigurationApi -> {
+      is BluetoothProximityDiscoveryConfigurationApi -> {
         stream.write(188)
         writeValue(stream, value.toList())
       }
-      is TapToPayDiscoveryConfigurationApi -> {
+      is AppsOnDevicesDiscoveryConfigurationApi -> {
         stream.write(189)
         writeValue(stream, value.toList())
       }
-      is UsbDiscoveryConfigurationApi -> {
+      is InternetDiscoveryConfigurationApi -> {
         stream.write(190)
         writeValue(stream, value.toList())
       }
-      is ClearCachedCredentialsResultApi -> {
+      is TapToPayDiscoveryConfigurationApi -> {
         stream.write(191)
         writeValue(stream, value.toList())
       }
-      is SimulatorConfigurationApi -> {
+      is UsbDiscoveryConfigurationApi -> {
         stream.write(192)
         writeValue(stream, value.toList())
       }
-      is SimulatedCardApi -> {
+      is ClearCachedCredentialsResultApi -> {
         stream.write(193)
         writeValue(stream, value.toList())
       }
@@ -5313,7 +5313,7 @@ interface TerminalPlatformApi {
   fun getPaymentStatus(): PaymentStatusApi
   fun createPaymentIntent(parameters: PaymentIntentParametersApi, callback: (Result<PaymentIntentApi>) -> Unit)
   fun retrievePaymentIntent(clientSecret: String, callback: (Result<PaymentIntentApi>) -> Unit)
-  fun startProcessPaymentIntent(operationId: Long, paymentIntentId: String, requestDynamicCurrencyConversion: Boolean, surchargeNotice: String?, skipTipping: Boolean, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Boolean, customerCancellationEnabled: Boolean, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi?, callback: (Result<PaymentIntentApi>) -> Unit)
+  fun startProcessPaymentIntent(operationId: Long, paymentIntentId: String, requestDynamicCurrencyConversion: Boolean, surchargeNotice: String?, skipTipping: Boolean, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Boolean, customerCancellationEnabled: Boolean, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, callback: (Result<PaymentIntentApi>) -> Unit)
   fun stopProcessPaymentIntent(operationId: Long, callback: (Result<Unit>) -> Unit)
   fun cancelPaymentIntent(paymentIntentId: String, callback: (Result<PaymentIntentApi>) -> Unit)
   fun createSetupIntent(customerId: String?, metadata: Map<String, String>?, onBehalfOf: String?, description: String?, usage: SetupIntentUsageApi?, callback: (Result<SetupIntentApi>) -> Unit)
@@ -5690,7 +5690,7 @@ interface TerminalPlatformApi {
             val shouldUpdatePaymentIntentArg = args[6] as Boolean
             val customerCancellationEnabledArg = args[7] as Boolean
             val allowRedisplayArg = args[8] as AllowRedisplayApi
-            val confirmConfigurationArg = args[9] as ConfirmPaymentIntentConfigurationApi?
+            val confirmConfigurationArg = args[9] as ConfirmPaymentIntentConfigurationApi
             api.startProcessPaymentIntent(operationIdArg, paymentIntentIdArg, requestDynamicCurrencyConversionArg, surchargeNoticeArg, skipTippingArg, tippingConfigurationArg, shouldUpdatePaymentIntentArg, customerCancellationEnabledArg, allowRedisplayArg, confirmConfigurationArg) { result: Result<PaymentIntentApi> ->
               val error = result.exceptionOrNull()
               if (error != null) {

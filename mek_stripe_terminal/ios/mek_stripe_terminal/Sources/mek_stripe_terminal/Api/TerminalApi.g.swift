@@ -843,65 +843,6 @@ enum ChargeStatusApi: Int, CaseIterable {
   case failed = 2
 }
 
-enum UpdateComponentApi: Int, CaseIterable {
-  case incremental = 0
-  case firmware = 1
-  case config = 2
-  case keys = 3
-}
-
-enum UpdateTimeEstimateApi: Int, CaseIterable {
-  case lessThanOneMinute = 0
-  case oneToTwoMinutes = 1
-  case twoToFiveMinutes = 2
-  case fiveToFifteenMinutes = 3
-}
-
-/// The [SetupIntentApi] usage options tell Stripe how the payment method is intended to be used in the future.
-/// Stripe will use the chosen option to pick the most frictionless flow for the customer.
-enum SetupIntentUsageApi: Int, CaseIterable {
-  /// An on-session usage indicates to Stripe that future payments will take place while the customer
-  /// is actively in your checkout flow and able to authenticate the payment method.
-  /// With the on-session option, you can postpone authenticating the card details
-  /// until a future checkout to avoid upfront friction.
-  case onSession = 0
-  /// An off-session usage indicates to Stripe that future payments will take place without
-  /// the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
-  /// initial friction from additional authentication steps, but can reduce customer intervention
-  /// in later off-session payments.
-  case offSession = 1
-}
-
-enum SetupIntentStatusApi: Int, CaseIterable {
-  case requiresPaymentMethod = 0
-  case requiresConfirmation = 1
-  case requiresAction = 2
-  case processing = 3
-  case succeeded = 4
-  case cancelled = 5
-}
-
-/// Statuses for a [SetupAttemptApi]
-enum SetupAttemptStatusApi: Int, CaseIterable {
-  case requiresConfirmation = 0
-  case requiresAction = 1
-  case processing = 2
-  case succeeded = 3
-  case failed = 4
-  case abandoned = 5
-}
-
-/// A field used to indicate whether a payment method can be shown again to its customer in a
-/// checkout flow. Consent must be obtained to set this field.
-enum AllowRedisplayApi: Int, CaseIterable {
-  /// Use always to indicate that this payment method can always be shown to a customer in a checkout flow.
-  case always = 0
-  /// Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription.
-  case limited = 1
-  /// This is the default value for payment methods where allow_redisplay wasn’t set.
-  case unspecified = 2
-}
-
 /// Enum used to simulate various types of reader updates being available for a simulated bluetooth
 /// or local mobile reader.
 enum SimulateReaderUpdateApi: Int, CaseIterable {
@@ -986,6 +927,65 @@ enum SimulatedCardTypeApi: Int, CaseIterable {
   /// This flow simulates an Offline Pin scenario with SCA compliance. Payment is retried and user is
   /// prompted to insert their card. Next a contact retry and an offline pin being entered are simulated.
   case offlinePinScaRetry = 27
+}
+
+enum UpdateComponentApi: Int, CaseIterable {
+  case incremental = 0
+  case firmware = 1
+  case config = 2
+  case keys = 3
+}
+
+enum UpdateTimeEstimateApi: Int, CaseIterable {
+  case lessThanOneMinute = 0
+  case oneToTwoMinutes = 1
+  case twoToFiveMinutes = 2
+  case fiveToFifteenMinutes = 3
+}
+
+/// The [SetupIntentApi] usage options tell Stripe how the payment method is intended to be used in the future.
+/// Stripe will use the chosen option to pick the most frictionless flow for the customer.
+enum SetupIntentUsageApi: Int, CaseIterable {
+  /// An on-session usage indicates to Stripe that future payments will take place while the customer
+  /// is actively in your checkout flow and able to authenticate the payment method.
+  /// With the on-session option, you can postpone authenticating the card details
+  /// until a future checkout to avoid upfront friction.
+  case onSession = 0
+  /// An off-session usage indicates to Stripe that future payments will take place without
+  /// the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
+  /// initial friction from additional authentication steps, but can reduce customer intervention
+  /// in later off-session payments.
+  case offSession = 1
+}
+
+enum SetupIntentStatusApi: Int, CaseIterable {
+  case requiresPaymentMethod = 0
+  case requiresConfirmation = 1
+  case requiresAction = 2
+  case processing = 3
+  case succeeded = 4
+  case cancelled = 5
+}
+
+/// Statuses for a [SetupAttemptApi]
+enum SetupAttemptStatusApi: Int, CaseIterable {
+  case requiresConfirmation = 0
+  case requiresAction = 1
+  case processing = 2
+  case succeeded = 3
+  case failed = 4
+  case abandoned = 5
+}
+
+/// A field used to indicate whether a payment method can be shown again to its customer in a
+/// checkout flow. Consent must be obtained to set this field.
+enum AllowRedisplayApi: Int, CaseIterable {
+  /// Use always to indicate that this payment method can always be shown to a customer in a checkout flow.
+  case always = 0
+  /// Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription.
+  case limited = 1
+  /// This is the default value for payment methods where allow_redisplay wasn’t set.
+  case unspecified = 2
 }
 
 /// The possible statuses for a [PaymentIntentApi].
@@ -1786,6 +1786,115 @@ struct TapToPayEasyConnectConfigurationApi: EasyConnectConfigurationApi {
 
   public var description: String {
     return "TapToPayEasyConnectConfigurationApi(discoveryConfiguration: \(String(describing: discoveryConfiguration)), connectionConfiguration: \(String(describing: connectionConfiguration)))"
+  }
+}
+
+/// Simulator specific configurations you can set to test your integration’s behavior in different
+/// scenarios. We recommend changing these properties during testing to ensure your app works as
+/// expected for different reader updates and for different presented cards.
+///
+/// Do not create new instances of this class. Instead, set the properties via [Terminal.setSimulatorConfiguration].
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct SimulatorConfigurationApi: Hashable, CustomStringConvertible {
+  /// Set this to different values of the [SimulateReaderUpdateApi] enum to test your integration with
+  /// different reader software update scenarios.
+  var update: SimulateReaderUpdateApi
+  /// Create a [SimulatedCardApi] and set it on the shared configuration object to test your integration
+  /// with different card brands and in error scenarios.
+  ///
+  /// Note: Simulated Internet reader refunds do not use the specified simulated card.
+  /// See: https://stripe.com/docs/terminal/testing#simulated-test-cards
+  var simulatedCard: SimulatedCardApi
+  /// Set this to simulate a [Terminal] configuration object with this fixed tip amount for all currencies.
+  var simulatedTipAmount: Int64? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> SimulatorConfigurationApi? {
+    let update = pigeonVar_list[0] as! SimulateReaderUpdateApi
+    let simulatedCard = pigeonVar_list[1] as! SimulatedCardApi
+    let simulatedTipAmount: Int64? = nilOrValue(pigeonVar_list[2])
+
+    return SimulatorConfigurationApi(
+      update: update,
+      simulatedCard: simulatedCard,
+      simulatedTipAmount: simulatedTipAmount
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      update,
+      simulatedCard,
+      simulatedTipAmount,
+    ]
+  }
+  static func == (lhs: SimulatorConfigurationApi, rhs: SimulatorConfigurationApi) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return TerminalApiPigeonInternal.deepEquals(lhs.update, rhs.update) && TerminalApiPigeonInternal.deepEquals(lhs.simulatedCard, rhs.simulatedCard) && TerminalApiPigeonInternal.deepEquals(lhs.simulatedTipAmount, rhs.simulatedTipAmount)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("SimulatorConfigurationApi")
+    TerminalApiPigeonInternal.deepHash(value: update, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: simulatedCard, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: simulatedTipAmount, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "SimulatorConfigurationApi(update: \(String(describing: update)), simulatedCard: \(String(describing: simulatedCard)), simulatedTipAmount: \(String(describing: simulatedTipAmount)))"
+  }
+}
+
+/// Simulated Card objects can be used with the shared [SimulatorConfigurationApi] to simulate different
+/// card brand and error cases with a simulated Reader.
+///
+/// Simulated Card objects are backed by one of Stripe’s test card numbers, which are hardcoded to
+/// provide certain behavior within Stripe’s backend. The Terminal SDK provides an [SimulatedCardTypeApi]
+/// enum that automatically maps to the card numbers for convenience.
+///
+///
+/// See: https://stripe.com/docs/terminal/testing#simulated-test-cards
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct SimulatedCardApi: Hashable, CustomStringConvertible {
+  var type: SimulatedCardTypeApi? = nil
+  var testCardNumber: String? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> SimulatedCardApi? {
+    let type: SimulatedCardTypeApi? = nilOrValue(pigeonVar_list[0])
+    let testCardNumber: String? = nilOrValue(pigeonVar_list[1])
+
+    return SimulatedCardApi(
+      type: type,
+      testCardNumber: testCardNumber
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      type,
+      testCardNumber,
+    ]
+  }
+  static func == (lhs: SimulatedCardApi, rhs: SimulatedCardApi) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return TerminalApiPigeonInternal.deepEquals(lhs.type, rhs.type) && TerminalApiPigeonInternal.deepEquals(lhs.testCardNumber, rhs.testCardNumber)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("SimulatedCardApi")
+    TerminalApiPigeonInternal.deepHash(value: type, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: testCardNumber, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "SimulatedCardApi(type: \(String(describing: type)), testCardNumber: \(String(describing: testCardNumber)))"
   }
 }
 
@@ -2780,115 +2889,6 @@ struct ClearCachedCredentialsResultApi: Hashable, CustomStringConvertible {
 
   public var description: String {
     return "ClearCachedCredentialsResultApi(isSuccessful: \(String(describing: isSuccessful)), error: \(String(describing: error)))"
-  }
-}
-
-/// Simulator specific configurations you can set to test your integration’s behavior in different
-/// scenarios. We recommend changing these properties during testing to ensure your app works as
-/// expected for different reader updates and for different presented cards.
-///
-/// Do not create new instances of this class. Instead, set the properties via [Terminal.setSimulatorConfiguration].
-///
-/// Generated class from Pigeon that represents data sent in messages.
-struct SimulatorConfigurationApi: Hashable, CustomStringConvertible {
-  /// Set this to different values of the [SimulateReaderUpdateApi] enum to test your integration with
-  /// different reader software update scenarios.
-  var update: SimulateReaderUpdateApi
-  /// Create a [SimulatedCardApi] and set it on the shared configuration object to test your integration
-  /// with different card brands and in error scenarios.
-  ///
-  /// Note: Simulated Internet reader refunds do not use the specified simulated card.
-  /// See: https://stripe.com/docs/terminal/testing#simulated-test-cards
-  var simulatedCard: SimulatedCardApi
-  /// Set this to simulate a [Terminal] configuration object with this fixed tip amount for all currencies.
-  var simulatedTipAmount: Int64? = nil
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> SimulatorConfigurationApi? {
-    let update = pigeonVar_list[0] as! SimulateReaderUpdateApi
-    let simulatedCard = pigeonVar_list[1] as! SimulatedCardApi
-    let simulatedTipAmount: Int64? = nilOrValue(pigeonVar_list[2])
-
-    return SimulatorConfigurationApi(
-      update: update,
-      simulatedCard: simulatedCard,
-      simulatedTipAmount: simulatedTipAmount
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      update,
-      simulatedCard,
-      simulatedTipAmount,
-    ]
-  }
-  static func == (lhs: SimulatorConfigurationApi, rhs: SimulatorConfigurationApi) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return TerminalApiPigeonInternal.deepEquals(lhs.update, rhs.update) && TerminalApiPigeonInternal.deepEquals(lhs.simulatedCard, rhs.simulatedCard) && TerminalApiPigeonInternal.deepEquals(lhs.simulatedTipAmount, rhs.simulatedTipAmount)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("SimulatorConfigurationApi")
-    TerminalApiPigeonInternal.deepHash(value: update, hasher: &hasher)
-    TerminalApiPigeonInternal.deepHash(value: simulatedCard, hasher: &hasher)
-    TerminalApiPigeonInternal.deepHash(value: simulatedTipAmount, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "SimulatorConfigurationApi(update: \(String(describing: update)), simulatedCard: \(String(describing: simulatedCard)), simulatedTipAmount: \(String(describing: simulatedTipAmount)))"
-  }
-}
-
-/// Simulated Card objects can be used with the shared [SimulatorConfigurationApi] to simulate different
-/// card brand and error cases with a simulated Reader.
-///
-/// Simulated Card objects are backed by one of Stripe’s test card numbers, which are hardcoded to
-/// provide certain behavior within Stripe’s backend. The Terminal SDK provides an [SimulatedCardTypeApi]
-/// enum that automatically maps to the card numbers for convenience.
-///
-///
-/// See: https://stripe.com/docs/terminal/testing#simulated-test-cards
-///
-/// Generated class from Pigeon that represents data sent in messages.
-struct SimulatedCardApi: Hashable, CustomStringConvertible {
-  var type: SimulatedCardTypeApi? = nil
-  var testCardNumber: String? = nil
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> SimulatedCardApi? {
-    let type: SimulatedCardTypeApi? = nilOrValue(pigeonVar_list[0])
-    let testCardNumber: String? = nilOrValue(pigeonVar_list[1])
-
-    return SimulatedCardApi(
-      type: type,
-      testCardNumber: testCardNumber
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      type,
-      testCardNumber,
-    ]
-  }
-  static func == (lhs: SimulatedCardApi, rhs: SimulatedCardApi) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return TerminalApiPigeonInternal.deepEquals(lhs.type, rhs.type) && TerminalApiPigeonInternal.deepEquals(lhs.testCardNumber, rhs.testCardNumber)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("SimulatedCardApi")
-    TerminalApiPigeonInternal.deepHash(value: type, hasher: &hasher)
-    TerminalApiPigeonInternal.deepHash(value: testCardNumber, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "SimulatedCardApi(type: \(String(describing: type)), testCardNumber: \(String(describing: testCardNumber)))"
   }
 }
 
@@ -4187,49 +4187,49 @@ private class TerminalApiPigeonCodecReader: FlutterStandardReader {
     case 143:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return UpdateComponentApi(rawValue: enumResultAsInt)
+        return SimulateReaderUpdateApi(rawValue: enumResultAsInt)
       }
       return nil
     case 144:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return UpdateTimeEstimateApi(rawValue: enumResultAsInt)
+        return SimulatedCardTypeApi(rawValue: enumResultAsInt)
       }
       return nil
     case 145:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return SetupIntentUsageApi(rawValue: enumResultAsInt)
+        return UpdateComponentApi(rawValue: enumResultAsInt)
       }
       return nil
     case 146:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return SetupIntentStatusApi(rawValue: enumResultAsInt)
+        return UpdateTimeEstimateApi(rawValue: enumResultAsInt)
       }
       return nil
     case 147:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return SetupAttemptStatusApi(rawValue: enumResultAsInt)
+        return SetupIntentUsageApi(rawValue: enumResultAsInt)
       }
       return nil
     case 148:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return AllowRedisplayApi(rawValue: enumResultAsInt)
+        return SetupIntentStatusApi(rawValue: enumResultAsInt)
       }
       return nil
     case 149:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return SimulateReaderUpdateApi(rawValue: enumResultAsInt)
+        return SetupAttemptStatusApi(rawValue: enumResultAsInt)
       }
       return nil
     case 150:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return SimulatedCardTypeApi(rawValue: enumResultAsInt)
+        return AllowRedisplayApi(rawValue: enumResultAsInt)
       }
       return nil
     case 151:
@@ -4321,47 +4321,47 @@ private class TerminalApiPigeonCodecReader: FlutterStandardReader {
     case 172:
       return TapToPayEasyConnectConfigurationApi.fromList(self.readValue() as! [Any?])
     case 173:
-      return ReaderSoftwareUpdateApi.fromList(self.readValue() as! [Any?])
-    case 174:
-      return SetupIntentApi.fromList(self.readValue() as! [Any?])
-    case 175:
-      return SetupAttemptApi.fromList(self.readValue() as! [Any?])
-    case 176:
-      return SetupAttemptPaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
-    case 177:
-      return SetupAttemptCardPresentDetailsApi.fromList(self.readValue() as! [Any?])
-    case 178:
-      return LocationApi.fromList(self.readValue() as! [Any?])
-    case 179:
-      return AddressApi.fromList(self.readValue() as! [Any?])
-    case 180:
-      return BluetoothConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 181:
-      return AppsOnDevicesConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 182:
-      return InternetConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 183:
-      return TapToPayConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 184:
-      return UsbConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 185:
-      return BluetoothDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 186:
-      return BluetoothProximityDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 187:
-      return AppsOnDevicesDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 188:
-      return InternetDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 189:
-      return TapToPayDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 190:
-      return UsbDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 191:
-      return ClearCachedCredentialsResultApi.fromList(self.readValue() as! [Any?])
-    case 192:
       return SimulatorConfigurationApi.fromList(self.readValue() as! [Any?])
-    case 193:
+    case 174:
       return SimulatedCardApi.fromList(self.readValue() as! [Any?])
+    case 175:
+      return ReaderSoftwareUpdateApi.fromList(self.readValue() as! [Any?])
+    case 176:
+      return SetupIntentApi.fromList(self.readValue() as! [Any?])
+    case 177:
+      return SetupAttemptApi.fromList(self.readValue() as! [Any?])
+    case 178:
+      return SetupAttemptPaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
+    case 179:
+      return SetupAttemptCardPresentDetailsApi.fromList(self.readValue() as! [Any?])
+    case 180:
+      return LocationApi.fromList(self.readValue() as! [Any?])
+    case 181:
+      return AddressApi.fromList(self.readValue() as! [Any?])
+    case 182:
+      return BluetoothConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 183:
+      return AppsOnDevicesConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 184:
+      return InternetConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 185:
+      return TapToPayConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 186:
+      return UsbConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 187:
+      return BluetoothDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 188:
+      return BluetoothProximityDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 189:
+      return AppsOnDevicesDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 190:
+      return InternetDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 191:
+      return TapToPayDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 192:
+      return UsbDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+    case 193:
+      return ClearCachedCredentialsResultApi.fromList(self.readValue() as! [Any?])
     case 194:
       return PaymentIntentApi.fromList(self.readValue() as! [Any?])
     case 195:
@@ -4448,28 +4448,28 @@ private class TerminalApiPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? ChargeStatusApi {
       super.writeByte(142)
       super.writeValue(value.rawValue)
-    } else if let value = value as? UpdateComponentApi {
+    } else if let value = value as? SimulateReaderUpdateApi {
       super.writeByte(143)
       super.writeValue(value.rawValue)
-    } else if let value = value as? UpdateTimeEstimateApi {
+    } else if let value = value as? SimulatedCardTypeApi {
       super.writeByte(144)
       super.writeValue(value.rawValue)
-    } else if let value = value as? SetupIntentUsageApi {
+    } else if let value = value as? UpdateComponentApi {
       super.writeByte(145)
       super.writeValue(value.rawValue)
-    } else if let value = value as? SetupIntentStatusApi {
+    } else if let value = value as? UpdateTimeEstimateApi {
       super.writeByte(146)
       super.writeValue(value.rawValue)
-    } else if let value = value as? SetupAttemptStatusApi {
+    } else if let value = value as? SetupIntentUsageApi {
       super.writeByte(147)
       super.writeValue(value.rawValue)
-    } else if let value = value as? AllowRedisplayApi {
+    } else if let value = value as? SetupIntentStatusApi {
       super.writeByte(148)
       super.writeValue(value.rawValue)
-    } else if let value = value as? SimulateReaderUpdateApi {
+    } else if let value = value as? SetupAttemptStatusApi {
       super.writeByte(149)
       super.writeValue(value.rawValue)
-    } else if let value = value as? SimulatedCardTypeApi {
+    } else if let value = value as? AllowRedisplayApi {
       super.writeByte(150)
       super.writeValue(value.rawValue)
     } else if let value = value as? PaymentIntentStatusApi {
@@ -4538,67 +4538,67 @@ private class TerminalApiPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? TapToPayEasyConnectConfigurationApi {
       super.writeByte(172)
       super.writeValue(value.toList())
-    } else if let value = value as? ReaderSoftwareUpdateApi {
+    } else if let value = value as? SimulatorConfigurationApi {
       super.writeByte(173)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupIntentApi {
+    } else if let value = value as? SimulatedCardApi {
       super.writeByte(174)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptApi {
+    } else if let value = value as? ReaderSoftwareUpdateApi {
       super.writeByte(175)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptPaymentMethodDetailsApi {
+    } else if let value = value as? SetupIntentApi {
       super.writeByte(176)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptCardPresentDetailsApi {
+    } else if let value = value as? SetupAttemptApi {
       super.writeByte(177)
       super.writeValue(value.toList())
-    } else if let value = value as? LocationApi {
+    } else if let value = value as? SetupAttemptPaymentMethodDetailsApi {
       super.writeByte(178)
       super.writeValue(value.toList())
-    } else if let value = value as? AddressApi {
+    } else if let value = value as? SetupAttemptCardPresentDetailsApi {
       super.writeByte(179)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothConnectionConfigurationApi {
+    } else if let value = value as? LocationApi {
       super.writeByte(180)
       super.writeValue(value.toList())
-    } else if let value = value as? AppsOnDevicesConnectionConfigurationApi {
+    } else if let value = value as? AddressApi {
       super.writeByte(181)
       super.writeValue(value.toList())
-    } else if let value = value as? InternetConnectionConfigurationApi {
+    } else if let value = value as? BluetoothConnectionConfigurationApi {
       super.writeByte(182)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayConnectionConfigurationApi {
+    } else if let value = value as? AppsOnDevicesConnectionConfigurationApi {
       super.writeByte(183)
       super.writeValue(value.toList())
-    } else if let value = value as? UsbConnectionConfigurationApi {
+    } else if let value = value as? InternetConnectionConfigurationApi {
       super.writeByte(184)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothDiscoveryConfigurationApi {
+    } else if let value = value as? TapToPayConnectionConfigurationApi {
       super.writeByte(185)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothProximityDiscoveryConfigurationApi {
+    } else if let value = value as? UsbConnectionConfigurationApi {
       super.writeByte(186)
       super.writeValue(value.toList())
-    } else if let value = value as? AppsOnDevicesDiscoveryConfigurationApi {
+    } else if let value = value as? BluetoothDiscoveryConfigurationApi {
       super.writeByte(187)
       super.writeValue(value.toList())
-    } else if let value = value as? InternetDiscoveryConfigurationApi {
+    } else if let value = value as? BluetoothProximityDiscoveryConfigurationApi {
       super.writeByte(188)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayDiscoveryConfigurationApi {
+    } else if let value = value as? AppsOnDevicesDiscoveryConfigurationApi {
       super.writeByte(189)
       super.writeValue(value.toList())
-    } else if let value = value as? UsbDiscoveryConfigurationApi {
+    } else if let value = value as? InternetDiscoveryConfigurationApi {
       super.writeByte(190)
       super.writeValue(value.toList())
-    } else if let value = value as? ClearCachedCredentialsResultApi {
+    } else if let value = value as? TapToPayDiscoveryConfigurationApi {
       super.writeByte(191)
       super.writeValue(value.toList())
-    } else if let value = value as? SimulatorConfigurationApi {
+    } else if let value = value as? UsbDiscoveryConfigurationApi {
       super.writeByte(192)
       super.writeValue(value.toList())
-    } else if let value = value as? SimulatedCardApi {
+    } else if let value = value as? ClearCachedCredentialsResultApi {
       super.writeByte(193)
       super.writeValue(value.toList())
     } else if let value = value as? PaymentIntentApi {
@@ -4699,7 +4699,7 @@ protocol TerminalPlatformApi {
   func getPaymentStatus() throws -> PaymentStatusApi
   func createPaymentIntent(parameters: PaymentIntentParametersApi, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func retrievePaymentIntent(clientSecret: String, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
-  func startProcessPaymentIntent(operationId: Int64, paymentIntentId: String, requestDynamicCurrencyConversion: Bool, surchargeNotice: String?, skipTipping: Bool, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Bool, customerCancellationEnabled: Bool, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi?, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
+  func startProcessPaymentIntent(operationId: Int64, paymentIntentId: String, requestDynamicCurrencyConversion: Bool, surchargeNotice: String?, skipTipping: Bool, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Bool, customerCancellationEnabled: Bool, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func stopProcessPaymentIntent(operationId: Int64, completion: @escaping (Result<Void, Error>) -> Void)
   func cancelPaymentIntent(paymentIntentId: String, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func createSetupIntent(customerId: String?, metadata: [String: String]?, onBehalfOf: String?, description: String?, usage: SetupIntentUsageApi?, completion: @escaping (Result<SetupIntentApi, Error>) -> Void)
@@ -5026,7 +5026,7 @@ class TerminalPlatformApiSetup {
         let shouldUpdatePaymentIntentArg = args[6] as! Bool
         let customerCancellationEnabledArg = args[7] as! Bool
         let allowRedisplayArg = args[8] as! AllowRedisplayApi
-        let confirmConfigurationArg: ConfirmPaymentIntentConfigurationApi? = nilOrValue(args[9])
+        let confirmConfigurationArg = args[9] as! ConfirmPaymentIntentConfigurationApi
         api.startProcessPaymentIntent(operationId: operationIdArg, paymentIntentId: paymentIntentIdArg, requestDynamicCurrencyConversion: requestDynamicCurrencyConversionArg, surchargeNotice: surchargeNoticeArg, skipTipping: skipTippingArg, tippingConfiguration: tippingConfigurationArg, shouldUpdatePaymentIntent: shouldUpdatePaymentIntentArg, customerCancellationEnabled: customerCancellationEnabledArg, allowRedisplay: allowRedisplayArg, confirmConfiguration: confirmConfigurationArg) { result in
           switch result {
           case .success(let res):

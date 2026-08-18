@@ -144,6 +144,14 @@ extension PaymentIntentUsageApi {
     }
 }
 
+extension ConfirmPaymentIntentConfigurationApi {
+    func toHost() throws -> ConfirmPaymentIntentConfiguration {
+        let configuration = ConfirmPaymentIntentConfigurationBuilder();
+        if let returnUrl = returnUrl { configuration.setReturnUrl(returnUrl) }
+        return try configuration.build()
+    }
+}
+
 // EXTRA
 
 extension PaymentStatus {

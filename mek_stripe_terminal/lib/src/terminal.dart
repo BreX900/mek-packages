@@ -287,6 +287,8 @@ class Terminal {
   /// Processes a PaymentIntent by collecting a payment method and confirming it.
   ///
   /// This method collects a payment method and confirms it in one call.
+  // TODO: Move all parameters inside CollectPaymentIntentConfiguration
+  // TODO: Remove null on [confirmConfiguration] parameter
   CancelableFuture<PaymentIntent> processPaymentIntent(
     PaymentIntent paymentIntent, {
     bool requestDynamicCurrencyConversion = false,
@@ -309,7 +311,7 @@ class Terminal {
         shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
         customerCancellationEnabled: customerCancellationEnabled,
         allowRedisplay: allowRedisplay,
-        confirmConfiguration: confirmConfiguration,
+        confirmConfiguration: confirmConfiguration ?? ConfirmPaymentIntentConfiguration(),
       );
     });
   }

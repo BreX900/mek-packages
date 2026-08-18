@@ -355,7 +355,7 @@ class TerminalPlatformPlugin(
         shouldUpdatePaymentIntent: Boolean,
         customerCancellationEnabled: Boolean,
         allowRedisplay: AllowRedisplayApi,
-        confirmConfiguration: ConfirmPaymentIntentConfigurationApi?,
+        confirmConfiguration: ConfirmPaymentIntentConfigurationApi,
         callback: (Result<PaymentIntentApi>) -> Unit
     ) {
         val paymentIntent = findPaymentIntent(paymentIntentId)
@@ -368,13 +368,12 @@ class TerminalPlatformPlugin(
             customerCancellationEnabled = customerCancellationEnabled,
             allowRedisplay = allowRedisplay
         )
-        val confirmConfig = confirmConfiguration?.toHost()
-            ?: ConfirmPaymentIntentConfiguration.Builder().build()
+        val confirmConfig = confirmConfiguration.toHost()
 
         processPaymentIntentCancelables[operationId] = terminal.processPaymentIntent(
-            paymentIntent,
-            collectConfig,
-            confirmConfig,
+            intent = paymentIntent,
+            collectConfig = collectConfig,
+            confirmConfig = confirmConfig,
             object : TerminalErrorHandler<PaymentIntentApi>(callback), PaymentIntentCallback {
                 override fun onFailure(e: TerminalException) {
                     processPaymentIntentCancelables.remove(operationId)

@@ -11,7 +11,7 @@ fun createError(details: TerminalExceptionApi): FlutterError {
     return FlutterError(
         code = "mek_stripe_terminal",
         message = null,
-        details = details
+        details = details.toList()
     )
 }
 

@@ -1,4 +1,9 @@
 
+## 5.7.1
+
+- fix(android): do not serialize api error when converting it to platform error (#157)[https://github.com/BreX900/mek-packages/issues/157]
+- fix(ios): incorrect calling collectPaymentMethod on processPaymentMethod (#158)[https://github.com/BreX900/mek-packages/issues/158]
+
 ## 5.7.0
 
 - build: bumped flutter to `^3.44.0` and dart to `3.12.0`

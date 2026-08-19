@@ -214,7 +214,7 @@ The code is formatted with a line/page length of 100 characters.
 Use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) for your commits.
 Much code in this plugin is auto generated:
 
-- [one_for_all](https://pub.dev/packages/one_for_all) is used to generate the code for communication between platforms.
+- [pigeon](https://pub.dev/packages/pigeon) is used to generate the code for communication between platforms. 
   Run this [script](tool/generate_api.dart)
 - [index_generator](https://pub.dev/packages/index_generator) is used to generate library exports
 

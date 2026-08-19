@@ -27,4 +27,9 @@ void main() async {
   await Pigeon.runWithOptions(options);
 
   input.deleteSync();
+
+  final result = Process.runSync('dart', ['format', options.dartOut!]);
+  if (result.exitCode >= 0) return;
+
+  throw StateError('${result.stderr}\n${result.stdout}');
 }

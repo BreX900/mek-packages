@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:meta/meta.dart' show immutable, protected, visibleForTesting;
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -34,7 +34,6 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
-
 List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty = false}) {
   if (empty) {
     return <Object?>[];
@@ -44,6 +43,7 @@ List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty
   }
   return <Object?>[error.code, error.message, error.details];
 }
+
 bool _deepEquals(Object? a, Object? b) {
   if (identical(a, b)) {
     return true;
@@ -56,8 +56,7 @@ bool _deepEquals(Object? a, Object? b) {
   }
   if (a is List && b is List) {
     return a.length == b.length &&
-        a.indexed
-            .every(((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]));
+        a.indexed.every(((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]));
   }
   if (a is Map && b is Map) {
     if (a.length != b.length) {
@@ -106,69 +105,83 @@ int _deepHash(Object? value) {
   return value.hashCode;
 }
 
-
-enum PaymentStatusApi {
-  notReady,
-  ready,
-  waitingForInput,
-  processing,
-}
+enum PaymentStatusApi { notReady, ready, waitingForInput, processing }
 
 /// Android exception codes: https://stripe.dev/stripe-terminal-android/external/com.stripe.stripeterminal.external.models/-terminal-exception/-terminal-error-code/index.html
 /// IOS exception codes: https://stripe.dev/stripe-terminal-ios/docs/Enums/SCPError.html
 enum TerminalExceptionCodeApi {
   /// See te message in [TerminalExceptionApi]
   unknown,
+
   /// See [message] field
   readerNotRecovered,
+
   /// See [message] field
   paymentIntentNotRecovered,
+
   /// See [message] field
   setupIntentNotRecovered,
+
   /// Cancelling an operation failed
   /// Android(CANCEL_FAILED)
   cancelFailed,
+
   /// Only IOS. Canceling a command failed because the command cannot currently be canceled.
   cancelFailedUnavailable,
+
   /// No reader is connected. Connect to a reader before trying again.
   /// Android(NOT_CONNECTED_TO_READER) IOS(SCPErrorNotConnectedToReader)
   notConnectedToReader,
+
   /// Already connected to a reader.
   alreadyConnectedToReader,
+
   /// Only IOS. This error indicates that Bluetooth is turned off, and the user should use Settings to turn Bluetooth on.
   /// If Bluetooth is on but the app does not have permission to use it, a different error (SCPErrorBluetoothError) occurs.
   bluetoothDisabled,
+
   /// Android: Either android.permission.BLUETOOTH_CONNECT or android.permission.BLUETOOTH_SCAN must be enabled.
   /// IOS: Bluetooth is turned on on the device, but access to Bluetooth has been denied for your app.
   ///   The user needs to go to Settings > Your App > and enable Bluetooth
   bluetoothPermissionDenied,
+
   /// [StripeTerminal.processPaymentIntent] was called with an unknown or invalid PaymentIntent.
   /// You must process a payment after retrieving a PaymentIntent. Successfully processed payments
   /// may not be processed again.
   confirmInvalidPaymentIntent,
+
   /// Only Android. [Terminal.processSetupIntent] was called with an unknown or invalid
   /// [SetupIntent]. Successfully processed setup intents may not be processed again.
   confirmInvalidSetupIntent,
+
   /// A [PaymentIntentApi] or [SetupIntent] was referenced using an invalid client secret.
   invalidClientSecret,
+
   /// Only IOS. [StripeTerminal.installUpdate] was passed an update that is for a different reader.
   ///   Updates can only be installed on the reader that was connected when the update was announced.
   invalidReaderForUpdate,
+
   /// Only Android. The Terminal operation that was called isn't supported for this device type
   unsupportedOperation,
+
   /// Only Android. The Terminal operation shouldn't have been called at this time.
   unexpectedOperation,
+
   /// [StripeTerminal.connectBluetoothReader] was called from an unsupported version of the SDK.
   /// In order to fix this you will need to update your app to the most recent version of the SDK.
   /// We suggest you prompt your user to update their app, assuming there is an update app version
   /// with a supported version of our SDK.
   unsupportedSdk,
+
   /// Only IOS. This feature is currently not available for the selected reader.
   featureNotAvailableWithConnectedReader,
+
   /// Only Android. User denied USB access when requested by the SDK.
   usbPermissionDenied,
+
   /// Only Android. Scanning for USB devices timed out.
   usbDiscoveryTimedOut,
+
   /// Android:
   /// - MISSING_REQUIRED_PARAMETER: A parameter that is required for your Terminal configuration is missing.
   /// - COLLECT_INPUTS_INVALID_PARAMETER: Error reported when invalid parameters are used while processing a collect inputs operation.
@@ -185,206 +198,282 @@ enum TerminalExceptionCodeApi {
   /// - SCPErrorCollectInputsInvalidParameter: An invalid parameter was used to start a collect
   ///   inputs operation.
   invalidParameter,
+
   /// Error reported when calling processPaymentIntent with request dynamic currency conversion and
   /// updatePaymentIntent set to false.
   /// IOS(SCPErrorRequestDynamicCurrencyConversionRequiresUpdatePaymentIntent)
   requestDynamicCurrencyConversionRequiresUpdatePaymentIntent,
+
   /// Dynamic Currency Conversion is not currently available.
   /// IOS(SCPErrorDynamicCurrencyConversionNotAvailable)
   dynamicCurrencyConversionNotAvailable,
+
   /// A required parameter was invalid or missing.
   invalidRequiredParameter,
+
   /// An invalid usage of eligibleAmount or skipTipping was passed into collect.
   invalidTipParameter,
+
   /// Only Android: The Android device the SDK is running on is unsupported by the local mobile library.
   /// Reasons for this might include:
   /// - Device is missing a NFC reader
   /// - Device does not have a hardware keystore
   tapToPayUnsupportedDevice,
+
   /// Only Android. The SDK is running on a version of Android older
   tapToPayUnsupportedOperatingSystemVersion,
+
   /// Only Android. The Android device the SDK is running on has been tampered. Some examples of tampering include:
   /// - unlocking the bootloader or rooting the device
   /// - replacing factory-provisioned hardware in the device (ex. the motherboard)
   tapToPayDeviceTampered,
+
   /// Only Android. The SDK is running in a debuggable application. This is not supported for
   /// security and compliance reasons. Please test the Tap to Pay on Android SDK with a simulated
   /// version of the reader by setting DiscoveryConfiguration.isSimulated to true.
   tapToPayDebugNotSupported,
+
   /// Only Android. The SDK is running in an insecure environment. Some examples of insecure situations include:
   /// - Other application components are running the secure payment process
   /// - Camera is opened by another application during payment collection
   /// - Developer mode is enabled or screen recording is active during PIN collection
   tapToPayInsecureEnvironment,
+
   /// Only Android. The Android device the SDK is running on does not support offline mode.
   offlineModeUnsupportedOperatingSystemVersion,
+
   /// The command was canceled by your app.
   canceled,
+
   /// Access to location services is currently disabled. This may be because:
   /// - The user disabled location services in the system settings.
   /// - The user denied access to location services for your app.
   /// - The user’s device is in Airplane Mode and unable to gather location data.
   locationServicesDisabled,
+
   /// Scanning for bluetooth devices timed out.
   bluetoothScanTimedOut,
+
   /// Bluetooth Low Energy is unsupported on this device. Use a different device that
   /// supports BLE (also known as Bluetooth 4.0)
   bluetoothLowEnergyUnsupported,
+
   /// Updating the reader software failed because the reader’s battery is too low.
   /// Charge the reader before trying again.
   readerSoftwareUpdateFailedBatteryLow,
+
   /// Updating the reader software failed because the update was interrupted.
   readerSoftwareUpdateFailedInterrupted,
+
   /// Only IOS. Updating the reader software failed because the update has expired.
   /// Please disconnect and reconnect from the reader to retrieve a new update.
   readerSoftwareUpdateFailedExpiredUpdate,
+
   /// The reader has a critically low battery and cannot connect to the device.
   /// Charge the reader before trying again.
   readerBatteryCriticallyLow,
+
   /// The card is not a chip card.
   cardInsertNotRead,
+
   /// The swipe could not be read.
   cardSwipeNotRead,
+
   /// Reading a card timed out.
   cardReadTimedOut,
+
   /// The card was removed during the transaction
   cardRemoved,
+
   /// The cardholder must give consent in order for this operation to succeed.
   customerConsentRequired,
+
   /// A card can only be used for one transaction, and must be removed after being read. Otherwise,
   /// subsequent processPaymentIntent attempts will fail with this error.
   /// Your terminal delegate will receive [ReaderDelegate.onReportReaderEvent] with
   /// [ReaderEventCardRemoved] when the card is removed.
   /// The Chipper 2x and WisePad 3 will beep until the card is removed.
   cardLeftInReader,
+
   /// Android: The connected account is not enabled to use the specified feature. Retry without
   ///   the parameter in question or contact Stripe support to enable the feature on this account.
   /// IOS: This feature is not currently available.
   featureNotEnabledOnAccount,
+
   /// Only IOS. The mobile device on which the app is running must have a passcode set.
   passcodeNotEnabled,
+
   /// Only IOS. The card reader cannot be used while a phone call is active.
   commandNotAllowedDuringCall,
+
   /// Only IOS. An attempt was made to charge an amount not supported by the reader.
   invalidAmount,
+
   /// Only IOS. An attempt was made to charge an amount in a currency not supported by the reader.
   invalidCurrency,
+
   /// Only IOS. Failed to accept reader-specific terms of service because there is no iCloud user
   /// signed in. Direct the user to sign into an appropriate iCloud account via iOS Settings and try again.
   tapToPayReaderTOSAcceptanceRequiresiCloudSignIn,
+
   /// Only IOS. The user cancelled reader-specific terms of service acceptance.
   tapToPayReaderTOSAcceptanceCanceled,
+
   /// Only IOS. Preparing the Apple Built-In reader to collect payments failed. Try connecting again.
   tapToPayReaderFailedToPrepare,
+
   /// Only IOS. This device cannot be used to process using the Apple Built-In reader as it has been banned.
   tapToPayReaderDeviceBanned,
+
   /// Only IOS. The operation could not be completed because the reader-specific terms of service
   /// have not yet been accepted. Try connecting again.
   tapToPayReaderTOSNotYetAccepted,
+
   /// Only IOS. Failed to accept reader-specific terms of service using the signed-in Apple ID.
   /// Ensure the Apple ID is still active and in a good standing and try again.
   tapToPayReaderTOSAcceptanceFailed,
+
   /// Only IOS. This merchant account cannot be used with Apple Built-In reader as it has been blocked.
   tapToPayReaderMerchantBlocked,
+
   /// Only IOS. This merchant account cannot be used with the Apple Built-In reader as it is invalid.
   tapToPayReaderInvalidMerchant,
+
   /// Only IOS. An error that indicates the linked Apple ID account has been deactivated by the merchant.
   tapToPayReaderAccountDeactivated,
+
   /// Please contact support at https://support.stripe.com/ for more help.
   /// Android: The reader is missing encryption keys required for taking payments. Disconnect and
   /// reconnect to the reader to attempt to re-install the keys. If the error persists, contact
   /// Stripe support.
   readerMissingEncryptionKeys,
+
   /// The reader is busy.
   readerBusy,
+
   /// Only IOS. An incompatible reader was detected. You can only use the Stripe Terminal iOS SDK
   /// with one of Stripe’s pre-certified readers.
   incompatibleReader,
+
   /// Could not communicate with the reader.
   readerCommunicationError,
+
   /// Only Android. The reader is in a tampered state, rendering it unusable.
   readerTampered,
+
   /// Only IOS. The reader returned from discovery does not have an IP address and cannot be
   /// connected to. The IP address should have been set by the SDK during registration of
   /// the reader. Try registering the reader again.
   unknownReaderIpAddress,
+
   /// Only IOS. Connecting to reader over the internet timed out. Make sure your device and reader
   /// are on the same Wifi network and your reader is connected to the Wifi network.
   internetConnectTimeOut,
+
   /// Only IOS. Connecting to the reader failed because it is currently in use and [failIfInUse] was set to true.
   /// Try to connect again with failIfInUse:false, or choose a different reader.
   /// A reader is in use while it’s collecting a payment.
   connectFailedReaderIsInUse,
+
   /// Only IOS. An attempt was made to interact with the reader while the the app is in the background.
   readerNotAccessibleInBackground,
+
   /// Generic Bluetooth error.
   bluetoothError,
+
   /// Only IOS. Connecting to the bluetooth device timed out. Make sure the device is powered on,
   /// in range, and not connected to another app or device. If this error continues to occur,
   /// you may need to charge the device.
   bluetoothConnectTimedOut,
+
   /// The Bluetooth device was disconnected unexpectedly.
   bluetoothDisconnected,
+
   /// Only IOS. Bluetooth pairing error, the reader has removed this device pairing information.
   /// Forget the reader in iOS Settings.
   bluetoothPeerRemovedPairingInformation,
+
   /// Only IOS. The Bluetooth reader is already paired to another device. The Bluetooth reader
   /// must have its pairing reset to connect to this device.
   bluetoothAlreadyPairedWithAnotherDevice,
+
   /// The Bluetooth reader has disconnected and we are attempting to reconnect.
   bluetoothReconnectStarted,
+
   /// Only Android. The USB device was disconnected unexpectedly.
   usbDisconnected,
+
   /// Only Android. The USB device was disconnected unexpectedly, reconnecting.
   usbReconnectStarted,
+
   /// Only Android. The reader cannot be reached because it is already connected to a different device.
   readerConnectedToAnotherDevice,
+
   /// Generic reader software update error.
   readerSoftwareUpdateFailed,
+
   /// Updating the reader software failed because there was an error communicating with the reader.
   readerSoftwareUpdateFailedReaderError,
+
   /// Updating the reader software failed because there was an error communicating with the update server.
   readerSoftwareUpdateFailedServerError,
+
   /// NFC functionality is disabled. Among other things, it may indicate that the app does not have
   /// permission to use NFC.
   nfcDisabled,
+
   /// [StripeTerminal.processPaymentIntent] was called from a reader with an unsupported reader version.
   /// You will need to update your reader to the most recent version in order to accept payments.
   /// We suggest you prompt your user to disconnect and reconnect their reader in order to update the reader.
   unsupportedReaderVersion,
+
   /// Unexpected SDK error.
   unexpectedSdkError,
+
   /// Only IOS. Unexpected reader error.
   unexpectedReaderError,
+
   /// Only IOS. Encryption key failed to initialize. Offline payments not available.
   /// The encryption key needed to decrypt the payment records is not available. This can happen if
   /// an iOS backup that included offline payment records was restored on a new device. Those records
   /// must be forwarded from the original device and the records must be deleted from this device.
   /// Please contact support at https://support.stripe.com/ for more help.
   encryptionKeyFailure,
+
   /// Only IOS. Encryption key still initializing. Offline payments are not yet available, please try again.
   encryptionKeyStillInitializing,
+
   /// The Stripe API declined the transaction. Inspect the error’s requestError property for more
   /// information about the decline, including the decline code.
   declinedByStripeApi,
+
   /// The reader declined the transaction. Try another card.
   declinedByReader,
+
   /// Only IOS. Customer consent is required to set allow redisplay to ALWAYS or LIMITED for this operation.
   commandInvalidAllowRedisplay,
+
   /// Only IOS. The SDK is not connected to the internet.
   notConnectedToInternet,
+
   /// The underlying request timed out.
   requestTimedOut,
+
   /// Only android. Failure to connect to Stripe's API.
   stripeApiConnectionError,
+
   /// Only android. The underlying request returned an API error.
   stripeApiError,
+
   /// The API response from Stripe could not be decoded.
   stripeApiResponseDecodingError,
+
   /// Only IOS. Generic network error
   internalNetworkError,
+
   /// Your implementation of [StripeTerminal.getInstance:fetchToken] throws an error.
   connectionTokenProviderError,
+
   /// The current session has expired and the reader must be disconnected and reconnected. The SDK
   /// will attempt to auto-disconnect for you and you should instruct your user to reconnect it.
   /// [StripeTerminal.onUnexpectedReaderDisconnect] will be called if the SDK is able to successfully
@@ -396,6 +485,7 @@ enum TerminalExceptionCodeApi {
   /// NOTE: This error will only occur in one of the following calls: [StripeTerminal.createPaymentIntent],
   /// [StripeTerminal.retrievePaymentIntent], [StripeTerminal.processPaymentIntent], and [StripeTerminal.cancelPaymentIntent].
   sessionExpired,
+
   /// Android:
   /// - ANDROID_API_LEVEL_ERROR: The SDK is running on an unsupported version of Android. This occurs
   ///     when an integrator overrides minSdkVersion.
@@ -404,152 +494,205 @@ enum TerminalExceptionCodeApi {
   ///     unsupported configuration. Verify that the device is running a supported version of iOS
   ///     and that the mobile device has the capability you are attempting to use.
   unsupportedMobileDeviceConfiguration,
+
   /// Only IOS: The command was not permitted to execute by the operating system.
   ///   This can happen for a number of reasons, but most commonly:
   ///   - Your application does not have the necessary entitlements.
   ///   - Your application bundle is invalid.
   commandNotAllowed,
+
   /// Error reported when the [PaymentIntentApi]’s amount exceeds the configured allowable maximum amount
   /// for offline transactions.
   amountExceedsMaxOfflineAmount,
+
   /// Error reported when the offline payments database has too many records.
   /// The Terminal should be brought back online to forward payments before collecting more.
   offlinePaymentsDatabaseTooLarge,
+
   /// Connecting to the reader failed because the most recently connected account hasn’t connected
   /// to a reader of this type while online. To connect to a reader offline, the SDK must have
   /// connected to a reader of the same type and location within the past 90 days.
   readerConnectionNotAvailableOffline,
+
   /// Only IOS. Connecting to the reader failed because the reader was most recently connected
   /// to a different location while online.
   readerConnectionOfflineLocationMismatch,
+
   /// Only IOS. The device software version running on this reader is out of date. You must connect
   /// to this reader while online to install required updates before this reader can be used for offline payments.
   readerConnectionOfflineNeedsUpdate,
+
   /// Connecting to the reader at this location failed. To connect a reader at a
   /// specified location while offline, a reader must have been connected online at that location
   /// within the last several weeks.
   /// Android(LOCATION_CONNECTION_NOT_AVAILABLE_OFFLINE) IOS(SCPErrorReaderConnectionOfflinePairingUnseenDisabled)
   locationConnectionNotAvailableOffline,
+
   /// The SDK has not activated a reader online yet, meaning there is no account with which
   /// the SDK can associate offline operations.
   noLastSeenAccount,
+
   /// Error reported when the PaymentIntent’s currency is not configured as a valid currency for offline transactions.
   invalidOfflineCurrency,
+
   /// Only IOS. The refund failed. The customer’s bank or card issuer was unable to process
   /// it correctly (e.g., a closed bank account or a problem with the card)
   refundFailed,
+
   /// Error reported when processPaymentIntent was called while offline
   /// and the card was read using the swipe method.
   /// Payment method data collected using the Swipe card read method cannot be processed online.
   /// Retry the payment by calling processPaymentIntent() again.
   cardSwipeNotAvailable,
+
   /// Error reported when processPaymentIntent was called while offline
   /// and the presented card was an Interac card.
   /// Retry the payment by calling processPaymentIntent() again.
   interacNotSupportedOffline,
+
   /// Only Android. Error reported when processPaymentIntent was called while offline and the
   /// presented card was authenticated with an online PIN. Retry the payment by calling processPaymentIntent() again.
   onlinePinNotSupportedOffline,
+
   /// Only Android. [Terminal.processPaymentIntent] was called with an unknown or invalid
   /// [PaymentIntentApi]. You must confirm a payment after collecting a payment method. Successfully
   /// confirmed payments may not be confirmed again.
   mobileWalletNotSupportedOnSetupIntents,
+
   /// Confirming a payment while offline and the card was identified as being expired.
   offlineAndCardExpired,
+
   /// Confirming a payment while offline and the card’s verification failed.
   /// Retry the payment by calling processPaymentIntent() again and try a different card if the error persists.
   offlineTransactionDeclined,
+
   /// Error reported when processPaymentIntent was called while online and completed while offline.
   /// Retry the payment by calling processPaymentIntent() again.
   offlineCollectAndConfirmMismatch,
+
   /// Error reported when a test payment attempted to forward while operating in livemode.
   /// The testmode transaction will be deleted.
   forwardingTestModePaymentInLiveMode,
+
   /// Error reported when a live payment attempted to forward while operating in testmode.
   /// Reconnect to this account with livemode keys to resume forwarding livemode transactions.
   forwardingLiveModePaymentInTestMode,
+
   /// Only Android. Error reported when processing a PaymentIntent that doesn't have a corresponding
   /// create request. In this situation, the PaymentIntent should be created again. This would typically happen if:
   /// 1. The PaymentIntent was created offline.
   /// 2. The SDK re-established connection to Stripe's backend and successfully forwarded the PaymentIntent.
   /// 3. Your application attempted to process the PaymentIntent, but it was already forwarded.
   offlinePaymentIntentNotFound,
+
   /// Only IOS. Error reported when calling processPaymentIntent with an offline PaymentIntent
   /// and processPaymentIntent with updatePaymentIntent set to true.
   updatePaymentIntentUnavailableWhileOffline,
+
   /// Only IOS. Error reported when calling processPaymentIntent with offline mode enabled and
   /// processPaymentIntent with updatePaymentIntent set to true.
   updatePaymentIntentUnavailableWhileOfflineModeEnabled,
+
   /// The reader failed to read the data from the presented payment method. If you encounter
   /// this error repeatedly, the reader may be faulty.
   missingEmvData,
+
   /// Error reported while forwarding offline payments when the connection token provider neither
   /// returns a token nor an error.
   connectionTokenProviderErrorWhileForwarding,
+
   /// Only IOS. Your implementation of [StripeTerminal.getInstance:fetchToken] did not call
   /// the provided completion block within 60 seconds.
   connectionTokenProviderTimedOut,
+
   /// Error reported when forwarding stored offline payments. The fetched connection token
   /// was generated with a different account ID than the stored payment.
   accountIdMismatchWhileForwarding,
+
   /// Error reported when a [PaymentIntentApi] was created with [OfflineBehaviorForceOffline]
   /// and the reader in use is not configured to operate offline. Use the Terminal Configuration
   /// API to enable the functionality or retry with another value for OfflineBehavior.
   offlineBehaviorForceOfflineWithFeatureDisabled,
+
   /// Error reported when the device is offline and the [PaymentIntentApi] was created with
   /// offlineBehavior set to requireOnline.
   notConnectedToInternetAndOfflineBehaviorRequireOnline,
+
   /// The card used is a known test card and the SDK is operating in livemode.
   testCardInLiveMode,
+
   /// An unexpected error occurred when using collectInputs
   collectInputsApplicationError,
+
   /// Error reported when a timeout occurs while processing a collect inputs operation.
   collectInputsTimedOut,
+
   /// The operation was cancelled due to an integration error.
   canceledDueToIntegrationError,
+
   /// Only Android. The printer is currently busy.
   printerBusy,
+
   /// Only Android. The printer has a paper jam.
   printerPaperjam,
+
   /// Only Android. The printer is out of paper.
   printerOutOfPaper,
+
   /// Only Android. The printer's cover or head assembly is open.
   printerCoverOpen,
+
   /// Only Android. The reader does not have a printer.
   printerAbsent,
+
   /// Only Android. The reader has a printer but it is currently unavailable.
   printerUnavailable,
+
   /// Only Android. Generic printer error. See error message for more details.
   printerError,
+
   /// Error reported when the connected account does not have access to this feature,
   /// or the reader/SDK version is not compatible with the collect inputs operation.
   collectInputsUnsupported,
+
   /// Only Android. Error reported when an attempt to get or set reader settings has failed.
   readerSettingsError,
+
   /// Only Android. A surcharging parameter is misconfigured or invalid.
   invalidSurchargeParameter,
+
   /// Only Android. Could not communicate to the reader due to SSL handshake failures. Typically
   /// occurs when your device is missing SSL certificates, check that you have the required SSL
   /// certificates installed on your device. If the error persists, contact Stripe support.
   readerCommunicationSslError,
+
   /// Customer consent is required to set allow redisplay to ALWAYS or LIMITED for this operation.
   allowRedisplayInvalid,
+
   /// Only Ios. Surcharging is not currently available.
   surchargingNotAvailable,
+
   /// Only Ios. `surchargeNotice` was specified with a CollectPaymentIntentConfiguration with updatePaymentIntent set to false.
   surchargeNoticeRequiresUpdatePaymentIntent,
+
   /// Only Ios. Surcharging was attempted while also using dynamic currency conversion.
   surchargeUnavailableWithDynamicCurrencyConversion,
+
   /// The SDK is running on a device with a non-ARM processor (usually x86).
   tapToPayUnsupportedProcessor,
+
   /// Only Android. Tap to Pay PIN entry is unavailable on this device.
   tapToPayPinUnavailable,
+
   /// Only Android. No barcode scanner is available on this device.
   barcodeScannerUnavailable,
+
   /// Only Android. The requested barcode scanner could not be found.
   barcodeRequestedScannerNotFound,
+
   /// Only Android. Barcode scanning is not supported on this device.
   barcodeScanningUnsupportedDevice,
+
   /// Only Android. Simulated offline mode is not available in live mode.
   simulatedOfflineModeNotAvailableInLivemode,
 }
@@ -558,45 +701,53 @@ enum TerminalExceptionCodeApi {
 enum PaymentMethodTypeApi {
   /// A card present payment method.
   cardPresent,
+
   /// A card payment method.
   card,
+
   /// An Interac Present payment method.
   interactPresent,
 }
 
-enum RefundStatusApi {
-  succeeded,
-  pending,
-  failed,
-}
+enum RefundStatusApi { succeeded, pending, failed }
 
 /// Possible reasons for Bluetooth reader disconnects.
 enum DisconnectReasonApi {
   /// Unexpected disconnect.
   unknown,
+
   /// Terminal.disconnectReader was called.
   disconnectRequested,
+
   /// Terminal.rebootReader was called.
   rebootRequested,
+
   /// Reader disconnected after performing its required security reboot. This will
   /// happen if the reader has been running for 24 hours. To control this you can
   /// call Terminal.rebootReader which will reset the 24 hour timer.
   securityReboot,
+
   /// Reader disconnected because its battery was critically low and needs to be charged before it
   /// can be used.
   criticallyLowBattery,
+
   /// Reader was powered off.
   poweredOff,
+
   /// Bluetooth was disabled on the device.
   bluetoothDisabled,
+
   /// Reader disconnected due to the USB cable being physically unplugged.
   usbDisconnected,
+
   /// Reader disconnected due to automatically powering down after idling for 10 hours, to conserve
   /// battery life.
   idlePowerDown,
+
   /// The mobile reader’s Bluetooth signal has been lost, either because it is out of range, or due
   /// to wireless interference.
   bluetoothSignalLost,
+
   /// The mobile reader's Bluetooth pairing has been cleared. Forget the reader in system settings.
   bluetoothPeerRemovedPairingInformation,
 }
@@ -605,11 +756,14 @@ enum DisconnectReasonApi {
 enum ConnectionStatusApi {
   /// The SDK is not connected to a reader.
   notConnected,
+
   /// The SDK is connected to a reader.
   connected,
+
   /// The SDK is currently connecting to a reader.
   connecting,
   discovering,
+
   /// The SDK is reconnecting to a reader.
   reconnecting,
 }
@@ -618,6 +772,7 @@ enum ConnectionStatusApi {
 enum LocationStatusApi {
   /// The location was successfully set to a known location. location is a valid [LocationApi].
   set,
+
   /// This location is known to be not set. location will be null.
   notSet,
 }
@@ -626,98 +781,136 @@ enum LocationStatusApi {
 enum DeviceTypeApi {
   /// Chipper 1X aka Chip & Swipe
   chipper1X,
+
   /// The BBPOS Chipper 2X BT mobile reader.
   chipper2X,
+
   /// The Stripe Reader M2 mobile reader.
   stripeM2,
+
   /// Tap To Pay reader.
   tapToPay,
+
   /// The Verifone P400 countertop reader.
   verifoneP400,
+
   /// Wisecube aka Wisepad 2 aka Tap & Chip.
   wiseCube,
+
   /// The BBPOS WisePad 3 mobile reader.
   wisePad3,
+
   /// The BBPOS WisePad 3S mobile reader.
   wisePad3s,
+
   /// The BBPOS WisePOS E countertop reader.
   wisePosE,
+
   /// The BBPOS WisePOS E DevKit countertop reader.
   wisePosEDevkit,
+
   /// ETNA.
   etna,
+
   /// Stripe Reader S700.
   stripeS700,
+
   /// Stripe Reader S700 DevKit.
   stripeS700Devkit,
+
   /// Stripe Reader S710.
   stripeS710,
+
   /// Stripe Reader S710 DevKit.
   stripeS710Devkit,
+
   /// Stripe Reader T600.
   stripeT600,
+
   /// Stripe Reader T600 DevKit.
   stripeT600Devkit,
+
   /// Stripe Reader T610.
   stripeT610,
+
   /// Stripe Reader T610 DevKit.
   stripeT610Devkit,
+
   /// Verifone V660p
   verifoneV660p,
+
   /// Verifone V660pa
   verifoneV660pa,
+
   /// Verifone M425
   verifoneM425,
+
   /// Verifone M450
   verifoneM450,
+
   /// Verifone P630
   verifoneP630,
+
   /// Verifone UX700
   verifoneUx700,
+
   /// Verifone V660P DevKit
   verifoneV660pDevkit,
+
   /// Verifone UX700 DevKit
   verifoneUx700Devkit,
+
   /// Verifone VM100
   verifoneVm100,
+
   /// Verifone VP100
   verifoneVp100,
+
   /// Stripe U200
   stripeU200,
+
   /// Verifone VM110
   verifoneVm110,
+
   /// Verifone VP110
   verifoneVp110,
+
   /// Verifone VL110
   verifoneVl110,
 }
 
-enum ReaderEventApi {
-  cardInserted,
-  cardRemoved,
-}
+enum ReaderEventApi { cardInserted, cardRemoved }
 
 /// The display messages that a reader may request be displayed by your app. Used by [MobileReaderDelegate.onRequestReaderDisplayMessage].
 enum ReaderDisplayMessageApi {
   /// Check mobile device for instructions and try again.
   checkMobileDevice,
+
   /// Retry the presented card.
   retryCard,
+
   /// Insert the presented card.
   insertCard,
+
   /// Insert or swipe the presented card.
   insertOrSwipeCard,
+
   /// Swipe the presented card.
   swipeCard,
+
   /// Remove the presented card.
   removeCard,
+
   /// The reader detected multiple contactless cards. Make sure only one contactless card or NFC
   /// device is near the reader.
   multipleContactlessCardsDetected,
+
   /// The card could not be read. Try another read method on the same card, or use a different card.
   tryAnotherReadMethod,
+
   /// The card is invalid. Try another card.
   tryAnotherCard,
+
   /// Card removed too early, try again.
   cardRemovedTooEarly,
 }
@@ -727,10 +920,13 @@ enum ReaderDisplayMessageApi {
 enum ReaderInputOptionApi {
   /// Insert a chip card.
   insertCard,
+
   /// Swipe a magstripe card.
   swipeCard,
+
   /// Tap a contactless card.
   tapCard,
+
   /// Manually enter the card information (MOTO).
   manualEntry,
 }
@@ -738,6 +934,7 @@ enum ReaderInputOptionApi {
 enum NetworkStatusApi {
   /// The reader is not connected to a network.
   offline,
+
   /// The reader is connected to a network.
   online,
 }
@@ -746,8 +943,10 @@ enum NetworkStatusApi {
 enum BatteryStatusApi {
   /// The device’s battery is less than or equal to 5%.
   critical,
+
   /// The device’s battery is between 5% and 20%.
   low,
+
   /// The device’s battery is greater than 20%.
   nominal,
 }
@@ -756,8 +955,10 @@ enum BatteryStatusApi {
 enum ChargeStatusApi {
   /// The charge succeeded.
   succeeded,
+
   /// The charge pending.
   pending,
+
   /// The charge failed.
   failed,
 }
@@ -770,14 +971,17 @@ enum SimulateReaderUpdateApi {
   /// When connecting to a Bluetooth reader, an update is available that is marked as needing to be installed within 7 days.
   /// When connecting to a Local Mobile reader, a mandatory update will complete during the connection flow.
   available,
+
   /// No updates are available
   none,
+
   /// A required full reader software update exists.
   ///
   /// Use this to simulate the auto-install of a required update that will be applied during connect.
   /// This simulated update will take 1 minute and progress will be provided to the delegate provided
   /// to [Terminal.connectBluetoothReader] or [Terminal.connectLocalMobileReader] as appropriate.
   required,
+
   /// Randomly picks a type of update for the reader to help exercise the various states.
   random,
 }
@@ -788,72 +992,94 @@ enum SimulateReaderUpdateApi {
 enum SimulatedCardTypeApi {
   /// Visa
   visa,
+
   /// Visa (debit)
   visaDebit,
+
   /// Visa debit supporting both international and US Common Debit applications
   visaUsCommonDebit,
+
   /// Mastercard
   mastercard,
+
   /// Mastercard (debit)
   masterDebit,
+
   /// Mastercard (prepaid)
   mastercardPrepaid,
+
   /// American Express
   amex,
+
   /// American Express
   amex2,
+
   /// Discover
   discover,
+
   /// Discover
   discover2,
+
   /// Diners Club
   diners,
+
   /// Diners Club (14 digit card)
   diners14Digit,
+
   /// JCB
   jbc,
+
   /// UnionPay
   unionPay,
+
   /// Interac
   interac,
+
   /// Eftpos Australia
   eftposAuDebit,
+
   /// Eftpos Australia/Visa
   eftposAuVisaDebit,
+
   /// Eftpos Australia/Mastercard
   eftposAuDebitMastercard,
+
   /// Charge is declined with a card_declined code.
   chargeDeclined,
+
   /// Charge is declined with a card_declined code. The decline_code attribute is insufficient_funds.
   chargeDeclinedInsufficientFunds,
+
   /// Charge is declined with a card_declined code. The decline_code attribute is lost_card.
   chargeDeclinedLostCard,
+
   /// Charge is declined with a card_declined code. The decline_code attribute is stolen_card.
   chargeDeclinedStolenCard,
+
   /// Charge is declined with an expired_card code.
   chargeDeclinedExpiredCard,
+
   /// Charge is declined with a processing_error code.
   chargeDeclinedProcessingError,
+
   /// Payment attaches Online Pin to the transaction. cardholder_verification_method will be set to
   /// online_pin in the resulting paymentIntent WisePad3 only
   onlinePinCvm,
+
   /// This flow simulates an Online Pin scenario with SCA compliance. Payment is retried and user is
   /// prompted to input their pin. Next an online pin being entered is simulated.
   onlinePinScaRetry,
+
   /// Payment attaches Offline Pin to the transaction. cardholder_verification_method will be set to
   /// offline_pin in the resulting paymentIntent WisePad3 only
   offlinePinCvm,
+
   /// This flow simulates an Offline Pin scenario with SCA compliance. Payment is retried and user is
   /// prompted to insert their card. Next a contact retry and an offline pin being entered are simulated.
   offlinePinScaRetry,
 }
 
-enum UpdateComponentApi {
-  incremental,
-  firmware,
-  config,
-  keys,
-}
+enum UpdateComponentApi { incremental, firmware, config, keys }
 
 enum UpdateTimeEstimateApi {
   lessThanOneMinute,
@@ -870,6 +1096,7 @@ enum SetupIntentUsageApi {
   /// With the on-session option, you can postpone authenticating the card details
   /// until a future checkout to avoid upfront friction.
   onSession,
+
   /// An off-session usage indicates to Stripe that future payments will take place without
   /// the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
   /// initial friction from additional authentication steps, but can reduce customer intervention
@@ -901,8 +1128,10 @@ enum SetupAttemptStatusApi {
 enum AllowRedisplayApi {
   /// Use always to indicate that this payment method can always be shown to a customer in a checkout flow.
   always,
+
   /// Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription.
   limited,
+
   /// This is the default value for payment methods where allow_redisplay wasn’t set.
   unspecified,
 }
@@ -913,20 +1142,27 @@ enum AllowRedisplayApi {
 enum PaymentIntentStatusApi {
   /// The [PaymentIntentApi] was canceled.
   canceled,
+
   /// The [PaymentIntentApi] is in the middle of full EMV processing.
   processing,
+
   /// Next step: capture the [PaymentIntentApi] on your backend via the Stripe API.
   requiresCapture,
+
   /// Next step: process the payment by calling [Terminal.processPaymentIntent].
   requiresConfirmation,
+
   /// Next step: process the payment by calling [Terminal.processPaymentIntent].
   requiresPaymentMethod,
+
   /// Next step: the payment requires additional actions, such as authenticating with 3D Secure.
   ///
   /// PaymentIntents collected with the Terminal SDK should not end in the requires_action status.
   requiresAction,
+
   /// The [PaymentIntentApi] succeeded.
   succeeded,
+
   /// The [PaymentIntentApi] was authorized but its capture window lapsed, so it
   /// must be authorized again before it can be captured (extended/reauthorization).
   requiresReauthorization,
@@ -936,6 +1172,7 @@ enum PaymentIntentStatusApi {
 enum CaptureMethodApi {
   /// Stripe automatically captures funds when the customer authorizes the payment.
   automatic,
+
   /// Place a hold on the funds when the customer authorizes the payment, but don’t capture
   /// the funds until later. Will require an explicit call to capture payments.
   /// (Not all payment methods support this.)
@@ -945,6 +1182,7 @@ enum CaptureMethodApi {
 enum ConfirmationMethodApi {
   /// After next_actions are handled, no additional confirmation is required to complete the payment.
   automatic,
+
   /// All payment attempts must be made using a secret key. The PaymentIntent returns to the
   /// requires_confirmation state after handling next_actions, and requires your server to
   /// initiate each payment attempt with an explicit confirmation.
@@ -955,24 +1193,14 @@ enum PaymentIntentUsageApi {
   /// Use “on_session” if you intend to only reuse the payment method when your customer
   /// is present in your checkout flow.
   onSession,
+
   /// Use “off_session” if your customer may or may not be present in your checkout flow.
   offSession,
 }
 
-enum TapToPayUxConfigurationTapZoneIndicatorApi {
-  above,
-  below,
-  front,
-  behind,
-  left,
-  right,
-}
+enum TapToPayUxConfigurationTapZoneIndicatorApi { above, below, front, behind, left, right }
 
-enum TapToPayUxConfigurationDarkModeApi {
-  system,
-  light,
-  dark,
-}
+enum TapToPayUxConfigurationDarkModeApi { system, light, dark }
 
 enum CardBrandApi {
   amex,
@@ -982,22 +1210,17 @@ enum CardBrandApi {
   masterCard,
   unionPay,
   visa,
+
   /// Only iOS
   interac,
+
   /// Only iOS
   eftposAu,
 }
 
-enum CardFundingTypeApi {
-  credit,
-  debit,
-  prepaid,
-}
+enum CardFundingTypeApi { credit, debit, prepaid }
 
-enum IncrementalAuthorizationStatusApi {
-  notSupported,
-  supported,
-}
+enum IncrementalAuthorizationStatusApi { notSupported, supported }
 
 /// Capture Method values that can be used as card-present payment method options.
 enum CardPresentCaptureMethodApi {
@@ -1007,10 +1230,7 @@ enum CardPresentCaptureMethodApi {
 }
 
 /// Transaction routing priorities
-enum CardPresentRoutingApi {
-  domestic,
-  international,
-}
+enum CardPresentRoutingApi { domestic, international }
 
 class TerminalExceptionApi {
   TerminalExceptionApi({
@@ -1032,17 +1252,12 @@ class TerminalExceptionApi {
   Object? apiError;
 
   List<Object?> _toList() {
-    return <Object?>[
-      code,
-      message,
-      stackTrace,
-      paymentIntent,
-      apiError,
-    ];
+    return <Object?>[code, message, stackTrace, paymentIntent, apiError];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TerminalExceptionApi decode(Object result) {
     result as List<Object?>;
@@ -1064,7 +1279,11 @@ class TerminalExceptionApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(code, other.code) && _deepEquals(message, other.message) && _deepEquals(stackTrace, other.stackTrace) && _deepEquals(paymentIntent, other.paymentIntent) && _deepEquals(apiError, other.apiError);
+    return _deepEquals(code, other.code) &&
+        _deepEquals(message, other.message) &&
+        _deepEquals(stackTrace, other.stackTrace) &&
+        _deepEquals(paymentIntent, other.paymentIntent) &&
+        _deepEquals(apiError, other.apiError);
   }
 
   @override
@@ -1110,18 +1329,12 @@ class PaymentMethodApi {
   Map<String, String> metadata;
 
   List<Object?> _toList() {
-    return <Object?>[
-      id,
-      card,
-      cardPresent,
-      interactPresent,
-      customerId,
-      metadata,
-    ];
+    return <Object?>[id, card, cardPresent, interactPresent, customerId, metadata];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static PaymentMethodApi decode(Object result) {
     result as List<Object?>;
@@ -1144,7 +1357,12 @@ class PaymentMethodApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(card, other.card) && _deepEquals(cardPresent, other.cardPresent) && _deepEquals(interactPresent, other.interactPresent) && _deepEquals(customerId, other.customerId) && _deepEquals(metadata, other.metadata);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(card, other.card) &&
+        _deepEquals(cardPresent, other.cardPresent) &&
+        _deepEquals(interactPresent, other.interactPresent) &&
+        _deepEquals(customerId, other.customerId) &&
+        _deepEquals(metadata, other.metadata);
   }
 
   @override
@@ -1208,7 +1426,8 @@ class RefundApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static RefundApi decode(Object result) {
     result as List<Object?>;
@@ -1235,7 +1454,16 @@ class RefundApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(amount, other.amount) && _deepEquals(chargeId, other.chargeId) && _deepEquals(createdInMilliseconds, other.createdInMilliseconds) && _deepEquals(currency, other.currency) && _deepEquals(metadata, other.metadata) && _deepEquals(reason, other.reason) && _deepEquals(status, other.status) && _deepEquals(paymentMethodDetails, other.paymentMethodDetails) && _deepEquals(failureReason, other.failureReason);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(amount, other.amount) &&
+        _deepEquals(chargeId, other.chargeId) &&
+        _deepEquals(createdInMilliseconds, other.createdInMilliseconds) &&
+        _deepEquals(currency, other.currency) &&
+        _deepEquals(metadata, other.metadata) &&
+        _deepEquals(reason, other.reason) &&
+        _deepEquals(status, other.status) &&
+        _deepEquals(paymentMethodDetails, other.paymentMethodDetails) &&
+        _deepEquals(failureReason, other.failureReason);
   }
 
   @override
@@ -1249,24 +1477,19 @@ class RefundApi {
 }
 
 class PaymentMethodDetailsApi {
-  PaymentMethodDetailsApi({
-    this.cardPresent,
-    this.interactPresent,
-  });
+  PaymentMethodDetailsApi({this.cardPresent, this.interactPresent});
 
   CardPresentDetailsApi? cardPresent;
 
   CardPresentDetailsApi? interactPresent;
 
   List<Object?> _toList() {
-    return <Object?>[
-      cardPresent,
-      interactPresent,
-    ];
+    return <Object?>[cardPresent, interactPresent];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static PaymentMethodDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -1285,7 +1508,8 @@ class PaymentMethodDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(cardPresent, other.cardPresent) && _deepEquals(interactPresent, other.interactPresent);
+    return _deepEquals(cardPresent, other.cardPresent) &&
+        _deepEquals(interactPresent, other.interactPresent);
   }
 
   @override
@@ -1403,7 +1627,8 @@ class ReaderApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ReaderApi decode(Object result) {
     result as List<Object?>;
@@ -1433,7 +1658,19 @@ class ReaderApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(locationStatus, other.locationStatus) && _deepEquals(deviceType, other.deviceType) && _deepEquals(simulated, other.simulated) && _deepEquals(locationId, other.locationId) && _deepEquals(location, other.location) && _deepEquals(serialNumber, other.serialNumber) && _deepEquals(deviceSoftwareVersion, other.deviceSoftwareVersion) && _deepEquals(availableUpdate, other.availableUpdate) && _deepEquals(batteryLevel, other.batteryLevel) && _deepEquals(ipAddress, other.ipAddress) && _deepEquals(networkStatus, other.networkStatus) && _deepEquals(label, other.label);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(locationStatus, other.locationStatus) &&
+        _deepEquals(deviceType, other.deviceType) &&
+        _deepEquals(simulated, other.simulated) &&
+        _deepEquals(locationId, other.locationId) &&
+        _deepEquals(location, other.location) &&
+        _deepEquals(serialNumber, other.serialNumber) &&
+        _deepEquals(deviceSoftwareVersion, other.deviceSoftwareVersion) &&
+        _deepEquals(availableUpdate, other.availableUpdate) &&
+        _deepEquals(batteryLevel, other.batteryLevel) &&
+        _deepEquals(ipAddress, other.ipAddress) &&
+        _deepEquals(networkStatus, other.networkStatus) &&
+        _deepEquals(label, other.label);
   }
 
   @override
@@ -1513,7 +1750,8 @@ class ChargeApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ChargeApi decode(Object result) {
     result as List<Object?>;
@@ -1540,7 +1778,16 @@ class ChargeApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(amount, other.amount) && _deepEquals(currency, other.currency) && _deepEquals(status, other.status) && _deepEquals(paymentMethodDetails, other.paymentMethodDetails) && _deepEquals(descriptionX, other.descriptionX) && _deepEquals(id, other.id) && _deepEquals(metadata, other.metadata) && _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) && _deepEquals(calculatedStatementDescriptor, other.calculatedStatementDescriptor) && _deepEquals(authorizationCode, other.authorizationCode);
+    return _deepEquals(amount, other.amount) &&
+        _deepEquals(currency, other.currency) &&
+        _deepEquals(status, other.status) &&
+        _deepEquals(paymentMethodDetails, other.paymentMethodDetails) &&
+        _deepEquals(descriptionX, other.descriptionX) &&
+        _deepEquals(id, other.id) &&
+        _deepEquals(metadata, other.metadata) &&
+        _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) &&
+        _deepEquals(calculatedStatementDescriptor, other.calculatedStatementDescriptor) &&
+        _deepEquals(authorizationCode, other.authorizationCode);
   }
 
   @override
@@ -1557,9 +1804,7 @@ class ChargeApi {
 ///
 /// For more information, see the official Stripe docs: [Collect on-reader tips](https://stripe.com/docs/terminal/features/collecting-tips/on-reader)
 class TipApi {
-  TipApi({
-    this.amount,
-  });
+  TipApi({this.amount});
 
   /// Portion of the amount that corresponds to a tip
   ///
@@ -1571,19 +1816,16 @@ class TipApi {
   int? amount;
 
   List<Object?> _toList() {
-    return <Object?>[
-      amount,
-    ];
+    return <Object?>[amount];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TipApi decode(Object result) {
     result as List<Object?>;
-    return TipApi(
-      amount: result[0] as int?,
-    );
+    return TipApi(amount: result[0] as int?);
   }
 
   @override
@@ -1610,27 +1852,22 @@ class TipApi {
 
 /// The [TippingConfigurationApi] contains configuration information relevant to collecting tips.
 class TippingConfigurationApi {
-  TippingConfigurationApi({
-    required this.eligibleAmount,
-  });
+  TippingConfigurationApi({required this.eligibleAmount});
 
   /// The amount of the payment total eligible for tips.
   int eligibleAmount;
 
   List<Object?> _toList() {
-    return <Object?>[
-      eligibleAmount,
-    ];
+    return <Object?>[eligibleAmount];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TippingConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return TippingConfigurationApi(
-      eligibleAmount: result[0]! as int,
-    );
+    return TippingConfigurationApi(eligibleAmount: result[0]! as int);
   }
 
   @override
@@ -1656,8 +1893,7 @@ class TippingConfigurationApi {
 }
 
 /// Configuration for the EasyConnect flow, which discovers and connects to a reader in one step.
-sealed class EasyConnectConfigurationApi {
-}
+sealed class EasyConnectConfigurationApi {}
 
 class InternetEasyConnectConfigurationApi extends EasyConnectConfigurationApi {
   InternetEasyConnectConfigurationApi({
@@ -1670,14 +1906,12 @@ class InternetEasyConnectConfigurationApi extends EasyConnectConfigurationApi {
   InternetConnectionConfigurationApi connectionConfiguration;
 
   List<Object?> _toList() {
-    return <Object?>[
-      discoveryConfiguration,
-      connectionConfiguration,
-    ];
+    return <Object?>[discoveryConfiguration, connectionConfiguration];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static InternetEasyConnectConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -1696,7 +1930,8 @@ class InternetEasyConnectConfigurationApi extends EasyConnectConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) && _deepEquals(connectionConfiguration, other.connectionConfiguration);
+    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) &&
+        _deepEquals(connectionConfiguration, other.connectionConfiguration);
   }
 
   @override
@@ -1720,14 +1955,12 @@ class AppsOnDevicesEasyConnectionConfigurationApi extends EasyConnectConfigurati
   AppsOnDevicesConnectionConfigurationApi connectionConfiguration;
 
   List<Object?> _toList() {
-    return <Object?>[
-      discoveryConfiguration,
-      connectionConfiguration,
-    ];
+    return <Object?>[discoveryConfiguration, connectionConfiguration];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static AppsOnDevicesEasyConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -1746,7 +1979,8 @@ class AppsOnDevicesEasyConnectionConfigurationApi extends EasyConnectConfigurati
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) && _deepEquals(connectionConfiguration, other.connectionConfiguration);
+    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) &&
+        _deepEquals(connectionConfiguration, other.connectionConfiguration);
   }
 
   @override
@@ -1770,14 +2004,12 @@ class TapToPayEasyConnectConfigurationApi extends EasyConnectConfigurationApi {
   TapToPayConnectionConfigurationApi connectionConfiguration;
 
   List<Object?> _toList() {
-    return <Object?>[
-      discoveryConfiguration,
-      connectionConfiguration,
-    ];
+    return <Object?>[discoveryConfiguration, connectionConfiguration];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayEasyConnectConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -1796,7 +2028,8 @@ class TapToPayEasyConnectConfigurationApi extends EasyConnectConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) && _deepEquals(connectionConfiguration, other.connectionConfiguration);
+    return _deepEquals(discoveryConfiguration, other.discoveryConfiguration) &&
+        _deepEquals(connectionConfiguration, other.connectionConfiguration);
   }
 
   @override
@@ -1836,15 +2069,12 @@ class SimulatorConfigurationApi {
   int? simulatedTipAmount;
 
   List<Object?> _toList() {
-    return <Object?>[
-      update,
-      simulatedCard,
-      simulatedTipAmount,
-    ];
+    return <Object?>[update, simulatedCard, simulatedTipAmount];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SimulatorConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -1864,7 +2094,9 @@ class SimulatorConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(update, other.update) && _deepEquals(simulatedCard, other.simulatedCard) && _deepEquals(simulatedTipAmount, other.simulatedTipAmount);
+    return _deepEquals(update, other.update) &&
+        _deepEquals(simulatedCard, other.simulatedCard) &&
+        _deepEquals(simulatedTipAmount, other.simulatedTipAmount);
   }
 
   @override
@@ -1887,24 +2119,19 @@ class SimulatorConfigurationApi {
 ///
 /// See: https://stripe.com/docs/terminal/testing#simulated-test-cards
 class SimulatedCardApi {
-  SimulatedCardApi({
-    this.type,
-    this.testCardNumber,
-  });
+  SimulatedCardApi({this.type, this.testCardNumber});
 
   SimulatedCardTypeApi? type;
 
   String? testCardNumber;
 
   List<Object?> _toList() {
-    return <Object?>[
-      type,
-      testCardNumber,
-    ];
+    return <Object?>[type, testCardNumber];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SimulatedCardApi decode(Object result) {
     result as List<Object?>;
@@ -1974,7 +2201,8 @@ class ReaderSoftwareUpdateApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ReaderSoftwareUpdateApi decode(Object result) {
     result as List<Object?>;
@@ -1998,7 +2226,13 @@ class ReaderSoftwareUpdateApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(components, other.components) && _deepEquals(keyProfileName, other.keyProfileName) && _deepEquals(onlyInstallRequiredUpdates, other.onlyInstallRequiredUpdates) && _deepEquals(requiredAtInMilliseconds, other.requiredAtInMilliseconds) && _deepEquals(settingsVersion, other.settingsVersion) && _deepEquals(timeEstimate, other.timeEstimate) && _deepEquals(version, other.version);
+    return _deepEquals(components, other.components) &&
+        _deepEquals(keyProfileName, other.keyProfileName) &&
+        _deepEquals(onlyInstallRequiredUpdates, other.onlyInstallRequiredUpdates) &&
+        _deepEquals(requiredAtInMilliseconds, other.requiredAtInMilliseconds) &&
+        _deepEquals(settingsVersion, other.settingsVersion) &&
+        _deepEquals(timeEstimate, other.timeEstimate) &&
+        _deepEquals(version, other.version);
   }
 
   @override
@@ -2048,19 +2282,12 @@ class SetupIntentApi {
   SetupAttemptApi? latestAttempt;
 
   List<Object?> _toList() {
-    return <Object?>[
-      id,
-      createdInMilliseconds,
-      customerId,
-      metadata,
-      usage,
-      status,
-      latestAttempt,
-    ];
+    return <Object?>[id, createdInMilliseconds, customerId, metadata, usage, status, latestAttempt];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SetupIntentApi decode(Object result) {
     result as List<Object?>;
@@ -2084,7 +2311,13 @@ class SetupIntentApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(createdInMilliseconds, other.createdInMilliseconds) && _deepEquals(customerId, other.customerId) && _deepEquals(metadata, other.metadata) && _deepEquals(usage, other.usage) && _deepEquals(status, other.status) && _deepEquals(latestAttempt, other.latestAttempt);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(createdInMilliseconds, other.createdInMilliseconds) &&
+        _deepEquals(customerId, other.customerId) &&
+        _deepEquals(metadata, other.metadata) &&
+        _deepEquals(usage, other.usage) &&
+        _deepEquals(status, other.status) &&
+        _deepEquals(latestAttempt, other.latestAttempt);
   }
 
   @override
@@ -2155,7 +2388,8 @@ class SetupAttemptApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SetupAttemptApi decode(Object result) {
     result as List<Object?>;
@@ -2181,7 +2415,15 @@ class SetupAttemptApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(applicationId, other.applicationId) && _deepEquals(createdInMilliseconds, other.createdInMilliseconds) && _deepEquals(customerId, other.customerId) && _deepEquals(onBehalfOf, other.onBehalfOf) && _deepEquals(paymentMethodId, other.paymentMethodId) && _deepEquals(paymentMethodDetails, other.paymentMethodDetails) && _deepEquals(setupIntentId, other.setupIntentId) && _deepEquals(status, other.status);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(applicationId, other.applicationId) &&
+        _deepEquals(createdInMilliseconds, other.createdInMilliseconds) &&
+        _deepEquals(customerId, other.customerId) &&
+        _deepEquals(onBehalfOf, other.onBehalfOf) &&
+        _deepEquals(paymentMethodId, other.paymentMethodId) &&
+        _deepEquals(paymentMethodDetails, other.paymentMethodDetails) &&
+        _deepEquals(setupIntentId, other.setupIntentId) &&
+        _deepEquals(status, other.status);
   }
 
   @override
@@ -2196,10 +2438,7 @@ class SetupAttemptApi {
 
 /// Details about a PaymentMethod at a specific time. ex: at time of transaction for a SetupAttempt.
 class SetupAttemptPaymentMethodDetailsApi {
-  SetupAttemptPaymentMethodDetailsApi({
-    this.cardPresent,
-    this.interactPresent,
-  });
+  SetupAttemptPaymentMethodDetailsApi({this.cardPresent, this.interactPresent});
 
   /// If this is a card present payment method (ie self.type == PaymentMethodTypeCardPresent),
   /// this contains additional information.
@@ -2210,14 +2449,12 @@ class SetupAttemptPaymentMethodDetailsApi {
   SetupAttemptCardPresentDetailsApi? interactPresent;
 
   List<Object?> _toList() {
-    return <Object?>[
-      cardPresent,
-      interactPresent,
-    ];
+    return <Object?>[cardPresent, interactPresent];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SetupAttemptPaymentMethodDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -2236,7 +2473,8 @@ class SetupAttemptPaymentMethodDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(cardPresent, other.cardPresent) && _deepEquals(interactPresent, other.interactPresent);
+    return _deepEquals(cardPresent, other.cardPresent) &&
+        _deepEquals(interactPresent, other.interactPresent);
   }
 
   @override
@@ -2251,10 +2489,7 @@ class SetupAttemptPaymentMethodDetailsApi {
 
 /// An object representing details from a transaction using a cardPresent payment method.
 class SetupAttemptCardPresentDetailsApi {
-  SetupAttemptCardPresentDetailsApi({
-    required this.emvAuthData,
-    required this.generatedCard,
-  });
+  SetupAttemptCardPresentDetailsApi({required this.emvAuthData, required this.generatedCard});
 
   /// The Authorization Response Cryptogram (ARPC) from the issuer.
   String emvAuthData;
@@ -2263,14 +2498,12 @@ class SetupAttemptCardPresentDetailsApi {
   String generatedCard;
 
   List<Object?> _toList() {
-    return <Object?>[
-      emvAuthData,
-      generatedCard,
-    ];
+    return <Object?>[emvAuthData, generatedCard];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static SetupAttemptCardPresentDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -2289,7 +2522,8 @@ class SetupAttemptCardPresentDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(emvAuthData, other.emvAuthData) && _deepEquals(generatedCard, other.generatedCard);
+    return _deepEquals(emvAuthData, other.emvAuthData) &&
+        _deepEquals(generatedCard, other.generatedCard);
   }
 
   @override
@@ -2303,13 +2537,7 @@ class SetupAttemptCardPresentDetailsApi {
 }
 
 class LocationApi {
-  LocationApi({
-    this.address,
-    this.displayName,
-    this.id,
-    this.livemode,
-    required this.metadata,
-  });
+  LocationApi({this.address, this.displayName, this.id, this.livemode, required this.metadata});
 
   AddressApi? address;
 
@@ -2322,17 +2550,12 @@ class LocationApi {
   Map<String, String> metadata;
 
   List<Object?> _toList() {
-    return <Object?>[
-      address,
-      displayName,
-      id,
-      livemode,
-      metadata,
-    ];
+    return <Object?>[address, displayName, id, livemode, metadata];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static LocationApi decode(Object result) {
     result as List<Object?>;
@@ -2354,7 +2577,11 @@ class LocationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(address, other.address) && _deepEquals(displayName, other.displayName) && _deepEquals(id, other.id) && _deepEquals(livemode, other.livemode) && _deepEquals(metadata, other.metadata);
+    return _deepEquals(address, other.address) &&
+        _deepEquals(displayName, other.displayName) &&
+        _deepEquals(id, other.id) &&
+        _deepEquals(livemode, other.livemode) &&
+        _deepEquals(metadata, other.metadata);
   }
 
   @override
@@ -2368,14 +2595,7 @@ class LocationApi {
 }
 
 class AddressApi {
-  AddressApi({
-    this.city,
-    this.country,
-    this.line1,
-    this.line2,
-    this.postalCode,
-    this.state,
-  });
+  AddressApi({this.city, this.country, this.line1, this.line2, this.postalCode, this.state});
 
   String? city;
 
@@ -2390,18 +2610,12 @@ class AddressApi {
   String? state;
 
   List<Object?> _toList() {
-    return <Object?>[
-      city,
-      country,
-      line1,
-      line2,
-      postalCode,
-      state,
-    ];
+    return <Object?>[city, country, line1, line2, postalCode, state];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static AddressApi decode(Object result) {
     result as List<Object?>;
@@ -2424,7 +2638,12 @@ class AddressApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(city, other.city) && _deepEquals(country, other.country) && _deepEquals(line1, other.line1) && _deepEquals(line2, other.line2) && _deepEquals(postalCode, other.postalCode) && _deepEquals(state, other.state);
+    return _deepEquals(city, other.city) &&
+        _deepEquals(country, other.country) &&
+        _deepEquals(line1, other.line1) &&
+        _deepEquals(line2, other.line2) &&
+        _deepEquals(postalCode, other.postalCode) &&
+        _deepEquals(state, other.state);
   }
 
   @override
@@ -2437,8 +2656,7 @@ class AddressApi {
   }
 }
 
-sealed class ConnectionConfigurationApi {
-}
+sealed class ConnectionConfigurationApi {}
 
 class BluetoothConnectionConfigurationApi extends ConnectionConfigurationApi {
   BluetoothConnectionConfigurationApi({
@@ -2451,14 +2669,12 @@ class BluetoothConnectionConfigurationApi extends ConnectionConfigurationApi {
   bool autoReconnectOnUnexpectedDisconnect;
 
   List<Object?> _toList() {
-    return <Object?>[
-      locationId,
-      autoReconnectOnUnexpectedDisconnect,
-    ];
+    return <Object?>[locationId, autoReconnectOnUnexpectedDisconnect];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static BluetoothConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2477,7 +2693,8 @@ class BluetoothConnectionConfigurationApi extends ConnectionConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(locationId, other.locationId) && _deepEquals(autoReconnectOnUnexpectedDisconnect, other.autoReconnectOnUnexpectedDisconnect);
+    return _deepEquals(locationId, other.locationId) &&
+        _deepEquals(autoReconnectOnUnexpectedDisconnect, other.autoReconnectOnUnexpectedDisconnect);
   }
 
   @override
@@ -2494,17 +2711,16 @@ class AppsOnDevicesConnectionConfigurationApi extends ConnectionConfigurationApi
   AppsOnDevicesConnectionConfigurationApi();
 
   List<Object?> _toList() {
-    return <Object?>[
-    ];
+    return <Object?>[];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static AppsOnDevicesConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return AppsOnDevicesConnectionConfigurationApi(
-    );
+    return AppsOnDevicesConnectionConfigurationApi();
   }
 
   @override
@@ -2538,14 +2754,12 @@ class InternetConnectionConfigurationApi extends ConnectionConfigurationApi {
   bool allowCustomerCancel;
 
   List<Object?> _toList() {
-    return <Object?>[
-      failIfInUse,
-      allowCustomerCancel,
-    ];
+    return <Object?>[failIfInUse, allowCustomerCancel];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static InternetConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2564,7 +2778,8 @@ class InternetConnectionConfigurationApi extends ConnectionConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(failIfInUse, other.failIfInUse) && _deepEquals(allowCustomerCancel, other.allowCustomerCancel);
+    return _deepEquals(failIfInUse, other.failIfInUse) &&
+        _deepEquals(allowCustomerCancel, other.allowCustomerCancel);
   }
 
   @override
@@ -2615,7 +2830,8 @@ class TapToPayConnectionConfigurationApi extends ConnectionConfigurationApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2638,7 +2854,15 @@ class TapToPayConnectionConfigurationApi extends ConnectionConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(locationId, other.locationId) && _deepEquals(autoReconnectOnUnexpectedDisconnect, other.autoReconnectOnUnexpectedDisconnect) && _deepEquals(onBehalfOf, other.onBehalfOf) && _deepEquals(merchantDisplayName, other.merchantDisplayName) && _deepEquals(tosAcceptancePermitted, other.tosAcceptancePermitted) && _deepEquals(returnReadResultImmediatelyEnabled, other.returnReadResultImmediatelyEnabled);
+    return _deepEquals(locationId, other.locationId) &&
+        _deepEquals(
+          autoReconnectOnUnexpectedDisconnect,
+          other.autoReconnectOnUnexpectedDisconnect,
+        ) &&
+        _deepEquals(onBehalfOf, other.onBehalfOf) &&
+        _deepEquals(merchantDisplayName, other.merchantDisplayName) &&
+        _deepEquals(tosAcceptancePermitted, other.tosAcceptancePermitted) &&
+        _deepEquals(returnReadResultImmediatelyEnabled, other.returnReadResultImmediatelyEnabled);
   }
 
   @override
@@ -2662,14 +2886,12 @@ class UsbConnectionConfigurationApi extends ConnectionConfigurationApi {
   bool autoReconnectOnUnexpectedDisconnect;
 
   List<Object?> _toList() {
-    return <Object?>[
-      locationId,
-      autoReconnectOnUnexpectedDisconnect,
-    ];
+    return <Object?>[locationId, autoReconnectOnUnexpectedDisconnect];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static UsbConnectionConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2688,7 +2910,8 @@ class UsbConnectionConfigurationApi extends ConnectionConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(locationId, other.locationId) && _deepEquals(autoReconnectOnUnexpectedDisconnect, other.autoReconnectOnUnexpectedDisconnect);
+    return _deepEquals(locationId, other.locationId) &&
+        _deepEquals(autoReconnectOnUnexpectedDisconnect, other.autoReconnectOnUnexpectedDisconnect);
   }
 
   @override
@@ -2712,8 +2935,7 @@ class UsbConnectionConfigurationApi extends ConnectionConfigurationApi {
 /// - [LocalMobileDiscoveryConfiguration]
 /// - [UsbDiscoveryConfigurationApi]
 /// Objects of those types get passed into the Terminal.shared.discoverReaders() method to control which devices get discovered, and how.
-sealed class DiscoveryConfigurationApi {
-}
+sealed class DiscoveryConfigurationApi {}
 
 /// In IOS this class is called BluetoothScanDiscoveryConfiguration
 ///
@@ -2722,24 +2944,19 @@ sealed class DiscoveryConfigurationApi {
 /// When discovering a reader using this method, the didUpdateDiscoveredReaders delegate method will
 /// be called multiple times as the Bluetooth scan proceeds.
 class BluetoothDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
-  BluetoothDiscoveryConfigurationApi({
-    required this.isSimulated,
-    this.timeoutInSeconds,
-  });
+  BluetoothDiscoveryConfigurationApi({required this.isSimulated, this.timeoutInSeconds});
 
   bool isSimulated;
 
   int? timeoutInSeconds;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSimulated,
-      timeoutInSeconds,
-    ];
+    return <Object?>[isSimulated, timeoutInSeconds];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static BluetoothDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2758,7 +2975,8 @@ class BluetoothDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(isSimulated, other.isSimulated) && _deepEquals(timeoutInSeconds, other.timeoutInSeconds);
+    return _deepEquals(isSimulated, other.isSimulated) &&
+        _deepEquals(timeoutInSeconds, other.timeoutInSeconds);
   }
 
   @override
@@ -2793,26 +3011,21 @@ class BluetoothDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
 /// - The Bluetooth Proximity discovery method can only discover Stripe Reader M2 and BBPOS Chipper 2X BT readers.
 /// - The simulated Bluetooth Proximity discovery method will always return a Stripe Reader M2 simulated device.
 class BluetoothProximityDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
-  BluetoothProximityDiscoveryConfigurationApi({
-    required this.isSimulated,
-  });
+  BluetoothProximityDiscoveryConfigurationApi({required this.isSimulated});
 
   bool isSimulated;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSimulated,
-    ];
+    return <Object?>[isSimulated];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static BluetoothProximityDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return BluetoothProximityDiscoveryConfigurationApi(
-      isSimulated: result[0]! as bool,
-    );
+    return BluetoothProximityDiscoveryConfigurationApi(isSimulated: result[0]! as bool);
   }
 
   @override
@@ -2842,17 +3055,16 @@ class AppsOnDevicesDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
   AppsOnDevicesDiscoveryConfigurationApi();
 
   List<Object?> _toList() {
-    return <Object?>[
-    ];
+    return <Object?>[];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static AppsOnDevicesDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return AppsOnDevicesDiscoveryConfigurationApi(
-    );
+    return AppsOnDevicesDiscoveryConfigurationApi();
   }
 
   @override
@@ -2901,16 +3113,12 @@ class InternetDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
   DiscoveryFilterApi? discoveryFilter;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSimulated,
-      locationId,
-      timeoutInSeconds,
-      discoveryFilter,
-    ];
+    return <Object?>[isSimulated, locationId, timeoutInSeconds, discoveryFilter];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static InternetDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -2931,7 +3139,10 @@ class InternetDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(isSimulated, other.isSimulated) && _deepEquals(locationId, other.locationId) && _deepEquals(timeoutInSeconds, other.timeoutInSeconds) && _deepEquals(discoveryFilter, other.discoveryFilter);
+    return _deepEquals(isSimulated, other.isSimulated) &&
+        _deepEquals(locationId, other.locationId) &&
+        _deepEquals(timeoutInSeconds, other.timeoutInSeconds) &&
+        _deepEquals(discoveryFilter, other.discoveryFilter);
   }
 
   @override
@@ -2950,26 +3161,21 @@ class InternetDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
 /// discovery attempt is made in an on a device without hardware support for the Apple Built-In reader
 /// or one running an unsupported version of iOS.
 class TapToPayDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
-  TapToPayDiscoveryConfigurationApi({
-    required this.isSimulated,
-  });
+  TapToPayDiscoveryConfigurationApi({required this.isSimulated});
 
   bool isSimulated;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSimulated,
-    ];
+    return <Object?>[isSimulated];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return TapToPayDiscoveryConfigurationApi(
-      isSimulated: result[0]! as bool,
-    );
+    return TapToPayDiscoveryConfigurationApi(isSimulated: result[0]! as bool);
   }
 
   @override
@@ -2996,24 +3202,19 @@ class TapToPayDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
 
 /// ONLY ON ANDROID
 class UsbDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
-  UsbDiscoveryConfigurationApi({
-    required this.isSimulated,
-    this.timeoutInSeconds,
-  });
+  UsbDiscoveryConfigurationApi({required this.isSimulated, this.timeoutInSeconds});
 
   bool isSimulated;
 
   int? timeoutInSeconds;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSimulated,
-      timeoutInSeconds,
-    ];
+    return <Object?>[isSimulated, timeoutInSeconds];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static UsbDiscoveryConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -3032,7 +3233,8 @@ class UsbDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(isSimulated, other.isSimulated) && _deepEquals(timeoutInSeconds, other.timeoutInSeconds);
+    return _deepEquals(isSimulated, other.isSimulated) &&
+        _deepEquals(timeoutInSeconds, other.timeoutInSeconds);
   }
 
   @override
@@ -3046,24 +3248,19 @@ class UsbDiscoveryConfigurationApi extends DiscoveryConfigurationApi {
 }
 
 class ClearCachedCredentialsResultApi {
-  ClearCachedCredentialsResultApi({
-    required this.isSuccessful,
-    this.error,
-  });
+  ClearCachedCredentialsResultApi({required this.isSuccessful, this.error});
 
   bool isSuccessful;
 
   TerminalExceptionApi? error;
 
   List<Object?> _toList() {
-    return <Object?>[
-      isSuccessful,
-      error,
-    ];
+    return <Object?>[isSuccessful, error];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ClearCachedCredentialsResultApi decode(Object result) {
     result as List<Object?>;
@@ -3282,7 +3479,8 @@ class PaymentIntentApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static PaymentIntentApi decode(Object result) {
     result as List<Object?>;
@@ -3329,7 +3527,36 @@ class PaymentIntentApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(createdInMilliseconds, other.createdInMilliseconds) && _deepEquals(status, other.status) && _deepEquals(amount, other.amount) && _deepEquals(captureMethod, other.captureMethod) && _deepEquals(currency, other.currency) && _deepEquals(metadata, other.metadata) && _deepEquals(charges, other.charges) && _deepEquals(paymentMethod, other.paymentMethod) && _deepEquals(paymentMethodId, other.paymentMethodId) && _deepEquals(amountDetails, other.amountDetails) && _deepEquals(amountTip, other.amountTip) && _deepEquals(statementDescriptor, other.statementDescriptor) && _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) && _deepEquals(amountCapturable, other.amountCapturable) && _deepEquals(amountReceived, other.amountReceived) && _deepEquals(applicationId, other.applicationId) && _deepEquals(applicationFeeAmount, other.applicationFeeAmount) && _deepEquals(cancellationReason, other.cancellationReason) && _deepEquals(canceledAt, other.canceledAt) && _deepEquals(clientSecret, other.clientSecret) && _deepEquals(confirmationMethod, other.confirmationMethod) && _deepEquals(customerId, other.customerId) && _deepEquals(descriptionX, other.descriptionX) && _deepEquals(invoiceId, other.invoiceId) && _deepEquals(onBehalfOf, other.onBehalfOf) && _deepEquals(reviewId, other.reviewId) && _deepEquals(receiptEmail, other.receiptEmail) && _deepEquals(setupFutureUsage, other.setupFutureUsage) && _deepEquals(transferGroup, other.transferGroup);
+    return _deepEquals(id, other.id) &&
+        _deepEquals(createdInMilliseconds, other.createdInMilliseconds) &&
+        _deepEquals(status, other.status) &&
+        _deepEquals(amount, other.amount) &&
+        _deepEquals(captureMethod, other.captureMethod) &&
+        _deepEquals(currency, other.currency) &&
+        _deepEquals(metadata, other.metadata) &&
+        _deepEquals(charges, other.charges) &&
+        _deepEquals(paymentMethod, other.paymentMethod) &&
+        _deepEquals(paymentMethodId, other.paymentMethodId) &&
+        _deepEquals(amountDetails, other.amountDetails) &&
+        _deepEquals(amountTip, other.amountTip) &&
+        _deepEquals(statementDescriptor, other.statementDescriptor) &&
+        _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) &&
+        _deepEquals(amountCapturable, other.amountCapturable) &&
+        _deepEquals(amountReceived, other.amountReceived) &&
+        _deepEquals(applicationId, other.applicationId) &&
+        _deepEquals(applicationFeeAmount, other.applicationFeeAmount) &&
+        _deepEquals(cancellationReason, other.cancellationReason) &&
+        _deepEquals(canceledAt, other.canceledAt) &&
+        _deepEquals(clientSecret, other.clientSecret) &&
+        _deepEquals(confirmationMethod, other.confirmationMethod) &&
+        _deepEquals(customerId, other.customerId) &&
+        _deepEquals(descriptionX, other.descriptionX) &&
+        _deepEquals(invoiceId, other.invoiceId) &&
+        _deepEquals(onBehalfOf, other.onBehalfOf) &&
+        _deepEquals(reviewId, other.reviewId) &&
+        _deepEquals(receiptEmail, other.receiptEmail) &&
+        _deepEquals(setupFutureUsage, other.setupFutureUsage) &&
+        _deepEquals(transferGroup, other.transferGroup);
   }
 
   @override
@@ -3344,27 +3571,22 @@ class PaymentIntentApi {
 
 /// Contains details about items included in the [PaymentIntentApi] amount
 class AmountDetailsApi {
-  AmountDetailsApi({
-    this.tip,
-  });
+  AmountDetailsApi({this.tip});
 
   /// Details about the tip
   TipApi? tip;
 
   List<Object?> _toList() {
-    return <Object?>[
-      tip,
-    ];
+    return <Object?>[tip];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static AmountDetailsApi decode(Object result) {
     result as List<Object?>;
-    return AmountDetailsApi(
-      tip: result[0] as TipApi?,
-    );
+    return AmountDetailsApi(tip: result[0] as TipApi?);
   }
 
   @override
@@ -3505,7 +3727,8 @@ class PaymentIntentParametersApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static PaymentIntentParametersApi decode(Object result) {
     result as List<Object?>;
@@ -3538,7 +3761,22 @@ class PaymentIntentParametersApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(amount, other.amount) && _deepEquals(currency, other.currency) && _deepEquals(captureMethod, other.captureMethod) && _deepEquals(paymentMethodTypes, other.paymentMethodTypes) && _deepEquals(metadata, other.metadata) && _deepEquals(descriptionX, other.descriptionX) && _deepEquals(statementDescriptor, other.statementDescriptor) && _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) && _deepEquals(receiptEmail, other.receiptEmail) && _deepEquals(customerId, other.customerId) && _deepEquals(applicationFeeAmount, other.applicationFeeAmount) && _deepEquals(transferDataDestination, other.transferDataDestination) && _deepEquals(transferGroup, other.transferGroup) && _deepEquals(onBehalfOf, other.onBehalfOf) && _deepEquals(setupFutureUsage, other.setupFutureUsage) && _deepEquals(paymentMethodOptionsParameters, other.paymentMethodOptionsParameters);
+    return _deepEquals(amount, other.amount) &&
+        _deepEquals(currency, other.currency) &&
+        _deepEquals(captureMethod, other.captureMethod) &&
+        _deepEquals(paymentMethodTypes, other.paymentMethodTypes) &&
+        _deepEquals(metadata, other.metadata) &&
+        _deepEquals(descriptionX, other.descriptionX) &&
+        _deepEquals(statementDescriptor, other.statementDescriptor) &&
+        _deepEquals(statementDescriptorSuffix, other.statementDescriptorSuffix) &&
+        _deepEquals(receiptEmail, other.receiptEmail) &&
+        _deepEquals(customerId, other.customerId) &&
+        _deepEquals(applicationFeeAmount, other.applicationFeeAmount) &&
+        _deepEquals(transferDataDestination, other.transferDataDestination) &&
+        _deepEquals(transferGroup, other.transferGroup) &&
+        _deepEquals(onBehalfOf, other.onBehalfOf) &&
+        _deepEquals(setupFutureUsage, other.setupFutureUsage) &&
+        _deepEquals(paymentMethodOptionsParameters, other.paymentMethodOptionsParameters);
   }
 
   @override
@@ -3553,21 +3791,18 @@ class PaymentIntentParametersApi {
 
 /// The PaymentMethodOptionsParameters contains options for PaymentMethod creation.
 class PaymentMethodOptionsParametersApi {
-  PaymentMethodOptionsParametersApi({
-    required this.cardPresentParameters,
-  });
+  PaymentMethodOptionsParametersApi({required this.cardPresentParameters});
 
   /// Card-present-specific configuration for this PaymentMethod.
   CardPresentParametersApi cardPresentParameters;
 
   List<Object?> _toList() {
-    return <Object?>[
-      cardPresentParameters,
-    ];
+    return <Object?>[cardPresentParameters];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static PaymentMethodOptionsParametersApi decode(Object result) {
     result as List<Object?>;
@@ -3600,27 +3835,22 @@ class PaymentMethodOptionsParametersApi {
 
 /// Configuration for confirming a payment intent.
 class ConfirmPaymentIntentConfigurationApi {
-  ConfirmPaymentIntentConfigurationApi({
-    this.returnUrl,
-  });
+  ConfirmPaymentIntentConfigurationApi({this.returnUrl});
 
   /// The URL to redirect the customer back to after authentication.
   String? returnUrl;
 
   List<Object?> _toList() {
-    return <Object?>[
-      returnUrl,
-    ];
+    return <Object?>[returnUrl];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ConfirmPaymentIntentConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return ConfirmPaymentIntentConfigurationApi(
-      returnUrl: result[0] as String?,
-    );
+    return ConfirmPaymentIntentConfigurationApi(returnUrl: result[0] as String?);
   }
 
   @override
@@ -3677,16 +3907,12 @@ class CartApi {
   List<CartLineItemApi> lineItems;
 
   List<Object?> _toList() {
-    return <Object?>[
-      currency,
-      tax,
-      total,
-      lineItems,
-    ];
+    return <Object?>[currency, tax, total, lineItems];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CartApi decode(Object result) {
     result as List<Object?>;
@@ -3707,7 +3933,10 @@ class CartApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(currency, other.currency) && _deepEquals(tax, other.tax) && _deepEquals(total, other.total) && _deepEquals(lineItems, other.lineItems);
+    return _deepEquals(currency, other.currency) &&
+        _deepEquals(tax, other.tax) &&
+        _deepEquals(total, other.total) &&
+        _deepEquals(lineItems, other.lineItems);
   }
 
   @override
@@ -3726,11 +3955,7 @@ class CartApi {
 /// and setting the [CartApi]‘s tax and total – the reader will not calculate tax or total for you.
 /// Similarly, make sure the values displayed reflect what the customer is actually charged.
 class CartLineItemApi {
-  CartLineItemApi({
-    required this.descriptionX,
-    required this.quantity,
-    required this.amount,
-  });
+  CartLineItemApi({required this.descriptionX, required this.quantity, required this.amount});
 
   /// The description or name of the item.
   String descriptionX;
@@ -3743,15 +3968,12 @@ class CartLineItemApi {
   int amount;
 
   List<Object?> _toList() {
-    return <Object?>[
-      descriptionX,
-      quantity,
-      amount,
-    ];
+    return <Object?>[descriptionX, quantity, amount];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CartLineItemApi decode(Object result) {
     result as List<Object?>;
@@ -3771,7 +3993,9 @@ class CartLineItemApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(descriptionX, other.descriptionX) && _deepEquals(quantity, other.quantity) && _deepEquals(amount, other.amount);
+    return _deepEquals(descriptionX, other.descriptionX) &&
+        _deepEquals(quantity, other.quantity) &&
+        _deepEquals(amount, other.amount);
   }
 
   @override
@@ -3784,31 +4008,25 @@ class CartLineItemApi {
   }
 }
 
-sealed class DiscoveryFilterApi {
-}
+sealed class DiscoveryFilterApi {}
 
 /// Filters internet discovery by reader ID.
 class DiscoveryFilterByReaderIdApi extends DiscoveryFilterApi {
-  DiscoveryFilterByReaderIdApi({
-    required this.readerId,
-  });
+  DiscoveryFilterByReaderIdApi({required this.readerId});
 
   String readerId;
 
   List<Object?> _toList() {
-    return <Object?>[
-      readerId,
-    ];
+    return <Object?>[readerId];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static DiscoveryFilterByReaderIdApi decode(Object result) {
     result as List<Object?>;
-    return DiscoveryFilterByReaderIdApi(
-      readerId: result[0]! as String,
-    );
+    return DiscoveryFilterByReaderIdApi(readerId: result[0]! as String);
   }
 
   @override
@@ -3835,26 +4053,21 @@ class DiscoveryFilterByReaderIdApi extends DiscoveryFilterApi {
 
 /// Filters internet discovery by reader serial number.
 class DiscoveryFilterBySerialNumberApi extends DiscoveryFilterApi {
-  DiscoveryFilterBySerialNumberApi({
-    required this.serialNumber,
-  });
+  DiscoveryFilterBySerialNumberApi({required this.serialNumber});
 
   String serialNumber;
 
   List<Object?> _toList() {
-    return <Object?>[
-      serialNumber,
-    ];
+    return <Object?>[serialNumber];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static DiscoveryFilterBySerialNumberApi decode(Object result) {
     result as List<Object?>;
-    return DiscoveryFilterBySerialNumberApi(
-      serialNumber: result[0]! as String,
-    );
+    return DiscoveryFilterBySerialNumberApi(serialNumber: result[0]! as String);
   }
 
   @override
@@ -3886,11 +4099,7 @@ class DiscoveryFilterBySerialNumberApi extends DiscoveryFilterApi {
 /// - The overall theme for this screen, either light or dark mode.
 /// - The color scheme for this screen.
 class TapToPayUxConfigurationApi {
-  TapToPayUxConfigurationApi({
-    this.tapZone,
-    this.colors,
-    this.darkMode,
-  });
+  TapToPayUxConfigurationApi({this.tapZone, this.colors, this.darkMode});
 
   TapToPayUxConfigurationTapZoneApi? tapZone;
 
@@ -3899,15 +4108,12 @@ class TapToPayUxConfigurationApi {
   TapToPayUxConfigurationDarkModeApi? darkMode;
 
   List<Object?> _toList() {
-    return <Object?>[
-      tapZone,
-      colors,
-      darkMode,
-    ];
+    return <Object?>[tapZone, colors, darkMode];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayUxConfigurationApi decode(Object result) {
     result as List<Object?>;
@@ -3927,7 +4133,9 @@ class TapToPayUxConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(tapZone, other.tapZone) && _deepEquals(colors, other.colors) && _deepEquals(darkMode, other.darkMode);
+    return _deepEquals(tapZone, other.tapZone) &&
+        _deepEquals(colors, other.colors) &&
+        _deepEquals(darkMode, other.darkMode);
   }
 
   @override
@@ -3941,24 +4149,19 @@ class TapToPayUxConfigurationApi {
 }
 
 class TapToPayUxConfigurationTapZoneApi {
-  TapToPayUxConfigurationTapZoneApi({
-    this.indicator,
-    this.position,
-  });
+  TapToPayUxConfigurationTapZoneApi({this.indicator, this.position});
 
   TapToPayUxConfigurationTapZoneIndicatorApi? indicator;
 
   TapToPayUxConfigurationTapZonePositionApi? position;
 
   List<Object?> _toList() {
-    return <Object?>[
-      indicator,
-      position,
-    ];
+    return <Object?>[indicator, position];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayUxConfigurationTapZoneApi decode(Object result) {
     result as List<Object?>;
@@ -3991,24 +4194,19 @@ class TapToPayUxConfigurationTapZoneApi {
 }
 
 class TapToPayUxConfigurationTapZonePositionApi {
-  TapToPayUxConfigurationTapZonePositionApi({
-    required this.xBias,
-    required this.yBias,
-  });
+  TapToPayUxConfigurationTapZonePositionApi({required this.xBias, required this.yBias});
 
   double xBias;
 
   double yBias;
 
   List<Object?> _toList() {
-    return <Object?>[
-      xBias,
-      yBias,
-    ];
+    return <Object?>[xBias, yBias];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayUxConfigurationTapZonePositionApi decode(Object result) {
     result as List<Object?>;
@@ -4041,11 +4239,7 @@ class TapToPayUxConfigurationTapZonePositionApi {
 }
 
 class TapToPayUxConfigurationColorSchemeApi {
-  TapToPayUxConfigurationColorSchemeApi({
-    this.primary,
-    this.success,
-    this.error,
-  });
+  TapToPayUxConfigurationColorSchemeApi({this.primary, this.success, this.error});
 
   /// The color value in the form 0xAARRGGBB.
   int? primary;
@@ -4057,15 +4251,12 @@ class TapToPayUxConfigurationColorSchemeApi {
   int? error;
 
   List<Object?> _toList() {
-    return <Object?>[
-      primary,
-      success,
-      error,
-    ];
+    return <Object?>[primary, success, error];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static TapToPayUxConfigurationColorSchemeApi decode(Object result) {
     result as List<Object?>;
@@ -4085,7 +4276,9 @@ class TapToPayUxConfigurationColorSchemeApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(primary, other.primary) && _deepEquals(success, other.success) && _deepEquals(error, other.error);
+    return _deepEquals(primary, other.primary) &&
+        _deepEquals(success, other.success) &&
+        _deepEquals(error, other.error);
   }
 
   @override
@@ -4121,18 +4314,12 @@ class CardDetailsApi {
   String? last4;
 
   List<Object?> _toList() {
-    return <Object?>[
-      brand,
-      country,
-      expMonth,
-      expYear,
-      funding,
-      last4,
-    ];
+    return <Object?>[brand, country, expMonth, expYear, funding, last4];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CardDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -4155,7 +4342,12 @@ class CardDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(brand, other.brand) && _deepEquals(country, other.country) && _deepEquals(expMonth, other.expMonth) && _deepEquals(expYear, other.expYear) && _deepEquals(funding, other.funding) && _deepEquals(last4, other.last4);
+    return _deepEquals(brand, other.brand) &&
+        _deepEquals(country, other.country) &&
+        _deepEquals(expMonth, other.expMonth) &&
+        _deepEquals(expYear, other.expYear) &&
+        _deepEquals(funding, other.funding) &&
+        _deepEquals(last4, other.last4);
   }
 
   @override
@@ -4226,7 +4418,8 @@ class CardPresentDetailsApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CardPresentDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -4255,7 +4448,18 @@ class CardPresentDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(brand, other.brand) && _deepEquals(country, other.country) && _deepEquals(expMonth, other.expMonth) && _deepEquals(expYear, other.expYear) && _deepEquals(funding, other.funding) && _deepEquals(last4, other.last4) && _deepEquals(cardholderName, other.cardholderName) && _deepEquals(emvAuthData, other.emvAuthData) && _deepEquals(generatedCard, other.generatedCard) && _deepEquals(incrementalAuthorizationStatus, other.incrementalAuthorizationStatus) && _deepEquals(networks, other.networks) && _deepEquals(receipt, other.receipt);
+    return _deepEquals(brand, other.brand) &&
+        _deepEquals(country, other.country) &&
+        _deepEquals(expMonth, other.expMonth) &&
+        _deepEquals(expYear, other.expYear) &&
+        _deepEquals(funding, other.funding) &&
+        _deepEquals(last4, other.last4) &&
+        _deepEquals(cardholderName, other.cardholderName) &&
+        _deepEquals(emvAuthData, other.emvAuthData) &&
+        _deepEquals(generatedCard, other.generatedCard) &&
+        _deepEquals(incrementalAuthorizationStatus, other.incrementalAuthorizationStatus) &&
+        _deepEquals(networks, other.networks) &&
+        _deepEquals(receipt, other.receipt);
   }
 
   @override
@@ -4269,24 +4473,19 @@ class CardPresentDetailsApi {
 }
 
 class CardNetworksApi {
-  CardNetworksApi({
-    required this.available,
-    this.preferred,
-  });
+  CardNetworksApi({required this.available, this.preferred});
 
   List<CardBrandApi> available;
 
   String? preferred;
 
   List<Object?> _toList() {
-    return <Object?>[
-      available,
-      preferred,
-    ];
+    return <Object?>[available, preferred];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CardNetworksApi decode(Object result) {
     result as List<Object?>;
@@ -4360,7 +4559,8 @@ class ReceiptDetailsApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static ReceiptDetailsApi decode(Object result) {
     result as List<Object?>;
@@ -4385,7 +4585,14 @@ class ReceiptDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(accountType, other.accountType) && _deepEquals(applicationPreferredName, other.applicationPreferredName) && _deepEquals(authorizationCode, other.authorizationCode) && _deepEquals(authorizationResponseCode, other.authorizationResponseCode) && _deepEquals(applicationCryptogram, other.applicationCryptogram) && _deepEquals(dedicatedFileName, other.dedicatedFileName) && _deepEquals(transactionStatusInformation, other.transactionStatusInformation) && _deepEquals(terminalVerificationResults, other.terminalVerificationResults);
+    return _deepEquals(accountType, other.accountType) &&
+        _deepEquals(applicationPreferredName, other.applicationPreferredName) &&
+        _deepEquals(authorizationCode, other.authorizationCode) &&
+        _deepEquals(authorizationResponseCode, other.authorizationResponseCode) &&
+        _deepEquals(applicationCryptogram, other.applicationCryptogram) &&
+        _deepEquals(dedicatedFileName, other.dedicatedFileName) &&
+        _deepEquals(transactionStatusInformation, other.transactionStatusInformation) &&
+        _deepEquals(terminalVerificationResults, other.terminalVerificationResults);
   }
 
   @override
@@ -4433,7 +4640,8 @@ class CardPresentParametersApi {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static CardPresentParametersApi decode(Object result) {
     result as List<Object?>;
@@ -4454,7 +4662,13 @@ class CardPresentParametersApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(captureMethod, other.captureMethod) && _deepEquals(requestExtendedAuthorization, other.requestExtendedAuthorization) && _deepEquals(requestIncrementalAuthorizationSupport, other.requestIncrementalAuthorizationSupport) && _deepEquals(requestedPriority, other.requestedPriority);
+    return _deepEquals(captureMethod, other.captureMethod) &&
+        _deepEquals(requestExtendedAuthorization, other.requestExtendedAuthorization) &&
+        _deepEquals(
+          requestIncrementalAuthorizationSupport,
+          other.requestIncrementalAuthorizationSupport,
+        ) &&
+        _deepEquals(requestedPriority, other.requestedPriority);
   }
 
   @override
@@ -4467,7 +4681,6 @@ class CardPresentParametersApi {
   }
 }
 
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -4475,253 +4688,253 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is PaymentStatusApi) {
+    } else if (value is PaymentStatusApi) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    }    else if (value is TerminalExceptionCodeApi) {
+    } else if (value is TerminalExceptionCodeApi) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    }    else if (value is PaymentMethodTypeApi) {
+    } else if (value is PaymentMethodTypeApi) {
       buffer.putUint8(131);
       writeValue(buffer, value.index);
-    }    else if (value is RefundStatusApi) {
+    } else if (value is RefundStatusApi) {
       buffer.putUint8(132);
       writeValue(buffer, value.index);
-    }    else if (value is DisconnectReasonApi) {
+    } else if (value is DisconnectReasonApi) {
       buffer.putUint8(133);
       writeValue(buffer, value.index);
-    }    else if (value is ConnectionStatusApi) {
+    } else if (value is ConnectionStatusApi) {
       buffer.putUint8(134);
       writeValue(buffer, value.index);
-    }    else if (value is LocationStatusApi) {
+    } else if (value is LocationStatusApi) {
       buffer.putUint8(135);
       writeValue(buffer, value.index);
-    }    else if (value is DeviceTypeApi) {
+    } else if (value is DeviceTypeApi) {
       buffer.putUint8(136);
       writeValue(buffer, value.index);
-    }    else if (value is ReaderEventApi) {
+    } else if (value is ReaderEventApi) {
       buffer.putUint8(137);
       writeValue(buffer, value.index);
-    }    else if (value is ReaderDisplayMessageApi) {
+    } else if (value is ReaderDisplayMessageApi) {
       buffer.putUint8(138);
       writeValue(buffer, value.index);
-    }    else if (value is ReaderInputOptionApi) {
+    } else if (value is ReaderInputOptionApi) {
       buffer.putUint8(139);
       writeValue(buffer, value.index);
-    }    else if (value is NetworkStatusApi) {
+    } else if (value is NetworkStatusApi) {
       buffer.putUint8(140);
       writeValue(buffer, value.index);
-    }    else if (value is BatteryStatusApi) {
+    } else if (value is BatteryStatusApi) {
       buffer.putUint8(141);
       writeValue(buffer, value.index);
-    }    else if (value is ChargeStatusApi) {
+    } else if (value is ChargeStatusApi) {
       buffer.putUint8(142);
       writeValue(buffer, value.index);
-    }    else if (value is SimulateReaderUpdateApi) {
+    } else if (value is SimulateReaderUpdateApi) {
       buffer.putUint8(143);
       writeValue(buffer, value.index);
-    }    else if (value is SimulatedCardTypeApi) {
+    } else if (value is SimulatedCardTypeApi) {
       buffer.putUint8(144);
       writeValue(buffer, value.index);
-    }    else if (value is UpdateComponentApi) {
+    } else if (value is UpdateComponentApi) {
       buffer.putUint8(145);
       writeValue(buffer, value.index);
-    }    else if (value is UpdateTimeEstimateApi) {
+    } else if (value is UpdateTimeEstimateApi) {
       buffer.putUint8(146);
       writeValue(buffer, value.index);
-    }    else if (value is SetupIntentUsageApi) {
+    } else if (value is SetupIntentUsageApi) {
       buffer.putUint8(147);
       writeValue(buffer, value.index);
-    }    else if (value is SetupIntentStatusApi) {
+    } else if (value is SetupIntentStatusApi) {
       buffer.putUint8(148);
       writeValue(buffer, value.index);
-    }    else if (value is SetupAttemptStatusApi) {
+    } else if (value is SetupAttemptStatusApi) {
       buffer.putUint8(149);
       writeValue(buffer, value.index);
-    }    else if (value is AllowRedisplayApi) {
+    } else if (value is AllowRedisplayApi) {
       buffer.putUint8(150);
       writeValue(buffer, value.index);
-    }    else if (value is PaymentIntentStatusApi) {
+    } else if (value is PaymentIntentStatusApi) {
       buffer.putUint8(151);
       writeValue(buffer, value.index);
-    }    else if (value is CaptureMethodApi) {
+    } else if (value is CaptureMethodApi) {
       buffer.putUint8(152);
       writeValue(buffer, value.index);
-    }    else if (value is ConfirmationMethodApi) {
+    } else if (value is ConfirmationMethodApi) {
       buffer.putUint8(153);
       writeValue(buffer, value.index);
-    }    else if (value is PaymentIntentUsageApi) {
+    } else if (value is PaymentIntentUsageApi) {
       buffer.putUint8(154);
       writeValue(buffer, value.index);
-    }    else if (value is TapToPayUxConfigurationTapZoneIndicatorApi) {
+    } else if (value is TapToPayUxConfigurationTapZoneIndicatorApi) {
       buffer.putUint8(155);
       writeValue(buffer, value.index);
-    }    else if (value is TapToPayUxConfigurationDarkModeApi) {
+    } else if (value is TapToPayUxConfigurationDarkModeApi) {
       buffer.putUint8(156);
       writeValue(buffer, value.index);
-    }    else if (value is CardBrandApi) {
+    } else if (value is CardBrandApi) {
       buffer.putUint8(157);
       writeValue(buffer, value.index);
-    }    else if (value is CardFundingTypeApi) {
+    } else if (value is CardFundingTypeApi) {
       buffer.putUint8(158);
       writeValue(buffer, value.index);
-    }    else if (value is IncrementalAuthorizationStatusApi) {
+    } else if (value is IncrementalAuthorizationStatusApi) {
       buffer.putUint8(159);
       writeValue(buffer, value.index);
-    }    else if (value is CardPresentCaptureMethodApi) {
+    } else if (value is CardPresentCaptureMethodApi) {
       buffer.putUint8(160);
       writeValue(buffer, value.index);
-    }    else if (value is CardPresentRoutingApi) {
+    } else if (value is CardPresentRoutingApi) {
       buffer.putUint8(161);
       writeValue(buffer, value.index);
-    }    else if (value is TerminalExceptionApi) {
+    } else if (value is TerminalExceptionApi) {
       buffer.putUint8(162);
       writeValue(buffer, value.encode());
-    }    else if (value is PaymentMethodApi) {
+    } else if (value is PaymentMethodApi) {
       buffer.putUint8(163);
       writeValue(buffer, value.encode());
-    }    else if (value is RefundApi) {
+    } else if (value is RefundApi) {
       buffer.putUint8(164);
       writeValue(buffer, value.encode());
-    }    else if (value is PaymentMethodDetailsApi) {
+    } else if (value is PaymentMethodDetailsApi) {
       buffer.putUint8(165);
       writeValue(buffer, value.encode());
-    }    else if (value is ReaderApi) {
+    } else if (value is ReaderApi) {
       buffer.putUint8(166);
       writeValue(buffer, value.encode());
-    }    else if (value is ChargeApi) {
+    } else if (value is ChargeApi) {
       buffer.putUint8(167);
       writeValue(buffer, value.encode());
-    }    else if (value is TipApi) {
+    } else if (value is TipApi) {
       buffer.putUint8(168);
       writeValue(buffer, value.encode());
-    }    else if (value is TippingConfigurationApi) {
+    } else if (value is TippingConfigurationApi) {
       buffer.putUint8(169);
       writeValue(buffer, value.encode());
-    }    else if (value is InternetEasyConnectConfigurationApi) {
+    } else if (value is InternetEasyConnectConfigurationApi) {
       buffer.putUint8(170);
       writeValue(buffer, value.encode());
-    }    else if (value is AppsOnDevicesEasyConnectionConfigurationApi) {
+    } else if (value is AppsOnDevicesEasyConnectionConfigurationApi) {
       buffer.putUint8(171);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayEasyConnectConfigurationApi) {
+    } else if (value is TapToPayEasyConnectConfigurationApi) {
       buffer.putUint8(172);
       writeValue(buffer, value.encode());
-    }    else if (value is SimulatorConfigurationApi) {
+    } else if (value is SimulatorConfigurationApi) {
       buffer.putUint8(173);
       writeValue(buffer, value.encode());
-    }    else if (value is SimulatedCardApi) {
+    } else if (value is SimulatedCardApi) {
       buffer.putUint8(174);
       writeValue(buffer, value.encode());
-    }    else if (value is ReaderSoftwareUpdateApi) {
+    } else if (value is ReaderSoftwareUpdateApi) {
       buffer.putUint8(175);
       writeValue(buffer, value.encode());
-    }    else if (value is SetupIntentApi) {
+    } else if (value is SetupIntentApi) {
       buffer.putUint8(176);
       writeValue(buffer, value.encode());
-    }    else if (value is SetupAttemptApi) {
+    } else if (value is SetupAttemptApi) {
       buffer.putUint8(177);
       writeValue(buffer, value.encode());
-    }    else if (value is SetupAttemptPaymentMethodDetailsApi) {
+    } else if (value is SetupAttemptPaymentMethodDetailsApi) {
       buffer.putUint8(178);
       writeValue(buffer, value.encode());
-    }    else if (value is SetupAttemptCardPresentDetailsApi) {
+    } else if (value is SetupAttemptCardPresentDetailsApi) {
       buffer.putUint8(179);
       writeValue(buffer, value.encode());
-    }    else if (value is LocationApi) {
+    } else if (value is LocationApi) {
       buffer.putUint8(180);
       writeValue(buffer, value.encode());
-    }    else if (value is AddressApi) {
+    } else if (value is AddressApi) {
       buffer.putUint8(181);
       writeValue(buffer, value.encode());
-    }    else if (value is BluetoothConnectionConfigurationApi) {
+    } else if (value is BluetoothConnectionConfigurationApi) {
       buffer.putUint8(182);
       writeValue(buffer, value.encode());
-    }    else if (value is AppsOnDevicesConnectionConfigurationApi) {
+    } else if (value is AppsOnDevicesConnectionConfigurationApi) {
       buffer.putUint8(183);
       writeValue(buffer, value.encode());
-    }    else if (value is InternetConnectionConfigurationApi) {
+    } else if (value is InternetConnectionConfigurationApi) {
       buffer.putUint8(184);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayConnectionConfigurationApi) {
+    } else if (value is TapToPayConnectionConfigurationApi) {
       buffer.putUint8(185);
       writeValue(buffer, value.encode());
-    }    else if (value is UsbConnectionConfigurationApi) {
+    } else if (value is UsbConnectionConfigurationApi) {
       buffer.putUint8(186);
       writeValue(buffer, value.encode());
-    }    else if (value is BluetoothDiscoveryConfigurationApi) {
+    } else if (value is BluetoothDiscoveryConfigurationApi) {
       buffer.putUint8(187);
       writeValue(buffer, value.encode());
-    }    else if (value is BluetoothProximityDiscoveryConfigurationApi) {
+    } else if (value is BluetoothProximityDiscoveryConfigurationApi) {
       buffer.putUint8(188);
       writeValue(buffer, value.encode());
-    }    else if (value is AppsOnDevicesDiscoveryConfigurationApi) {
+    } else if (value is AppsOnDevicesDiscoveryConfigurationApi) {
       buffer.putUint8(189);
       writeValue(buffer, value.encode());
-    }    else if (value is InternetDiscoveryConfigurationApi) {
+    } else if (value is InternetDiscoveryConfigurationApi) {
       buffer.putUint8(190);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayDiscoveryConfigurationApi) {
+    } else if (value is TapToPayDiscoveryConfigurationApi) {
       buffer.putUint8(191);
       writeValue(buffer, value.encode());
-    }    else if (value is UsbDiscoveryConfigurationApi) {
+    } else if (value is UsbDiscoveryConfigurationApi) {
       buffer.putUint8(192);
       writeValue(buffer, value.encode());
-    }    else if (value is ClearCachedCredentialsResultApi) {
+    } else if (value is ClearCachedCredentialsResultApi) {
       buffer.putUint8(193);
       writeValue(buffer, value.encode());
-    }    else if (value is PaymentIntentApi) {
+    } else if (value is PaymentIntentApi) {
       buffer.putUint8(194);
       writeValue(buffer, value.encode());
-    }    else if (value is AmountDetailsApi) {
+    } else if (value is AmountDetailsApi) {
       buffer.putUint8(195);
       writeValue(buffer, value.encode());
-    }    else if (value is PaymentIntentParametersApi) {
+    } else if (value is PaymentIntentParametersApi) {
       buffer.putUint8(196);
       writeValue(buffer, value.encode());
-    }    else if (value is PaymentMethodOptionsParametersApi) {
+    } else if (value is PaymentMethodOptionsParametersApi) {
       buffer.putUint8(197);
       writeValue(buffer, value.encode());
-    }    else if (value is ConfirmPaymentIntentConfigurationApi) {
+    } else if (value is ConfirmPaymentIntentConfigurationApi) {
       buffer.putUint8(198);
       writeValue(buffer, value.encode());
-    }    else if (value is CartApi) {
+    } else if (value is CartApi) {
       buffer.putUint8(199);
       writeValue(buffer, value.encode());
-    }    else if (value is CartLineItemApi) {
+    } else if (value is CartLineItemApi) {
       buffer.putUint8(200);
       writeValue(buffer, value.encode());
-    }    else if (value is DiscoveryFilterByReaderIdApi) {
+    } else if (value is DiscoveryFilterByReaderIdApi) {
       buffer.putUint8(201);
       writeValue(buffer, value.encode());
-    }    else if (value is DiscoveryFilterBySerialNumberApi) {
+    } else if (value is DiscoveryFilterBySerialNumberApi) {
       buffer.putUint8(202);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayUxConfigurationApi) {
+    } else if (value is TapToPayUxConfigurationApi) {
       buffer.putUint8(203);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayUxConfigurationTapZoneApi) {
+    } else if (value is TapToPayUxConfigurationTapZoneApi) {
       buffer.putUint8(204);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayUxConfigurationTapZonePositionApi) {
+    } else if (value is TapToPayUxConfigurationTapZonePositionApi) {
       buffer.putUint8(205);
       writeValue(buffer, value.encode());
-    }    else if (value is TapToPayUxConfigurationColorSchemeApi) {
+    } else if (value is TapToPayUxConfigurationColorSchemeApi) {
       buffer.putUint8(206);
       writeValue(buffer, value.encode());
-    }    else if (value is CardDetailsApi) {
+    } else if (value is CardDetailsApi) {
       buffer.putUint8(207);
       writeValue(buffer, value.encode());
-    }    else if (value is CardPresentDetailsApi) {
+    } else if (value is CardPresentDetailsApi) {
       buffer.putUint8(208);
       writeValue(buffer, value.encode());
-    }    else if (value is CardNetworksApi) {
+    } else if (value is CardNetworksApi) {
       buffer.putUint8(209);
       writeValue(buffer, value.encode());
-    }    else if (value is ReceiptDetailsApi) {
+    } else if (value is ReceiptDetailsApi) {
       buffer.putUint8(210);
       writeValue(buffer, value.encode());
-    }    else if (value is CardPresentParametersApi) {
+    } else if (value is CardPresentParametersApi) {
       buffer.putUint8(211);
       writeValue(buffer, value.encode());
     } else {
@@ -4944,8 +5157,10 @@ class TerminalPlatformApi {
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
   TerminalPlatformApi({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    : pigeonVar_binaryMessenger = binaryMessenger,
+      pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty
+          ? '.$messageChannelSuffix'
+          : '';
   final BinaryMessenger? pigeonVar_binaryMessenger;
 
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
@@ -4953,7 +5168,8 @@ class TerminalPlatformApi {
   final String pigeonVar_messageChannelSuffix;
 
   Future<void> initialize({required bool shouldPrintLogs}) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.initialize$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.initialize$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -4962,16 +5178,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[shouldPrintLogs]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<ClearCachedCredentialsResultApi> clearCachedCredentials() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.clearCachedCredentials$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.clearCachedCredentials$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -4981,16 +5193,16 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as ClearCachedCredentialsResultApi;
   }
 
   Future<ConnectionStatusApi> getConnectionStatus() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getConnectionStatus$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getConnectionStatus$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5000,35 +5212,41 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as ConnectionStatusApi;
   }
 
-  Future<bool> supportsReadersOfType({required DeviceTypeApi? deviceType, required DiscoveryConfigurationApi discoveryConfiguration}) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.supportsReadersOfType$pigeonVar_messageChannelSuffix';
+  Future<bool> supportsReadersOfType({
+    required DeviceTypeApi? deviceType,
+    required DiscoveryConfigurationApi discoveryConfiguration,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.supportsReadersOfType$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[deviceType, discoveryConfiguration]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      deviceType,
+      discoveryConfiguration,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as bool;
   }
 
   Future<void> applyDiscoverReadersParameters(DiscoveryConfigurationApi configuration) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.applyDiscoverReadersParameters$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.applyDiscoverReadersParameters$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5037,54 +5255,62 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[configuration]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
-  Future<ReaderApi> connectReader(String serialNumber, ConnectionConfigurationApi configuration) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.connectReader$pigeonVar_messageChannelSuffix';
+  Future<ReaderApi> connectReader(
+    String serialNumber,
+    ConnectionConfigurationApi configuration,
+  ) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.connectReader$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serialNumber, configuration]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      serialNumber,
+      configuration,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as ReaderApi;
   }
 
-  Future<ReaderApi> startEasyConnect({required int operationId, required EasyConnectConfigurationApi configuration}) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startEasyConnect$pigeonVar_messageChannelSuffix';
+  Future<ReaderApi> startEasyConnect({
+    required int operationId,
+    required EasyConnectConfigurationApi configuration,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startEasyConnect$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId, configuration]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      configuration,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as ReaderApi;
   }
 
   Future<void> stopEasyConnect(int operationId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopEasyConnect$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopEasyConnect$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5093,16 +5319,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<ReaderApi?> getConnectedReader() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getConnectedReader$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getConnectedReader$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5112,16 +5334,16 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
     return pigeonVar_replyValue as ReaderApi?;
   }
 
   Future<void> cancelReaderReconnection() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelReaderReconnection$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelReaderReconnection$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5130,35 +5352,39 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
-  Future<List<LocationApi>> listLocations({required String? endingBefore, required int? limit, required String? startingAfter, }) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.listLocations$pigeonVar_messageChannelSuffix';
+  Future<List<LocationApi>> listLocations({
+    required String? endingBefore,
+    required int? limit,
+    required String? startingAfter,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.listLocations$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[endingBefore, limit, startingAfter]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      endingBefore,
+      limit,
+      startingAfter,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return (pigeonVar_replyValue! as List<Object?>).cast<LocationApi>();
   }
 
   Future<void> installAvailableUpdate() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.installAvailableUpdate$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.installAvailableUpdate$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5167,16 +5393,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> cancelReaderUpdate() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelReaderUpdate$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelReaderUpdate$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5185,16 +5407,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> rebootReader() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.rebootReader$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.rebootReader$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5203,16 +5421,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> disconnectReader() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.disconnectReader$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.disconnectReader$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5221,16 +5435,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> setSimulatorConfiguration(SimulatorConfigurationApi configuration) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setSimulatorConfiguration$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setSimulatorConfiguration$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5239,16 +5449,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[configuration]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<PaymentStatusApi> getPaymentStatus() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getPaymentStatus$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.getPaymentStatus$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5258,16 +5464,16 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as PaymentStatusApi;
   }
 
   Future<PaymentIntentApi> createPaymentIntent(PaymentIntentParametersApi parameters) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.createPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.createPaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5277,16 +5483,16 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as PaymentIntentApi;
   }
 
   Future<PaymentIntentApi> retrievePaymentIntent(String clientSecret) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.retrievePaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.retrievePaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5296,35 +5502,57 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as PaymentIntentApi;
   }
 
-  Future<PaymentIntentApi> startProcessPaymentIntent({required int operationId, required String paymentIntentId, required bool requestDynamicCurrencyConversion, required String? surchargeNotice, required bool skipTipping, required TippingConfigurationApi? tippingConfiguration, required bool shouldUpdatePaymentIntent, required bool customerCancellationEnabled, required AllowRedisplayApi allowRedisplay, required ConfirmPaymentIntentConfigurationApi confirmConfiguration, }) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessPaymentIntent$pigeonVar_messageChannelSuffix';
+  Future<PaymentIntentApi> startProcessPaymentIntent({
+    required int operationId,
+    required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
+    required bool skipTipping,
+    required TippingConfigurationApi? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
+    required AllowRedisplayApi allowRedisplay,
+    required ConfirmPaymentIntentConfigurationApi confirmConfiguration,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessPaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId, paymentIntentId, requestDynamicCurrencyConversion, surchargeNotice, skipTipping, tippingConfiguration, shouldUpdatePaymentIntent, customerCancellationEnabled, allowRedisplay, confirmConfiguration]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      paymentIntentId,
+      requestDynamicCurrencyConversion,
+      surchargeNotice,
+      skipTipping,
+      tippingConfiguration,
+      shouldUpdatePaymentIntent,
+      customerCancellationEnabled,
+      allowRedisplay,
+      confirmConfiguration,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as PaymentIntentApi;
   }
 
   Future<void> stopProcessPaymentIntent(int operationId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessPaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5333,16 +5561,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<PaymentIntentApi> cancelPaymentIntent(String paymentIntentId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelPaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5352,35 +5576,47 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as PaymentIntentApi;
   }
 
-  Future<SetupIntentApi> createSetupIntent({required String? customerId, required Map<String, String>? metadata, required String? onBehalfOf, required String? description, required SetupIntentUsageApi? usage, }) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.createSetupIntent$pigeonVar_messageChannelSuffix';
+  Future<SetupIntentApi> createSetupIntent({
+    required String? customerId,
+    required Map<String, String>? metadata,
+    required String? onBehalfOf,
+    required String? description,
+    required SetupIntentUsageApi? usage,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.createSetupIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[customerId, metadata, onBehalfOf, description, usage]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      customerId,
+      metadata,
+      onBehalfOf,
+      description,
+      usage,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as SetupIntentApi;
   }
 
   Future<SetupIntentApi> retrieveSetupIntent(String clientSecret) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.retrieveSetupIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.retrieveSetupIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5390,35 +5626,45 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as SetupIntentApi;
   }
 
-  Future<SetupIntentApi> startProcessSetupIntent({required int operationId, required String setupIntentId, required AllowRedisplayApi allowRedisplay, required bool customerCancellationEnabled, }) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessSetupIntent$pigeonVar_messageChannelSuffix';
+  Future<SetupIntentApi> startProcessSetupIntent({
+    required int operationId,
+    required String setupIntentId,
+    required AllowRedisplayApi allowRedisplay,
+    required bool customerCancellationEnabled,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessSetupIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId, setupIntentId, allowRedisplay, customerCancellationEnabled]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      setupIntentId,
+      allowRedisplay,
+      customerCancellationEnabled,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as SetupIntentApi;
   }
 
   Future<void> stopProcessSetupIntent(int operationId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessSetupIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessSetupIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5427,16 +5673,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<SetupIntentApi> cancelSetupIntent(String setupIntentId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelSetupIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelSetupIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5446,35 +5688,57 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as SetupIntentApi;
   }
 
-  Future<RefundApi> startProcessRefund({required int operationId, required String? chargeId, required String? paymentIntentId, required String? paymentIntentClientSecret, required int amount, required String currency, required Map<String, String>? metadata, required bool? reverseTransfer, required bool? refundApplicationFee, required bool customerCancellationEnabled, }) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessRefund$pigeonVar_messageChannelSuffix';
+  Future<RefundApi> startProcessRefund({
+    required int operationId,
+    required String? chargeId,
+    required String? paymentIntentId,
+    required String? paymentIntentClientSecret,
+    required int amount,
+    required String currency,
+    required Map<String, String>? metadata,
+    required bool? reverseTransfer,
+    required bool? refundApplicationFee,
+    required bool customerCancellationEnabled,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startProcessRefund$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId, chargeId, paymentIntentId, paymentIntentClientSecret, amount, currency, metadata, reverseTransfer, refundApplicationFee, customerCancellationEnabled]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      chargeId,
+      paymentIntentId,
+      paymentIntentClientSecret,
+      amount,
+      currency,
+      metadata,
+      reverseTransfer,
+      refundApplicationFee,
+      customerCancellationEnabled,
+    ]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as RefundApi;
   }
 
   Future<void> stopProcessRefund(int operationId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessRefund$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessRefund$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5483,16 +5747,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> setReaderDisplay(CartApi cart) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setReaderDisplay$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setReaderDisplay$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5501,16 +5761,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[cart]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> clearReaderDisplay() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.clearReaderDisplay$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.clearReaderDisplay$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5519,16 +5775,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<void> setTapToPayUXConfiguration(TapToPayUxConfigurationApi configuration) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setTapToPayUXConfiguration$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.setTapToPayUXConfiguration$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5537,16 +5789,12 @@ class TerminalPlatformApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[configuration]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: true,
-    )
-    ;
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
   Future<bool> isTapToPayAccountLinked({required String? onBehalfOf}) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.isTapToPayAccountLinked$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.isTapToPayAccountLinked$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -5556,11 +5804,10 @@ class TerminalPlatformApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as bool;
   }
 }
@@ -5571,17 +5818,18 @@ class TerminalPlatformApi {
 /// not be called multiple times for the same `instanceName`. To deliver
 /// events to multiple listeners, call this method once and listen to the
 /// returned broadcast stream multiple times instead.
-Stream<List> discoverReaders( {String instanceName = ''}) {
+Stream<List> discoverReaders({String instanceName = ''}) {
   if (instanceName.isNotEmpty) {
     instanceName = '.$instanceName';
   }
-  final EventChannel discoverReadersChannel =
-      EventChannel('dev.flutter.pigeon.mek_stripe_terminal.TerminalEventsApi.discoverReaders$instanceName', pigeonMethodCodec);
+  final EventChannel discoverReadersChannel = EventChannel(
+    'dev.flutter.pigeon.mek_stripe_terminal.TerminalEventsApi.discoverReaders$instanceName',
+    pigeonMethodCodec,
+  );
   return discoverReadersChannel.receiveBroadcastStream().map((dynamic event) {
     return event as List;
   });
 }
-    
 
 abstract class TerminalHandlersApi {
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
@@ -5604,7 +5852,11 @@ abstract class TerminalHandlersApi {
 
   void readerRequestInput(List<ReaderInputOptionApi> options);
 
-  void readerBatteryLevelUpdate(double batteryLevel, BatteryStatusApi? batteryStatus, bool isCharging);
+  void readerBatteryLevelUpdate(
+    double batteryLevel,
+    BatteryStatusApi? batteryStatus,
+    bool isCharging,
+  );
 
   void readerReportLowBatteryWarning();
 
@@ -5616,16 +5868,25 @@ abstract class TerminalHandlersApi {
 
   void readerReportSoftwareUpdateProgress(double progress);
 
-  void readerFinishInstallingUpdate(ReaderSoftwareUpdateApi? update, TerminalExceptionApi? exception);
+  void readerFinishInstallingUpdate(
+    ReaderSoftwareUpdateApi? update,
+    TerminalExceptionApi? exception,
+  );
 
   void readerAcceptTermsOfService();
 
-  static void setUp(TerminalHandlersApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
+  static void setUp(
+    TerminalHandlersApi? api, {
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  }) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.requestConnectionToken$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.requestConnectionToken$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5635,16 +5896,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(result: output);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.connectionStatusChange$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.connectionStatusChange$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5656,16 +5921,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.paymentStatusChange$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.paymentStatusChange$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5677,16 +5946,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportEvent$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportEvent$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5698,16 +5971,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectStarted$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectStarted$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5720,16 +5997,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectFailed$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectFailed$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5741,16 +6022,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectSucceeded$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReconnectSucceeded$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5762,16 +6047,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerRequestDisplayMessage$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerRequestDisplayMessage$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5783,37 +6072,46 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerRequestInput$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerRequestInput$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
         pigeonVar_channel.setMessageHandler((Object? message) async {
           final List<Object?> args = message! as List<Object?>;
-          final List<ReaderInputOptionApi> arg_options = (args[0]! as List<Object?>).cast<ReaderInputOptionApi>();
+          final List<ReaderInputOptionApi> arg_options = (args[0]! as List<Object?>)
+              .cast<ReaderInputOptionApi>();
           try {
             api.readerRequestInput(arg_options);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerBatteryLevelUpdate$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerBatteryLevelUpdate$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5827,16 +6125,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportLowBatteryWarning$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportLowBatteryWarning$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5846,16 +6148,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportAvailableUpdate$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportAvailableUpdate$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5867,16 +6173,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.disconnect$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.disconnect$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5888,16 +6198,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerStartInstallingUpdate$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerStartInstallingUpdate$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5909,16 +6223,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportSoftwareUpdateProgress$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerReportSoftwareUpdateProgress$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5930,16 +6248,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerFinishInstallingUpdate$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerFinishInstallingUpdate$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5952,16 +6274,20 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }
     }
     {
       final pigeonVar_channel = BasicMessageChannel<Object?>(
-          'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerAcceptTermsOfService$messageChannelSuffix', pigeonChannelCodec,
-          binaryMessenger: binaryMessenger);
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalHandlersApi.readerAcceptTermsOfService$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
       if (api == null) {
         pigeonVar_channel.setMessageHandler(null);
       } else {
@@ -5971,8 +6297,10 @@ abstract class TerminalHandlersApi {
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);
-          }          catch (e) {
-            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
           }
         });
       }

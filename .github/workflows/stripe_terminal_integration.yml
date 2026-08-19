@@ -54,9 +54,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Check code formatting
-        run: >-
-          dart format --set-exit-if-changed --output none
-          $(find . ! -path "./.dart_tool/**" ! -path "./build/**" -name "*.dart" ! -name "*.g.dart")
+        run: dart format --set-exit-if-changed --output none .
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos

@@ -25,14 +25,18 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
     
     func reader(_ reader: Reader, didDisconnect reason: DisconnectReason) {
         DispatchQueue.main.async {
-            self._handlers.disconnect(reason: reason.toApi()) { result in }
+            self._handlers.disconnect(reason: reason.toApi(), completion: logUnexpectedResultError)
         }
     }
     
     func reader(_ reader: Reader, didStartReconnect cancelable: Cancelable, disconnectReason: DisconnectReason) {
         self.cancellableReconnection = cancelable
         DispatchQueue.main.async {
-            self._handlers.readerReconnectStarted(reader: reader.toApi(), reason: disconnectReason.toApi()) { result in }
+            self._handlers.readerReconnectStarted(
+                reader: reader.toApi(),
+                reason: disconnectReason.toApi(),
+                completion: logUnexpectedResultError
+            )
         }
     }
     
@@ -47,20 +51,23 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
     
     func reader(_ reader: Reader, didReportAvailableUpdate update: ReaderSoftwareUpdate) {
         DispatchQueue.main.async {
-            self._handlers.readerReportAvailableUpdate(update: update.toApi()) { result in }
+            self._handlers.readerReportAvailableUpdate(update: update.toApi(), completion: logUnexpectedResultError)
         }
     }
     
     func reader(_ reader: Reader, didStartInstallingUpdate update: ReaderSoftwareUpdate, cancelable: Cancelable?) {
         cancellableUpdate = cancelable
         DispatchQueue.main.async {
-            self._handlers.readerStartInstallingUpdate(update: update.toApi()) { result in }
+            self._handlers.readerStartInstallingUpdate(update: update.toApi(), completion: logUnexpectedResultError)
         }
     }
     
     func reader(_ reader: Reader, didReportReaderSoftwareUpdateProgress progress: Float) {
         DispatchQueue.main.async {
-            self._handlers.readerReportSoftwareUpdateProgress(progress: Double(progress)) { result in }
+            self._handlers.readerReportSoftwareUpdateProgress(
+                progress: Double(progress),
+                completion: logUnexpectedResultError
+            )
         }
     }
     
@@ -70,26 +77,27 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
         DispatchQueue.main.async {
             self._handlers.readerFinishInstallingUpdate(
                 update: update?.toApi(),
-                exception: exception
-            ) { result in }
+                exception: exception,
+                completion: logUnexpectedResultError
+            )
         }
     }
     
     func reader(_ reader: Reader, didRequestReaderInput inputOptions: ReaderInputOptions = []) {
         DispatchQueue.main.async {
-            self._handlers.readerRequestInput(options: inputOptions.toApi()) { result in }
+            self._handlers.readerRequestInput(options: inputOptions.toApi(), completion: logUnexpectedResultError)
         }
     }
     
     func reader(_ reader: Reader, didRequestReaderDisplayMessage displayMessage: ReaderDisplayMessage) {
         DispatchQueue.main.async {
-            self._handlers.readerRequestDisplayMessage(message: displayMessage.toApi()) { result in }
+            self._handlers.readerRequestDisplayMessage(message: displayMessage.toApi(), completion: logUnexpectedResultError)
         }
     }
         
     func reader(_ reader: Reader, didReportReaderEvent event: ReaderEvent, info: Dictionary<AnyHashable, Any>?) {
         DispatchQueue.main.async {
-            self._handlers.readerReportEvent(event: event.toApi()) { result in }
+            self._handlers.readerReportEvent(event: event.toApi(), completion: logUnexpectedResultError)
         }
     }
     
@@ -98,14 +106,15 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
             self._handlers.readerBatteryLevelUpdate(
                 batteryLevel: Double(batteryLevel),
                 batteryStatus: status.toApi(),
-                isCharging: isCharging
-            ) { result in }
+                isCharging: isCharging,
+                completion: logUnexpectedResultError
+            )
         }
     }
     
     func readerDidReportLowBatteryWarning(_ reader: Reader) {
         DispatchQueue.main.async {
-            self._handlers.readerReportLowBatteryWarning() { result in }
+            self._handlers.readerReportLowBatteryWarning(completion: logUnexpectedResultError)
         }
     }
     
@@ -133,7 +142,8 @@ class ReaderDelegatePlugin: NSObject, ReaderDelegate, MobileReaderDelegate, Inte
     
     func tapToPayReaderDidAcceptTermsOfService(_ reader: Reader) {
         DispatchQueue.main.async {
-            self._handlers.readerAcceptTermsOfService() { result in }
+            self._handlers.readerAcceptTermsOfService(completion: logUnexpectedResultError)
         }
     }
 }
+

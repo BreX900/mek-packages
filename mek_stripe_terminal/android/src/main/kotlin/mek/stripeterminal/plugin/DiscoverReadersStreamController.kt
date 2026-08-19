@@ -44,7 +44,7 @@ class DiscoverReadersStreamController : DiscoverReadersStreamHandler() {
             return
         }
 
-        // Ignore error, the previous stream can no longer receive events
+        // Ignore events, stream is closed by Flutter
         cancel()
 
         cancelable =
@@ -62,12 +62,13 @@ class DiscoverReadersStreamController : DiscoverReadersStreamHandler() {
                         object : Callback {
                             override fun onFailure(e: TerminalException) = runOnMainThread {
                                 if (e.errorCode == TerminalErrorCode.CANCELED) {
+                                    // Ignore events, stream is closed by Flutter
                                     return@runOnMainThread
                                 }
 
-                                cancelable = null
                                 sink.addError(createError(mapExceptionToApi(e)))
                                 sink.endOfStream()
+                                clean()
                             }
 
                             override fun onSuccess() = runOnMainThread { sink.endOfStream() }
@@ -79,9 +80,13 @@ class DiscoverReadersStreamController : DiscoverReadersStreamHandler() {
 
     private fun cancel() {
         val cancelable = cancelable
-        this.cancelable = null
-        configuration = null
+        clean()
         // Ignore error, flutter stream already closed
         cancelable?.cancel(EmptyCallback())
+    }
+
+    private fun clean() {
+        this.cancelable = null
+        this.configuration = null
     }
 }

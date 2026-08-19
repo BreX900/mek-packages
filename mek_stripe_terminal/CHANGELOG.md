@@ -1,4 +1,8 @@
 
+## 5.7.2
+- fix(ios): added support to more device types
+- fix(ios): fix `Terminal.discoveryReaders` method doesn't work the second time
+
 ## 5.7.1
 
 - fix(android): do not serialize api error when converting it to platform error (#157)[https://github.com/BreX900/mek-packages/issues/157]

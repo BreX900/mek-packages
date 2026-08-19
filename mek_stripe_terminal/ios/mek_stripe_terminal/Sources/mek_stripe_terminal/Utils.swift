@@ -1,14 +1,5 @@
 import Foundation
-
-func createApiException(_ code: TerminalExceptionCodeApi, _ message: String? = nil) -> TerminalExceptionApi {
-    return TerminalExceptionApi(
-        code: code,
-        message: message ?? "",
-        stackTrace: nil,
-        paymentIntent: nil,
-        apiError: nil
- )
-}
+import os
 
 extension Optional {
     func apply(_ callback: (_ this: Wrapped) -> Any?) {
@@ -67,5 +58,18 @@ extension Date {
 extension PigeonEventSink {
     func addError(_ error: PigeonError) {
         self.error(code: error.code, message: error.message, details: error.details)
+    }
+}
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "mek_stripe_terminal")
+
+func logUnexpectedResultError(_ result: Result<Void, PigeonError>) {
+    switch result {
+    case .failure(let error):
+        print("[mek_stripe_terminal] \(error.localizedDescription)")
+        logger.error("[mek_stripe_terminal] \(error.localizedDescription)")
+    case .success():
+        // nothing, is ok
+        break
     }
 }

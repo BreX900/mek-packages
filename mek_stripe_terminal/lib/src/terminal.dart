@@ -93,7 +93,7 @@ class Terminal {
     final result = await _platform.clearCachedCredentials();
     if (result.isSuccessful) {
       _handlers.handleReaderDisconnection();
-      _controller = null;
+      _readersDiscoverySubscription = null;
     }
     return result;
   });
@@ -132,8 +132,8 @@ class Terminal {
     );
   });
 
-  // ignore: close_sinks
-  StreamController<List<Reader>>? _controller;
+  // ignore: cancel_subscriptions
+  StreamSubscription<List<Reader>>? _readersDiscoverySubscription;
 
   /// Begins discovering readers matching the given DiscoveryConfiguration.
   ///
@@ -155,13 +155,43 @@ class Terminal {
   ///
   /// See https://stripe.com/docs/terminal/readers/connecting.
   Stream<List<Reader>> discoverReaders(DiscoveryConfiguration discoveryConfiguration) {
-    _controller = _handleStream(
-      _controller,
-      () =>
-          _run(() async => await _platform.applyDiscoverReadersParameters(discoveryConfiguration)),
-      () => api.discoverReaders().map((data) => data.cast<Reader>()),
-    );
-    return _controller!.stream;
+    return Stream.multi((controller) async {
+      if (_readersDiscoverySubscription case final subscription?) {
+        _readersDiscoverySubscription = null;
+        await subscription.cancel();
+      }
+
+      try {
+        await _run(() async {
+          await _platform.applyDiscoverReadersParameters(discoveryConfiguration);
+        });
+
+        _readersDiscoverySubscription = api
+            .discoverReaders()
+            .map((data) => data.cast<Reader>())
+            .handleError((error, stackTrace) {
+              if (error is PlatformException) _throwIfIsHostException(error);
+              Error.throwWithStackTrace(error, stackTrace);
+            })
+            .listen(
+              controller.addSync,
+              onError: controller.addErrorSync,
+              onDone: () {
+                _readersDiscoverySubscription = null;
+                controller.closeSync();
+              },
+            );
+
+        controller.onCancel = () async {
+          if (_readersDiscoverySubscription case final subscription?) {
+            _readersDiscoverySubscription = null;
+            await subscription.cancel();
+          }
+        };
+      } catch (error, stackTrace) {
+        controller.addErrorSync(error, stackTrace);
+      }
+    });
   }
 
   /// Discovers and connects to a reader in a single call.
@@ -474,31 +504,6 @@ class Terminal {
     return await _platform.isTapToPayAccountLinked(onBehalfOf: onBehalfOf);
   });
   //endregion
-
-  StreamController<T> _handleStream<T>(
-    StreamController<T>? oldController,
-    Future<void> Function() onSetup,
-    Stream<T> Function() onListen,
-  ) {
-    unawaited(oldController?.close());
-
-    final newController = StreamController<T>(sync: true);
-    newController.onListen = () async {
-      try {
-        await onSetup();
-
-        await newController.addStream(
-          onListen().handleError((error, stackTrace) {
-            if (error is PlatformException) _throwIfIsHostException(error);
-            Error.throwWithStackTrace(error, stackTrace);
-          }),
-        );
-      } catch (error, stackTrace) {
-        newController.addError(error, stackTrace);
-      }
-    };
-    return newController;
-  }
 
   static Future<R> _run<R>(Future<R> Function() body) async {
     try {

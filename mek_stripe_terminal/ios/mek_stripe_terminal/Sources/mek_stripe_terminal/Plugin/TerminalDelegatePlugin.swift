@@ -22,13 +22,19 @@ class TerminalDelegatePlugin: NSObject, ConnectionTokenProvider, TerminalDelegat
 
     public func terminal(_: Terminal, didChangePaymentStatus status: PaymentStatus) {
         DispatchQueue.main.async {
-            self.handlers.paymentStatusChange(status: status.toApi()) { result in }
+            self.handlers.paymentStatusChange(
+                status: status.toApi(),
+                completion: logUnexpectedResultError
+            )
         }
     }
 
     public func terminal(_: Terminal, didChangeConnectionStatus status: ConnectionStatus) {
         DispatchQueue.main.async {
-            self.handlers.connectionStatusChange(status: status.toApi()) { result in }
+            self.handlers.connectionStatusChange(
+                status: status.toApi(),
+                completion: logUnexpectedResultError
+            )
         }
     }
 

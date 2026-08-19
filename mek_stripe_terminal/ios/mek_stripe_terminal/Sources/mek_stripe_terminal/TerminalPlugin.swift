@@ -8,7 +8,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     public static func register(with registrar: FlutterPluginRegistrar) {
         TerminalPlugin.shared = TerminalPlugin(registrar.messenger());
         TerminalPlatformApiSetup.setUp(binaryMessenger: registrar.messenger(), api: TerminalPlugin.shared!);
- }
+    }
     
     private let _binaryMessenger: FlutterBinaryMessenger
     private let _handlers: TerminalHandlersApi
@@ -88,14 +88,14 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     func applyDiscoverReadersParameters(configuration: any DiscoveryConfigurationApi) throws {
-        self._discoveryDelegate.configuration = try! configuration.toHost()
+        self._discoveryDelegate.configuration = try configuration.toHost()
     }
     
     func connectReader(
         serialNumber: String,
         configuration: any ConnectionConfigurationApi,
-        completion: @escaping (Result<ReaderApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<ReaderApi, any Error>) -> Void
+    ) {
         handleResult(completion) {
             let configuration = try configuration.toHost(self._readerDelegate)
             guard let configuration else {
@@ -112,9 +112,11 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     func startEasyConnect(
         operationId: Int64,
         configuration: any EasyConnectConfigurationApi,
-        completion: @escaping (Result<ReaderApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<ReaderApi, any Error>) -> Void
+    ) {
         completion(.failure(PigeonError(code: "", message: "Method not implemented", details: nil)))
+        
+        // Terminal.shared.easyConnect(configuration.toHost())
     }
     
     func stopEasyConnect(operationId: Int64, completion: @escaping (Result<Void, any Error>) -> Void) {
@@ -135,8 +137,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         endingBefore: String?,
         limit: Int64?,
         startingAfter: String?,
-        completion: @escaping (Result<[LocationApi], any Error>
-    ) -> Void) {
+        completion: @escaping (Result<[LocationApi], any Error>) -> Void
+    ) {
         handleResult(completion) {
             let params = ListLocationsParametersBuilder()
                 .setEndingBefore(endingBefore)
@@ -183,7 +185,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         return Terminal.shared.paymentStatus.toApi()
     }
     
-    func createPaymentIntent(parameters: PaymentIntentParametersApi, completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void) {
+    func createPaymentIntent(
+        parameters: PaymentIntentParametersApi,
+        completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void
+    ) {
         handleResult(completion) {
             let paymentIntent = try await Terminal.shared.createPaymentIntent(parameters.toHost())
             self._paymentIntents[paymentIntent.stripeId!] = paymentIntent
@@ -191,7 +196,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         }
     }
     
-    func retrievePaymentIntent(clientSecret: String, completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void) {
+    func retrievePaymentIntent(
+        clientSecret: String,
+        completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void
+    ) {
         handleResult(completion) {
             let paymentIntent = try await Terminal.shared.retrievePaymentIntent(clientSecret: clientSecret)
             self._paymentIntents[paymentIntent.stripeId!] = paymentIntent
@@ -212,8 +220,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         customerCancellationEnabled: Bool,
         allowRedisplay: AllowRedisplayApi,
         confirmConfiguration: ConfirmPaymentIntentConfigurationApi,
-        completion: @escaping (Result<PaymentIntentApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void
+    ) {
         handleError(completion) {
             let paymentIntent = try _findPaymentIntent(paymentIntentId)
             let collectConfig = try CollectPaymentIntentConfigurationBuilder()
@@ -257,30 +265,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             return newPaymentIntent.toApi()
         }
     }
-/*
-    private var _confirmPaymentIntentCancelables: [Int: Cancelable] = [:]
-    
-    func onStartConfirmPaymentIntent(
-        _ result: Result<PaymentIntentApi>,
-        _ operationId: Int,
-        _ paymentIntentId: String
-    ) throws {
-        let paymentIntent = try _findPaymentIntent(paymentIntentId)
-        Terminal.shared.confirmPaymentIntent(paymentIntent, completion: { paymentIntent, error in
-            self._cancelablesCollectPaymentMethod.removeValue(forKey: operationId)
-            if let error = error {
-                result.error(error.toPlatformError())
-                return
-            }
-            self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
-            result.success(paymentIntent!.toApi())
-        })
-    }
-    
-    func onStopConfirmPaymentIntent(_ operationId: Int) async throws {
-        try await _cancelablesCollectPaymentMethod.removeValue(forKey: operationId)?.cancel()
-    }
- */
+
 // MARK: - Saving payment details for later use
    
     private var _setupIntents: [String: SetupIntent] = [:]
@@ -292,8 +277,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         onBehalfOf: String?,
         description: String?,
         usage: SetupIntentUsageApi?,
-        completion: @escaping (Result<SetupIntentApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<SetupIntentApi, any Error>) -> Void
+    ) {
         handleResult(completion) {
             let params = SetupIntentParametersBuilder()
             params.setCustomer(customerId)
@@ -324,8 +309,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         setupIntentId: String,
         allowRedisplay: AllowRedisplayApi,
         customerCancellationEnabled: Bool,
-        completion: @escaping (Result<SetupIntentApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<SetupIntentApi, any Error>) -> Void
+    ) {
         handleError(completion) {
             let setupIntent = try self._findSetupIntent(setupIntentId)
             let config = CollectSetupIntentConfigurationBuilder()
@@ -362,29 +347,6 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         }
     }
 
-    
-    /*private var _confirmSetupIntentCancelables: [Int: Cancelable] = [:]
-    
-    func onStartConfirmSetupIntent(
-        _ result: Result<SetupIntentApi>,
-        _ operationId: Int,
-        _ setupIntentId: String
-    ) throws {
-        let setupIntent = try _findSetupIntent(setupIntentId)
-        _confirmSetupIntentCancelables[operationId] = Terminal.shared.confirmSetupIntent(setupIntent, completion: { setupIntent, error in
-            self._confirmSetupIntentCancelables.removeValue(forKey: operationId)
-            if let error = error {
-                result.error(error.toPlatformError())
-                return
-            }
-            self._setupIntents[setupIntent!.stripeId!] = setupIntent!
-            result.success(setupIntent!.toApi())
-    })
-    }
-    
-    func onStopConfirmSetupIntent(_ operationId: Int) async throws {
-        try await _confirmSetupIntentCancelables.removeValue(forKey: operationId)?.cancel()
-    }*/
 // MARK: - Card-present refunds
     private var _cancelablesCollectRefundPaymentMethod: [Int64: Cancelable] = [:]
     
@@ -399,8 +361,8 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         reverseTransfer: Bool?,
         refundApplicationFee: Bool?,
         customerCancellationEnabled: Bool,
-        completion: @escaping (Result<RefundApi, any Error>
-    ) -> Void) {
+        completion: @escaping (Result<RefundApi, any Error>) -> Void
+    ) {
         handleError(completion) {
             let params = chargeId != nil
                 ? RefundParametersBuilder(
@@ -440,27 +402,6 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             try await self._cancelablesCollectRefundPaymentMethod.removeValue(forKey: operationId)?.cancel()
         }
     }
-
-
-    
-    /*private var _confirmRefundCancelables: [Int: Cancelable] = [:]
-    
-    func onStartConfirmRefund(_ result: Result<RefundApi>, _ operationId: Int) throws {
-        _confirmRefundCancelables[operationId] = Terminal.shared.confirmRefund(completion: { refund, error in
-            self._confirmRefundCancelables.removeValue(forKey: operationId)
-            if let error = error {
-                result.error(error.toPlatformError())
-                return
-            }
-            result.success(refund!.toApi())
-    })
-    }
-    
-    func onStopConfirmRefund(_ operationId: Int) async throws {
-        try await _confirmRefundCancelables.removeValue(forKey: operationId)?.cancel()
-    }*/
-    
-
 
 // MARK: - Display information to customers
     

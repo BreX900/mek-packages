@@ -15,23 +15,16 @@ dependencies:
     sdk: flutter
 
   permission_handler: ^12.0.3
-  mek_stripe_terminal:
-    path: ./..
+  mek_stripe_terminal: { path: ./.. }
 
   shelf: ^1.4.1
   shelf_router: ^1.1.4
-  stripe:
-    git:
-      url: https://github.com/enyo/stripe-dart
+  stripe: { git: { url: https://github.com/enyo/stripe-dart } }
   dio: ^5.7.0
   flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   mek_lints: ^4.0.0
-
-dependency_overrides:
-  one_for_all:
-    path: ./../../one_for_all
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

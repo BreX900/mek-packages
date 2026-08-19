@@ -1,6 +1,16 @@
 import Foundation
 import StripeTerminal
 
+func createApiException(_ code: TerminalExceptionCodeApi, _ message: String? = nil) -> TerminalExceptionApi {
+    return TerminalExceptionApi(
+        code: code,
+        message: message ?? "",
+        stackTrace: nil,
+        paymentIntent: nil,
+        apiError: nil
+ )
+}
+
 extension TerminalExceptionApi {
     func toPlatformError() -> PigeonError {
         return PigeonError(code: "mek_stripe_terminal", message: nil, details: toList())

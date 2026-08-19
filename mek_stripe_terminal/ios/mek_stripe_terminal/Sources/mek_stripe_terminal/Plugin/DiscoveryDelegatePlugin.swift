@@ -14,7 +14,9 @@ class DiscoveryDelegatePlugin: DiscoverReadersStreamHandler {
     } }
     
     func clear() {
+        self._sink?.endOfStream()
         self._cancel()
+        self._clean()
         self._readers = []
     }
     
@@ -26,8 +28,6 @@ class DiscoveryDelegatePlugin: DiscoverReadersStreamHandler {
     }
     
     override func onListen(withArguments arguments: Any?, sink: PigeonEventSink<[ReaderApi]>) {
-        self._cancel()
-        
         guard let configuration else {
             sink.addError(
                 createApiException(
@@ -35,46 +35,54 @@ class DiscoveryDelegatePlugin: DiscoverReadersStreamHandler {
                     "DiscoveryConfiguration not supported"
                 ).toPlatformError()
             )
-            self._sink?.endOfStream()
-            self._sink = nil
+            sink.endOfStream()
             return;
         }
         
-        _delegate = DiscoveryDelegateHandler(delegate: self)
+        // Ignore events, stream is closed by Flutter
+        self._cancel()
+        self._clean()
+        
+        self._sink = sink
+        self._delegate = DiscoveryDelegateHandler(delegate: self)
          
         self._cancelable = Terminal.shared.discoverReaders(
             configuration,
             delegate: _delegate!
         ) { error in
-            self._cancelable = nil
             DispatchQueue.main.async {
                 if let error = error as? NSError {
                     let exception = error.toApi()
                     if (exception.code == TerminalExceptionCodeApi.canceled) {
-                        self._cancel()
+                        // Ignore events, stream is closed by Flutter
                         return;
                     }
                     self._sink?.addError(exception.toPlatformError())
                 }
                 
                 self._sink?.endOfStream()
-                self._sink = nil
+                self._clean();
             }
         }
-        self._sink = sink
     }
     
     override func onCancel(withArguments arguments: Any?) {
-        self._cancel()
+        self._cancel();
+        self._clean();
     }
     
     private func _cancel() {
-        self._sink?.endOfStream()
+        // Ignore error, the previous stream can no longer receive events
+        self._cancelable?.cancel { error in
+            print("CANCELLATION DISCOVER READERS ERROR: \(error?.localizedDescription ?? "-")")
+        }
+    }
+    
+    private func _clean() {
         self._sink = nil
         self._delegate = nil
-        // Ignore error, the previous stream can no longer receive events
-        self._cancelable?.cancel { error in }
         self._cancelable = nil
+        self.configuration = nil
     }
 }
 

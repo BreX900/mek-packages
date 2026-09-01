@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:mek_stripe_terminal/src/api/terminal_api.g.dart' as api;
+import 'package:mek_stripe_terminal/src/api/terminal_api.g.dart';
 import 'package:mek_stripe_terminal/src/cancellable_future.dart';
 import 'package:mek_stripe_terminal/src/models/cart.dart';
 import 'package:mek_stripe_terminal/src/models/clear_cached_credentials.dart';
@@ -15,8 +17,6 @@ import 'package:mek_stripe_terminal/src/models/setup_intent.dart';
 import 'package:mek_stripe_terminal/src/models/simulator_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tap_to_pay_ux_configuration.dart';
 import 'package:mek_stripe_terminal/src/models/tip.dart';
-import 'package:mek_stripe_terminal/src/terminal_api.g.dart' as api;
-import 'package:mek_stripe_terminal/src/terminal_api.g.dart';
 import 'package:mek_stripe_terminal/src/terminal_exception.dart';
 import 'package:mek_stripe_terminal/src/terminal_handlers.dart';
 

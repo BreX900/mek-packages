@@ -1,6 +1,34 @@
 import Foundation
 import os
 
+func createPigeonError(_ code: String?, _ message: String?, _ details: Any? = nil) -> PigeonError {
+    return PigeonError(code: "mek_stripe_terminal\(code ?? "")", message: message, details: details)
+}
+
+func createUnsupportedOperatingSystem(_ version: String) -> PigeonError {
+    return createPigeonError(".unsupoported.operating_system_version", "Available on ios >=\(version)");
+}
+
+func handleResult<R>(_ completion: @escaping (Result<R, any Error>) -> Void, callback: @escaping () async throws -> R) {
+    Task {
+        do {
+            let result = try await callback();
+            completion(.success(result))
+        } catch let error as NSError {
+            completion(.failure(error.toPlatformError()))
+        }
+    }
+}
+
+func handleError<R>(_ completion: @escaping (Result<R, any Error>) -> Void, callback: () throws -> Void) {
+    do {
+        try callback();
+    } catch let error as NSError {
+        completion(.failure(error.toPlatformError()))
+    }
+}
+
+
 extension Optional {
     func apply(_ callback: (_ this: Wrapped) -> Any?) {
         if let this = self { callback(this) }

@@ -6,24 +6,32 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     private static var shared: TerminalPlugin?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-        TerminalPlugin.shared = TerminalPlugin(registrar.messenger());
-        TerminalPlatformApiSetup.setUp(binaryMessenger: registrar.messenger(), api: TerminalPlugin.shared!);
+        let plugin = TerminalPlugin(registrar.viewController, registrar.messenger())
+        plugin.setUpAndRegister()
+        TerminalPlugin.shared = plugin;
     }
     
     private let _binaryMessenger: FlutterBinaryMessenger
+    private let _proximityReader: ProximityReaderPlugin
     private let _handlers: TerminalHandlersApi
     private let _terminalDelegate: TerminalDelegatePlugin
     private let _discoveryDelegate: DiscoveryDelegatePlugin
 
-    init(_ binaryMessenger: FlutterBinaryMessenger) {
+    init(_ viewController: UIViewController?, _ binaryMessenger: FlutterBinaryMessenger) {
         self._binaryMessenger = binaryMessenger
-        self._handlers = TerminalHandlersApi.init(binaryMessenger: binaryMessenger)
+        self._proximityReader = ProximityReaderPlugin(viewController)
+        self._handlers = TerminalHandlersApi(binaryMessenger: binaryMessenger)
         self._terminalDelegate = TerminalDelegatePlugin(_handlers)
         self._discoveryDelegate = DiscoveryDelegatePlugin()
-        DiscoverReadersStreamHandler.register(with: binaryMessenger, streamHandler: _discoveryDelegate)
         self._readerDelegate = ReaderDelegatePlugin(_handlers)
     }
     
+    private func setUpAndRegister() {
+        TerminalPlatformApiSetup.setUp(binaryMessenger: self._binaryMessenger, api: self);
+        ProximityReaderPlatformApiSetup.setUp(binaryMessenger: self._binaryMessenger, api: self._proximityReader)
+        DiscoverReadersStreamHandler.register(with: self._binaryMessenger, streamHandler: self._discoveryDelegate)
+    }
+
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
         if (Terminal.isInitialized()) { self._clean() }
         
@@ -99,7 +107,7 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         handleResult(completion) {
             let configuration = try configuration.toHost(self._readerDelegate)
             guard let configuration else {
-                throw PigeonError(code: "mek_stripe_terminal.unimplemented", message: "Unsupported connection configuration", details: nil)
+                throw createPigeonError(".unsupported", "Unsupported connection configuration")
             }
             let reader = try await Terminal.shared.connectReader(
                 self._findReader(serialNumber),
@@ -114,13 +122,11 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         configuration: any EasyConnectConfigurationApi,
         completion: @escaping (Result<ReaderApi, any Error>) -> Void
     ) {
-        completion(.failure(PigeonError(code: "", message: "Method not implemented", details: nil)))
-        
-        // Terminal.shared.easyConnect(configuration.toHost())
+        completion(.failure(createPigeonError(".unimplemented", "Unimplemented 'startEasyConnect' method")))
     }
     
     func stopEasyConnect(operationId: Int64, completion: @escaping (Result<Void, any Error>) -> Void) {
-        completion(.failure(PigeonError(code: "", message: "Method not implemented", details: nil)))
+        completion(.failure(createPigeonError(".unimplemented", "Unimplemented 'stopEasyConnect' method")))
     }
     
     func getConnectedReader() throws -> ReaderApi? {
@@ -286,13 +292,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             params.setOnBehalfOf(onBehalfOf)
             params.setStripeDescription(description)
             usage.apply { params.setUsage($0.toHost()) }
-            do {
-                let setupIntent = try await Terminal.shared.createSetupIntent(params.build())
-                self._setupIntents[setupIntent.stripeId!] = setupIntent
-                return setupIntent.toApi()
-            } catch let error as NSError {
-                throw error.toPlatformError()
-            }
+
+            let setupIntent = try await Terminal.shared.createSetupIntent(params.build())
+            self._setupIntents[setupIntent.stripeId!] = setupIntent
+            return setupIntent.toApi()
         }
     }
     
@@ -418,21 +421,16 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
     
     func setTapToPayUXConfiguration(configuration: TapToPayUxConfigurationApi) throws {
-        throw PigeonError(code: "", message: "setTapToPayUXConfiguration method not supported on ios device", details: nil);
-
+        throw createPigeonError("unsupported", "Unsupported 'setTapToPayUXConfiguration' method");
     }
     
     func isTapToPayAccountLinked(onBehalfOf: String?, completion: @escaping (Result<Bool, any Error>) -> Void) {
-        if #available(iOS 16.4, *) {
-            Terminal.shared.isTapToPayAccountLinked(onBehalfOf) { linked, error in
-                if let error = error {
-                    completion(.failure((error as NSError).toPlatformError()))
-                } else {
-                    completion(.success(linked?.boolValue ?? false))
-                }
+        handleResult(completion) {
+            guard #available(iOS 16.4, *) else {
+                throw createUnsupportedOperatingSystem("16.4");
             }
-        } else {
-            completion(.success(false))
+            let result = try await Terminal.shared.isTapToPayAccountLinked(onBehalfOf)
+            return result.boolValue
         }
     }
     
@@ -485,21 +483,3 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
     }
 }
 
-func handleResult<R>(_ completion: @escaping (Result<R, any Error>) -> Void, callback: @escaping () async throws -> R) {
-    Task {
-        do {
-            let result = try await callback();
-            completion(.success(result))
-        } catch let error as NSError {
-            completion(.failure(error.toPlatformError()))
-        }
-    }
-}
-
-func handleError<R>(_ completion: @escaping (Result<R, any Error>) -> Void, callback: () throws -> Void) {
-    do {
-        try callback();
-    } catch let error as NSError {
-        completion(.failure(error.toPlatformError()))
-    }
-}

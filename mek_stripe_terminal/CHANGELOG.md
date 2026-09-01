@@ -1,4 +1,7 @@
 
+## 5.8.0
+- feat(ios): added ProximityReader api, with isAccountLinked, linkAccount and presentHowToTap methods
+
 ## 5.7.2
 - fix(ios): added support to more device types
 - fix(ios): fix `Terminal.discoveryReaders` method doesn't work the second time

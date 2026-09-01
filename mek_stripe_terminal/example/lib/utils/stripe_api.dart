@@ -16,9 +16,9 @@ class StripeApi {
 
   Future<String> createTerminalConnectionToken() async {
     try {
-      final terminalToken = await _stripe.client.post('/terminal/connection_tokens');
-      print(jsonEncode(terminalToken));
-      return terminalToken['secret'] as String;
+      final response = await _stripe.client.post('/terminal/connection_tokens');
+      print(jsonEncode(response));
+      return response['secret'] as String;
     } catch (error, stackTrace) {
       print('$error\n$stackTrace');
       rethrow;

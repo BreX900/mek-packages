@@ -14,7 +14,6 @@ import com.stripe.stripeterminal.external.callable.SetupIntentCallback
 import com.stripe.stripeterminal.external.models.CollectPaymentIntentConfiguration
 import com.stripe.stripeterminal.external.models.CollectRefundConfiguration
 import com.stripe.stripeterminal.external.models.CollectSetupIntentConfiguration
-import com.stripe.stripeterminal.external.models.ConfirmPaymentIntentConfiguration
 import com.stripe.stripeterminal.external.models.CustomerCancellation
 import com.stripe.stripeterminal.external.models.DeviceType
 import com.stripe.stripeterminal.external.models.ListLocationsParameters
@@ -55,7 +54,7 @@ import TapToPayUxConfigurationApi
 import TerminalExceptionCodeApi
 import TippingConfigurationApi
 import mek.stripeterminal.mappings.createApiException
-import mek.stripeterminal.mappings.createError
+import mek.stripeterminal.mappings.mapExceptionToError
 import mek.stripeterminal.mappings.mapExceptionToApi
 import mek.stripeterminal.mappings.toApi
 import mek.stripeterminal.mappings.toHost
@@ -669,19 +668,19 @@ class TerminalPlatformPlugin(
     private fun findActiveReader(serialNumber: String): Reader {
         val reader = discoveredReaders.firstOrNull { it.serialNumber == serialNumber }
         return reader
-            ?: throw createError(createApiException(TerminalExceptionCodeApi.READER_NOT_RECOVERED))
+            ?: throw mapExceptionToError(createApiException(TerminalExceptionCodeApi.READER_NOT_RECOVERED))
     }
 
     private fun findPaymentIntent(paymentIntentId: String): PaymentIntent {
         val paymentIntent = paymentIntents[paymentIntentId]
         return paymentIntent
-            ?: throw createError(createApiException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED))
+            ?: throw mapExceptionToError(createApiException(TerminalExceptionCodeApi.PAYMENT_INTENT_NOT_RECOVERED))
     }
 
     private fun findSetupIntent(setupIntentId: String): SetupIntent {
         val setupIntent = setupIntents[setupIntentId]
         return setupIntent
-            ?: throw createError(createApiException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED))
+            ?: throw mapExceptionToError(createApiException(TerminalExceptionCodeApi.SETUP_INTENT_NOT_RECOVERED))
     }
 
     internal fun clean() {

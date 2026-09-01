@@ -7,12 +7,16 @@ import TerminalExceptionApi
 import TerminalExceptionCodeApi
 import kotlin.stackTraceToString
 
-fun createError(details: TerminalExceptionApi): FlutterError {
+fun createError(code: String? = null, message: String? = null, details: Any? = null): FlutterError {
     return FlutterError(
-        code = "mek_stripe_terminal",
-        message = null,
-        details = details.toList()
+        code = "mek_stripe_terminal${code ?: ""}",
+        message = message,
+        details = details
     )
+}
+
+fun mapExceptionToError(details: TerminalExceptionApi): FlutterError {
+    return createError(details = details.toList())
 }
 
 fun createApiException(code: TerminalExceptionCodeApi, message: String? = null): TerminalExceptionApi {

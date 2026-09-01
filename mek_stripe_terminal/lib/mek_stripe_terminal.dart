@@ -22,6 +22,7 @@ export 'src/models/setup_intent.dart';
 export 'src/models/simulator_configuration.dart';
 export 'src/models/tap_to_pay_ux_configuration.dart';
 export 'src/models/tip.dart';
+export 'src/proximity_reader.dart';
 export 'src/reader_delegates.dart';
 export 'src/terminal.dart';
 export 'src/terminal_exception.dart';

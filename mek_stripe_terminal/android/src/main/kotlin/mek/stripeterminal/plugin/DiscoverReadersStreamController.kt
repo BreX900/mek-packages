@@ -16,7 +16,7 @@ import TerminalExceptionCodeApi
 import com.stripe.stripeterminal.external.models.DiscoveryConfiguration
 import mek.stripeterminal.addError
 import mek.stripeterminal.mappings.createApiException
-import mek.stripeterminal.mappings.createError
+import mek.stripeterminal.mappings.mapExceptionToError
 import mek.stripeterminal.mappings.mapExceptionToApi
 import mek.stripeterminal.mappings.toApi
 import mek.stripeterminal.runOnMainThread
@@ -39,7 +39,7 @@ class DiscoverReadersStreamController : DiscoverReadersStreamHandler() {
         val configuration = this.configuration
         if (configuration == null) {
             val exception = createApiException(TerminalExceptionCodeApi.UNKNOWN, "Discovery method not supported");
-            sink.addError(createError(exception))
+            sink.addError(mapExceptionToError(exception))
             sink.endOfStream()
             return
         }
@@ -66,7 +66,7 @@ class DiscoverReadersStreamController : DiscoverReadersStreamHandler() {
                                     return@runOnMainThread
                                 }
 
-                                sink.addError(createError(mapExceptionToApi(e)))
+                                sink.addError(mapExceptionToError(mapExceptionToApi(e)))
                                 sink.endOfStream()
                                 clean()
                             }

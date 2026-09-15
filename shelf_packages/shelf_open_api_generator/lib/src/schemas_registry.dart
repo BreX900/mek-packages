@@ -1,13 +1,14 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart';
 import 'package:open_api_specification/open_api_spec.dart';
+import 'package:shelf_open_api/shelf_open_api.dart';
 import 'package:shelf_open_api_generator/src/utils/doc.dart';
 import 'package:shelf_open_api_generator/src/utils/json_annotation.dart';
 import 'package:shelf_open_api_generator/src/utils/utils.dart';
 import 'package:source_gen/source_gen.dart';
+import 'package:source_helper/source_helper.dart';
 
 class SchemasRegistry {
   static const _dateTimeType = TypeChecker.typeNamed(DateTime, inSdk: true);
@@ -144,36 +145,70 @@ class SchemasRegistry {
       }
 
       final parameters = element.requireUnnamedConstructor.formalParameters;
-      final fields = element.getters;
+      final getters = element.getters.where((e) => !e.isExternal && !e.isStatic && !e.isPrivate);
+
       final names = <String, String>{
         for (final e in parameters)
           if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
         for (final e in element.fields)
           if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
-        for (final e in fields)
+        for (final e in getters)
           if (JsonAnnotation.getFieldName(e) case final name?) e.displayName: name,
       };
 
       final List<_ClassProperty> properties;
-
       if (fromJsonType != null) {
-        final parameters = element.requireUnnamedConstructor.formalParameters;
-
         properties = parameters.map((e) {
           return _ClassProperty(
-            isRequired: e.type.nullabilitySuffix == NullabilitySuffix.none,
+            isRequired: !e.type.isNullableType,
             name: e.displayName,
             type: e.type,
           );
         }).toList();
       } else {
-        properties = element.getters.map((e) {
+        properties = getters.map((e) {
           return _ClassProperty(
-            isRequired: e.returnType.nullabilitySuffix == NullabilitySuffix.none,
+            isRequired: !e.returnType.isNullableType,
             name: e.displayName,
             type: e.returnType,
           );
         }).toList();
+      }
+
+      DiscriminatorOpenApi? discriminator;
+      Iterable<ClassElement>? oneOf;
+      if (element.isSealed) {
+        const discriminatorChecker = TypeChecker.typeNamed(
+          OpenApiDiscriminator,
+          inPackage: 'shelf_open_api',
+        );
+
+        final discriminatorName = element.getters
+            .firstWhereOrNull(discriminatorChecker.hasAnnotationOf)
+            ?.displayName;
+        if (discriminatorName != null) {
+          oneOf = element.library.classes.where((e) {
+            return TypeChecker.fromStatic(element.thisType).isSuperOf(e);
+          });
+
+          discriminator = DiscriminatorOpenApi(
+            propertyName: discriminatorName,
+            mapping: Map.fromEntries(
+              oneOf.map((element) {
+                final value = discriminatorChecker
+                    .firstAnnotationOf(element)
+                    ?.getField('value')
+                    ?.getField('_name')
+                    ?.toStringValue();
+                if (value == null) {
+                  throw InvalidGenerationSourceError('Missing OpenApiDiscriminator annotation.');
+                }
+
+                return MapEntry(value, element.displayName);
+              }),
+            ),
+          );
+        }
       }
 
       return SchemaOpenApi(
@@ -181,6 +216,17 @@ class SchemasRegistry {
         type: TypeOpenApi.object,
         description: doc.summaryAndDescription,
         example: doc.example,
+        allOf: [
+          if (element.supertype case final superType? when !superType.isDartCoreObject)
+            ?_buildAndRegister(context, Doc.none, superType),
+          for (final type in element.thisType.interfaces)
+            if (!type.isDartCoreObject) ?_buildAndRegister(context, Doc.none, type),
+        ],
+        oneOf: oneOf
+            ?.map((element) => _buildAndRegister(context, Doc.none, element.thisType))
+            .nonNulls
+            .toList(),
+        discriminator: discriminator,
         required: properties
             .where((e) => e.isRequired)
             .map((e) => names[e.name] ?? e.name)

@@ -1,4 +1,7 @@
 
+## 1.4.1
+- feat: added support to sealed class and discriminator
+
 ## 1.3.0
 - fix: auto create output folder
 - feat: added support to customize `part` path to generate files in another directory

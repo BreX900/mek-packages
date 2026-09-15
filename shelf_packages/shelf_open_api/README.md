@@ -15,7 +15,7 @@ This library is under development, any help is welcome
 - [x] Responses
 - [ ] Bad Responses
 - [x] Reused schemas by `$ref`
-- [-] Inheritance and Polymorphism by `allOf`, `oneOf`, `anyOf`, `discriminator` (Partial implemented)
+- [x] Inheritance and Polymorphism by `allOf`, `oneOf`, `discriminator` (`anyOf` not supported)
 - [-] Security (Partial implemented)
 - [x] Docs (`summary`, `description`, `example`)
 - [x] Tags/Groups

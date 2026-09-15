@@ -37,3 +37,9 @@ class OpenApiRouteMount {
 
   const OpenApiRouteMount(this.serviceType);
 }
+
+class OpenApiDiscriminator {
+  final Object? value;
+
+  const OpenApiDiscriminator([this.value]);
+}

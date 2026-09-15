@@ -1,4 +1,7 @@
 
+## 3.0.2
+- chore: improved message error when parsing is not supported
+
 ## 3.0.1
 - build: require `analyzer: '>=10.0.0 <15.0.0'`
 

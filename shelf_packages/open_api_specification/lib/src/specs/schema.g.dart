@@ -142,6 +142,20 @@ SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
             ?.map((e) => SchemaOrRef.fromJson(e as Map))
             .toList(),
       ),
+      oneOf: $checkedConvert(
+        'oneOf',
+        (v) => (v as List<dynamic>?)
+            ?.map((e) => SchemaOrRef.fromJson(e as Map))
+            .toList(),
+      ),
+      discriminator: $checkedConvert(
+        'discriminator',
+        (v) => v == null
+            ? null
+            : DiscriminatorOpenApi.fromJson(
+                Map<String, dynamic>.from(v as Map),
+              ),
+      ),
       required: $checkedConvert(
         'required',
         (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
@@ -174,7 +188,9 @@ Map<String, dynamic> _$SchemaOpenApiToJson(
   'properties': ?instance.properties?.map((k, e) => MapEntry(k, e.toJson())),
   'propertyNames': ?instance.propertyNames?.toJson(),
   'additionalProperties': ?instance.additionalProperties?.toJson(),
-  'allOf': ?instance.allOf?.map((e) => e.toJson()).toList(),
+  'allOf': ?$nullIfEmpty(instance.allOf),
+  'oneOf': ?$nullIfEmpty(instance.oneOf),
+  'discriminator': ?instance.discriminator?.toJson(),
   'required': ?instance.required,
   'nullable': ?$nullIfFalse(instance.nullable),
   'default': ?instance.default$,
@@ -206,4 +222,23 @@ const _$FormatOpenApiEnumMap = {
   FormatOpenApi.uri: 'uri',
   FormatOpenApi.binary: 'binary',
   FormatOpenApi.base64: 'base64',
+};
+
+DiscriminatorOpenApi _$DiscriminatorOpenApiFromJson(Map json) =>
+    $checkedCreate('DiscriminatorOpenApi', json, ($checkedConvert) {
+      final val = DiscriminatorOpenApi(
+        propertyName: $checkedConvert('propertyName', (v) => v as String),
+        mapping: $checkedConvert(
+          'mapping',
+          (v) => Map<String, String>.from(v as Map),
+        ),
+      );
+      return val;
+    });
+
+Map<String, dynamic> _$DiscriminatorOpenApiToJson(
+  DiscriminatorOpenApi instance,
+) => <String, dynamic>{
+  'propertyName': instance.propertyName,
+  'mapping': instance.mapping,
 };

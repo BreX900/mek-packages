@@ -38,7 +38,7 @@ class RoutingGenerator extends Generator {
     return null;
   }
 
-  String? _codeParser(DartType type) {
+  String? _codeParser(FormalParameterElement element, DartType type) {
     if (type.isDartCoreBool) return 'bool.parse';
     if (type.isDartCoreInt) return 'int.parse';
     if (type.isDartCoreDouble) return 'double.parse';
@@ -46,18 +46,23 @@ class RoutingGenerator extends Generator {
     if (type.isDartCoreString) return null;
     final parser = _findParserMethod(type);
     if (parser != null) return parser;
-    throw UnsupportedError('the var $type has not supported $type type.');
+    throw InvalidGenerationSourceError(
+      'Cant resolve the parsing procedure for type "$type".',
+      element: element,
+      todo:
+          'Implement "static $type parse(String source)" or "factory $type.fromJson(String source)" method',
+    );
   }
 
-  String _codeListParser(DartType type) {
+  String _codeListParser(FormalParameterElement element, DartType type) {
     if (type.isDartCoreList || type.isDartCoreSet) {
-      var parserCode = _codeParser((type as InterfaceType).typeArguments.single);
+      var parserCode = _codeParser(element, (type as InterfaceType).typeArguments.single);
       if (parserCode != null) {
         parserCode = '.map($parserCode).${type.isDartCoreSet ? 'toSet' : 'toList'}()';
       }
       return '(vls) => vls${parserCode ?? ''}';
     }
-    var parserCode = _codeParser(type);
+    var parserCode = _codeParser(element, type);
     parserCode = parserCode != null ? '$parserCode(vls.single)' : 'vls.single';
     if (type.isNullable) {
       return '(vls) => vls.isNotEmpty ? $parserCode : null';
@@ -116,7 +121,7 @@ class RoutingGenerator extends Generator {
     final methodParams = [
       if (hasRequest) 'request',
       ...pathParameters.map((e) {
-        final parserCode = _codeParser(e.type);
+        final parserCode = _codeParser(e, e.type);
         return parserCode != null ? '$parserCode(\$${e.displayName})' : '\$${e.displayName}';
       }),
       ?switch (bodyParameter) {
@@ -135,7 +140,7 @@ class RoutingGenerator extends Generator {
       if (queryParameters.isNotEmpty)
         ...queryParameters.map((e) {
           final key = e.displayName;
-          return '${e.displayName}: \$parseQueryParameters(request, ${literalString(key)}, ${_codeListParser(e.type)})';
+          return '${e.displayName}: \$parseQueryParameters(request, ${literalString(key)}, ${_codeListParser(e, e.type)})';
         }),
     ];
     final methodParamsText = methodParams.expand((e) sync* {

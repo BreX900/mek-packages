@@ -1,4 +1,9 @@
 
+## 3.4.0
+- fix: do not register private class fields on schema
+- feat: added support to Schema.allOff field analyzing the class extended supertype
+- feat: added support to polymorphism via discriminator and sealed class
+
 ## 3.3.1
 - build: require `analyzer: '>=10.0.0 <15.0.0'`
 

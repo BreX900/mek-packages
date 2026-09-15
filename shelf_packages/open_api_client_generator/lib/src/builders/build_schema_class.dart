@@ -11,26 +11,35 @@ class BuildSchemaClass with ContextMixin {
 
   BuildSchemaClass({required this.context});
 
-  final _cache = <String, _CacheEntry>{};
+  final _cache = <String, ApiSpec?>{};
 
-  Iterable<ApiSpec> get apiSpecs => _cache.values.map((e) => e.spec);
+  Iterable<ApiSpec> get apiSpecs => _cache.values.nonNulls;
 
-  Reference call(String name, SchemaOrRef schemaOrRef) {
+  Reference build(String name, SchemaOrRef schemaOrRef) {
     final schema = schemaOrRef.resolve(components);
-    name = switch (schemaOrRef) {
-      SchemaOpenApi() => schema.name ?? schema.title ?? name,
-      SchemaRef() => schemaOrRef.ref.split('/').last,
-    };
+    switch (schemaOrRef) {
+      case SchemaOpenApi():
+        name = codecs.encodeType(schema.name ?? schema.title ?? name);
 
-    final cacheEntry = _cache[name];
-    if (cacheEntry != null) return cacheEntry.type;
+        final builtSchema = _build(name, schema);
+        if (builtSchema.spec case final spec?) _cache[name] = spec;
 
-    final builtSchema = _build(name, schema);
+        return builtSchema.type;
 
-    final newCacheEntry = builtSchema.toCache();
-    if (newCacheEntry != null) _cache[name] = newCacheEntry;
+      case SchemaRef():
+        name = schemaOrRef.ref.split('/').last;
 
-    return builtSchema.type;
+        if (!_cache.containsKey(name)) {
+          _cache[name] = null;
+          if (_build(name, schema).spec case final spec?) {
+            _cache[name] = spec;
+          } else {
+            _cache.remove(name);
+          }
+        }
+
+        return Reference(name);
+    }
   }
 
   _BuiltSchema _build(String name, SchemaOpenApi schema) {
@@ -44,14 +53,13 @@ class BuildSchemaClass with ContextMixin {
 
     if (schema.isEnum) {
       final values = schema.enum$!;
-      final enumName = codecs.encodeType(name);
 
       return _BuiltSchema(
-        type: Reference(enumName),
+        type: Reference(name),
         spec: ApiEnum(
           schema: schema,
           docs: docs,
-          name: enumName,
+          name: name,
           values: values.map((value) {
             return ApiEnumValue(name: codecs.encodeEnumValue(value), value: '$value');
           }).toList(),
@@ -97,7 +105,7 @@ class BuildSchemaClass with ContextMixin {
       case TypeOpenApi.string:
         return const _BuiltSchema(type: References.string);
       case TypeOpenApi.array:
-        final itemsReference = call(name, schema.items!);
+        final itemsReference = build(name, schema.items!);
         return _BuiltSchema(
           type: (schema.uniqueItems ?? false)
               ? References.set(itemsReference)
@@ -105,32 +113,56 @@ class BuildSchemaClass with ContextMixin {
         );
       case TypeOpenApi.object:
         if (schema.isClass) {
-          final allOf = (schema.allOf ?? []).map((schema) => call('Unknown', schema));
+          final SchemaOpenApi(:discriminator) = schema;
+          final allOf = (schema.allOf ?? []).map((schema) => build('Unknown', schema));
 
-          final className = codecs.encodeType(name);
+          List<ApiField> resolveField(SchemaOrRef schemaOrRef) {
+            final schema = schemaOrRef.resolve(components);
+
+            final properties = (schema.properties ?? {}).entries.map((__) {
+              final MapEntry(key: name, value: propertySchemaOrRef) = __;
+              final propertySchema = propertySchemaOrRef.resolve(components);
+
+              return ApiField(
+                key: name,
+                docs: const [], // TODO:  prop.docs ??
+                isRequired: schema.isRequired(name),
+                type: build(
+                  name,
+                  propertySchemaOrRef,
+                ).toNullable(schema.canNull(name, propertySchema)),
+                name: codecs.encodeName(name),
+              );
+            });
+
+            return [
+              for (final schemaOrRef in schema.allOf ?? <SchemaOrRef>[])
+                for (final field in resolveField(schemaOrRef.resolve(components)))
+                  if (properties.every((e) => field.name != e.name)) field,
+              ...properties,
+            ];
+          }
+
+          ApiDiscriminator? apiDiscriminator;
+          if (discriminator != null) {
+            apiDiscriminator = ApiDiscriminator(
+              name: discriminator.propertyName,
+              mapping: discriminator.mapping,
+            );
+            for (final name in discriminator.mapping.values) {
+              build(name, SchemaRef.from(name));
+            }
+          }
 
           return _BuiltSchema(
-            type: Reference(className).toNullable(schema.nullable),
+            type: Reference(name).toNullable(schema.nullable),
             spec: ApiClass(
+              discriminator: apiDiscriminator,
               schema: schema,
               docs: docs,
-              name: className,
+              name: name,
               implements: allOf.map((reference) => reference.symbol!).toList(),
-              fields: (schema.properties ?? {}).entries.map((entry) {
-                final MapEntry(key: name, value: propertySchema) = entry;
-                final resolvedPropertySchema = propertySchema.resolve(components);
-
-                return ApiField(
-                  key: name,
-                  docs: const [], // TODO:  prop.docs ??
-                  isRequired: schema.isRequired(name),
-                  type: call(
-                    name,
-                    propertySchema,
-                  ).toNullable(schema.canNull(name, resolvedPropertySchema)),
-                  name: codecs.encodeName(name),
-                );
-              }).toList(),
+              fields: resolveField(schema),
             ),
           );
         }
@@ -139,7 +171,7 @@ class BuildSchemaClass with ContextMixin {
           type: References.map(
             key: References.string,
             value: schema.additionalProperties != null
-                ? call(name, schema.additionalProperties!)
+                ? build(name, schema.additionalProperties!)
                 : null,
           ),
         );
@@ -153,7 +185,7 @@ class _CacheEntry {
   final Reference type;
   final ApiSpec spec;
 
-  const _CacheEntry({required this.type, required this.spec});
+  _CacheEntry({required this.type, required this.spec});
 }
 
 class _BuiltSchema {

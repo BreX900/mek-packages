@@ -1,3 +1,5 @@
+## 3.1.0
+- feat: added OpenApiDiscriminator to support polymorphism via discriminator and sealed class
 
 ## 3.0.0
 - feat: The OpenApi for the entire project are generated directly in the public/* folder

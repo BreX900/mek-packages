@@ -59,7 +59,7 @@ class BuildApiClass with ContextMixin {
           final key = codecs.encodeDartValue(e.name);
           final varName = codecs.encodeName(e.name);
           final varEncoder = dataCodec.encodeSerialization(
-            buildSchemaClass(varName, e.schema!).toNullable(false),
+            buildSchemaClass.build(varName, e.schema!).toNullable(false),
             varName,
           );
 
@@ -123,7 +123,7 @@ class BuildApiClass with ContextMixin {
           ? '${methodName}Response'
           : '${methodName}Exception';
       final responseClass = responseSchema != null
-          ? buildSchemaClass.call(responseClassName, responseSchema)
+          ? buildSchemaClass.build(responseClassName, responseSchema)
           : References.void$;
       return MapEntry(code, responseClass);
     });
@@ -143,7 +143,7 @@ class BuildApiClass with ContextMixin {
     final requestSchema = request?.content.jsonOrAny?.schema;
     final requestClassName = '${methodName}Request';
     final requestClass = requestSchema != null
-        ? buildSchemaClass.call(requestClassName, requestSchema)
+        ? buildSchemaClass.build(requestClassName, requestSchema)
         : null;
     final requestType = requestClass?.type.toNullable(!(request?.required ?? false));
 
@@ -185,7 +185,9 @@ class BuildApiClass with ContextMixin {
           pathParameters.map((param) {
             return Parameter(
               (b) => b
-                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
+                ..type = buildSchemaClass
+                    .build(param.name, param.schema!)
+                    .toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),
@@ -204,7 +206,9 @@ class BuildApiClass with ContextMixin {
               (b) => b
                 ..named = true
                 ..required = param.required
-                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
+                ..type = buildSchemaClass
+                    .build(param.name, param.schema!)
+                    .toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),

@@ -1,4 +1,8 @@
 
+## 4.1.0
+- feat: added support to `oneOf` and `discriminator` fields
+- chore: if "Schema.allOf" field has empty map set the values as null 
+
 ## 4.0.0
 - feat!: added support to `SchemaOrRef` to better handling open api schema or ref
 - feat: added support to `decimal` value for schema format

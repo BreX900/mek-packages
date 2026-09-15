@@ -19,11 +19,13 @@ class OpenApiHandler {
     OpenApiFile,
     inPackage: 'shelf_open_api',
   );
-  static const _jsonEncoder = JsonEncoder();
-  static final _yamlEncoder = YamlEncoder(
+  static const _jsonEncoder = JsonEncoder(_callToJson);
+  static const _yamlEncoder = YamlEncoder(
     shouldMultilineStringInBlock: false,
-    toEncodable: (o) => (o as dynamic).toJson(),
+    toEncodable: _callToJson,
   );
+
+  static Object? _callToJson(Object? data) => (data as dynamic).toJson();
 
   final Config config;
   final Set<OpenApiFileFormat> fileFormats;
@@ -114,7 +116,7 @@ class OpenApiHandler {
 
     return fileFormats.map((fileFormat) {
       final code = switch (fileFormat) {
-        OpenApiFileFormat.json => _jsonEncoder.convert(openApi),
+        OpenApiFileFormat.json => _jsonEncoder.convert(openApi.toJson()),
         OpenApiFileFormat.yaml => _yamlEncoder.convert(openApi.toJson()),
       };
       return ('.${fileFormat.name}', code);

@@ -109,6 +109,7 @@ Future<void> generateApi({
         'always_use_package_imports',
         'cast_nullable_to_non_nullable',
         'unnecessary_cast',
+        'annotate_overrides',
       ])
       ..directives.add(Directive.part(partPath))
       ..body.add(apiSpec)

@@ -11,10 +11,18 @@ sealed class ApiSpec {
   const ApiSpec({required this.schema, required this.name});
 }
 
+class ApiDiscriminator {
+  final String name;
+  final Map<String, String> mapping;
+
+  const ApiDiscriminator({required this.name, required this.mapping});
+}
+
 class ApiClass extends ApiSpec {
   final Iterable<String> docs;
   final List<String> implements;
   final List<ApiField> fields;
+  final ApiDiscriminator? discriminator;
 
   const ApiClass({
     required super.schema,
@@ -22,14 +30,41 @@ class ApiClass extends ApiSpec {
     required this.implements,
     required super.name,
     required this.fields,
+    required this.discriminator,
   });
 
   Class toSpec(Updates<ClassBuilder> updates) {
     return Class(
       (b) => b
         ..docs.addAll(docs)
+        ..sealed = discriminator != null
         ..name = name
         ..implements.replace(implements.map(Reference.new))
+        ..update(updates),
+    );
+  }
+}
+
+class ApiParameter {
+  final String key;
+  final bool isRequired;
+  final bool isInherited;
+  final String name;
+
+  const ApiParameter({
+    required this.key,
+    required this.isRequired,
+    required this.isInherited,
+    required this.name,
+  });
+
+  Parameter toParameter(Updates<ParameterBuilder> updates) {
+    return Parameter(
+      (b) => b
+        ..named = true
+        ..required = isRequired
+        ..toSuper = isInherited
+        ..name = name
         ..update(updates),
     );
   }

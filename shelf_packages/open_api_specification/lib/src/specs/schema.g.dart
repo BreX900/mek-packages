@@ -104,6 +104,7 @@ SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
       type: $checkedConvert(
         'type',
         (v) => $enumDecodeNullable(_$TypeOpenApiEnumMap, v),
+        readValue: SchemaOpenApi._readType,
       ),
       format: $checkedConvert(
         'format',
@@ -160,7 +161,11 @@ SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
         'required',
         (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
       ),
-      nullable: $checkedConvert('nullable', (v) => v as bool? ?? false),
+      nullable: $checkedConvert(
+        'nullable',
+        (v) => v as bool? ?? false,
+        readValue: SchemaOpenApi._readNullable,
+      ),
       default$: $checkedConvert('default', (v) => v),
       $original: $checkedConvert(r'$original', (v) => v),
       uniqueItems: $checkedConvert('uniqueItems', (v) => v as bool?),

@@ -95,6 +95,7 @@ class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
   final String? description;
   final Object? example;
 
+  @JsonKey(readValue: _readType)
   final TypeOpenApi? type;
 
   @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)
@@ -128,7 +129,7 @@ class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
   /// With [TypeOpenApi.object]
   final List<String>? required;
 
-  @JsonKey(toJson: $nullIfFalse)
+  @JsonKey(readValue: _readNullable, toJson: $nullIfFalse)
   final bool nullable;
 
   @JsonKey(name: 'default')
@@ -182,6 +183,19 @@ class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
 
   @override
   SchemaOpenApi resolve(ComponentsOpenApi components) => this;
+
+  static Object? _readType(Map<dynamic, dynamic> data, String key) {
+    return switch (data[key]) {
+      final List<dynamic> data => ([...data]..remove('null')).single,
+      final data => data,
+    };
+  }
+
+  static Object? _readNullable(Map<dynamic, dynamic> data, String key) {
+    if (data.containsKey(key)) return data[key];
+    if (data['type'] case final List<dynamic> types) return types.contains('null');
+    return null;
+  }
 
   static Object? _readAdditionalProperties(Map<dynamic, dynamic> data, String key) {
     final value = data[key];

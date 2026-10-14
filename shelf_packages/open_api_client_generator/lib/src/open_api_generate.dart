@@ -102,7 +102,7 @@ Future<void> generateApi({
 
   var librarySpec = Library(
     (b) => b
-      ..ignoreForFile.add('type=lint')
+      ..ignoreForFile.addAll(['type=lint', 'unused_import'])
       ..directives.add(Directive.import('dart:typed_data'))
       ..directives.add(Directive.part(partPath))
       ..body.add(apiSpec)
@@ -114,7 +114,7 @@ Future<void> generateApi({
   if (!outputDirectory.existsSync()) outputDirectory.createSync(recursive: true);
 
   var content = formatter.format('${librarySpec.accept(emitter)}');
-  content = '// dart format off\n$content\n// dart format on';
+  content = '// GENERATED CODE - DO NOT MODIFY BY HAND\n\n// dart format off\n\n$content';
   works.add(File('${outputDirectory.path}/$apiFileName').writeAsString(content));
 
   for (final plugin in allPlugins) {

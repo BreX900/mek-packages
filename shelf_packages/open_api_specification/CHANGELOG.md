@@ -1,4 +1,7 @@
 
+## 4.1.1
+fix: added support array on `type` field on schema for `null` value
+
 ## 4.1.0
 - feat: added support to `oneOf` and `discriminator` fields
 - chore: if "Schema.allOf" field has empty map set the values as null 

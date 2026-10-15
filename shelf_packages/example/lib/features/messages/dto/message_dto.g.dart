@@ -10,5 +10,7 @@ Map<String, dynamic> _$MessageDtoToJson(MessageDto instance) =>
     <String, dynamic>{
       'chatId': instance.chatId,
       'description': instance.content,
+      'sentAt': instance.sentAt,
+      'receivedAt': instance.receivedAt,
       'parent': instance.parent,
     };

@@ -140,7 +140,7 @@ class SchemasRegistry {
 
         if (!(toJsonType?.isDartCoreMap ?? true) || !(fromJsonType?.isDartCoreMap ?? true)) {
           final dartType = (toJsonType ?? fromJsonType)!;
-          return _buildComplexSchema(context, doc, dartType as InterfaceType);
+          return _buildSimpleSchema(context, doc, dartType);
         }
       }
 

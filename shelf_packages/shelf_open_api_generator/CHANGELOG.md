@@ -1,4 +1,7 @@
 
+## 3.5.1
+- fix: fixed support to custom primitive types serialization
+
 ## 3.5.0
 - feat: added support to `Stream<Uint8List>` response
 - feat: added ability to disable open api spec generation via `enabled` flag on `build.yaml` file

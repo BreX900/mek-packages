@@ -157,6 +157,8 @@ components:
         - title
         - visibility
         - type
+    Date:
+      type: string
     MessageDto:
       title: MessageDto
       type: object
@@ -165,11 +167,16 @@ components:
           type: string
         description:
           type: string
+        sentAt:
+          $ref: "#/components/schemas/Date"
+        receivedAt:
+          $ref: "#/components/schemas/Date"
         parent:
           $ref: "#/components/schemas/MessageDto"
       required:
         - chatId
         - description
+        - sentAt
 tags:
   - name: ChatsController
   - name: MessagesController

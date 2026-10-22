@@ -15,7 +15,7 @@ This library is under development, any help is welcome
 - [x] Responses
 - [ ] Bad Responses
 - [x] Reused schemas by `$ref`
-- [-] Inheritance and Polymorphism by `allOf`, `oneOf`, `anyOf`, `discriminator` (Partial implemented)
+- [x] Inheritance and Polymorphism by `allOf`, `oneOf`, `discriminator` (`anyOf` not supported)
 - [-] Security (Partial implemented)
 - [x] Docs (`summary`, `description`, `example`)
 - [x] Tags/Groups
@@ -159,6 +159,7 @@ targets:
     builders:
       shelf_open_api_generator:
         options:
+          output_path: 'public' # The output folder path
           info: # See more info on open_api_specification.InfoOpenApi class
             title: 'Api'
             description: 'Shelf open api example'
@@ -169,6 +170,8 @@ targets:
                type: http
                scheme: Bearer
                bearerFormat: JWT
+        release_options:
+          enabled: false
 ```
 
 ## More

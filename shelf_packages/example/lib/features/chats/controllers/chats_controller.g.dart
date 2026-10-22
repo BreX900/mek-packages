@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: cast_nullable_to_non_nullable
+
 part of 'chats_controller.dart';
 
 // **************************************************************************
@@ -11,14 +13,14 @@ Router _$ChatsControllerRouter(ChatsController service) => Router()
     return await service.createChatForReport(request);
   })
   ..add('PUT', '/', (Request request) async {
-    final body = await service.createChatForReportV2(
+    final data = await service.createChatForReportV2(
       request,
       await $readBodyAs(
         request,
         (data) => ChatCreateDto.fromJson(data! as Map<String, dynamic>),
       ),
     );
-    return JsonResponse.ok(body);
+    return JsonResponse.ok(data);
   })
   ..add('PUT', '/', (Request request) async {
     return await service.batchChats(

@@ -1,0 +1,13 @@
+import 'package:mek_stripe_terminal/src/api/terminal_api.g.dart';
+
+typedef TapToPayUxConfiguration = TapToPayUxConfigurationApi;
+
+typedef TapToPayUxConfigurationTapZone = TapToPayUxConfigurationTapZoneApi;
+
+typedef TapToPayUxConfigurationTapZoneIndicator = TapToPayUxConfigurationTapZoneIndicatorApi;
+
+typedef TapToPayUxConfigurationTapZonePosition = TapToPayUxConfigurationTapZonePositionApi;
+
+typedef TapToPayUxConfigurationColorScheme = TapToPayUxConfigurationColorSchemeApi;
+
+typedef TapToPayUxConfigurationDarkMode = TapToPayUxConfigurationDarkModeApi;

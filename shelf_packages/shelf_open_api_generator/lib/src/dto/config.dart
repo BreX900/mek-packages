@@ -5,11 +5,16 @@ part 'config.g.dart';
 
 @YamlSerializable(createFactory: true)
 class Config {
+  final bool enabled;
+  final String outputPath;
+
   final InfoOpenApi? info;
   final List<ServerOpenApi> servers;
   final Map<String, SecuritySchemeOpenApi> securitySchemes;
 
   const Config({
+    this.enabled = true,
+    this.outputPath = 'public',
     this.info,
     this.servers = const [ServerOpenApi(url: 'http://localhost:8080')],
     this.securitySchemes = const {},

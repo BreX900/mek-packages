@@ -1,0 +1,294 @@
+import 'location.dart';
+
+/// The possible reader connection statuses for the SDK.
+enum ConnectionStatusApi {
+  /// The SDK is not connected to a reader.
+  notConnected,
+
+  /// The SDK is connected to a reader.
+  connected,
+
+  /// The SDK is currently connecting to a reader.
+  connecting,
+
+  discovering,
+
+  /// The SDK is reconnecting to a reader.
+  reconnecting,
+}
+
+/// Information about a card reader that has been discovered by or connected to the SDK.
+///
+/// Some of the properties are only applicable to a certain device type. These properties are
+/// labeled with the reader or reader type to which they apply.
+class ReaderApi {
+  /// The reader’s unique identifier.
+  final String? id;
+
+  /// Used to tell whether the location field has been set. Note that the Internet and simulated
+  /// readers will always have an `null` [locationStatus].
+  ///
+  /// The location is not known. location will be nil.
+  ///
+  /// A reader will have a location status to `null` when a Bluetooth reader’s full location
+  /// information failed to fetch properly during discovery.
+  ///
+  /// (Bluetooth and Apple Built-In readers only.)
+  final LocationStatusApi? locationStatus;
+
+  /// The reader’s device type.
+  final DeviceTypeApi? deviceType;
+
+  /// True if this is a simulated reader.
+  final bool simulated;
+
+  /// The ID of the reader’s Location.
+  ///
+  /// Internet readers remain registered to the location specified when registering the reader
+  /// to your account. For internet readers, this field represents that location. If you need to
+  /// change your internet reader’s location, re-register the reader and specify the new location id
+  /// in the location param. See https://stripe.com/docs/api/terminal/readers/create
+  ///
+  /// Bluetooth and Apple Built-In readers are designed to be more mobile and must be registered
+  /// to a location upon each connection. This field represents the last location that the reader
+  /// was registered to. If the reader has not been used before, this field will be `null`. If you
+  /// associate the reader to a different location while calling [Terminal.connectBluetoothReader],
+  /// this field will update to that new location’s id.
+  final String? locationId;
+
+  final LocationApi? location;
+
+  /// The reader’s serial number.
+  final String serialNumber;
+
+  /// The reader's current device software version, or `null` if this
+  /// information is unavailable.
+  final String? deviceSoftwareVersion;
+
+  /// LocalMobile, Bluetooth and Usb readers properties
+
+  /// The available update for this reader, or nil if no update is available. This update will also
+  /// have been announced via [PhysicalReaderDelegate.onReportAvailableUpdate]
+  ///
+  /// Install this update with [Terminal.installAvailableUpdate]
+  ///
+  /// calls to [Terminal.installAvailableUpdate] when availableUpdate is `null` will result in
+  /// [PhysicalReaderDelegate.onFinishInstallingUpdate] called immediately with a `null` update and `null` error.
+  final bool availableUpdate;
+
+  /// The reader’s battery level, represented as a boxed float in the range [0, 1]. If the reader does not have a battery, or the battery level is unknown, this value is nil.
+  final double batteryLevel;
+
+  // TODO: Add isCharging/bluetoothDevice field
+
+  /// Internet readers properties
+
+  /// The reader’s IP address, or nil if the IP address is unknown.
+  final String? ipAddress;
+
+  /// The reader’s network status, or nil if the network status is unknown.
+  final NetworkStatusApi? networkStatus;
+
+  // TODO: Add status field
+
+  final String? label;
+
+  const ReaderApi({
+    required this.id,
+    required this.locationStatus,
+    required this.batteryLevel,
+    required this.deviceType,
+    required this.simulated,
+    required this.availableUpdate,
+    required this.serialNumber,
+    required this.deviceSoftwareVersion,
+    required this.locationId,
+    required this.location,
+    required this.ipAddress,
+    required this.networkStatus,
+    required this.label,
+  });
+}
+
+/// Represents the possible states of the location object for a discovered reader.
+enum LocationStatusApi {
+  /// The location was successfully set to a known location. location is a valid [LocationApi].
+  set,
+
+  /// This location is known to be not set. location will be null.
+  notSet,
+}
+
+/// The reader’s device type.
+enum DeviceTypeApi {
+  /// Chipper 1X aka Chip & Swipe
+  chipper1X,
+
+  /// The BBPOS Chipper 2X BT mobile reader.
+  chipper2X,
+
+  /// The Stripe Reader M2 mobile reader.
+  stripeM2,
+
+  /// Tap To Pay reader.
+  tapToPay,
+
+  /// The Verifone P400 countertop reader.
+  verifoneP400,
+
+  /// Wisecube aka Wisepad 2 aka Tap & Chip.
+  wiseCube,
+
+  /// The BBPOS WisePad 3 mobile reader.
+  wisePad3,
+
+  /// The BBPOS WisePad 3S mobile reader.
+  wisePad3s,
+
+  /// The BBPOS WisePOS E countertop reader.
+  wisePosE,
+
+  /// The BBPOS WisePOS E DevKit countertop reader.
+  wisePosEDevkit,
+
+  /// ETNA.
+  etna,
+
+  /// Stripe Reader S700.
+  stripeS700,
+
+  /// Stripe Reader S700 DevKit.
+  stripeS700Devkit,
+
+  /// Stripe Reader S710.
+  stripeS710,
+
+  /// Stripe Reader S710 DevKit.
+  stripeS710Devkit,
+
+  /// Stripe Reader T600.
+  stripeT600,
+
+  /// Stripe Reader T600 DevKit.
+  stripeT600Devkit,
+
+  /// Stripe Reader T610.
+  stripeT610,
+
+  /// Stripe Reader T610 DevKit.
+  stripeT610Devkit,
+
+  /// Verifone V660p
+  verifoneV660p,
+
+  /// Verifone V660pa
+  verifoneV660pa,
+
+  /// Verifone M425
+  verifoneM425,
+
+  /// Verifone M450
+  verifoneM450,
+
+  /// Verifone P630
+  verifoneP630,
+
+  /// Verifone UX700
+  verifoneUx700,
+
+  /// Verifone V660P DevKit
+  verifoneV660pDevkit,
+
+  /// Verifone UX700 DevKit
+  verifoneUx700Devkit,
+
+  /// Verifone VM100
+  verifoneVm100,
+
+  /// Verifone VP100
+  verifoneVp100,
+
+  /// Stripe U200
+  stripeU200,
+
+  /// Verifone VM110
+  verifoneVm110,
+
+  /// Verifone VP110
+  verifoneVp110,
+
+  /// Verifone VL110
+  verifoneVl110,
+}
+
+enum ReaderEventApi { cardInserted, cardRemoved }
+
+/// The display messages that a reader may request be displayed by your app. Used by [MobileReaderDelegate.onRequestReaderDisplayMessage].
+enum ReaderDisplayMessageApi {
+  /// Check mobile device for instructions and try again.
+  checkMobileDevice,
+
+  /// Retry the presented card.
+  retryCard,
+
+  /// Insert the presented card.
+  insertCard,
+
+  /// Insert or swipe the presented card.
+  insertOrSwipeCard,
+
+  /// Swipe the presented card.
+  swipeCard,
+
+  /// Remove the presented card.
+  removeCard,
+
+  /// The reader detected multiple contactless cards. Make sure only one contactless card or NFC
+  /// device is near the reader.
+  multipleContactlessCardsDetected,
+
+  /// The card could not be read. Try another read method on the same card, or use a different card.
+  tryAnotherReadMethod,
+
+  /// The card is invalid. Try another card.
+  tryAnotherCard,
+
+  /// Card removed too early, try again.
+  cardRemovedTooEarly,
+}
+
+/// This OptionSet represents all of the input methods available to your user when the reader begins
+/// waiting for input. Used by [MobileReaderDelegate.onRequestReaderInput].
+enum ReaderInputOptionApi {
+  /// Insert a chip card.
+  insertCard,
+
+  /// Swipe a magstripe card.
+  swipeCard,
+
+  /// Tap a contactless card.
+  tapCard,
+
+  /// Manually enter the card information (MOTO).
+  manualEntry,
+}
+
+enum NetworkStatusApi {
+  /// The reader is not connected to a network.
+  offline,
+
+  /// The reader is connected to a network.
+  online,
+}
+
+/// A categorization of a reader’s battery charge level.
+enum BatteryStatusApi {
+  /// The device’s battery is less than or equal to 5%.
+  critical,
+
+  /// The device’s battery is between 5% and 20%.
+  low,
+
+  /// The device’s battery is greater than 20%.
+  nominal,
+}

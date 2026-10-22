@@ -22,6 +22,9 @@ abstract final class References {
   static const Reference jsonMap = Reference('Map<String, dynamic>');
   static final Reference jsonValue = _ref('Object', isNullable: true);
 
+  static const Reference bytes = Reference('Uint8List');
+  static final Reference bytesStream = _ref('Stream', types: [bytes]);
+
   static Reference _ref(
     String symbol, {
     List<Reference> types = const [],
@@ -48,6 +51,9 @@ extension ReferenceExtensions on Reference {
   bool get isSet => symbol == 'Set';
   bool get isDateTime => symbol == 'DateTime';
   bool get isUri => symbol == 'Uri';
+
+  bool get isBytesStream => symbol == 'Stream';
+  bool get isBytes => symbol == 'Uint8List';
 
   bool get isJsonPrimitive => isObject || isBool || isNum || isDouble || isInt || isString;
 

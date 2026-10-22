@@ -25,6 +25,8 @@ dependencies:
   mek_data_class: ^2.1.0
   json_annotation: ^4.9.0
 
+  fast_immutable_collections:
+
 dev_dependencies:
   mek_lints: ^5.0.0
 
@@ -37,6 +39,7 @@ dev_dependencies:
 
 dependency_overrides:
   open_api_specification: { path: ../open_api_specification }
+
   shelf_open_api: { path: ../shelf_open_api }
   shelf_open_api_generator: { path: ../shelf_open_api_generator }
 

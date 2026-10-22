@@ -209,9 +209,9 @@ class HttpRouteHandler extends RouteHandler {
 
         if (type is! InterfaceType) return false;
 
-        if (type.isDartCoreList) {
-          return check(type.typeArgument);
-        } else if (type.isDartCoreMap) {
+        if (TypeCheckers.listOrSet.isAssignableFromType(type)) {
+          return check(type.typeArguments.single);
+        } else if (TypeCheckers.map.isAssignableFromType(type)) {
           return check(type.typeArguments[1]);
         } else {
           final parameterElement = type.element as ClassElement;
@@ -303,7 +303,7 @@ class HttpRouteHandler extends RouteHandler {
     if (type.isDartAsyncStream || bytesChecker.isAssignableFromType(type)) {
       return RouteReturnsBytes(isAsync: isAsync);
     }
-    if (type.isJson) {
+    if (type.isJsonSuperset) {
       return RouteReturnsJson(isAsync: isAsync, type);
     }
     if (type is InterfaceType ? type.getMethod('toJson') : null case final toJsonMethod?

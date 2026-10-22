@@ -15,7 +15,13 @@ class MessagesController with RouterMixin {
 
   @Route.get('/')
   @OpenApiRouteHttp(requestQuery: MessageFetchDto)
-  Future<JsonResponse<List<MessageDto>>> fetchMessages(Request request) async {
+  Future<JsonResponse<List<MessageDto>>> fetchMessages(
+    Request request, {
+    int pageNumber = 1,
+    int pageSize = 100,
+    String? sortedBy,
+    required bool descending,
+  }) async {
     // ...
 
     return JsonResponse.ok(null);

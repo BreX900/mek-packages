@@ -59,7 +59,7 @@ class BuildApiClass with ContextMixin {
           final key = codecs.encodeDartValue(e.name);
           final varName = codecs.encodeName(e.name);
           final varEncoder = dataCodec.encodeSerialization(
-            buildSchemaClass(varName, e.schema!).toNullable(false),
+            buildSchemaClass.build(varName, e.schema!).toNullable(false),
             varName,
           );
 
@@ -71,7 +71,7 @@ class BuildApiClass with ContextMixin {
       b.write('};\n');
     }
 
-    if (requestType != null) {
+    if (requestType != null && !requestType.isBytesStream) {
       b.write('final _data = ${dataCodec.encodeSerialization(requestType, '_request')};');
     }
 
@@ -82,33 +82,37 @@ class BuildApiClass with ContextMixin {
         method.toUpperCase(),
         encodePath(path),
         queryParametersVar: queryParameters.isNotEmpty ? '_queryParameters' : null,
-        dataVar: requestType != null ? '_data' : null,
+        dataVar: requestType != null ? (requestType.isBytesStream ? '_request' : '_data') : null,
       ),
     );
 
     if (responses.isNotEmpty) {
       b.write('return switch (_response.statusCode) {\n');
-      b.indent(() {
-        for (final MapEntry(key: code, value: type) in responses.entries) {
-          b.write('$code => ');
+
+      for (final MapEntry(key: code, value: type) in responses.entries) {
+        b.write('$code => ');
+
+        if (type == clientCodec.responseType) {
+          b.write('_response');
+        } else if (type.isVoid) {
+          if (code == successCode) {
+            b.write('null');
+          } else {
+            b.write('throw ${clientCodec.encodeExceptionInstance('_response')}');
+          }
+        } else {
           final deserialization = dataCodec.encodeDeserialization(type, '_response.data');
           if (code == successCode) {
-            if (type.isVoid) {
-              b.write('null');
-            } else {
-              b.write(deserialization);
-            }
+            b.write(deserialization);
           } else {
-            if (type.isVoid) {
-              b.write('throw ${clientCodec.encodeExceptionInstance('_response')}');
-            } else {
-              b.write('throw $deserialization');
-            }
+            b.write('throw $deserialization');
           }
-          b.write(',');
         }
-        b.write('_ => throw ${clientCodec.encodeExceptionInstance('_response')},');
-      });
+
+        b.write(',');
+      }
+      b.write('_ => throw ${clientCodec.encodeExceptionInstance('_response')},');
+
       b.write('};\n');
     }
 
@@ -117,15 +121,17 @@ class BuildApiClass with ContextMixin {
 
   Map<int, Reference> _resolveResponses(String methodName, Map<int, ResponseOpenApi> responses) {
     return responses.map((code, response) {
-      final responseMedia = response.content?.jsonOrAny;
-      final responseSchema = responseMedia?.schema;
-      final responseClassName = code >= 200 && code < 300
-          ? '${methodName}Response'
-          : '${methodName}Exception';
-      final responseClass = responseSchema != null
-          ? buildSchemaClass.call(responseClassName, responseSchema)
-          : References.void$;
-      return MapEntry(code, responseClass);
+      if (response.content?.jsonOrAny?.schema case final responseSchema?) {
+        final responseClassName = code >= 200 && code < 300
+            ? '${methodName}Response'
+            : '${methodName}Exception';
+
+        return MapEntry(code, buildSchemaClass.build(responseClassName, responseSchema));
+      }
+      if (response.content != null) {
+        return MapEntry(code, clientCodec.responseType);
+      }
+      return MapEntry(code, References.void$);
     });
   }
 
@@ -139,13 +145,17 @@ class BuildApiClass with ContextMixin {
     final pathParameters = operation.parameters.where((e) => e.in$.path).toList();
     final queryParameters = operation.parameters.where((e) => e.in$.query).toList();
 
-    final request = operation.requestBody;
-    final requestSchema = request?.content.jsonOrAny?.schema;
-    final requestClassName = '${methodName}Request';
-    final requestClass = requestSchema != null
-        ? buildSchemaClass.call(requestClassName, requestSchema)
-        : null;
-    final requestType = requestClass?.type.toNullable(!(request?.required ?? false));
+    Reference? requestType;
+    if (operation.requestBody?.content.jsonOrAny?.schema case final requestSchema?) {
+      final requestClassName = '${methodName}Request';
+      final requestClass = buildSchemaClass.build(requestClassName, requestSchema);
+      requestType = requestClass.type;
+    } else if (operation.requestBody?.content.octetStream != null) {
+      requestType = References.bytesStream;
+    } else if (operation.requestBody != null) {
+      requestType = References.object;
+    }
+    requestType = requestType?.toNullable(!(operation.requestBody?.required ?? false));
 
     final responses = _resolveResponses(methodName, operation.responses);
 
@@ -185,13 +195,15 @@ class BuildApiClass with ContextMixin {
           pathParameters.map((param) {
             return Parameter(
               (b) => b
-                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
+                ..type = buildSchemaClass
+                    .build(param.name, param.schema!)
+                    .toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),
         )
         ..requiredParameters.addAll([
-          if (request != null && requestSchema != null)
+          if (requestType != null)
             Parameter(
               (b) => b
                 ..type = requestType
@@ -204,7 +216,9 @@ class BuildApiClass with ContextMixin {
               (b) => b
                 ..named = true
                 ..required = param.required
-                ..type = buildSchemaClass(param.name, param.schema!).toNullable(!param.required)
+                ..type = buildSchemaClass
+                    .build(param.name, param.schema!)
+                    .toNullable(!param.required)
                 ..name = codecs.encodeName(param.name),
             );
           }),

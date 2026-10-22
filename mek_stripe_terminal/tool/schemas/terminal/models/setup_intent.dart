@@ -1,0 +1,154 @@
+/// A SetupIntent guides you through the process of setting up and saving a customer’s
+/// payment credentials for future payments. For example, you could use a SetupIntent to set up and
+/// save your customer’s card without immediately collecting a payment.
+/// Later, you can use PaymentIntents to drive the payment flow.
+class SetupIntentApi {
+  /// The unique identifier for the intent.
+  final String id;
+
+  /// When the intent was created.
+  final int createdInMilliseconds;
+
+  /// The identifier of a customer object to which the SetupIntent is attached, if applicable.
+  final String? customerId;
+
+  /// Set of key-value pairs attached to the object.
+  final Map<String, String> metadata;
+
+  /// An [SetupIntentUsageApi] value describing how the SetupIntent will be used. Defaults to off-session if not set.
+  final SetupIntentUsageApi usage;
+
+  /// The status of the intent.
+  final SetupIntentStatusApi status;
+
+  /// The most recent SetupAttempt for this SetupIntent
+  final SetupAttemptApi? latestAttempt;
+
+  const SetupIntentApi({
+    required this.id,
+    required this.createdInMilliseconds,
+    required this.customerId,
+    required this.metadata,
+    required this.usage,
+    required this.status,
+    required this.latestAttempt,
+  });
+}
+
+/// The [SetupIntentApi] usage options tell Stripe how the payment method is intended to be used in the future.
+/// Stripe will use the chosen option to pick the most frictionless flow for the customer.
+enum SetupIntentUsageApi {
+  /// An on-session usage indicates to Stripe that future payments will take place while the customer
+  /// is actively in your checkout flow and able to authenticate the payment method.
+  /// With the on-session option, you can postpone authenticating the card details
+  /// until a future checkout to avoid upfront friction.
+  onSession,
+
+  /// An off-session usage indicates to Stripe that future payments will take place without
+  /// the direct involvement of the customer. Creating an off-session [SetupIntentApi] might incur some
+  /// initial friction from additional authentication steps, but can reduce customer intervention
+  /// in later off-session payments.
+  offSession,
+}
+
+enum SetupIntentStatusApi {
+  requiresPaymentMethod,
+  requiresConfirmation,
+  requiresAction,
+  processing,
+  succeeded,
+  cancelled,
+}
+
+/// A SetupAttempt describes one attempted confirmation of a SetupIntent, whether that confirmation
+/// was successful or unsuccessful. You can use SetupAttempts to inspect details of a specific
+/// attempt at setting up a payment method using a SetupIntent.
+class SetupAttemptApi {
+  /// The unique identifier for the SetupAttempt.
+  final String id;
+
+  /// The ID of the Connect application that created the SetupIntent.
+  final String? applicationId;
+
+  /// Time at which the object was created.
+  final int createdInMilliseconds;
+
+  /// ID of the Customer this SetupIntent belongs to, if one exists.
+  final String? customerId;
+
+  /// (Connect) The account (if any) for which the setup is intended.
+  final String? onBehalfOf;
+
+  /// ID of the payment method used with this SetupAttempt.
+  final String? paymentMethodId;
+
+  /// Details about the payment method at the time of SetupIntent confirmation.
+  final SetupAttemptPaymentMethodDetailsApi? paymentMethodDetails;
+
+  /// ID of the SetupIntent that this attempt belongs to.
+  final String setupIntentId;
+
+  /// The status of this [SetupAttemptApi].
+  final SetupAttemptStatusApi status;
+
+  const SetupAttemptApi({
+    required this.id,
+    required this.applicationId,
+    required this.createdInMilliseconds,
+    required this.customerId,
+    required this.onBehalfOf,
+    required this.paymentMethodId,
+    required this.paymentMethodDetails,
+    required this.setupIntentId,
+    required this.status,
+  });
+}
+
+/// Statuses for a [SetupAttemptApi]
+enum SetupAttemptStatusApi {
+  requiresConfirmation,
+  requiresAction,
+  processing,
+  succeeded,
+  failed,
+  abandoned,
+}
+
+/// Details about a PaymentMethod at a specific time. ex: at time of transaction for a SetupAttempt.
+class SetupAttemptPaymentMethodDetailsApi {
+  // TODO: Implement `type` field
+
+  /// If this is a card present payment method (ie self.type == PaymentMethodTypeCardPresent),
+  /// this contains additional information.
+  final SetupAttemptCardPresentDetailsApi? cardPresent;
+
+  /// If this is a card present payment method (ie self.type == SCPPaymentMethodTypeInteracPresent),
+  /// this contains additional information.
+  final SetupAttemptCardPresentDetailsApi? interactPresent;
+
+  const SetupAttemptPaymentMethodDetailsApi({this.cardPresent, this.interactPresent});
+}
+
+/// An object representing details from a transaction using a cardPresent payment method.
+class SetupAttemptCardPresentDetailsApi {
+  /// The Authorization Response Cryptogram (ARPC) from the issuer.
+  final String emvAuthData;
+
+  /// The ID of the Card PaymentMethod which was generated by this [SetupAttemptApi].
+  final String generatedCard;
+
+  const SetupAttemptCardPresentDetailsApi({required this.emvAuthData, required this.generatedCard});
+}
+
+/// A field used to indicate whether a payment method can be shown again to its customer in a
+/// checkout flow. Consent must be obtained to set this field.
+enum AllowRedisplayApi {
+  /// Use always to indicate that this payment method can always be shown to a customer in a checkout flow.
+  always,
+
+  /// Use limited to indicate that this payment method can’t always be shown to a customer in a checkout flow. For example, it can only be shown in the context of a specific subscription.
+  limited,
+
+  /// This is the default value for payment methods where allow_redisplay wasn’t set.
+  unspecified,
+}

@@ -1,0 +1,9 @@
+import 'package:mek_stripe_terminal/src/api/terminal_api.g.dart';
+
+typedef EasyConnectConfiguration = EasyConnectConfigurationApi;
+
+typedef InternetEasyConnectConfiguration = InternetEasyConnectConfigurationApi;
+
+typedef AppsOnDevicesEasyConnectionConfiguration = AppsOnDevicesEasyConnectionConfigurationApi;
+
+typedef TapToPayEasyConnectConfiguration = TapToPayEasyConnectConfigurationApi;

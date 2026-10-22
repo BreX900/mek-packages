@@ -14,9 +14,16 @@ T $parsePathParameter<T>(String value, T Function(String vl) parser) {
 }
 
 /// Generator utils
-T $parseQueryParameters<T>(Request request, String name, T Function(List<String> vls) parser) {
+T $parseQueryParameters<T>(
+  Request request,
+  String name,
+  T Function(List<String> vls) parser, {
+  T? defaultValue,
+}) {
   try {
-    return parser(request.url.queryParametersAll[name] ?? const <String>[]);
+    final data = request.url.queryParametersAll[name] ?? const <String>[];
+    if (data.isEmpty && defaultValue != null) return defaultValue;
+    return parser(data);
   } catch (error, stackTrace) {
     throw BadRequestException.queryParameter(error, stackTrace, name);
   }

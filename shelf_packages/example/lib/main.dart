@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:example/features/chats/controllers/chats_controller.dart';
+import 'package:example/features/collections/controllers/collections_controller.dart';
+import 'package:example/features/files/files_controller.dart';
 import 'package:example/features/messages/controllers/messages_controller.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf/shelf.dart';
@@ -46,6 +48,13 @@ class ApiController {
 
   @Route.mount('$_version/chats')
   ChatsController get chats => const ChatsController();
+
   @Route.mount('$_version/messages')
   MessagesController get messages => const MessagesController();
+
+  @Route.mount('$_version/files')
+  FilesController get files => const FilesController();
+
+  @Route.mount('$_version/collections')
+  CollectionsController get collections => const CollectionsController();
 }

@@ -8,7 +8,7 @@ enum ChatVisibility {
   public,
 }
 
-@JsonEnum(valueField: 'code')
+@JsonEnum(valueField: 'code', alwaysCreate: true)
 enum ChatType {
   private('PV'),
   channel('CH'),
@@ -17,6 +17,9 @@ enum ChatType {
   final String code;
 
   const ChatType(this.code);
+
+  factory ChatType.fromJson(String source) => $enumDecode(_$ChatTypeEnumMap, source);
+  String toJson() => _$ChatTypeEnumMap[this]!;
 }
 
 @JsonSerializable(createToJson: false)

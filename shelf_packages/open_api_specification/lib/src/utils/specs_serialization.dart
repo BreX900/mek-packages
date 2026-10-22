@@ -17,7 +17,9 @@ class SpecsSerializable extends JsonSerializable {
 bool? $nullIfFalse(bool? value) => (value ?? false) ? true : null;
 
 Object? $nullIfEmpty(Object? value) {
-  if (value is List) {
+  if (value == null) {
+    return null;
+  } else if (value is List<dynamic>) {
     return value.isEmpty ? null : value;
   } else if (value is Map<String, dynamic>) {
     return value.isEmpty ? null : value;

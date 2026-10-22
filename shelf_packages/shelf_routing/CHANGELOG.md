@@ -1,4 +1,7 @@
 
+## 1.1.3
+- chore: added `defaultValue` to `$parseQueryParameters` to support default values on query parameters
+
 ## 1.1.1
 - fix: wait `Request.readAsString` finish to catch errors 
 

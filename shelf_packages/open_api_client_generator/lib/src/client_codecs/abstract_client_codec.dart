@@ -14,6 +14,9 @@ class AbstractClientCodec extends ClientCodec with Plugin {
   @override
   Reference get type => const Reference('ApiClient', './api_client.dart');
 
+  @override
+  Reference get responseType => const Reference('ApiClientResponse');
+
   Map<String, String> get filesContents => {'api_client.dart': FilesContents.apiClient};
 
   @override

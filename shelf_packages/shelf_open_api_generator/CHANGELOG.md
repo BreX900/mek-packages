@@ -1,4 +1,23 @@
 
+## 3.6.1
+- fix: do not force required query parameter if it has default value
+
+## 3.6.0
+- feat: added support to `fast_immutable_collections` and `built_collections`
+
+## 3.5.1
+- fix: fixed support to custom primitive types serialization
+
+## 3.5.0
+- feat: added support to `Stream<Uint8List>` response
+- feat: added ability to disable open api spec generation via `enabled` flag on `build.yaml` file
+- feat: added `output_path` to specify destination of open api spec files folder
+
+## 3.4.0
+- fix: do not register private class fields on schema
+- feat: added support to Schema.allOff field analyzing the class extended supertype
+- feat: added support to polymorphism via discriminator and sealed class
+
 ## 3.3.1
 - build: require `analyzer: '>=10.0.0 <15.0.0'`
 

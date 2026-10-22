@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: cast_nullable_to_non_nullable
+
 part of 'chat_create_dto.dart';
 
 // **************************************************************************
@@ -10,7 +12,7 @@ ChatCreateDto _$ChatCreateDtoFromJson(Map<String, dynamic> json) =>
     ChatCreateDto(
       title: json['title'] as String,
       visibility: $enumDecode(_$ChatVisibilityEnumMap, json['visibility']),
-      type: $enumDecode(_$ChatTypeEnumMap, json['type']),
+      type: ChatType.fromJson(json['type'] as String),
     );
 
 const _$ChatVisibilityEnumMap = {

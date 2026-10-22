@@ -28,9 +28,9 @@ class ChatsController with RouterMixin {
   }
 
   @Route.put('/')
-  Future<JsonResponse<void>> batchChats(Request request, List<ChatCreateDto> data) async {
+  Future<Response> batchChats(Request request, List<ChatCreateDto> data) async {
     // ...
 
-    return JsonResponse.ok(null);
+    return Response.ok(null);
   }
 }

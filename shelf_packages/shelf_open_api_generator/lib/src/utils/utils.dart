@@ -13,3 +13,25 @@ extension ClassElementExtensions on ClassElement {
     throw InvalidGenerationSourceError('Define a unnamed constructor!', element: this);
   }
 }
+
+abstract final class TypeCheckers {
+  static const _ficPackage = 'fast_immutable_collections';
+  static const _builtPackage = 'built_collection';
+
+  static const list = TypeChecker.any([
+    TypeChecker.typeNamed(List, inSdk: true),
+    TypeChecker.typeNamedLiterally('IList', inPackage: _ficPackage),
+    TypeChecker.typeNamedLiterally('BuiltList', inPackage: _builtPackage),
+  ]);
+  static const set = TypeChecker.any([
+    TypeChecker.typeNamed(Set, inSdk: true),
+    TypeChecker.typeNamedLiterally('ISet', inPackage: _ficPackage),
+    TypeChecker.typeNamedLiterally('BuiltSet', inPackage: _builtPackage),
+  ]);
+  static const listOrSet = TypeChecker.any([list, set]);
+  static const map = TypeChecker.any([
+    TypeChecker.typeNamed(Map, inSdk: true),
+    TypeChecker.typeNamedLiterally('IMap', inPackage: _ficPackage),
+    TypeChecker.typeNamedLiterally('BuiltMap', inPackage: _builtPackage),
+  ]);
+}

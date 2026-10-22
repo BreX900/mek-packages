@@ -1,5 +1,4 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 import 'package:shelf_open_api/shelf_open_api.dart';
@@ -67,44 +66,40 @@ class OpenRouteHandler {
       );
     });
     // TODO: check client generation
-    final queryParams =
-        (requestQuery?.element as ClassElement?)?.requireUnnamedConstructor.formalParameters.map((
-          parameter,
-        ) {
-          return ParameterOpenApi(
-            name: parameter.displayName,
-            in$: ParameterInOpenApi.query,
-            required: parameter.type.nullabilitySuffix == NullabilitySuffix.none,
-            schema: schemasRegistry.register(
-              object: false,
-              dartType: parameter.type,
-              fallback: const SchemaOpenApi(type: TypeOpenApi.string),
-            ),
-          );
-        }) ??
-        handler.queryParameters.map((parameter) {
-          return ParameterOpenApi(
-            name: parameter.displayName,
-            in$: ParameterInOpenApi.query,
-            required: parameter.type.nullabilitySuffix == NullabilitySuffix.none,
-            schema: schemasRegistry.register(
-              object: false,
-              dartType: parameter.type,
-              fallback: const SchemaOpenApi(type: TypeOpenApi.string),
-            ),
-          );
-        });
+    final queryParameterElements =
+        (requestQuery?.element as ClassElement?)?.requireUnnamedConstructor.formalParameters ??
+        handler.queryParameters;
+    final queryParams = queryParameterElements.map((parameter) {
+      return ParameterOpenApi(
+        name: parameter.displayName,
+        in$: ParameterInOpenApi.query,
+        required: parameter.isRequired,
+        schema: schemasRegistry.register(
+          object: false,
+          dartType: parameter.type,
+          fallback: const SchemaOpenApi(type: TypeOpenApi.string),
+        ),
+      );
+    });
     return [...pathParams, ...queryParams];
   }
 
   RequestBodyOpenApi? _buildRequestBody() {
     final requestBody = this.requestBody ?? handler.bodyParameter?.type;
     if (requestBody == null) return null;
+
     return RequestBodyOpenApi(
       required: true,
-      content: GroupMediaOpenApi(
-        json: MediaOpenApi(schema: schemasRegistry.register(dartType: requestBody)),
-      ),
+      content: switch (requestBody) {
+        _ when requestBody.isDartAsyncStream => const GroupMediaOpenApi(
+          octetStream: MediaOpenApi(
+            schema: SchemaOpenApi(type: TypeOpenApi.string, format: FormatOpenApi.binary),
+          ),
+        ),
+        _ => GroupMediaOpenApi(
+          json: MediaOpenApi(schema: schemasRegistry.register(dartType: requestBody)),
+        ),
+      },
     );
   }
 

@@ -103,6 +103,7 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
 
   @override
   Class buildDataClass(ApiClass spec) {
+    final ApiClass(:discriminator) = spec;
     final args = <String>[
       if (classFieldRename != null) 'fieldRename: $classFieldRename',
       if (!implicitCreate) ...['createFactory: true', 'createToJson: true'],
@@ -110,9 +111,10 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
 
     return spec.toSpec(
       (b) => b
-        ..annotations.add(
-          CodeExpression(Code('${classAnnotation ?? 'JsonSerializable'}(${args.join(', ')})')),
-        )
+        ..annotations.addAll([
+          if (discriminator == null)
+            CodeExpression(Code('${classAnnotation ?? 'JsonSerializable'}(${args.join(', ')})')),
+        ])
         ..constructors.add(
           Constructor(
             (b) => b
@@ -137,7 +139,16 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
                 ),
               )
               ..lambda = true
-              ..body = Code('_\$${spec.name}FromJson(map)'),
+              ..body = discriminator != null
+                  ? Code(
+                      '\$checkedCreate(${literalString(spec.name)}, map, (convert) => switch (convert(${literalString(discriminator.name)}, (vl) => vl as String)) {\n'
+                      '${discriminator.mapping.entries.map((entry) {
+                        return '${literalString(entry.key)} => _\$${entry.value}FromJson(map),\n';
+                      }).join()}'
+                      '_ => throw UnimplementedError(),'
+                      '})',
+                    )
+                  : Code('_\$${spec.name}FromJson(map)'),
           ),
         )
         ..fields.addAll(
@@ -158,8 +169,8 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
             (b) => b
               ..returns = References.jsonMap
               ..name = 'toJson'
-              ..lambda = true
-              ..body = Code('_\$${spec.name}ToJson(this)'),
+              ..lambda = discriminator == null
+              ..body = discriminator == null ? Code('_\$${spec.name}ToJson(this)') : null,
           ),
         ),
     );

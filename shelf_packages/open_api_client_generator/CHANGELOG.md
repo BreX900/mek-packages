@@ -1,3 +1,15 @@
+## 1.5.1
+- fix: added `unused_import` to generated file and removed `dart format on`
+
+## 1.5.0
+- feat: added support to `application/octet-stream` content type
+- chore: disable linting and formatting on generated file 
+
+## 1.4.1
+- feat: added support to sealed class and discriminator
+
+## 1.4.1
+- feat: added support to sealed class and discriminator
 
 ## 1.3.0
 - fix: auto create output folder

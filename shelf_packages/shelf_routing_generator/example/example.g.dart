@@ -10,15 +10,15 @@ part of 'example.dart';
 
 Router _$UserControllerRouter(UserController service) => Router()
   ..add('GET', '/', (Request request) async {
-    final body = await service.listUsers(
+    final data = await service.listUsers(
       request,
       query: $parseQueryParameters(
         request,
         'query',
-        (vls) => vls.isNotEmpty ? vls.single : null,
+        (data) => data.isNotEmpty ? data.single : null,
       ),
     );
-    return JsonResponse.ok(body);
+    return JsonResponse.ok(data);
   })
   ..add('GET', '/<userId>', (Request request, String $userId) async {
     return await service.fetchUser(request, int.parse($userId));

@@ -8,10 +8,13 @@ import 'package:shelf_open_api_generator/src/handlers/routes_handler.dart';
 
 Builder buildOpenApi(BuilderOptions options) {
   final config = Config.fromJson(options.config);
+  var outputPath = config.outputPath;
+  if (outputPath.startsWith('/')) outputPath = outputPath.substring(1);
+  if (outputPath.endsWith('/')) outputPath = outputPath.substring(0, outputPath.length - 1);
 
   return OpenApiBuilder(
-    buildExtensions: const {
-      'lib/{{}}.dart': ['public/{{}}.json', 'public/{{}}.yaml'],
+    buildExtensions: {
+      'lib/{{}}.dart': ['$outputPath/{{}}.json', '$outputPath/{{}}.yaml'],
     },
     config: config,
   );
@@ -27,6 +30,8 @@ class OpenApiBuilder implements Builder {
 
   @override
   Future<void> build(BuildStep buildStep) async {
+    if (!config.enabled) return;
+
     if (!await buildStep.resolver.isLibrary(buildStep.inputId)) return;
 
     final apiHandler = await OpenApiHandler.from(config, buildStep);

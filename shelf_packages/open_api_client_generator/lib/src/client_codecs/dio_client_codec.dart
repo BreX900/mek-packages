@@ -1,5 +1,5 @@
 import 'package:code_builder/code_builder.dart';
-import 'package:open_api_client_generator/src/client_codecs/client_codec.dart';
+import 'package:open_api_client_generator/open_api_client_generator.dart';
 import 'package:open_api_specification/open_api_spec.dart';
 
 class DioClientCodec extends ClientCodec {
@@ -7,6 +7,9 @@ class DioClientCodec extends ClientCodec {
 
   @override
   Reference get type => const Reference('Dio', 'package:dio/dio.dart');
+
+  @override
+  Reference get responseType => const Reference('Response<Object?>');
 
   @override
   Method rebuildMethod(Method method, String path, String name, OperationOpenApi operation) {
@@ -40,10 +43,11 @@ class DioClientCodec extends ClientCodec {
   String encodeSendMethod(
     String method,
     String path, {
-    String? queryParametersVar,
-    String? dataVar,
+    required String? queryParametersVar,
+    required String? dataVar,
   }) {
     final b = StringBuffer();
+
     b.write("await client.${method.toLowerCase()}<dynamic>('$path'");
     if (dataVar != null) b.write(', data: $dataVar');
     if (queryParametersVar != null) b.write(', queryParameters: $queryParametersVar');
@@ -51,6 +55,7 @@ class DioClientCodec extends ClientCodec {
     b.write(r', cancelToken: $cancelToken');
     if (method != 'DELETE') b.write(r', onReceiveProgress: $onReceiveProgress');
     b.write(');');
+
     return b.toString();
   }
 

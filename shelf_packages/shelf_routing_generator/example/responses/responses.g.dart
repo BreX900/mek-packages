@@ -16,12 +16,12 @@ Router _$ResponsesControllerRouter(ResponsesController service) => Router()
     return await service.async(request);
   })
   ..add('PUT', '/json', (Request request) async {
-    final body = await service.json(request);
-    return JsonResponse.ok(body);
+    final data = await service.json(request);
+    return JsonResponse.ok(data);
   })
   ..add('HEAD', '/json-dto', (Request request) async {
-    final body = await service.jsonClass(request);
-    return JsonResponse.ok(body);
+    final data = await service.jsonClass(request);
+    return JsonResponse.ok(data.toJson());
   })
   ..add('DELETE', '/json-response', (Request request) async {
     return await service.jsonResponse(request);

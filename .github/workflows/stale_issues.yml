@@ -1,0 +1,24 @@
+name: Close inactive issues
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  close-inactive-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/stale@v11
+        with:
+          only-issue-labels: "waiting-for-feedback"
+
+          days-before-issue-stale: -1
+          days-before-issue-close: 7
+
+          close-issue-message: >
+            This issue has been automatically closed after 7 days of inactivity.
+            If this issue is still relevant, please reopen it and provide an update.

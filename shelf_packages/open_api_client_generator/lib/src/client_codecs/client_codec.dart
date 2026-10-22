@@ -6,6 +6,8 @@ abstract class ClientCodec {
 
   Reference get type;
 
+  Reference get responseType;
+
   Class rebuildClass(Class class$, Map<String, ItemPathOpenApi> paths) => class$;
 
   Method rebuildMethod(Method method, String path, String name, OperationOpenApi operation) =>
@@ -14,8 +16,8 @@ abstract class ClientCodec {
   String encodeSendMethod(
     String method,
     String path, {
-    String? queryParametersVar,
-    String? dataVar,
+    required String? queryParametersVar,
+    required String? dataVar,
   });
 
   String encodeExceptionInstance(String responseVar);

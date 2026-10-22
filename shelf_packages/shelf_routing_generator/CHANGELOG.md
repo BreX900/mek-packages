@@ -1,4 +1,12 @@
 
+## 3.1.1
+- feat: added support to `fast_immutable_collection` package
+- feat: allow default values on query parameters
+- fix: force non nullable list/set on query parameters
+
+## 3.0.2
+- chore: improved message error when parsing is not supported
+
 ## 3.0.1
 - build: require `analyzer: '>=10.0.0 <15.0.0'`
 

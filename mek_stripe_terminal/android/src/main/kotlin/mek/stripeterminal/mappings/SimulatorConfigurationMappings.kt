@@ -1,6 +1,5 @@
 package mek.stripeterminal.mappings
 
-import com.stripe.stripeterminal.external.models.SimulateReaderUpdate
 import com.stripe.stripeterminal.external.models.SimulatedCard
 import com.stripe.stripeterminal.external.models.SimulatedCardType
 import com.stripe.stripeterminal.external.models.SimulatorConfiguration
@@ -11,20 +10,12 @@ import SimulatorConfigurationApi
 
 fun SimulatorConfigurationApi.toHost(): SimulatorConfiguration {
     return SimulatorConfiguration(
-        update = update.toHost(),
         simulatedCard = simulatedCard.toHost(),
         simulatedTipAmount = simulatedTipAmount
     )
 }
 
-fun SimulateReaderUpdateApi.toHost(): SimulateReaderUpdate {
-    return when (this) {
-        SimulateReaderUpdateApi.AVAILABLE -> SimulateReaderUpdate.UPDATE_AVAILABLE
-        SimulateReaderUpdateApi.NONE -> SimulateReaderUpdate.NONE
-        SimulateReaderUpdateApi.REQUIRED -> SimulateReaderUpdate.REQUIRED
-        SimulateReaderUpdateApi.RANDOM -> SimulateReaderUpdate.RANDOM
-    }
-}
+fun SimulateReaderUpdateApi.toHost(): Any? = null
 
 fun SimulatedCardApi.toHost(): SimulatedCard {
     if (type != null) return SimulatedCard(type.toHost())

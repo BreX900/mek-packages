@@ -1,6 +1,7 @@
 package mek.stripeterminal.mappings
 
 import com.stripe.stripeterminal.external.models.ConnectionConfiguration
+import com.stripe.stripeterminal.external.models.TapUseCase
 import AppsOnDevicesConnectionConfigurationApi
 import BluetoothConnectionConfigurationApi
 import ConnectionConfigurationApi
@@ -35,7 +36,7 @@ fun ConnectionConfigurationApi.toHost(readerDelegate: ReaderDelegatePlugin): Con
             internetReaderListener = readerDelegate,
         )
         is TapToPayConnectionConfigurationApi -> ConnectionConfiguration.TapToPayConnectionConfiguration(
-            locationId = locationId,
+            useCase = TapUseCase.Pay(locationId),
             autoReconnectOnUnexpectedDisconnect = autoReconnectOnUnexpectedDisconnect,
             tapToPayReaderListener = readerDelegate
         )

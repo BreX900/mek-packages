@@ -3,7 +3,8 @@ package mek.stripeterminal.mappings
 import com.stripe.stripeterminal.external.models.CardDetails
 import com.stripe.stripeterminal.external.models.CardNetworks
 import com.stripe.stripeterminal.external.models.CardPresentCaptureMethod
-import com.stripe.stripeterminal.external.models.CardPresentDetails
+import com.stripe.stripeterminal.external.models.PaymentMethod
+import com.stripe.stripeterminal.external.models.Charge
 import com.stripe.stripeterminal.external.models.CardPresentParameters
 import com.stripe.stripeterminal.external.models.CardPresentRoutingOptionParameters
 import com.stripe.stripeterminal.external.models.IncrementalAuthorizationStatus
@@ -57,7 +58,7 @@ fun fundingToApi(value: String?): CardFundingTypeApi? {
     }
 }
 
-fun CardPresentDetails.toApi(): CardPresentDetailsApi {
+fun Charge.CardPresent.toApi(): CardPresentDetailsApi {
     return CardPresentDetailsApi(
         brand = cardBrandToApi(brand),
         country = country,
@@ -69,8 +70,25 @@ fun CardPresentDetails.toApi(): CardPresentDetailsApi {
         generatedCard = generatedCard,
         receipt = receiptDetails?.toApi(),
         emvAuthData = emvAuthData,
+        networks = null,
+        incrementalAuthorizationStatus = incrementalAuthorizationStatus?.toApi()
+    )
+}
+
+fun PaymentMethod.CardPresent.toApi(): CardPresentDetailsApi {
+    return CardPresentDetailsApi(
+        brand = cardBrandToApi(brand),
+        country = country,
+        expMonth = expMonth?.toLong() ?: 0L,
+        expYear = expYear?.toLong() ?: 0L,
+        funding = fundingToApi(funding),
+        last4 = last4,
+        cardholderName = cardholderName,
+        generatedCard = null,
+        receipt = null,
+        emvAuthData = null,
         networks = networks?.toApi(),
-        incrementalAuthorizationStatus = incrementalAuthorizationStatus.toApi()
+        incrementalAuthorizationStatus = null
     )
 }
 

@@ -4,6 +4,7 @@ import 'package:open_api_client_generator/src/api_specs.dart';
 const overrideAnnotation = CodeExpression(Code('override'));
 
 abstract final class References {
+  static const Reference never = Reference('Never');
   static const Reference void$ = Reference('void');
   static const Reference object = Reference('Object');
   static const Reference boolean = Reference('bool');
@@ -13,19 +14,19 @@ abstract final class References {
   static const Reference string = Reference('String');
   static const Reference dateTime = Reference('DateTime');
   static const Reference uri = Reference('Uri');
-  static Reference list([Reference? typeArg]) => _ref('List', types: [typeArg ?? References.void$]);
-  static Reference set([Reference? typeArg]) => _ref('Set', types: [typeArg ?? References.void$]);
+  static Reference list([Reference? typeArg]) => ref('List', types: [typeArg ?? References.void$]);
+  static Reference set([Reference? typeArg]) => ref('Set', types: [typeArg ?? References.void$]);
   static Reference map({Reference? key, Reference? value}) =>
-      _ref('Map', types: [key ?? jsonValue, value ?? jsonValue]);
+      ref('Map', types: [key ?? jsonValue, value ?? jsonValue]);
   static Reference future([Reference? typeArg]) =>
-      _ref('Future', types: [typeArg ?? References.void$]);
+      ref('Future', types: [typeArg ?? References.void$]);
   static const Reference jsonMap = Reference('Map<String, dynamic>');
-  static final Reference jsonValue = _ref('Object', isNullable: true);
+  static final Reference jsonValue = ref('Object', isNullable: true);
 
   static const Reference bytes = Reference('Uint8List');
-  static final Reference bytesStream = _ref('Stream', types: [bytes]);
+  static final Reference bytesStream = ref('Stream', types: [bytes]);
 
-  static Reference _ref(
+  static Reference ref(
     String symbol, {
     List<Reference> types = const [],
     bool isNullable = false,
@@ -71,14 +72,11 @@ extension ReferenceExtensions on Reference {
   }
 
   // ignore: avoid_positional_boolean_parameters
-  Reference toNullable([bool? nullable = true]) {
-    return TypeReference(
-      (b) => b
-        ..symbol = symbol
-        ..types.replace(types)
-        ..isNullable = nullable ?? b.isNullable,
-    );
-  }
+  Reference toNullable([bool? nullable = true]) =>
+      rebuild((b) => b..isNullable = nullable ?? b.isNullable);
+
+  Reference mergeWith({required bool shouldNullable}) =>
+      rebuild((b) => b..isNullable = shouldNullable || (b.isNullable ?? false));
 
   Reference rebuild(Updates<TypeReferenceBuilder> updates) {
     return TypeReference(

@@ -1,3 +1,7 @@
+
+## 1.6.0
+- feat: added support to union types on multiple responses. See `valid-status-codes` on CLI or `Options.shouldReturns` arg
+
 ## 1.5.1
 - fix: added `unused_import` to generated file and removed `dart format on`
 

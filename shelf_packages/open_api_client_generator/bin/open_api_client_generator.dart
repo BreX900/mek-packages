@@ -36,6 +36,11 @@ void main(List<String> arguments) async {
       allowed: ['json_serializable', 'built_value'],
       help: 'The serialization library to use.',
     )
+    ..addOption(
+      'valid-status-codes',
+      defaultsTo: '200-299',
+      help: 'Insert `min-max` valid status codes',
+    )
     ..addMultiOption(
       'plugins',
       allowed: ['mek_data_class'],
@@ -65,12 +70,17 @@ void main(List<String> arguments) async {
   }
 
   final input = args['input'] as String;
+  final (minValidStatusCode, maxValidStatusCode) = _parseValidStatusCode(
+    args['valid-status-codes'] as String,
+  );
 
   final options = Options(
     input: input.contains('://') ? Uri.parse(input) : Uri.file(input),
     apiClassName: args['api-class-name'],
     dataClassesPostfix: args['data-classes-postfix'],
     outputFolder: args['output-folder'],
+    shouldReturns: (statusCode, response) =>
+        statusCode >= minValidStatusCode && statusCode <= maxValidStatusCode,
   );
 
   final client = switch (args['client']) {
@@ -118,5 +128,16 @@ SerializationCodec _resolveDataCodec(ArgResults args) {
       return BuiltValueSerializationCodec(collectionCodec: collection);
     default:
       throw StateError('Unsupported "serialization" option ${args['serialization']}');
+  }
+}
+
+(int, int) _parseValidStatusCode(String text) {
+  try {
+    final [min, max] = text.split('-');
+    return (int.parse(min), int.parse(max));
+  } on Object {
+    throw StateError(
+      'Cant parse valid-status-codes. Pass two numbers separated by `-`. Ex. 200-299',
+    );
   }
 }

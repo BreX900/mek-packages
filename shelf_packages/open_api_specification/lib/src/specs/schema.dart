@@ -186,15 +186,19 @@ class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
 
   static Object? _readType(Map<dynamic, dynamic> data, String key) {
     return switch (data[key]) {
-      final List<dynamic> data => ([...data]..remove('null')).single,
+      final List<dynamic> data => ([...data]..remove('null')).firstOrNull,
+      'null' => null,
       final data => data,
     };
   }
 
   static Object? _readNullable(Map<dynamic, dynamic> data, String key) {
     if (data.containsKey(key)) return data[key];
-    if (data['type'] case final List<dynamic> types) return types.contains('null');
-    return null;
+    return switch (data['type']) {
+      final List<dynamic> data => data.contains('null'),
+      'null' => true,
+      _ => null,
+    };
   }
 
   static Object? _readAdditionalProperties(Map<dynamic, dynamic> data, String key) {

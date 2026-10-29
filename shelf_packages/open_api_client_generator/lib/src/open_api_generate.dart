@@ -6,6 +6,7 @@ import 'package:dart_style/dart_style.dart';
 import 'package:open_api_client_generator/src/api_specs.dart';
 import 'package:open_api_client_generator/src/builders/build_api_class.dart';
 import 'package:open_api_client_generator/src/builders/build_schema_class.dart';
+import 'package:open_api_client_generator/src/builders/unions_registry.dart';
 import 'package:open_api_client_generator/src/client_codecs/client_codec.dart';
 import 'package:open_api_client_generator/src/code_utils/codecs.dart';
 import 'package:open_api_client_generator/src/options/context.dart';
@@ -73,12 +74,14 @@ Future<void> generateApi({
   // Api Class and data classes
 
   final apiFileName = '${options.outputApiFileTitle}.dart';
-  final buildSchemaClass = BuildSchemaClass(context: context);
+  final recordsRegistry = UnionsRegistry();
+  final buildSchemaClass = BuildSchemaClass(context: context, recordsRegistry: recordsRegistry);
   final buildApiClass = BuildApiClass(
     context: context,
     clientCodec: clientCodec,
     dataCodec: serializationCodec,
     buildSchemaClass: buildSchemaClass,
+    recordsRegistry: recordsRegistry,
   );
 
   var apiSpec = buildApiClass(openApi.paths);
@@ -106,7 +109,8 @@ Future<void> generateApi({
       ..directives.add(Directive.import('dart:typed_data'))
       ..directives.add(Directive.part(partPath))
       ..body.add(apiSpec)
-      ..body.addAll(dataSpecs),
+      ..body.addAll(dataSpecs)
+      ..body.addAll(recordsRegistry.buildClasses()),
   );
   librarySpec = allPlugins.fold(librarySpec, (spec, plugin) => plugin.onLibrary(openApi, spec));
 

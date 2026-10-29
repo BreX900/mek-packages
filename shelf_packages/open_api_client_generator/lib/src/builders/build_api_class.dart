@@ -1,6 +1,6 @@
 import 'package:code_builder/code_builder.dart';
-import 'package:collection/collection.dart';
 import 'package:open_api_client_generator/src/builders/build_schema_class.dart';
+import 'package:open_api_client_generator/src/builders/unions_registry.dart';
 import 'package:open_api_client_generator/src/client_codecs/client_codec.dart';
 import 'package:open_api_client_generator/src/code_utils/code_buffer.dart';
 import 'package:open_api_client_generator/src/code_utils/document.dart';
@@ -19,12 +19,14 @@ class BuildApiClass with ContextMixin {
   final SerializationCodec dataCodec;
   CollectionCodec get collectionCodec => dataCodec.collectionCodec;
   final BuildSchemaClass buildSchemaClass;
+  final UnionsRegistry recordsRegistry;
 
-  const BuildApiClass({
+  BuildApiClass({
     required this.context,
     required this.clientCodec,
     required this.dataCodec,
     required this.buildSchemaClass,
+    required this.recordsRegistry,
   });
 
   String _encodeOperationMethodName({
@@ -47,8 +49,8 @@ class BuildApiClass with ContextMixin {
     required String path,
     required List<ParameterOpenApi> queryParameters,
     required Reference? requestType,
-    required int? successCode,
-    required Map<int, Reference> responses,
+    required Map<int, Reference> successResponses,
+    required Map<int, Reference> errorResponses,
   }) {
     final b = CodeBuffer();
 
@@ -75,7 +77,7 @@ class BuildApiClass with ContextMixin {
       b.write('final _data = ${dataCodec.encodeSerialization(requestType, '_request')};');
     }
 
-    if (responses.isNotEmpty) b.write('final _response = ');
+    if (successResponses.isNotEmpty || errorResponses.isNotEmpty) b.write('final _response = ');
 
     b.writeln(
       clientCodec.encodeSendMethod(
@@ -86,32 +88,45 @@ class BuildApiClass with ContextMixin {
       ),
     );
 
-    if (responses.isNotEmpty) {
+    if (successResponses.isNotEmpty || errorResponses.isNotEmpty) {
+      final successes = successResponses.keys.toList();
+
       b.write('return switch (_response.statusCode) {\n');
 
-      for (final MapEntry(key: code, value: type) in responses.entries) {
+      for (final MapEntry(key: code, value: type) in successResponses.entries) {
         b.write('$code => ');
 
         if (type == clientCodec.responseType) {
           b.write('_response');
-        } else if (type.isVoid) {
-          if (code == successCode) {
+        } else {
+          if (successes.length > 1) {
+            b.write(
+              '${recordsRegistry.name(successes.length, value: successes.indexOf(code) + 1)}._(',
+            );
+          }
+          if (type.isVoid) {
             b.write('null');
           } else {
-            b.write('throw ${clientCodec.encodeExceptionInstance('_response')}');
+            b.write(dataCodec.encodeDeserialization(type, '_response.data'));
           }
+          if (successes.length > 1) b.write(')');
+        }
+        b.write(',\n');
+      }
+
+      for (final MapEntry(key: code, value: type) in errorResponses.entries) {
+        b.write('$code => ');
+
+        if (type.isVoid) {
+          b.write('throw ${clientCodec.encodeExceptionInstance('_response')}');
         } else {
           final deserialization = dataCodec.encodeDeserialization(type, '_response.data');
-          if (code == successCode) {
-            b.write(deserialization);
-          } else {
-            b.write('throw $deserialization');
-          }
+          b.write('throw $deserialization');
         }
 
-        b.write(',');
+        b.write(',\n');
       }
-      b.write('_ => throw ${clientCodec.encodeExceptionInstance('_response')},');
+      b.write('_ => throw ${clientCodec.encodeExceptionInstance('_response')},\n');
 
       b.write('};\n');
     }
@@ -119,21 +134,35 @@ class BuildApiClass with ContextMixin {
     return b.toString();
   }
 
-  Map<int, Reference> _resolveResponses(String methodName, Map<int, ResponseOpenApi> responses) {
-    return responses.map((code, response) {
+  (Map<int, Reference>, Map<int, Reference>) _resolveResponses(
+    String methodName,
+    Map<int, ResponseOpenApi> responses,
+  ) {
+    final returnsResponses = <int, Reference>{};
+    final throwsResponses = <int, Reference>{};
+    responses.forEach((statusCode, response) {
       if (response.content?.jsonOrAny?.schema case final responseSchema?) {
-        final responseClassName = code >= 200 && code < 300
-            ? '${methodName}Response'
-            : '${methodName}Exception';
-
-        return MapEntry(code, buildSchemaClass.build(responseClassName, responseSchema));
+        if (options.shouldReturns(statusCode, response)) {
+          returnsResponses[statusCode] = buildSchemaClass.build(
+            '${methodName}Response',
+            responseSchema,
+          );
+        } else {
+          throwsResponses[statusCode] = buildSchemaClass.build(
+            '${methodName}Exception',
+            responseSchema,
+          );
+        }
+      } else if (response.content != null) {
+        returnsResponses[statusCode] = clientCodec.responseType;
+      } else {
+        returnsResponses[statusCode] = References.void$;
       }
-      if (response.content != null) {
-        return MapEntry(code, clientCodec.responseType);
-      }
-      return MapEntry(code, References.void$);
     });
+    return (returnsResponses, throwsResponses);
   }
+
+  // bool shouldReturns(int statusCode) => statusCode >= 200 && statusCode < 300;
 
   Method _buildMethod(String path, String name, OperationOpenApi operation) {
     final methodName = _encodeOperationMethodName(
@@ -157,19 +186,15 @@ class BuildApiClass with ContextMixin {
     }
     requestType = requestType?.toNullable(!(operation.requestBody?.required ?? false));
 
-    final responses = _resolveResponses(methodName, operation.responses);
-
-    final successResponse = responses.entries.firstWhereOrNull((e) {
-      return e.key >= 200 && e.key < 300;
-    });
+    final (returnsResponses, throwsResponses) = _resolveResponses(methodName, operation.responses);
 
     final operationCode = _buildOperationCode(
       method: name,
       path: path,
       queryParameters: queryParameters,
       requestType: requestType,
-      successCode: successResponse?.key,
-      responses: responses,
+      successResponses: returnsResponses,
+      errorResponses: throwsResponses,
     );
 
     final method = Method(
@@ -189,7 +214,7 @@ class BuildApiClass with ContextMixin {
             ),
           ),
         )
-        ..returns = References.future(successResponse?.value)
+        ..returns = References.future(recordsRegistry.buildType(returnsResponses.values.toList()))
         ..name = methodName
         ..requiredParameters.addAll(
           pathParameters.map((param) {

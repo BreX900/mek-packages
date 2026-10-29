@@ -1,5 +1,6 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:open_api_client_generator/src/api_specs.dart';
+import 'package:open_api_client_generator/src/builders/unions_registry.dart';
 import 'package:open_api_client_generator/src/code_utils/document.dart';
 import 'package:open_api_client_generator/src/code_utils/reference_utils.dart';
 import 'package:open_api_client_generator/src/options/context.dart';
@@ -8,8 +9,9 @@ import 'package:open_api_specification/open_api_spec.dart';
 class BuildSchemaClass with ContextMixin {
   @override
   final Context context;
+  final UnionsRegistry recordsRegistry;
 
-  BuildSchemaClass({required this.context});
+  BuildSchemaClass({required this.context, required this.recordsRegistry});
 
   final _cache = <String, ApiSpec?>{};
 
@@ -130,7 +132,7 @@ class BuildSchemaClass with ContextMixin {
                 type: build(
                   name,
                   propertySchemaOrRef,
-                ).toNullable(schema.canNull(name, propertySchema)),
+                ).mergeWith(shouldNullable: schema.canNull(name, propertySchema)),
                 name: codecs.encodeName(name),
               );
             });
@@ -176,6 +178,21 @@ class BuildSchemaClass with ContextMixin {
           ),
         );
       case null:
+        final oneOfReferences = (schema.oneOf ?? []).map((schema) {
+          if (schema.resolve(components).type == null) return null;
+          return build('Unknown', schema);
+        }).nonNulls;
+
+        if (oneOfReferences.isNotEmpty) {
+          final hasNullType = (schema.oneOf ?? []).any((e) {
+            return schema.resolve(components).type == null;
+          });
+
+          return _BuiltSchema(
+            type: recordsRegistry.buildType(oneOfReferences.toList()).toNullable(hasNullType),
+          );
+        }
+
         return _BuiltSchema(type: References.jsonValue);
     }
   }

@@ -1,6 +1,9 @@
 
+## 4.1.2
+- fix: improved support to `null` on `type` schema field
+
 ## 4.1.1
-fix: added support array on `type` field on schema for `null` value
+- fix: added support array on `type` field on schema for `null` value
 
 ## 4.1.0
 - feat: added support to `oneOf` and `discriminator` fields

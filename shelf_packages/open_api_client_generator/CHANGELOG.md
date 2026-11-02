@@ -1,4 +1,7 @@
 
+## 1.6.1
+- fix: fixes incorrect mapping responses codes to returnable and throwable
+
 ## 1.6.0
 - feat: added support to union types on multiple responses. See `valid-status-codes` on CLI or `Options.shouldReturns` arg
 

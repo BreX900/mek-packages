@@ -141,28 +141,23 @@ class BuildApiClass with ContextMixin {
     final returnsResponses = <int, Reference>{};
     final throwsResponses = <int, Reference>{};
     responses.forEach((statusCode, response) {
+      final Reference responseType;
       if (response.content?.jsonOrAny?.schema case final responseSchema?) {
-        if (options.shouldReturns(statusCode, response)) {
-          returnsResponses[statusCode] = buildSchemaClass.build(
-            '${methodName}Response',
-            responseSchema,
-          );
-        } else {
-          throwsResponses[statusCode] = buildSchemaClass.build(
-            '${methodName}Exception',
-            responseSchema,
-          );
-        }
+        responseType = buildSchemaClass.build('${methodName}Response', responseSchema);
       } else if (response.content != null) {
-        returnsResponses[statusCode] = clientCodec.responseType;
+        responseType = clientCodec.responseType;
       } else {
-        returnsResponses[statusCode] = References.void$;
+        responseType = References.void$;
+      }
+
+      if (options.shouldReturns(statusCode, response)) {
+        returnsResponses[statusCode] = responseType;
+      } else {
+        throwsResponses[statusCode] = responseType;
       }
     });
     return (returnsResponses, throwsResponses);
   }
-
-  // bool shouldReturns(int statusCode) => statusCode >= 200 && statusCode < 300;
 
   Method _buildMethod(String path, String name, OperationOpenApi operation) {
     final methodName = _encodeOperationMethodName(

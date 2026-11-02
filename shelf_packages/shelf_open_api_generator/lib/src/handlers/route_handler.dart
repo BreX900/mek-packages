@@ -179,7 +179,7 @@ class OpenRouteFinder {
           if (isRouterMixin) classElement = element.returnType.element! as ClassElement;
           if (classElement == null) return;
 
-          yield* _find(classElement, pathPrefix: path);
+          yield* _find(classElement, pathPrefix: '$pathPrefix$path');
 
         case HttpRouteHandler(:final element):
           final openApiRoute = _openApiRouteHttpChecker

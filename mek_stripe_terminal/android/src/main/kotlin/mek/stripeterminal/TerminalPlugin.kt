@@ -21,7 +21,8 @@ import com.stripe.stripeterminal.external.models.Location
 import com.stripe.stripeterminal.external.models.PaymentIntent
 import com.stripe.stripeterminal.external.models.Reader
 import com.stripe.stripeterminal.external.models.Refund
-import com.stripe.stripeterminal.external.models.RefundParameters
+import com.stripe.stripeterminal.external.models.LocaleConfig
+import com.stripe.stripeterminal.external.models.ProcessRefundParameters
 import com.stripe.stripeterminal.external.models.SetupIntent
 import com.stripe.stripeterminal.external.models.SetupIntentCancellationParameters
 import com.stripe.stripeterminal.external.models.SetupIntentParameters
@@ -126,7 +127,8 @@ class TerminalPlatformPlugin(
             if (shouldPrintLogs) LogLevel.VERBOSE else LogLevel.NONE,
             delegate,
             delegate,
-            null
+            null,
+            LocaleConfig.CardLanguagePreferenceIfAvailable
         )
     }
 
@@ -479,12 +481,11 @@ class TerminalPlatformPlugin(
             CustomerCancellation.DISABLE_IF_AVAILABLE
         }
         val config =
-            CollectSetupIntentConfiguration.Builder()
+            CollectSetupIntentConfiguration.Builder(allowRedisplay.toHost())
                 .setCustomerCancellation(customerCancellation)
 
         processSetupIntentCancelables[operationId] = terminal.processSetupIntent(
             setupIntent,
-            allowRedisplay.toHost(),
             config.build(),
             object : TerminalErrorHandler<SetupIntentApi>(callback), SetupIntentCallback {
                 override fun onFailure(e: TerminalException) {
@@ -640,19 +641,19 @@ class TerminalPlatformPlugin(
         metadata: HashMap<String, String>?,
         reverseTransfer: Boolean?,
         refundApplicationFee: Boolean?
-    ): RefundParameters {
+    ): ProcessRefundParameters {
         val params = when {
             paymentIntentId != null -> {
                 val clientSecret = paymentIntentClientSecret
                     ?: throw IllegalArgumentException("paymentIntentClientSecret is required when paymentIntentId is provided")
-                RefundParameters.ByPaymentIntentId(
+                ProcessRefundParameters.ByPaymentIntentId(
                     id = paymentIntentId,
                     clientSecret = clientSecret,
                     amount = amount,
                     currency = currency
                 )
             }
-            chargeId != null -> RefundParameters.ByChargeId(
+            chargeId != null -> ProcessRefundParameters.ByChargeId(
                 id = chargeId,
                 amount = amount,
                 currency = currency

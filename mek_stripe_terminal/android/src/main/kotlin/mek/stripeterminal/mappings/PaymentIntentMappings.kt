@@ -38,7 +38,7 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
         },
         currency = currency!!,
         metadata = metadata?.toHashMap() ?: hashMapOf(),
-        charges = getCharges().map { it.toApi() },
+        charges = latestCharge?.let { listOf(it.toApi()) } ?: emptyList(),
         paymentMethod = paymentMethod?.toApi(),
         amountDetails = amountDetails?.toApi(),
         paymentMethodId = paymentMethodId,
@@ -59,7 +59,7 @@ fun PaymentIntent.toApi(): PaymentIntentApi {
             else -> null
         },
         descriptionX = description,
-        invoiceId = invoice,
+        invoiceId = null,
         onBehalfOf = onBehalfOf,
         receiptEmail = receiptEmail,
         reviewId = review,

@@ -7,12 +7,9 @@ import TapToPayUxConfigurationTapZoneApi
 import TapToPayUxConfigurationTapZoneIndicatorApi
 import TapToPayUxConfigurationDarkModeApi
 
-
 fun TapToPayUxConfigurationApi.toHost(): TapToPayUxConfiguration {
-    val builder = TapToPayUxConfiguration.Builder();
+    val builder = TapToPayUxConfiguration.Builder()
     if (tapZone != null) builder.tapZone(tapZone.toHost())
-    if (colors != null) builder.colors(colors.toHost())
-    if (darkMode != null) builder.darkMode(darkMode.toHost())
     return builder.build()
 }
 
@@ -39,21 +36,5 @@ fun TapToPayUxConfigurationTapZoneApi.toHost(): TapToPayUxConfiguration.TapZone 
             if (xBias != null && yBias != null) TapToPayUxConfiguration.TapZone.Behind(xBias, yBias)
             else TapToPayUxConfiguration.TapZone.Behind()
         null -> TapToPayUxConfiguration.TapZone.Default
-    }
-}
-
-fun TapToPayUxConfigurationColorSchemeApi.toHost(): TapToPayUxConfiguration.ColorScheme {
-    val builder = TapToPayUxConfiguration.ColorScheme.Builder()
-    if (primary != null) builder.primary(TapToPayUxConfiguration.Color.Value(primary.toInt()))
-    if (success != null) builder.success(TapToPayUxConfiguration.Color.Value(success.toInt()))
-    if (error != null) builder.primary(TapToPayUxConfiguration.Color.Value(error.toInt()))
-    return builder.build()
-}
-
-fun TapToPayUxConfigurationDarkModeApi.toHost(): TapToPayUxConfiguration.DarkMode {
-    return when (this) {
-        TapToPayUxConfigurationDarkModeApi.SYSTEM -> TapToPayUxConfiguration.DarkMode.SYSTEM
-        TapToPayUxConfigurationDarkModeApi.LIGHT -> TapToPayUxConfiguration.DarkMode.LIGHT
-        TapToPayUxConfigurationDarkModeApi.DARK -> TapToPayUxConfiguration.DarkMode.DARK
     }
 }

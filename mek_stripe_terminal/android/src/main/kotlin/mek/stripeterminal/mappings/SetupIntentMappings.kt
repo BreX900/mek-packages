@@ -4,8 +4,8 @@ import com.stripe.stripeterminal.external.models.AllowRedisplay
 import com.stripe.stripeterminal.external.models.SetupAttempt
 import com.stripe.stripeterminal.external.models.SetupAttemptStatus
 import com.stripe.stripeterminal.external.models.SetupIntent
-import com.stripe.stripeterminal.external.models.SetupIntentCardPresentDetails
-import com.stripe.stripeterminal.external.models.SetupIntentPaymentMethodDetails
+import com.stripe.stripeterminal.external.models.SetupAttemptCardPresentDetails
+import com.stripe.stripeterminal.external.models.SetupAttemptPaymentMethodDetails
 import com.stripe.stripeterminal.external.models.SetupIntentStatus
 import com.stripe.stripeterminal.external.models.SetupIntentUsage
 import AllowRedisplayApi
@@ -73,14 +73,14 @@ fun SetupAttemptStatus.toApi(): SetupAttemptStatusApi {
     }
 }
 
-fun SetupIntentPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi {
+fun SetupAttemptPaymentMethodDetails.toApi(): SetupAttemptPaymentMethodDetailsApi {
     return SetupAttemptPaymentMethodDetailsApi(
         cardPresent = cardPresentDetails?.toApi(),
         interactPresent = interacPresentDetails?.toApi()
     )
 }
 
-fun SetupIntentCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
+fun SetupAttemptCardPresentDetails.toApi(): SetupAttemptCardPresentDetailsApi {
     return SetupAttemptCardPresentDetailsApi(
         emvAuthData = emvAuthData!!,
         generatedCard = generatedCard!!

@@ -72,9 +72,9 @@ kotlin {
 }
 
 dependencies {
-    implementation("com.stripe:stripeterminal-taptopay:5.6.0")
-    implementation("com.stripe:stripeterminal-core:5.6.0")
-    implementation("com.stripe:stripeterminal-appsondevices:5.6.0")
+    implementation("com.stripe:stripeterminal-taptopay:6.0.0")
+    implementation("com.stripe:stripeterminal-core:6.0.0")
+    implementation("com.stripe:stripeterminal-appsondevices:6.0.0")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.mockito:mockito-core:5.0.0")

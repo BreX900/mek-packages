@@ -99,6 +99,32 @@ abstract class TerminalPlatformApi {
   void stopProcessPaymentIntent(int operationId);
 
   @async
+  PaymentIntentApi startCollectPaymentMethod({
+    required int operationId,
+    required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
+    required bool skipTipping,
+    required TippingConfigurationApi? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
+    required AllowRedisplayApi allowRedisplay,
+  });
+
+  @async
+  void stopCollectPaymentMethod(int operationId);
+
+  @async
+  PaymentIntentApi startConfirmPaymentIntent({
+    required int operationId,
+    required String paymentIntentId,
+    required ConfirmPaymentIntentConfigurationApi confirmConfiguration,
+  });
+
+  @async
+  void stopConfirmPaymentIntent(int operationId);
+
+  @async
   PaymentIntentApi cancelPaymentIntent(String paymentIntentId);
   //endregion
 

@@ -1,6 +1,7 @@
 ## Unreleased
 
 - feat: re-added `Terminal.collectPaymentMethod` and `Terminal.confirmPaymentIntent`, to inspect the collected payment method (e.g. its card funding type) before confirming
+- feat: added `PaymentIntent.amountDetails.surcharge` (`SurchargeDetails`: amount, maximum amount, status) and `ConfirmPaymentIntentConfiguration.surcharge` (`SurchargeConfiguration`, with optional `SurchargeConsent`), mapping the Stripe SDKs' surcharging API, which they mark experimental
 - fix(android): `CancelableFuture.cancel()` no longer waits forever when the operation has already finished or was never started (all cancelable operations)
 
 ## 5.7.3

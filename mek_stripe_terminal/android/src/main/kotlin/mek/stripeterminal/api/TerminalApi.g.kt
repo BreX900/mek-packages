@@ -1335,6 +1335,18 @@ enum class PaymentIntentStatusApi(val raw: Int) {
   }
 }
 
+/** Whether a surcharge can be applied to the [PaymentIntentApi] with the collected payment method. */
+enum class SurchargeStatusApi(val raw: Int) {
+  AVAILABLE(0),
+  UNAVAILABLE(1);
+
+  companion object {
+    fun ofRaw(raw: Int): SurchargeStatusApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
 /** Controls when the funds will be captured from the customer’s account. */
 enum class CaptureMethodApi(val raw: Int) {
   /** Stripe automatically captures funds when the customer authorizes the payment. */
@@ -1381,6 +1393,18 @@ enum class PaymentIntentUsageApi(val raw: Int) {
 
   companion object {
     fun ofRaw(raw: Int): PaymentIntentUsageApi? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+/** Whether to collect the customer's consent to a surcharge on the reader. */
+enum class SurchargeConsentCollectionApi(val raw: Int) {
+  DISABLED(0),
+  ENABLED(1);
+
+  companion object {
+    fun ofRaw(raw: Int): SurchargeConsentCollectionApi? {
       return values().firstOrNull { it.raw == raw }
     }
   }
@@ -3550,18 +3574,22 @@ data class PaymentIntentApi (
  */
 data class AmountDetailsApi (
   /** Details about the tip */
-  val tip: TipApi? = null
+  val tip: TipApi? = null,
+  /** Details about the surcharge, after a payment method has been collected. */
+  val surcharge: SurchargeDetailsApi? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): AmountDetailsApi {
       val tip = pigeonVar_list[0] as TipApi?
-      return AmountDetailsApi(tip)
+      val surcharge = pigeonVar_list[1] as SurchargeDetailsApi?
+      return AmountDetailsApi(tip, surcharge)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       tip,
+      surcharge,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -3572,16 +3600,71 @@ data class AmountDetailsApi (
       return true
     }
     val other = other as AmountDetailsApi
-    return TerminalApiPigeonUtils.deepEquals(this.tip, other.tip)
+    return TerminalApiPigeonUtils.deepEquals(this.tip, other.tip) && TerminalApiPigeonUtils.deepEquals(this.surcharge, other.surcharge)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + TerminalApiPigeonUtils.deepHash(this.tip)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.surcharge)
     return result
   }
   override fun toString(): String {
-    return "AmountDetailsApi(tip=$tip)"
+    return "AmountDetailsApi(tip=$tip, surcharge=$surcharge)"
+  }
+}
+
+/**
+ * Contains details about a surcharge.
+ *
+ * For more information, see the official Stripe docs: [Collect surcharges](https://docs.stripe.com/payments/cards/surcharge)
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SurchargeDetailsApi (
+  /** The surcharge amount applied, in the currency’s smallest unit. */
+  val amount: Long? = null,
+  /** The maximum surcharge amount allowed for the collected payment method. */
+  val maximumAmount: Long? = null,
+  /** Whether a surcharge is available for the collected payment method. */
+  val status: SurchargeStatusApi? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SurchargeDetailsApi {
+      val amount = pigeonVar_list[0] as Long?
+      val maximumAmount = pigeonVar_list[1] as Long?
+      val status = pigeonVar_list[2] as SurchargeStatusApi?
+      return SurchargeDetailsApi(amount, maximumAmount, status)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      amount,
+      maximumAmount,
+      status,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SurchargeDetailsApi
+    return TerminalApiPigeonUtils.deepEquals(this.amount, other.amount) && TerminalApiPigeonUtils.deepEquals(this.maximumAmount, other.maximumAmount) && TerminalApiPigeonUtils.deepEquals(this.status, other.status)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.amount)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.maximumAmount)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.status)
+    return result
+  }
+  override fun toString(): String {
+    return "SurchargeDetailsApi(amount=$amount, maximumAmount=$maximumAmount, status=$status)"
   }
 }
 
@@ -3789,18 +3872,22 @@ data class PaymentMethodOptionsParametersApi (
  */
 data class ConfirmPaymentIntentConfigurationApi (
   /** The URL to redirect the customer back to after authentication. */
-  val returnUrl: String? = null
+  val returnUrl: String? = null,
+  /** A surcharge to apply when confirming. Experimental in the Stripe SDKs. */
+  val surcharge: SurchargeConfigurationApi? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): ConfirmPaymentIntentConfigurationApi {
       val returnUrl = pigeonVar_list[0] as String?
-      return ConfirmPaymentIntentConfigurationApi(returnUrl)
+      val surcharge = pigeonVar_list[1] as SurchargeConfigurationApi?
+      return ConfirmPaymentIntentConfigurationApi(returnUrl, surcharge)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       returnUrl,
+      surcharge,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -3811,16 +3898,114 @@ data class ConfirmPaymentIntentConfigurationApi (
       return true
     }
     val other = other as ConfirmPaymentIntentConfigurationApi
-    return TerminalApiPigeonUtils.deepEquals(this.returnUrl, other.returnUrl)
+    return TerminalApiPigeonUtils.deepEquals(this.returnUrl, other.returnUrl) && TerminalApiPigeonUtils.deepEquals(this.surcharge, other.surcharge)
   }
 
   override fun hashCode(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + TerminalApiPigeonUtils.deepHash(this.returnUrl)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.surcharge)
     return result
   }
   override fun toString(): String {
-    return "ConfirmPaymentIntentConfigurationApi(returnUrl=$returnUrl)"
+    return "ConfirmPaymentIntentConfigurationApi(returnUrl=$returnUrl, surcharge=$surcharge)"
+  }
+}
+
+/**
+ * Configuration of surcharge consent collection.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SurchargeConsentApi (
+  /** Whether to collect surcharge consent from the customer. */
+  val collection: SurchargeConsentCollectionApi,
+  /** A custom message on the surcharge consent screen. */
+  val notice: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SurchargeConsentApi {
+      val collection = pigeonVar_list[0] as SurchargeConsentCollectionApi
+      val notice = pigeonVar_list[1] as String?
+      return SurchargeConsentApi(collection, notice)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      collection,
+      notice,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SurchargeConsentApi
+    return TerminalApiPigeonUtils.deepEquals(this.collection, other.collection) && TerminalApiPigeonUtils.deepEquals(this.notice, other.notice)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.collection)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.notice)
+    return result
+  }
+  override fun toString(): String {
+    return "SurchargeConsentApi(collection=$collection, notice=$notice)"
+  }
+}
+
+/**
+ * A surcharge to apply when confirming a [PaymentIntentApi].
+ *
+ * Read `amountDetails.surcharge` of the collected [PaymentIntentApi] first: apply a surcharge
+ * only when its status is [SurchargeStatusApi.available], up to its `maximumAmount`.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SurchargeConfigurationApi (
+  /** The surcharge amount, in the currency’s smallest unit. */
+  val amount: Long,
+  /** Surcharge consent collection. */
+  val consent: SurchargeConsentApi? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SurchargeConfigurationApi {
+      val amount = pigeonVar_list[0] as Long
+      val consent = pigeonVar_list[1] as SurchargeConsentApi?
+      return SurchargeConfigurationApi(amount, consent)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      amount,
+      consent,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SurchargeConfigurationApi
+    return TerminalApiPigeonUtils.deepEquals(this.amount, other.amount) && TerminalApiPigeonUtils.deepEquals(this.consent, other.consent)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.amount)
+    result = 31 * result + TerminalApiPigeonUtils.deepHash(this.consent)
+    return result
+  }
+  override fun toString(): String {
+    return "SurchargeConfigurationApi(amount=$amount, consent=$consent)"
   }
 }
 
@@ -4649,300 +4834,325 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
       }
       152.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          CaptureMethodApi.ofRaw(it.toInt())
+          SurchargeStatusApi.ofRaw(it.toInt())
         }
       }
       153.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          ConfirmationMethodApi.ofRaw(it.toInt())
+          CaptureMethodApi.ofRaw(it.toInt())
         }
       }
       154.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          PaymentIntentUsageApi.ofRaw(it.toInt())
+          ConfirmationMethodApi.ofRaw(it.toInt())
         }
       }
       155.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          TapToPayUxConfigurationTapZoneIndicatorApi.ofRaw(it.toInt())
+          PaymentIntentUsageApi.ofRaw(it.toInt())
         }
       }
       156.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          TapToPayUxConfigurationDarkModeApi.ofRaw(it.toInt())
+          SurchargeConsentCollectionApi.ofRaw(it.toInt())
         }
       }
       157.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          CardBrandApi.ofRaw(it.toInt())
+          TapToPayUxConfigurationTapZoneIndicatorApi.ofRaw(it.toInt())
         }
       }
       158.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          CardFundingTypeApi.ofRaw(it.toInt())
+          TapToPayUxConfigurationDarkModeApi.ofRaw(it.toInt())
         }
       }
       159.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          IncrementalAuthorizationStatusApi.ofRaw(it.toInt())
+          CardBrandApi.ofRaw(it.toInt())
         }
       }
       160.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          CardPresentCaptureMethodApi.ofRaw(it.toInt())
+          CardFundingTypeApi.ofRaw(it.toInt())
         }
       }
       161.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          CardPresentRoutingApi.ofRaw(it.toInt())
+          IncrementalAuthorizationStatusApi.ofRaw(it.toInt())
         }
       }
       162.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          TerminalExceptionApi.fromList(it)
+        return (readValue(buffer) as Long?)?.let {
+          CardPresentCaptureMethodApi.ofRaw(it.toInt())
         }
       }
       163.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          PaymentMethodApi.fromList(it)
+        return (readValue(buffer) as Long?)?.let {
+          CardPresentRoutingApi.ofRaw(it.toInt())
         }
       }
       164.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RefundApi.fromList(it)
+          TerminalExceptionApi.fromList(it)
         }
       }
       165.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PaymentMethodDetailsApi.fromList(it)
+          PaymentMethodApi.fromList(it)
         }
       }
       166.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ReaderApi.fromList(it)
+          RefundApi.fromList(it)
         }
       }
       167.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ChargeApi.fromList(it)
+          PaymentMethodDetailsApi.fromList(it)
         }
       }
       168.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TipApi.fromList(it)
+          ReaderApi.fromList(it)
         }
       }
       169.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TippingConfigurationApi.fromList(it)
+          ChargeApi.fromList(it)
         }
       }
       170.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          InternetEasyConnectConfigurationApi.fromList(it)
+          TipApi.fromList(it)
         }
       }
       171.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppsOnDevicesEasyConnectionConfigurationApi.fromList(it)
+          TippingConfigurationApi.fromList(it)
         }
       }
       172.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayEasyConnectConfigurationApi.fromList(it)
+          InternetEasyConnectConfigurationApi.fromList(it)
         }
       }
       173.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SimulatorConfigurationApi.fromList(it)
+          AppsOnDevicesEasyConnectionConfigurationApi.fromList(it)
         }
       }
       174.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SimulatedCardApi.fromList(it)
+          TapToPayEasyConnectConfigurationApi.fromList(it)
         }
       }
       175.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ReaderSoftwareUpdateApi.fromList(it)
+          SimulatorConfigurationApi.fromList(it)
         }
       }
       176.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupIntentApi.fromList(it)
+          SimulatedCardApi.fromList(it)
         }
       }
       177.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptApi.fromList(it)
+          ReaderSoftwareUpdateApi.fromList(it)
         }
       }
       178.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptPaymentMethodDetailsApi.fromList(it)
+          SetupIntentApi.fromList(it)
         }
       }
       179.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SetupAttemptCardPresentDetailsApi.fromList(it)
+          SetupAttemptApi.fromList(it)
         }
       }
       180.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          LocationApi.fromList(it)
+          SetupAttemptPaymentMethodDetailsApi.fromList(it)
         }
       }
       181.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AddressApi.fromList(it)
+          SetupAttemptCardPresentDetailsApi.fromList(it)
         }
       }
       182.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothConnectionConfigurationApi.fromList(it)
+          LocationApi.fromList(it)
         }
       }
       183.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppsOnDevicesConnectionConfigurationApi.fromList(it)
+          AddressApi.fromList(it)
         }
       }
       184.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          InternetConnectionConfigurationApi.fromList(it)
+          BluetoothConnectionConfigurationApi.fromList(it)
         }
       }
       185.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayConnectionConfigurationApi.fromList(it)
+          AppsOnDevicesConnectionConfigurationApi.fromList(it)
         }
       }
       186.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UsbConnectionConfigurationApi.fromList(it)
+          InternetConnectionConfigurationApi.fromList(it)
         }
       }
       187.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothDiscoveryConfigurationApi.fromList(it)
+          TapToPayConnectionConfigurationApi.fromList(it)
         }
       }
       188.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          BluetoothProximityDiscoveryConfigurationApi.fromList(it)
+          UsbConnectionConfigurationApi.fromList(it)
         }
       }
       189.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppsOnDevicesDiscoveryConfigurationApi.fromList(it)
+          BluetoothDiscoveryConfigurationApi.fromList(it)
         }
       }
       190.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          InternetDiscoveryConfigurationApi.fromList(it)
+          BluetoothProximityDiscoveryConfigurationApi.fromList(it)
         }
       }
       191.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayDiscoveryConfigurationApi.fromList(it)
+          AppsOnDevicesDiscoveryConfigurationApi.fromList(it)
         }
       }
       192.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UsbDiscoveryConfigurationApi.fromList(it)
+          InternetDiscoveryConfigurationApi.fromList(it)
         }
       }
       193.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ClearCachedCredentialsResultApi.fromList(it)
+          TapToPayDiscoveryConfigurationApi.fromList(it)
         }
       }
       194.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PaymentIntentApi.fromList(it)
+          UsbDiscoveryConfigurationApi.fromList(it)
         }
       }
       195.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AmountDetailsApi.fromList(it)
+          ClearCachedCredentialsResultApi.fromList(it)
         }
       }
       196.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PaymentIntentParametersApi.fromList(it)
+          PaymentIntentApi.fromList(it)
         }
       }
       197.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PaymentMethodOptionsParametersApi.fromList(it)
+          AmountDetailsApi.fromList(it)
         }
       }
       198.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ConfirmPaymentIntentConfigurationApi.fromList(it)
+          SurchargeDetailsApi.fromList(it)
         }
       }
       199.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CartApi.fromList(it)
+          PaymentIntentParametersApi.fromList(it)
         }
       }
       200.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CartLineItemApi.fromList(it)
+          PaymentMethodOptionsParametersApi.fromList(it)
         }
       }
       201.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DiscoveryFilterByReaderIdApi.fromList(it)
+          ConfirmPaymentIntentConfigurationApi.fromList(it)
         }
       }
       202.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DiscoveryFilterBySerialNumberApi.fromList(it)
+          SurchargeConsentApi.fromList(it)
         }
       }
       203.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayUxConfigurationApi.fromList(it)
+          SurchargeConfigurationApi.fromList(it)
         }
       }
       204.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayUxConfigurationTapZoneApi.fromList(it)
+          CartApi.fromList(it)
         }
       }
       205.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayUxConfigurationTapZonePositionApi.fromList(it)
+          CartLineItemApi.fromList(it)
         }
       }
       206.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TapToPayUxConfigurationColorSchemeApi.fromList(it)
+          DiscoveryFilterByReaderIdApi.fromList(it)
         }
       }
       207.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CardDetailsApi.fromList(it)
+          DiscoveryFilterBySerialNumberApi.fromList(it)
         }
       }
       208.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CardPresentDetailsApi.fromList(it)
+          TapToPayUxConfigurationApi.fromList(it)
         }
       }
       209.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          CardNetworksApi.fromList(it)
+          TapToPayUxConfigurationTapZoneApi.fromList(it)
         }
       }
       210.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ReceiptDetailsApi.fromList(it)
+          TapToPayUxConfigurationTapZonePositionApi.fromList(it)
         }
       }
       211.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          TapToPayUxConfigurationColorSchemeApi.fromList(it)
+        }
+      }
+      212.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          CardDetailsApi.fromList(it)
+        }
+      }
+      213.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          CardPresentDetailsApi.fromList(it)
+        }
+      }
+      214.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          CardNetworksApi.fromList(it)
+        }
+      }
+      215.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ReceiptDetailsApi.fromList(it)
+        }
+      }
+      216.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           CardPresentParametersApi.fromList(it)
         }
@@ -5044,244 +5254,264 @@ private open class TerminalApiPigeonCodec : StandardMessageCodec() {
         stream.write(151)
         writeValue(stream, value.raw.toLong())
       }
-      is CaptureMethodApi -> {
+      is SurchargeStatusApi -> {
         stream.write(152)
         writeValue(stream, value.raw.toLong())
       }
-      is ConfirmationMethodApi -> {
+      is CaptureMethodApi -> {
         stream.write(153)
         writeValue(stream, value.raw.toLong())
       }
-      is PaymentIntentUsageApi -> {
+      is ConfirmationMethodApi -> {
         stream.write(154)
         writeValue(stream, value.raw.toLong())
       }
-      is TapToPayUxConfigurationTapZoneIndicatorApi -> {
+      is PaymentIntentUsageApi -> {
         stream.write(155)
         writeValue(stream, value.raw.toLong())
       }
-      is TapToPayUxConfigurationDarkModeApi -> {
+      is SurchargeConsentCollectionApi -> {
         stream.write(156)
         writeValue(stream, value.raw.toLong())
       }
-      is CardBrandApi -> {
+      is TapToPayUxConfigurationTapZoneIndicatorApi -> {
         stream.write(157)
         writeValue(stream, value.raw.toLong())
       }
-      is CardFundingTypeApi -> {
+      is TapToPayUxConfigurationDarkModeApi -> {
         stream.write(158)
         writeValue(stream, value.raw.toLong())
       }
-      is IncrementalAuthorizationStatusApi -> {
+      is CardBrandApi -> {
         stream.write(159)
         writeValue(stream, value.raw.toLong())
       }
-      is CardPresentCaptureMethodApi -> {
+      is CardFundingTypeApi -> {
         stream.write(160)
         writeValue(stream, value.raw.toLong())
       }
-      is CardPresentRoutingApi -> {
+      is IncrementalAuthorizationStatusApi -> {
         stream.write(161)
         writeValue(stream, value.raw.toLong())
       }
-      is TerminalExceptionApi -> {
+      is CardPresentCaptureMethodApi -> {
         stream.write(162)
-        writeValue(stream, value.toList())
+        writeValue(stream, value.raw.toLong())
       }
-      is PaymentMethodApi -> {
+      is CardPresentRoutingApi -> {
         stream.write(163)
-        writeValue(stream, value.toList())
+        writeValue(stream, value.raw.toLong())
       }
-      is RefundApi -> {
+      is TerminalExceptionApi -> {
         stream.write(164)
         writeValue(stream, value.toList())
       }
-      is PaymentMethodDetailsApi -> {
+      is PaymentMethodApi -> {
         stream.write(165)
         writeValue(stream, value.toList())
       }
-      is ReaderApi -> {
+      is RefundApi -> {
         stream.write(166)
         writeValue(stream, value.toList())
       }
-      is ChargeApi -> {
+      is PaymentMethodDetailsApi -> {
         stream.write(167)
         writeValue(stream, value.toList())
       }
-      is TipApi -> {
+      is ReaderApi -> {
         stream.write(168)
         writeValue(stream, value.toList())
       }
-      is TippingConfigurationApi -> {
+      is ChargeApi -> {
         stream.write(169)
         writeValue(stream, value.toList())
       }
-      is InternetEasyConnectConfigurationApi -> {
+      is TipApi -> {
         stream.write(170)
         writeValue(stream, value.toList())
       }
-      is AppsOnDevicesEasyConnectionConfigurationApi -> {
+      is TippingConfigurationApi -> {
         stream.write(171)
         writeValue(stream, value.toList())
       }
-      is TapToPayEasyConnectConfigurationApi -> {
+      is InternetEasyConnectConfigurationApi -> {
         stream.write(172)
         writeValue(stream, value.toList())
       }
-      is SimulatorConfigurationApi -> {
+      is AppsOnDevicesEasyConnectionConfigurationApi -> {
         stream.write(173)
         writeValue(stream, value.toList())
       }
-      is SimulatedCardApi -> {
+      is TapToPayEasyConnectConfigurationApi -> {
         stream.write(174)
         writeValue(stream, value.toList())
       }
-      is ReaderSoftwareUpdateApi -> {
+      is SimulatorConfigurationApi -> {
         stream.write(175)
         writeValue(stream, value.toList())
       }
-      is SetupIntentApi -> {
+      is SimulatedCardApi -> {
         stream.write(176)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptApi -> {
+      is ReaderSoftwareUpdateApi -> {
         stream.write(177)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptPaymentMethodDetailsApi -> {
+      is SetupIntentApi -> {
         stream.write(178)
         writeValue(stream, value.toList())
       }
-      is SetupAttemptCardPresentDetailsApi -> {
+      is SetupAttemptApi -> {
         stream.write(179)
         writeValue(stream, value.toList())
       }
-      is LocationApi -> {
+      is SetupAttemptPaymentMethodDetailsApi -> {
         stream.write(180)
         writeValue(stream, value.toList())
       }
-      is AddressApi -> {
+      is SetupAttemptCardPresentDetailsApi -> {
         stream.write(181)
         writeValue(stream, value.toList())
       }
-      is BluetoothConnectionConfigurationApi -> {
+      is LocationApi -> {
         stream.write(182)
         writeValue(stream, value.toList())
       }
-      is AppsOnDevicesConnectionConfigurationApi -> {
+      is AddressApi -> {
         stream.write(183)
         writeValue(stream, value.toList())
       }
-      is InternetConnectionConfigurationApi -> {
+      is BluetoothConnectionConfigurationApi -> {
         stream.write(184)
         writeValue(stream, value.toList())
       }
-      is TapToPayConnectionConfigurationApi -> {
+      is AppsOnDevicesConnectionConfigurationApi -> {
         stream.write(185)
         writeValue(stream, value.toList())
       }
-      is UsbConnectionConfigurationApi -> {
+      is InternetConnectionConfigurationApi -> {
         stream.write(186)
         writeValue(stream, value.toList())
       }
-      is BluetoothDiscoveryConfigurationApi -> {
+      is TapToPayConnectionConfigurationApi -> {
         stream.write(187)
         writeValue(stream, value.toList())
       }
-      is BluetoothProximityDiscoveryConfigurationApi -> {
+      is UsbConnectionConfigurationApi -> {
         stream.write(188)
         writeValue(stream, value.toList())
       }
-      is AppsOnDevicesDiscoveryConfigurationApi -> {
+      is BluetoothDiscoveryConfigurationApi -> {
         stream.write(189)
         writeValue(stream, value.toList())
       }
-      is InternetDiscoveryConfigurationApi -> {
+      is BluetoothProximityDiscoveryConfigurationApi -> {
         stream.write(190)
         writeValue(stream, value.toList())
       }
-      is TapToPayDiscoveryConfigurationApi -> {
+      is AppsOnDevicesDiscoveryConfigurationApi -> {
         stream.write(191)
         writeValue(stream, value.toList())
       }
-      is UsbDiscoveryConfigurationApi -> {
+      is InternetDiscoveryConfigurationApi -> {
         stream.write(192)
         writeValue(stream, value.toList())
       }
-      is ClearCachedCredentialsResultApi -> {
+      is TapToPayDiscoveryConfigurationApi -> {
         stream.write(193)
         writeValue(stream, value.toList())
       }
-      is PaymentIntentApi -> {
+      is UsbDiscoveryConfigurationApi -> {
         stream.write(194)
         writeValue(stream, value.toList())
       }
-      is AmountDetailsApi -> {
+      is ClearCachedCredentialsResultApi -> {
         stream.write(195)
         writeValue(stream, value.toList())
       }
-      is PaymentIntentParametersApi -> {
+      is PaymentIntentApi -> {
         stream.write(196)
         writeValue(stream, value.toList())
       }
-      is PaymentMethodOptionsParametersApi -> {
+      is AmountDetailsApi -> {
         stream.write(197)
         writeValue(stream, value.toList())
       }
-      is ConfirmPaymentIntentConfigurationApi -> {
+      is SurchargeDetailsApi -> {
         stream.write(198)
         writeValue(stream, value.toList())
       }
-      is CartApi -> {
+      is PaymentIntentParametersApi -> {
         stream.write(199)
         writeValue(stream, value.toList())
       }
-      is CartLineItemApi -> {
+      is PaymentMethodOptionsParametersApi -> {
         stream.write(200)
         writeValue(stream, value.toList())
       }
-      is DiscoveryFilterByReaderIdApi -> {
+      is ConfirmPaymentIntentConfigurationApi -> {
         stream.write(201)
         writeValue(stream, value.toList())
       }
-      is DiscoveryFilterBySerialNumberApi -> {
+      is SurchargeConsentApi -> {
         stream.write(202)
         writeValue(stream, value.toList())
       }
-      is TapToPayUxConfigurationApi -> {
+      is SurchargeConfigurationApi -> {
         stream.write(203)
         writeValue(stream, value.toList())
       }
-      is TapToPayUxConfigurationTapZoneApi -> {
+      is CartApi -> {
         stream.write(204)
         writeValue(stream, value.toList())
       }
-      is TapToPayUxConfigurationTapZonePositionApi -> {
+      is CartLineItemApi -> {
         stream.write(205)
         writeValue(stream, value.toList())
       }
-      is TapToPayUxConfigurationColorSchemeApi -> {
+      is DiscoveryFilterByReaderIdApi -> {
         stream.write(206)
         writeValue(stream, value.toList())
       }
-      is CardDetailsApi -> {
+      is DiscoveryFilterBySerialNumberApi -> {
         stream.write(207)
         writeValue(stream, value.toList())
       }
-      is CardPresentDetailsApi -> {
+      is TapToPayUxConfigurationApi -> {
         stream.write(208)
         writeValue(stream, value.toList())
       }
-      is CardNetworksApi -> {
+      is TapToPayUxConfigurationTapZoneApi -> {
         stream.write(209)
         writeValue(stream, value.toList())
       }
-      is ReceiptDetailsApi -> {
+      is TapToPayUxConfigurationTapZonePositionApi -> {
         stream.write(210)
         writeValue(stream, value.toList())
       }
-      is CardPresentParametersApi -> {
+      is TapToPayUxConfigurationColorSchemeApi -> {
         stream.write(211)
+        writeValue(stream, value.toList())
+      }
+      is CardDetailsApi -> {
+        stream.write(212)
+        writeValue(stream, value.toList())
+      }
+      is CardPresentDetailsApi -> {
+        stream.write(213)
+        writeValue(stream, value.toList())
+      }
+      is CardNetworksApi -> {
+        stream.write(214)
+        writeValue(stream, value.toList())
+      }
+      is ReceiptDetailsApi -> {
+        stream.write(215)
+        writeValue(stream, value.toList())
+      }
+      is CardPresentParametersApi -> {
+        stream.write(216)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)

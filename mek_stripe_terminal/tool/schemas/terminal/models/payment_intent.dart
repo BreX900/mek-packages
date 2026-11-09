@@ -194,7 +194,33 @@ class AmountDetailsApi {
   /// Details about the tip
   final TipApi? tip;
 
-  const AmountDetailsApi({required this.tip});
+  /// Details about the surcharge, after a payment method has been collected.
+  final SurchargeDetailsApi? surcharge;
+
+  const AmountDetailsApi({required this.tip, required this.surcharge});
+}
+
+/// Whether a surcharge can be applied to the [PaymentIntentApi] with the collected payment method.
+enum SurchargeStatusApi { available, unavailable }
+
+/// Contains details about a surcharge.
+///
+/// For more information, see the official Stripe docs: [Collect surcharges](https://docs.stripe.com/payments/cards/surcharge)
+class SurchargeDetailsApi {
+  /// The surcharge amount applied, in the currency’s smallest unit.
+  final int? amount;
+
+  /// The maximum surcharge amount allowed for the collected payment method.
+  final int? maximumAmount;
+
+  /// Whether a surcharge is available for the collected payment method.
+  final SurchargeStatusApi? status;
+
+  const SurchargeDetailsApi({
+    required this.amount,
+    required this.maximumAmount,
+    required this.status,
+  });
 }
 
 // PARAMETERS
@@ -337,5 +363,36 @@ class ConfirmPaymentIntentConfigurationApi {
   /// The URL to redirect the customer back to after authentication.
   final String? returnUrl;
 
-  const ConfirmPaymentIntentConfigurationApi({this.returnUrl});
+  /// A surcharge to apply when confirming. Experimental in the Stripe SDKs.
+  final SurchargeConfigurationApi? surcharge;
+
+  const ConfirmPaymentIntentConfigurationApi({this.returnUrl, this.surcharge});
+}
+
+/// Whether to collect the customer's consent to a surcharge on the reader.
+enum SurchargeConsentCollectionApi { disabled, enabled }
+
+/// Configuration of surcharge consent collection.
+class SurchargeConsentApi {
+  /// Whether to collect surcharge consent from the customer.
+  final SurchargeConsentCollectionApi collection;
+
+  /// A custom message on the surcharge consent screen.
+  final String? notice;
+
+  const SurchargeConsentApi({required this.collection, this.notice});
+}
+
+/// A surcharge to apply when confirming a [PaymentIntentApi].
+///
+/// Read `amountDetails.surcharge` of the collected [PaymentIntentApi] first: apply a surcharge
+/// only when its status is [SurchargeStatusApi.available], up to its `maximumAmount`.
+class SurchargeConfigurationApi {
+  /// The surcharge amount, in the currency’s smallest unit.
+  final int amount;
+
+  /// Surcharge consent collection.
+  final SurchargeConsentApi? consent;
+
+  const SurchargeConfigurationApi({required this.amount, this.consent});
 }

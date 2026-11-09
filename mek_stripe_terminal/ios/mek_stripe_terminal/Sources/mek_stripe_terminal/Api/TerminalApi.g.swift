@@ -1013,6 +1013,12 @@ enum PaymentIntentStatusApi: Int, CaseIterable {
   case requiresReauthorization = 7
 }
 
+/// Whether a surcharge can be applied to the [PaymentIntentApi] with the collected payment method.
+enum SurchargeStatusApi: Int, CaseIterable {
+  case available = 0
+  case unavailable = 1
+}
+
 /// Controls when the funds will be captured from the customer’s account.
 enum CaptureMethodApi: Int, CaseIterable {
   /// Stripe automatically captures funds when the customer authorizes the payment.
@@ -1038,6 +1044,12 @@ enum PaymentIntentUsageApi: Int, CaseIterable {
   case onSession = 0
   /// Use “off_session” if your customer may or may not be present in your checkout flow.
   case offSession = 1
+}
+
+/// Whether to collect the customer's consent to a surcharge on the reader.
+enum SurchargeConsentCollectionApi: Int, CaseIterable {
+  case disabled = 0
+  case enabled = 1
 }
 
 enum TapToPayUxConfigurationTapZoneIndicatorApi: Int, CaseIterable {
@@ -3136,35 +3148,93 @@ struct PaymentIntentApi: Hashable, CustomStringConvertible {
 struct AmountDetailsApi: Hashable, CustomStringConvertible {
   /// Details about the tip
   var tip: TipApi? = nil
+  /// Details about the surcharge, after a payment method has been collected.
+  var surcharge: SurchargeDetailsApi? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> AmountDetailsApi? {
     let tip: TipApi? = nilOrValue(pigeonVar_list[0])
+    let surcharge: SurchargeDetailsApi? = nilOrValue(pigeonVar_list[1])
 
     return AmountDetailsApi(
-      tip: tip
+      tip: tip,
+      surcharge: surcharge
     )
   }
   func toList() -> [Any?] {
     return [
-      tip
+      tip,
+      surcharge,
     ]
   }
   static func == (lhs: AmountDetailsApi, rhs: AmountDetailsApi) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return TerminalApiPigeonInternal.deepEquals(lhs.tip, rhs.tip)
+    return TerminalApiPigeonInternal.deepEquals(lhs.tip, rhs.tip) && TerminalApiPigeonInternal.deepEquals(lhs.surcharge, rhs.surcharge)
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine("AmountDetailsApi")
     TerminalApiPigeonInternal.deepHash(value: tip, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: surcharge, hasher: &hasher)
   }
 
   public var description: String {
-    return "AmountDetailsApi(tip: \(String(describing: tip)))"
+    return "AmountDetailsApi(tip: \(String(describing: tip)), surcharge: \(String(describing: surcharge)))"
+  }
+}
+
+/// Contains details about a surcharge.
+///
+/// For more information, see the official Stripe docs: [Collect surcharges](https://docs.stripe.com/payments/cards/surcharge)
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct SurchargeDetailsApi: Hashable, CustomStringConvertible {
+  /// The surcharge amount applied, in the currency’s smallest unit.
+  var amount: Int64? = nil
+  /// The maximum surcharge amount allowed for the collected payment method.
+  var maximumAmount: Int64? = nil
+  /// Whether a surcharge is available for the collected payment method.
+  var status: SurchargeStatusApi? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> SurchargeDetailsApi? {
+    let amount: Int64? = nilOrValue(pigeonVar_list[0])
+    let maximumAmount: Int64? = nilOrValue(pigeonVar_list[1])
+    let status: SurchargeStatusApi? = nilOrValue(pigeonVar_list[2])
+
+    return SurchargeDetailsApi(
+      amount: amount,
+      maximumAmount: maximumAmount,
+      status: status
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      amount,
+      maximumAmount,
+      status,
+    ]
+  }
+  static func == (lhs: SurchargeDetailsApi, rhs: SurchargeDetailsApi) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return TerminalApiPigeonInternal.deepEquals(lhs.amount, rhs.amount) && TerminalApiPigeonInternal.deepEquals(lhs.maximumAmount, rhs.maximumAmount) && TerminalApiPigeonInternal.deepEquals(lhs.status, rhs.status)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("SurchargeDetailsApi")
+    TerminalApiPigeonInternal.deepHash(value: amount, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: maximumAmount, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: status, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "SurchargeDetailsApi(amount: \(String(describing: amount)), maximumAmount: \(String(describing: maximumAmount)), status: \(String(describing: status)))"
   }
 }
 
@@ -3364,35 +3434,132 @@ struct PaymentMethodOptionsParametersApi: Hashable, CustomStringConvertible {
 struct ConfirmPaymentIntentConfigurationApi: Hashable, CustomStringConvertible {
   /// The URL to redirect the customer back to after authentication.
   var returnUrl: String? = nil
+  /// A surcharge to apply when confirming. Experimental in the Stripe SDKs.
+  var surcharge: SurchargeConfigurationApi? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> ConfirmPaymentIntentConfigurationApi? {
     let returnUrl: String? = nilOrValue(pigeonVar_list[0])
+    let surcharge: SurchargeConfigurationApi? = nilOrValue(pigeonVar_list[1])
 
     return ConfirmPaymentIntentConfigurationApi(
-      returnUrl: returnUrl
+      returnUrl: returnUrl,
+      surcharge: surcharge
     )
   }
   func toList() -> [Any?] {
     return [
-      returnUrl
+      returnUrl,
+      surcharge,
     ]
   }
   static func == (lhs: ConfirmPaymentIntentConfigurationApi, rhs: ConfirmPaymentIntentConfigurationApi) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return TerminalApiPigeonInternal.deepEquals(lhs.returnUrl, rhs.returnUrl)
+    return TerminalApiPigeonInternal.deepEquals(lhs.returnUrl, rhs.returnUrl) && TerminalApiPigeonInternal.deepEquals(lhs.surcharge, rhs.surcharge)
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine("ConfirmPaymentIntentConfigurationApi")
     TerminalApiPigeonInternal.deepHash(value: returnUrl, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: surcharge, hasher: &hasher)
   }
 
   public var description: String {
-    return "ConfirmPaymentIntentConfigurationApi(returnUrl: \(String(describing: returnUrl)))"
+    return "ConfirmPaymentIntentConfigurationApi(returnUrl: \(String(describing: returnUrl)), surcharge: \(String(describing: surcharge)))"
+  }
+}
+
+/// Configuration of surcharge consent collection.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct SurchargeConsentApi: Hashable, CustomStringConvertible {
+  /// Whether to collect surcharge consent from the customer.
+  var collection: SurchargeConsentCollectionApi
+  /// A custom message on the surcharge consent screen.
+  var notice: String? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> SurchargeConsentApi? {
+    let collection = pigeonVar_list[0] as! SurchargeConsentCollectionApi
+    let notice: String? = nilOrValue(pigeonVar_list[1])
+
+    return SurchargeConsentApi(
+      collection: collection,
+      notice: notice
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      collection,
+      notice,
+    ]
+  }
+  static func == (lhs: SurchargeConsentApi, rhs: SurchargeConsentApi) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return TerminalApiPigeonInternal.deepEquals(lhs.collection, rhs.collection) && TerminalApiPigeonInternal.deepEquals(lhs.notice, rhs.notice)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("SurchargeConsentApi")
+    TerminalApiPigeonInternal.deepHash(value: collection, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: notice, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "SurchargeConsentApi(collection: \(String(describing: collection)), notice: \(String(describing: notice)))"
+  }
+}
+
+/// A surcharge to apply when confirming a [PaymentIntentApi].
+///
+/// Read `amountDetails.surcharge` of the collected [PaymentIntentApi] first: apply a surcharge
+/// only when its status is [SurchargeStatusApi.available], up to its `maximumAmount`.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct SurchargeConfigurationApi: Hashable, CustomStringConvertible {
+  /// The surcharge amount, in the currency’s smallest unit.
+  var amount: Int64
+  /// Surcharge consent collection.
+  var consent: SurchargeConsentApi? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> SurchargeConfigurationApi? {
+    let amount = pigeonVar_list[0] as! Int64
+    let consent: SurchargeConsentApi? = nilOrValue(pigeonVar_list[1])
+
+    return SurchargeConfigurationApi(
+      amount: amount,
+      consent: consent
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      amount,
+      consent,
+    ]
+  }
+  static func == (lhs: SurchargeConfigurationApi, rhs: SurchargeConfigurationApi) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return TerminalApiPigeonInternal.deepEquals(lhs.amount, rhs.amount) && TerminalApiPigeonInternal.deepEquals(lhs.consent, rhs.consent)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("SurchargeConfigurationApi")
+    TerminalApiPigeonInternal.deepHash(value: amount, hasher: &hasher)
+    TerminalApiPigeonInternal.deepHash(value: consent, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "SurchargeConfigurationApi(amount: \(String(describing: amount)), consent: \(String(describing: consent)))"
   }
 }
 
@@ -4241,162 +4408,180 @@ private class TerminalApiPigeonCodecReader: FlutterStandardReader {
     case 152:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return CaptureMethodApi(rawValue: enumResultAsInt)
+        return SurchargeStatusApi(rawValue: enumResultAsInt)
       }
       return nil
     case 153:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return ConfirmationMethodApi(rawValue: enumResultAsInt)
+        return CaptureMethodApi(rawValue: enumResultAsInt)
       }
       return nil
     case 154:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return PaymentIntentUsageApi(rawValue: enumResultAsInt)
+        return ConfirmationMethodApi(rawValue: enumResultAsInt)
       }
       return nil
     case 155:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return TapToPayUxConfigurationTapZoneIndicatorApi(rawValue: enumResultAsInt)
+        return PaymentIntentUsageApi(rawValue: enumResultAsInt)
       }
       return nil
     case 156:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return TapToPayUxConfigurationDarkModeApi(rawValue: enumResultAsInt)
+        return SurchargeConsentCollectionApi(rawValue: enumResultAsInt)
       }
       return nil
     case 157:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return CardBrandApi(rawValue: enumResultAsInt)
+        return TapToPayUxConfigurationTapZoneIndicatorApi(rawValue: enumResultAsInt)
       }
       return nil
     case 158:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return CardFundingTypeApi(rawValue: enumResultAsInt)
+        return TapToPayUxConfigurationDarkModeApi(rawValue: enumResultAsInt)
       }
       return nil
     case 159:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return IncrementalAuthorizationStatusApi(rawValue: enumResultAsInt)
+        return CardBrandApi(rawValue: enumResultAsInt)
       }
       return nil
     case 160:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return CardPresentCaptureMethodApi(rawValue: enumResultAsInt)
+        return CardFundingTypeApi(rawValue: enumResultAsInt)
       }
       return nil
     case 161:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return CardPresentRoutingApi(rawValue: enumResultAsInt)
+        return IncrementalAuthorizationStatusApi(rawValue: enumResultAsInt)
       }
       return nil
     case 162:
-      return TerminalExceptionApi.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return CardPresentCaptureMethodApi(rawValue: enumResultAsInt)
+      }
+      return nil
     case 163:
-      return PaymentMethodApi.fromList(self.readValue() as! [Any?])
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return CardPresentRoutingApi(rawValue: enumResultAsInt)
+      }
+      return nil
     case 164:
-      return RefundApi.fromList(self.readValue() as! [Any?])
+      return TerminalExceptionApi.fromList(self.readValue() as! [Any?])
     case 165:
-      return PaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
+      return PaymentMethodApi.fromList(self.readValue() as! [Any?])
     case 166:
-      return ReaderApi.fromList(self.readValue() as! [Any?])
+      return RefundApi.fromList(self.readValue() as! [Any?])
     case 167:
-      return ChargeApi.fromList(self.readValue() as! [Any?])
+      return PaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
     case 168:
-      return TipApi.fromList(self.readValue() as! [Any?])
+      return ReaderApi.fromList(self.readValue() as! [Any?])
     case 169:
-      return TippingConfigurationApi.fromList(self.readValue() as! [Any?])
+      return ChargeApi.fromList(self.readValue() as! [Any?])
     case 170:
-      return InternetEasyConnectConfigurationApi.fromList(self.readValue() as! [Any?])
+      return TipApi.fromList(self.readValue() as! [Any?])
     case 171:
-      return AppsOnDevicesEasyConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return TippingConfigurationApi.fromList(self.readValue() as! [Any?])
     case 172:
-      return TapToPayEasyConnectConfigurationApi.fromList(self.readValue() as! [Any?])
+      return InternetEasyConnectConfigurationApi.fromList(self.readValue() as! [Any?])
     case 173:
-      return SimulatorConfigurationApi.fromList(self.readValue() as! [Any?])
+      return AppsOnDevicesEasyConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 174:
-      return SimulatedCardApi.fromList(self.readValue() as! [Any?])
+      return TapToPayEasyConnectConfigurationApi.fromList(self.readValue() as! [Any?])
     case 175:
-      return ReaderSoftwareUpdateApi.fromList(self.readValue() as! [Any?])
+      return SimulatorConfigurationApi.fromList(self.readValue() as! [Any?])
     case 176:
-      return SetupIntentApi.fromList(self.readValue() as! [Any?])
+      return SimulatedCardApi.fromList(self.readValue() as! [Any?])
     case 177:
-      return SetupAttemptApi.fromList(self.readValue() as! [Any?])
+      return ReaderSoftwareUpdateApi.fromList(self.readValue() as! [Any?])
     case 178:
-      return SetupAttemptPaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
+      return SetupIntentApi.fromList(self.readValue() as! [Any?])
     case 179:
-      return SetupAttemptCardPresentDetailsApi.fromList(self.readValue() as! [Any?])
+      return SetupAttemptApi.fromList(self.readValue() as! [Any?])
     case 180:
-      return LocationApi.fromList(self.readValue() as! [Any?])
+      return SetupAttemptPaymentMethodDetailsApi.fromList(self.readValue() as! [Any?])
     case 181:
-      return AddressApi.fromList(self.readValue() as! [Any?])
+      return SetupAttemptCardPresentDetailsApi.fromList(self.readValue() as! [Any?])
     case 182:
-      return BluetoothConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return LocationApi.fromList(self.readValue() as! [Any?])
     case 183:
-      return AppsOnDevicesConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return AddressApi.fromList(self.readValue() as! [Any?])
     case 184:
-      return InternetConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return BluetoothConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 185:
-      return TapToPayConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return AppsOnDevicesConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 186:
-      return UsbConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
+      return InternetConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 187:
-      return BluetoothDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return TapToPayConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 188:
-      return BluetoothProximityDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return UsbConnectionConfigurationApi.fromList(self.readValue() as! [Any?])
     case 189:
-      return AppsOnDevicesDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return BluetoothDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 190:
-      return InternetDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return BluetoothProximityDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 191:
-      return TapToPayDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return AppsOnDevicesDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 192:
-      return UsbDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
+      return InternetDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 193:
-      return ClearCachedCredentialsResultApi.fromList(self.readValue() as! [Any?])
+      return TapToPayDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 194:
-      return PaymentIntentApi.fromList(self.readValue() as! [Any?])
+      return UsbDiscoveryConfigurationApi.fromList(self.readValue() as! [Any?])
     case 195:
-      return AmountDetailsApi.fromList(self.readValue() as! [Any?])
+      return ClearCachedCredentialsResultApi.fromList(self.readValue() as! [Any?])
     case 196:
-      return PaymentIntentParametersApi.fromList(self.readValue() as! [Any?])
+      return PaymentIntentApi.fromList(self.readValue() as! [Any?])
     case 197:
-      return PaymentMethodOptionsParametersApi.fromList(self.readValue() as! [Any?])
+      return AmountDetailsApi.fromList(self.readValue() as! [Any?])
     case 198:
-      return ConfirmPaymentIntentConfigurationApi.fromList(self.readValue() as! [Any?])
+      return SurchargeDetailsApi.fromList(self.readValue() as! [Any?])
     case 199:
-      return CartApi.fromList(self.readValue() as! [Any?])
+      return PaymentIntentParametersApi.fromList(self.readValue() as! [Any?])
     case 200:
-      return CartLineItemApi.fromList(self.readValue() as! [Any?])
+      return PaymentMethodOptionsParametersApi.fromList(self.readValue() as! [Any?])
     case 201:
-      return DiscoveryFilterByReaderIdApi.fromList(self.readValue() as! [Any?])
+      return ConfirmPaymentIntentConfigurationApi.fromList(self.readValue() as! [Any?])
     case 202:
-      return DiscoveryFilterBySerialNumberApi.fromList(self.readValue() as! [Any?])
+      return SurchargeConsentApi.fromList(self.readValue() as! [Any?])
     case 203:
-      return TapToPayUxConfigurationApi.fromList(self.readValue() as! [Any?])
+      return SurchargeConfigurationApi.fromList(self.readValue() as! [Any?])
     case 204:
-      return TapToPayUxConfigurationTapZoneApi.fromList(self.readValue() as! [Any?])
+      return CartApi.fromList(self.readValue() as! [Any?])
     case 205:
-      return TapToPayUxConfigurationTapZonePositionApi.fromList(self.readValue() as! [Any?])
+      return CartLineItemApi.fromList(self.readValue() as! [Any?])
     case 206:
-      return TapToPayUxConfigurationColorSchemeApi.fromList(self.readValue() as! [Any?])
+      return DiscoveryFilterByReaderIdApi.fromList(self.readValue() as! [Any?])
     case 207:
-      return CardDetailsApi.fromList(self.readValue() as! [Any?])
+      return DiscoveryFilterBySerialNumberApi.fromList(self.readValue() as! [Any?])
     case 208:
-      return CardPresentDetailsApi.fromList(self.readValue() as! [Any?])
+      return TapToPayUxConfigurationApi.fromList(self.readValue() as! [Any?])
     case 209:
-      return CardNetworksApi.fromList(self.readValue() as! [Any?])
+      return TapToPayUxConfigurationTapZoneApi.fromList(self.readValue() as! [Any?])
     case 210:
-      return ReceiptDetailsApi.fromList(self.readValue() as! [Any?])
+      return TapToPayUxConfigurationTapZonePositionApi.fromList(self.readValue() as! [Any?])
     case 211:
+      return TapToPayUxConfigurationColorSchemeApi.fromList(self.readValue() as! [Any?])
+    case 212:
+      return CardDetailsApi.fromList(self.readValue() as! [Any?])
+    case 213:
+      return CardPresentDetailsApi.fromList(self.readValue() as! [Any?])
+    case 214:
+      return CardNetworksApi.fromList(self.readValue() as! [Any?])
+    case 215:
+      return ReceiptDetailsApi.fromList(self.readValue() as! [Any?])
+    case 216:
       return CardPresentParametersApi.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -4475,185 +4660,200 @@ private class TerminalApiPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? PaymentIntentStatusApi {
       super.writeByte(151)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CaptureMethodApi {
+    } else if let value = value as? SurchargeStatusApi {
       super.writeByte(152)
       super.writeValue(value.rawValue)
-    } else if let value = value as? ConfirmationMethodApi {
+    } else if let value = value as? CaptureMethodApi {
       super.writeByte(153)
       super.writeValue(value.rawValue)
-    } else if let value = value as? PaymentIntentUsageApi {
+    } else if let value = value as? ConfirmationMethodApi {
       super.writeByte(154)
       super.writeValue(value.rawValue)
-    } else if let value = value as? TapToPayUxConfigurationTapZoneIndicatorApi {
+    } else if let value = value as? PaymentIntentUsageApi {
       super.writeByte(155)
       super.writeValue(value.rawValue)
-    } else if let value = value as? TapToPayUxConfigurationDarkModeApi {
+    } else if let value = value as? SurchargeConsentCollectionApi {
       super.writeByte(156)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CardBrandApi {
+    } else if let value = value as? TapToPayUxConfigurationTapZoneIndicatorApi {
       super.writeByte(157)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CardFundingTypeApi {
+    } else if let value = value as? TapToPayUxConfigurationDarkModeApi {
       super.writeByte(158)
       super.writeValue(value.rawValue)
-    } else if let value = value as? IncrementalAuthorizationStatusApi {
+    } else if let value = value as? CardBrandApi {
       super.writeByte(159)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CardPresentCaptureMethodApi {
+    } else if let value = value as? CardFundingTypeApi {
       super.writeByte(160)
       super.writeValue(value.rawValue)
-    } else if let value = value as? CardPresentRoutingApi {
+    } else if let value = value as? IncrementalAuthorizationStatusApi {
       super.writeByte(161)
       super.writeValue(value.rawValue)
-    } else if let value = value as? TerminalExceptionApi {
+    } else if let value = value as? CardPresentCaptureMethodApi {
       super.writeByte(162)
-      super.writeValue(value.toList())
-    } else if let value = value as? PaymentMethodApi {
+      super.writeValue(value.rawValue)
+    } else if let value = value as? CardPresentRoutingApi {
       super.writeByte(163)
-      super.writeValue(value.toList())
-    } else if let value = value as? RefundApi {
+      super.writeValue(value.rawValue)
+    } else if let value = value as? TerminalExceptionApi {
       super.writeByte(164)
       super.writeValue(value.toList())
-    } else if let value = value as? PaymentMethodDetailsApi {
+    } else if let value = value as? PaymentMethodApi {
       super.writeByte(165)
       super.writeValue(value.toList())
-    } else if let value = value as? ReaderApi {
+    } else if let value = value as? RefundApi {
       super.writeByte(166)
       super.writeValue(value.toList())
-    } else if let value = value as? ChargeApi {
+    } else if let value = value as? PaymentMethodDetailsApi {
       super.writeByte(167)
       super.writeValue(value.toList())
-    } else if let value = value as? TipApi {
+    } else if let value = value as? ReaderApi {
       super.writeByte(168)
       super.writeValue(value.toList())
-    } else if let value = value as? TippingConfigurationApi {
+    } else if let value = value as? ChargeApi {
       super.writeByte(169)
       super.writeValue(value.toList())
-    } else if let value = value as? InternetEasyConnectConfigurationApi {
+    } else if let value = value as? TipApi {
       super.writeByte(170)
       super.writeValue(value.toList())
-    } else if let value = value as? AppsOnDevicesEasyConnectionConfigurationApi {
+    } else if let value = value as? TippingConfigurationApi {
       super.writeByte(171)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayEasyConnectConfigurationApi {
+    } else if let value = value as? InternetEasyConnectConfigurationApi {
       super.writeByte(172)
       super.writeValue(value.toList())
-    } else if let value = value as? SimulatorConfigurationApi {
+    } else if let value = value as? AppsOnDevicesEasyConnectionConfigurationApi {
       super.writeByte(173)
       super.writeValue(value.toList())
-    } else if let value = value as? SimulatedCardApi {
+    } else if let value = value as? TapToPayEasyConnectConfigurationApi {
       super.writeByte(174)
       super.writeValue(value.toList())
-    } else if let value = value as? ReaderSoftwareUpdateApi {
+    } else if let value = value as? SimulatorConfigurationApi {
       super.writeByte(175)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupIntentApi {
+    } else if let value = value as? SimulatedCardApi {
       super.writeByte(176)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptApi {
+    } else if let value = value as? ReaderSoftwareUpdateApi {
       super.writeByte(177)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptPaymentMethodDetailsApi {
+    } else if let value = value as? SetupIntentApi {
       super.writeByte(178)
       super.writeValue(value.toList())
-    } else if let value = value as? SetupAttemptCardPresentDetailsApi {
+    } else if let value = value as? SetupAttemptApi {
       super.writeByte(179)
       super.writeValue(value.toList())
-    } else if let value = value as? LocationApi {
+    } else if let value = value as? SetupAttemptPaymentMethodDetailsApi {
       super.writeByte(180)
       super.writeValue(value.toList())
-    } else if let value = value as? AddressApi {
+    } else if let value = value as? SetupAttemptCardPresentDetailsApi {
       super.writeByte(181)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothConnectionConfigurationApi {
+    } else if let value = value as? LocationApi {
       super.writeByte(182)
       super.writeValue(value.toList())
-    } else if let value = value as? AppsOnDevicesConnectionConfigurationApi {
+    } else if let value = value as? AddressApi {
       super.writeByte(183)
       super.writeValue(value.toList())
-    } else if let value = value as? InternetConnectionConfigurationApi {
+    } else if let value = value as? BluetoothConnectionConfigurationApi {
       super.writeByte(184)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayConnectionConfigurationApi {
+    } else if let value = value as? AppsOnDevicesConnectionConfigurationApi {
       super.writeByte(185)
       super.writeValue(value.toList())
-    } else if let value = value as? UsbConnectionConfigurationApi {
+    } else if let value = value as? InternetConnectionConfigurationApi {
       super.writeByte(186)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothDiscoveryConfigurationApi {
+    } else if let value = value as? TapToPayConnectionConfigurationApi {
       super.writeByte(187)
       super.writeValue(value.toList())
-    } else if let value = value as? BluetoothProximityDiscoveryConfigurationApi {
+    } else if let value = value as? UsbConnectionConfigurationApi {
       super.writeByte(188)
       super.writeValue(value.toList())
-    } else if let value = value as? AppsOnDevicesDiscoveryConfigurationApi {
+    } else if let value = value as? BluetoothDiscoveryConfigurationApi {
       super.writeByte(189)
       super.writeValue(value.toList())
-    } else if let value = value as? InternetDiscoveryConfigurationApi {
+    } else if let value = value as? BluetoothProximityDiscoveryConfigurationApi {
       super.writeByte(190)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayDiscoveryConfigurationApi {
+    } else if let value = value as? AppsOnDevicesDiscoveryConfigurationApi {
       super.writeByte(191)
       super.writeValue(value.toList())
-    } else if let value = value as? UsbDiscoveryConfigurationApi {
+    } else if let value = value as? InternetDiscoveryConfigurationApi {
       super.writeByte(192)
       super.writeValue(value.toList())
-    } else if let value = value as? ClearCachedCredentialsResultApi {
+    } else if let value = value as? TapToPayDiscoveryConfigurationApi {
       super.writeByte(193)
       super.writeValue(value.toList())
-    } else if let value = value as? PaymentIntentApi {
+    } else if let value = value as? UsbDiscoveryConfigurationApi {
       super.writeByte(194)
       super.writeValue(value.toList())
-    } else if let value = value as? AmountDetailsApi {
+    } else if let value = value as? ClearCachedCredentialsResultApi {
       super.writeByte(195)
       super.writeValue(value.toList())
-    } else if let value = value as? PaymentIntentParametersApi {
+    } else if let value = value as? PaymentIntentApi {
       super.writeByte(196)
       super.writeValue(value.toList())
-    } else if let value = value as? PaymentMethodOptionsParametersApi {
+    } else if let value = value as? AmountDetailsApi {
       super.writeByte(197)
       super.writeValue(value.toList())
-    } else if let value = value as? ConfirmPaymentIntentConfigurationApi {
+    } else if let value = value as? SurchargeDetailsApi {
       super.writeByte(198)
       super.writeValue(value.toList())
-    } else if let value = value as? CartApi {
+    } else if let value = value as? PaymentIntentParametersApi {
       super.writeByte(199)
       super.writeValue(value.toList())
-    } else if let value = value as? CartLineItemApi {
+    } else if let value = value as? PaymentMethodOptionsParametersApi {
       super.writeByte(200)
       super.writeValue(value.toList())
-    } else if let value = value as? DiscoveryFilterByReaderIdApi {
+    } else if let value = value as? ConfirmPaymentIntentConfigurationApi {
       super.writeByte(201)
       super.writeValue(value.toList())
-    } else if let value = value as? DiscoveryFilterBySerialNumberApi {
+    } else if let value = value as? SurchargeConsentApi {
       super.writeByte(202)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayUxConfigurationApi {
+    } else if let value = value as? SurchargeConfigurationApi {
       super.writeByte(203)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayUxConfigurationTapZoneApi {
+    } else if let value = value as? CartApi {
       super.writeByte(204)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayUxConfigurationTapZonePositionApi {
+    } else if let value = value as? CartLineItemApi {
       super.writeByte(205)
       super.writeValue(value.toList())
-    } else if let value = value as? TapToPayUxConfigurationColorSchemeApi {
+    } else if let value = value as? DiscoveryFilterByReaderIdApi {
       super.writeByte(206)
       super.writeValue(value.toList())
-    } else if let value = value as? CardDetailsApi {
+    } else if let value = value as? DiscoveryFilterBySerialNumberApi {
       super.writeByte(207)
       super.writeValue(value.toList())
-    } else if let value = value as? CardPresentDetailsApi {
+    } else if let value = value as? TapToPayUxConfigurationApi {
       super.writeByte(208)
       super.writeValue(value.toList())
-    } else if let value = value as? CardNetworksApi {
+    } else if let value = value as? TapToPayUxConfigurationTapZoneApi {
       super.writeByte(209)
       super.writeValue(value.toList())
-    } else if let value = value as? ReceiptDetailsApi {
+    } else if let value = value as? TapToPayUxConfigurationTapZonePositionApi {
       super.writeByte(210)
       super.writeValue(value.toList())
-    } else if let value = value as? CardPresentParametersApi {
+    } else if let value = value as? TapToPayUxConfigurationColorSchemeApi {
       super.writeByte(211)
+      super.writeValue(value.toList())
+    } else if let value = value as? CardDetailsApi {
+      super.writeByte(212)
+      super.writeValue(value.toList())
+    } else if let value = value as? CardPresentDetailsApi {
+      super.writeByte(213)
+      super.writeValue(value.toList())
+    } else if let value = value as? CardNetworksApi {
+      super.writeByte(214)
+      super.writeValue(value.toList())
+    } else if let value = value as? ReceiptDetailsApi {
+      super.writeByte(215)
+      super.writeValue(value.toList())
+    } else if let value = value as? CardPresentParametersApi {
+      super.writeByte(216)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)

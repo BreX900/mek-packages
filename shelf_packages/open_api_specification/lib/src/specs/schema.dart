@@ -66,26 +66,25 @@ class MediaOpenApi with PrettyJsonToString {
 enum TypeOpenApi { boolean, number, integer, string, array, object }
 
 /// https://spec.openapis.org/registry/format/
-enum FormatOpenApi {
-  int32,
-  int64,
-  double,
-  decimal,
-  float,
-  string,
+extension type const FormatOpenApi(String _code) implements String {
+  static const FormatOpenApi int32 = FormatOpenApi('int32');
+  static const FormatOpenApi int64 = FormatOpenApi('int64');
+  static const FormatOpenApi double = FormatOpenApi('double');
+  static const FormatOpenApi decimal = FormatOpenApi('decimal');
+  static const FormatOpenApi float = FormatOpenApi('float');
+  static const FormatOpenApi string = FormatOpenApi('string');
 
-  date,
-  @JsonValue('date-time')
-  dateTime,
+  static const FormatOpenApi date = FormatOpenApi('date');
+  static const FormatOpenApi dateTime = FormatOpenApi('date-time');
 
-  uuid,
-  email,
-  url,
-  uri,
+  static const FormatOpenApi uuid = FormatOpenApi('uuid');
+  static const FormatOpenApi email = FormatOpenApi('email');
+  static const FormatOpenApi url = FormatOpenApi('url');
+  static const FormatOpenApi uri = FormatOpenApi('uri');
 
   /// File upload
-  binary,
-  base64,
+  static const FormatOpenApi binary = FormatOpenApi('binary');
+  static const FormatOpenApi base64 = FormatOpenApi('base64');
 }
 
 @SpecsSerializable()
@@ -98,7 +97,6 @@ class SchemaOpenApi extends OriginalJson implements SchemaOrRef {
   @JsonKey(readValue: _readType)
   final TypeOpenApi? type;
 
-  @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)
   final FormatOpenApi? format;
 
   /// With [TypeOpenApi.integer] | [TypeOpenApi.string]

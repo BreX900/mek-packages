@@ -202,9 +202,7 @@ class JsonSerializableSerializationCodec extends SerializationCodec with Plugin 
   @override
   Library onLibrary(OpenApi openApi, Library spec) {
     return spec.rebuild(
-      (b) => b
-        ..directives.add(Directive.import('package:json_annotation/json_annotation.dart'))
-        ..directives.addAll(typeCodecs.map((e) => e.reference.url).nonNulls.map(Directive.import)),
+      (b) => b..directives.add(Directive.import('package:json_annotation/json_annotation.dart')),
     );
   }
 

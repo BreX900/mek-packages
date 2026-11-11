@@ -1,4 +1,7 @@
 
+## 1.6.2
+- fix: removed custom types imports from generated code
+
 ## 1.6.1
 - fix: fixes incorrect mapping responses codes to returnable and throwable
 

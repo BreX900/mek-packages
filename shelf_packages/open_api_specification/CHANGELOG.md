@@ -1,4 +1,7 @@
 
+## 4.1.3
+- fix: `FormatOpenApi` is converted to a `String` extension type to support custom values
+
 ## 4.1.2
 - fix: improved support to `null` on `type` schema field
 

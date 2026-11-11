@@ -106,14 +106,7 @@ SchemaOpenApi _$SchemaOpenApiFromJson(Map json) => $checkedCreate(
         (v) => $enumDecodeNullable(_$TypeOpenApiEnumMap, v),
         readValue: SchemaOpenApi._readType,
       ),
-      format: $checkedConvert(
-        'format',
-        (v) => $enumDecodeNullable(
-          _$FormatOpenApiEnumMap,
-          v,
-          unknownValue: JsonKey.nullForUndefinedEnumValue,
-        ),
-      ),
+      format: $checkedConvert('format', (v) => v as FormatOpenApi?),
       enum$: $checkedConvert(
         'enum',
         (v) => (v as List<dynamic>?)?.map((e) => e as Object).toList(),
@@ -187,7 +180,7 @@ Map<String, dynamic> _$SchemaOpenApiToJson(
   'description': ?instance.description,
   'example': ?instance.example,
   'type': ?_$TypeOpenApiEnumMap[instance.type],
-  'format': ?_$FormatOpenApiEnumMap[instance.format],
+  'format': ?instance.format,
   'enum': ?instance.enum$,
   'items': ?instance.items?.toJson(),
   'properties': ?instance.properties?.map((k, e) => MapEntry(k, e.toJson())),
@@ -210,23 +203,6 @@ const _$TypeOpenApiEnumMap = {
   TypeOpenApi.string: 'string',
   TypeOpenApi.array: 'array',
   TypeOpenApi.object: 'object',
-};
-
-const _$FormatOpenApiEnumMap = {
-  FormatOpenApi.int32: 'int32',
-  FormatOpenApi.int64: 'int64',
-  FormatOpenApi.double: 'double',
-  FormatOpenApi.decimal: 'decimal',
-  FormatOpenApi.float: 'float',
-  FormatOpenApi.string: 'string',
-  FormatOpenApi.date: 'date',
-  FormatOpenApi.dateTime: 'date-time',
-  FormatOpenApi.uuid: 'uuid',
-  FormatOpenApi.email: 'email',
-  FormatOpenApi.url: 'url',
-  FormatOpenApi.uri: 'uri',
-  FormatOpenApi.binary: 'binary',
-  FormatOpenApi.base64: 'base64',
 };
 
 DiscriminatorOpenApi _$DiscriminatorOpenApiFromJson(Map json) =>

@@ -262,6 +262,90 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
             try await self._processPaymentIntentCancellables.removeValue(forKey: operationId)?.cancel()
         }
     }
+
+    private var _collectPaymentMethodCancellables: [Int64: Cancelable] = [:]
+
+    func startCollectPaymentMethod(
+        operationId: Int64,
+        paymentIntentId: String,
+        requestDynamicCurrencyConversion: Bool,
+        surchargeNotice: String?,
+        skipTipping: Bool,
+        tippingConfiguration: TippingConfigurationApi?,
+        shouldUpdatePaymentIntent: Bool,
+        customerCancellationEnabled: Bool,
+        allowRedisplay: AllowRedisplayApi,
+        completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void
+    ) {
+        handleError(completion) {
+            let paymentIntent = try _findPaymentIntent(paymentIntentId)
+            let collectConfig = try CollectPaymentIntentConfigurationBuilder()
+                .setSurchargeNotice(surchargeNotice)
+                .setRequestDynamicCurrencyConversion(requestDynamicCurrencyConversion)
+                .setSkipTipping(skipTipping)
+                .setTippingConfiguration(try tippingConfiguration?.toHost())
+                .setUpdatePaymentIntent(shouldUpdatePaymentIntent)
+                .setCustomerCancellation(customerCancellationEnabled ? .enableIfAvailable : .disableIfAvailable)
+                .setAllowRedisplay(allowRedisplay.toHost())
+                .build()
+
+            self._collectPaymentMethodCancellables[operationId] = Terminal.shared.collectPaymentMethod(
+                paymentIntent,
+                collectConfig: collectConfig,
+                completion: { paymentIntent, error in
+                self._collectPaymentMethodCancellables.removeValue(forKey: operationId)
+                if let error = error as? NSError {
+                    completion(.failure(error.toPlatformError()))
+                    return
+                }
+                // Kept: confirmPaymentIntent needs the collected intent.
+                self._paymentIntents[paymentIntent!.stripeId!] = paymentIntent!
+                completion(.success(paymentIntent!.toApi()))
+            })
+        }
+    }
+
+    func stopCollectPaymentMethod(operationId: Int64, completion: @escaping (Result<Void, any Error>) -> Void) {
+        handleResult(completion) {
+            try await self._collectPaymentMethodCancellables.removeValue(forKey: operationId)?.cancel()
+        }
+    }
+
+    private var _confirmPaymentIntentCancellables: [Int64: Cancelable] = [:]
+
+    func startConfirmPaymentIntent(
+        operationId: Int64,
+        paymentIntentId: String,
+        confirmConfiguration: ConfirmPaymentIntentConfigurationApi,
+        completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void
+    ) {
+        handleError(completion) {
+            let paymentIntent = try _findPaymentIntent(paymentIntentId)
+            let confirmConfig = try confirmConfiguration.toHost()
+
+            self._confirmPaymentIntentCancellables[operationId] = Terminal.shared.confirmPaymentIntent(
+                paymentIntent,
+                confirmConfig: confirmConfig,
+                completion: { paymentIntent, error in
+                self._confirmPaymentIntentCancellables.removeValue(forKey: operationId)
+                if let error = error {
+                    if let updated = error.paymentIntent, let id = updated.stripeId {
+                        self._paymentIntents[id] = updated
+                    }
+                    completion(.failure((error as NSError).toPlatformError()))
+                    return
+                }
+                self._paymentIntents.removeValue(forKey: paymentIntent!.stripeId!)
+                completion(.success(paymentIntent!.toApi()))
+            })
+        }
+    }
+
+    func stopConfirmPaymentIntent(operationId: Int64, completion: @escaping (Result<Void, any Error>) -> Void) {
+        handleResult(completion) {
+            try await self._confirmPaymentIntentCancellables.removeValue(forKey: operationId)?.cancel()
+        }
+    }
     
     func cancelPaymentIntent(paymentIntentId: String, completion: @escaping (Result<PaymentIntentApi, any Error>) -> Void) {
         handleResult(completion) {
@@ -443,6 +527,10 @@ public class TerminalPlugin: NSObject, FlutterPlugin, TerminalPlatformApi {
         
         self._processPaymentIntentCancellables.values.forEach { $0.cancel { error in } }
         self._processPaymentIntentCancellables = [:]
+        self._collectPaymentMethodCancellables.values.forEach { $0.cancel { error in } }
+        self._collectPaymentMethodCancellables = [:]
+        self._confirmPaymentIntentCancellables.values.forEach { $0.cancel { error in } }
+        self._confirmPaymentIntentCancellables = [:]
         // self._confirmSetupIntentCancelables.values.forEach { $0.cancel { error in } }
         // self._confirmSetupIntentCancelables = [:]
         self._paymentIntents = [:]

@@ -346,6 +346,55 @@ class Terminal {
     });
   }
 
+  /// Collects a payment method for the given [PaymentIntent], without confirming it.
+  ///
+  /// Use this instead of [processPaymentIntent] when you need to inspect the collected payment
+  /// method (e.g. `paymentMethod.cardPresent.funding`) before confirming. On success the
+  /// [PaymentIntent] has status [PaymentIntentStatus.requiresConfirmation]; finish with
+  /// [confirmPaymentIntent] or cancel it. Stripe requires that within 30 seconds of collecting.
+  ///
+  /// Set [shouldUpdatePaymentIntent] to also attach the payment method to the server-side
+  /// PaymentIntent, so your backend can read it too. If the PaymentIntent is edited after this
+  /// call, Stripe requires calling [collectPaymentMethod] again before confirming.
+  CancelableFuture<PaymentIntent> collectPaymentMethod(
+    PaymentIntent paymentIntent, {
+    bool requestDynamicCurrencyConversion = false,
+    String? surchargeNotice,
+    bool skipTipping = false,
+    TippingConfiguration? tippingConfiguration,
+    bool shouldUpdatePaymentIntent = false,
+    bool customerCancellationEnabled = true,
+    AllowRedisplay allowRedisplay = AllowRedisplay.unspecified,
+  }) {
+    return _CancelableFuture(_platform.stopCollectPaymentMethod, (id) async {
+      return await _platform.startCollectPaymentMethod(
+        operationId: id,
+        paymentIntentId: paymentIntent.id,
+        requestDynamicCurrencyConversion: requestDynamicCurrencyConversion,
+        surchargeNotice: surchargeNotice,
+        skipTipping: skipTipping,
+        tippingConfiguration: tippingConfiguration,
+        shouldUpdatePaymentIntent: shouldUpdatePaymentIntent,
+        customerCancellationEnabled: customerCancellationEnabled,
+        allowRedisplay: allowRedisplay,
+      );
+    });
+  }
+
+  /// Confirms a [PaymentIntent] whose payment method was collected with [collectPaymentMethod].
+  CancelableFuture<PaymentIntent> confirmPaymentIntent(
+    PaymentIntent paymentIntent, {
+    ConfirmPaymentIntentConfiguration? confirmConfiguration,
+  }) {
+    return _CancelableFuture(_platform.stopConfirmPaymentIntent, (id) async {
+      return await _platform.startConfirmPaymentIntent(
+        operationId: id,
+        paymentIntentId: paymentIntent.id,
+        confirmConfiguration: confirmConfiguration ?? ConfirmPaymentIntentConfiguration(),
+      );
+    });
+  }
+
   /// Cancels an [PaymentIntent].
   ///
   /// If the cancel request succeeds, the future complete with the updated [PaymentIntent] object

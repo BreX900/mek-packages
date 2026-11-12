@@ -5564,6 +5564,100 @@ class TerminalPlatformApi {
     _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
   }
 
+  Future<PaymentIntentApi> startCollectPaymentMethod({
+    required int operationId,
+    required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
+    required bool skipTipping,
+    required TippingConfigurationApi? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
+    required AllowRedisplayApi allowRedisplay,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startCollectPaymentMethod$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      paymentIntentId,
+      requestDynamicCurrencyConversion,
+      surchargeNotice,
+      skipTipping,
+      tippingConfiguration,
+      shouldUpdatePaymentIntent,
+      customerCancellationEnabled,
+      allowRedisplay,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as PaymentIntentApi;
+  }
+
+  Future<void> stopCollectPaymentMethod(int operationId) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopCollectPaymentMethod$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
+  }
+
+  Future<PaymentIntentApi> startConfirmPaymentIntent({
+    required int operationId,
+    required String paymentIntentId,
+    required ConfirmPaymentIntentConfigurationApi confirmConfiguration,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startConfirmPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      paymentIntentId,
+      confirmConfiguration,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as PaymentIntentApi;
+  }
+
+  Future<void> stopConfirmPaymentIntent(int operationId) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopConfirmPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
+  }
+
   Future<PaymentIntentApi> cancelPaymentIntent(String paymentIntentId) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelPaymentIntent$pigeonVar_messageChannelSuffix';

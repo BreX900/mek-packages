@@ -4701,6 +4701,10 @@ protocol TerminalPlatformApi {
   func retrievePaymentIntent(clientSecret: String, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func startProcessPaymentIntent(operationId: Int64, paymentIntentId: String, requestDynamicCurrencyConversion: Bool, surchargeNotice: String?, skipTipping: Bool, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Bool, customerCancellationEnabled: Bool, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func stopProcessPaymentIntent(operationId: Int64, completion: @escaping (Result<Void, Error>) -> Void)
+  func startCollectPaymentMethod(operationId: Int64, paymentIntentId: String, requestDynamicCurrencyConversion: Bool, surchargeNotice: String?, skipTipping: Bool, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Bool, customerCancellationEnabled: Bool, allowRedisplay: AllowRedisplayApi, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
+  func stopCollectPaymentMethod(operationId: Int64, completion: @escaping (Result<Void, Error>) -> Void)
+  func startConfirmPaymentIntent(operationId: Int64, paymentIntentId: String, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
+  func stopConfirmPaymentIntent(operationId: Int64, completion: @escaping (Result<Void, Error>) -> Void)
   func cancelPaymentIntent(paymentIntentId: String, completion: @escaping (Result<PaymentIntentApi, Error>) -> Void)
   func createSetupIntent(customerId: String?, metadata: [String: String]?, onBehalfOf: String?, description: String?, usage: SetupIntentUsageApi?, completion: @escaping (Result<SetupIntentApi, Error>) -> Void)
   func retrieveSetupIntent(clientSecret: String, completion: @escaping (Result<SetupIntentApi, Error>) -> Void)
@@ -5055,6 +5059,84 @@ class TerminalPlatformApiSetup {
       }
     } else {
       stopProcessPaymentIntentChannel.setMessageHandler(nil)
+    }
+    let startCollectPaymentMethodChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startCollectPaymentMethod\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startCollectPaymentMethodChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let operationIdArg = args[0] as! Int64
+        let paymentIntentIdArg = args[1] as! String
+        let requestDynamicCurrencyConversionArg = args[2] as! Bool
+        let surchargeNoticeArg: String? = nilOrValue(args[3])
+        let skipTippingArg = args[4] as! Bool
+        let tippingConfigurationArg: TippingConfigurationApi? = nilOrValue(args[5])
+        let shouldUpdatePaymentIntentArg = args[6] as! Bool
+        let customerCancellationEnabledArg = args[7] as! Bool
+        let allowRedisplayArg = args[8] as! AllowRedisplayApi
+        api.startCollectPaymentMethod(operationId: operationIdArg, paymentIntentId: paymentIntentIdArg, requestDynamicCurrencyConversion: requestDynamicCurrencyConversionArg, surchargeNotice: surchargeNoticeArg, skipTipping: skipTippingArg, tippingConfiguration: tippingConfigurationArg, shouldUpdatePaymentIntent: shouldUpdatePaymentIntentArg, customerCancellationEnabled: customerCancellationEnabledArg, allowRedisplay: allowRedisplayArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      startCollectPaymentMethodChannel.setMessageHandler(nil)
+    }
+    let stopCollectPaymentMethodChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopCollectPaymentMethod\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopCollectPaymentMethodChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let operationIdArg = args[0] as! Int64
+        api.stopCollectPaymentMethod(operationId: operationIdArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      stopCollectPaymentMethodChannel.setMessageHandler(nil)
+    }
+    let startConfirmPaymentIntentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startConfirmPaymentIntent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      startConfirmPaymentIntentChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let operationIdArg = args[0] as! Int64
+        let paymentIntentIdArg = args[1] as! String
+        let confirmConfigurationArg = args[2] as! ConfirmPaymentIntentConfigurationApi
+        api.startConfirmPaymentIntent(operationId: operationIdArg, paymentIntentId: paymentIntentIdArg, confirmConfiguration: confirmConfigurationArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      startConfirmPaymentIntentChannel.setMessageHandler(nil)
+    }
+    let stopConfirmPaymentIntentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopConfirmPaymentIntent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      stopConfirmPaymentIntentChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let operationIdArg = args[0] as! Int64
+        api.stopConfirmPaymentIntent(operationId: operationIdArg) { result in
+          switch result {
+          case .success:
+            reply(wrapResult(nil))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      stopConfirmPaymentIntentChannel.setMessageHandler(nil)
     }
     let cancelPaymentIntentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.cancelPaymentIntent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {

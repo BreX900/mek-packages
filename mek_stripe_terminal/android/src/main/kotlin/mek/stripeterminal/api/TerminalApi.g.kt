@@ -5315,6 +5315,10 @@ interface TerminalPlatformApi {
   fun retrievePaymentIntent(clientSecret: String, callback: (Result<PaymentIntentApi>) -> Unit)
   fun startProcessPaymentIntent(operationId: Long, paymentIntentId: String, requestDynamicCurrencyConversion: Boolean, surchargeNotice: String?, skipTipping: Boolean, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Boolean, customerCancellationEnabled: Boolean, allowRedisplay: AllowRedisplayApi, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, callback: (Result<PaymentIntentApi>) -> Unit)
   fun stopProcessPaymentIntent(operationId: Long, callback: (Result<Unit>) -> Unit)
+  fun startCollectPaymentMethod(operationId: Long, paymentIntentId: String, requestDynamicCurrencyConversion: Boolean, surchargeNotice: String?, skipTipping: Boolean, tippingConfiguration: TippingConfigurationApi?, shouldUpdatePaymentIntent: Boolean, customerCancellationEnabled: Boolean, allowRedisplay: AllowRedisplayApi, callback: (Result<PaymentIntentApi>) -> Unit)
+  fun stopCollectPaymentMethod(operationId: Long, callback: (Result<Unit>) -> Unit)
+  fun startConfirmPaymentIntent(operationId: Long, paymentIntentId: String, confirmConfiguration: ConfirmPaymentIntentConfigurationApi, callback: (Result<PaymentIntentApi>) -> Unit)
+  fun stopConfirmPaymentIntent(operationId: Long, callback: (Result<Unit>) -> Unit)
   fun cancelPaymentIntent(paymentIntentId: String, callback: (Result<PaymentIntentApi>) -> Unit)
   fun createSetupIntent(customerId: String?, metadata: Map<String, String>?, onBehalfOf: String?, description: String?, usage: SetupIntentUsageApi?, callback: (Result<SetupIntentApi>) -> Unit)
   fun retrieveSetupIntent(clientSecret: String, callback: (Result<SetupIntentApi>) -> Unit)
@@ -5712,6 +5716,94 @@ interface TerminalPlatformApi {
             val args = message as List<Any?>
             val operationIdArg = args[0] as Long
             api.stopProcessPaymentIntent(operationIdArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(TerminalApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(TerminalApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startCollectPaymentMethod$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val operationIdArg = args[0] as Long
+            val paymentIntentIdArg = args[1] as String
+            val requestDynamicCurrencyConversionArg = args[2] as Boolean
+            val surchargeNoticeArg = args[3] as String?
+            val skipTippingArg = args[4] as Boolean
+            val tippingConfigurationArg = args[5] as TippingConfigurationApi?
+            val shouldUpdatePaymentIntentArg = args[6] as Boolean
+            val customerCancellationEnabledArg = args[7] as Boolean
+            val allowRedisplayArg = args[8] as AllowRedisplayApi
+            api.startCollectPaymentMethod(operationIdArg, paymentIntentIdArg, requestDynamicCurrencyConversionArg, surchargeNoticeArg, skipTippingArg, tippingConfigurationArg, shouldUpdatePaymentIntentArg, customerCancellationEnabledArg, allowRedisplayArg) { result: Result<PaymentIntentApi> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(TerminalApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(TerminalApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopCollectPaymentMethod$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val operationIdArg = args[0] as Long
+            api.stopCollectPaymentMethod(operationIdArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(TerminalApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(TerminalApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startConfirmPaymentIntent$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val operationIdArg = args[0] as Long
+            val paymentIntentIdArg = args[1] as String
+            val confirmConfigurationArg = args[2] as ConfirmPaymentIntentConfigurationApi
+            api.startConfirmPaymentIntent(operationIdArg, paymentIntentIdArg, confirmConfigurationArg) { result: Result<PaymentIntentApi> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(TerminalApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(TerminalApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopConfirmPaymentIntent$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val operationIdArg = args[0] as Long
+            api.stopConfirmPaymentIntent(operationIdArg) { result: Result<Unit> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(TerminalApiPigeonUtils.wrapError(error))

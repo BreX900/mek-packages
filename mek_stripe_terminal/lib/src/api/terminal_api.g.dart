@@ -1168,6 +1168,9 @@ enum PaymentIntentStatusApi {
   requiresReauthorization,
 }
 
+/// Whether a surcharge can be applied to the [PaymentIntentApi] with the collected payment method.
+enum SurchargeStatusApi { available, unavailable }
+
 /// Controls when the funds will be captured from the customer’s account.
 enum CaptureMethodApi {
   /// Stripe automatically captures funds when the customer authorizes the payment.
@@ -1197,6 +1200,9 @@ enum PaymentIntentUsageApi {
   /// Use “off_session” if your customer may or may not be present in your checkout flow.
   offSession,
 }
+
+/// Whether to collect the customer's consent to a surcharge on the reader.
+enum SurchargeConsentCollectionApi { disabled, enabled }
 
 enum TapToPayUxConfigurationTapZoneIndicatorApi { above, below, front, behind, left, right }
 
@@ -3571,13 +3577,16 @@ class PaymentIntentApi {
 
 /// Contains details about items included in the [PaymentIntentApi] amount
 class AmountDetailsApi {
-  AmountDetailsApi({this.tip});
+  AmountDetailsApi({this.tip, this.surcharge});
 
   /// Details about the tip
   TipApi? tip;
 
+  /// Details about the surcharge, after a payment method has been collected.
+  SurchargeDetailsApi? surcharge;
+
   List<Object?> _toList() {
-    return <Object?>[tip];
+    return <Object?>[tip, surcharge];
   }
 
   Object encode() {
@@ -3586,7 +3595,10 @@ class AmountDetailsApi {
 
   static AmountDetailsApi decode(Object result) {
     result as List<Object?>;
-    return AmountDetailsApi(tip: result[0] as TipApi?);
+    return AmountDetailsApi(
+      tip: result[0] as TipApi?,
+      surcharge: result[1] as SurchargeDetailsApi?,
+    );
   }
 
   @override
@@ -3598,7 +3610,7 @@ class AmountDetailsApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(tip, other.tip);
+    return _deepEquals(tip, other.tip) && _deepEquals(surcharge, other.surcharge);
   }
 
   @override
@@ -3607,7 +3619,63 @@ class AmountDetailsApi {
 
   @override
   String toString() {
-    return 'AmountDetailsApi(tip: $tip)';
+    return 'AmountDetailsApi(tip: $tip, surcharge: $surcharge)';
+  }
+}
+
+/// Contains details about a surcharge.
+///
+/// For more information, see the official Stripe docs: [Collect surcharges](https://docs.stripe.com/payments/cards/surcharge)
+class SurchargeDetailsApi {
+  SurchargeDetailsApi({this.amount, this.maximumAmount, this.status});
+
+  /// The surcharge amount applied, in the currency’s smallest unit.
+  int? amount;
+
+  /// The maximum surcharge amount allowed for the collected payment method.
+  int? maximumAmount;
+
+  /// Whether a surcharge is available for the collected payment method.
+  SurchargeStatusApi? status;
+
+  List<Object?> _toList() {
+    return <Object?>[amount, maximumAmount, status];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static SurchargeDetailsApi decode(Object result) {
+    result as List<Object?>;
+    return SurchargeDetailsApi(
+      amount: result[0] as int?,
+      maximumAmount: result[1] as int?,
+      status: result[2] as SurchargeStatusApi?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SurchargeDetailsApi || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(amount, other.amount) &&
+        _deepEquals(maximumAmount, other.maximumAmount) &&
+        _deepEquals(status, other.status);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SurchargeDetailsApi(amount: $amount, maximumAmount: $maximumAmount, status: $status)';
   }
 }
 
@@ -3835,13 +3903,16 @@ class PaymentMethodOptionsParametersApi {
 
 /// Configuration for confirming a payment intent.
 class ConfirmPaymentIntentConfigurationApi {
-  ConfirmPaymentIntentConfigurationApi({this.returnUrl});
+  ConfirmPaymentIntentConfigurationApi({this.returnUrl, this.surcharge});
 
   /// The URL to redirect the customer back to after authentication.
   String? returnUrl;
 
+  /// A surcharge to apply when confirming. Experimental in the Stripe SDKs.
+  SurchargeConfigurationApi? surcharge;
+
   List<Object?> _toList() {
-    return <Object?>[returnUrl];
+    return <Object?>[returnUrl, surcharge];
   }
 
   Object encode() {
@@ -3850,7 +3921,10 @@ class ConfirmPaymentIntentConfigurationApi {
 
   static ConfirmPaymentIntentConfigurationApi decode(Object result) {
     result as List<Object?>;
-    return ConfirmPaymentIntentConfigurationApi(returnUrl: result[0] as String?);
+    return ConfirmPaymentIntentConfigurationApi(
+      returnUrl: result[0] as String?,
+      surcharge: result[1] as SurchargeConfigurationApi?,
+    );
   }
 
   @override
@@ -3862,7 +3936,7 @@ class ConfirmPaymentIntentConfigurationApi {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(returnUrl, other.returnUrl);
+    return _deepEquals(returnUrl, other.returnUrl) && _deepEquals(surcharge, other.surcharge);
   }
 
   @override
@@ -3871,7 +3945,106 @@ class ConfirmPaymentIntentConfigurationApi {
 
   @override
   String toString() {
-    return 'ConfirmPaymentIntentConfigurationApi(returnUrl: $returnUrl)';
+    return 'ConfirmPaymentIntentConfigurationApi(returnUrl: $returnUrl, surcharge: $surcharge)';
+  }
+}
+
+/// Configuration of surcharge consent collection.
+class SurchargeConsentApi {
+  SurchargeConsentApi({required this.collection, this.notice});
+
+  /// Whether to collect surcharge consent from the customer.
+  SurchargeConsentCollectionApi collection;
+
+  /// A custom message on the surcharge consent screen.
+  String? notice;
+
+  List<Object?> _toList() {
+    return <Object?>[collection, notice];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static SurchargeConsentApi decode(Object result) {
+    result as List<Object?>;
+    return SurchargeConsentApi(
+      collection: result[0]! as SurchargeConsentCollectionApi,
+      notice: result[1] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SurchargeConsentApi || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(collection, other.collection) && _deepEquals(notice, other.notice);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SurchargeConsentApi(collection: $collection, notice: $notice)';
+  }
+}
+
+/// A surcharge to apply when confirming a [PaymentIntentApi].
+///
+/// Read `amountDetails.surcharge` of the collected [PaymentIntentApi] first: apply a surcharge
+/// only when its status is [SurchargeStatusApi.available], up to its `maximumAmount`.
+class SurchargeConfigurationApi {
+  SurchargeConfigurationApi({required this.amount, this.consent});
+
+  /// The surcharge amount, in the currency’s smallest unit.
+  int amount;
+
+  /// Surcharge consent collection.
+  SurchargeConsentApi? consent;
+
+  List<Object?> _toList() {
+    return <Object?>[amount, consent];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static SurchargeConfigurationApi decode(Object result) {
+    result as List<Object?>;
+    return SurchargeConfigurationApi(
+      amount: result[0]! as int,
+      consent: result[1] as SurchargeConsentApi?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SurchargeConfigurationApi || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(amount, other.amount) && _deepEquals(consent, other.consent);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SurchargeConfigurationApi(amount: $amount, consent: $consent)';
   }
 }
 
@@ -4757,185 +4930,200 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is PaymentIntentStatusApi) {
       buffer.putUint8(151);
       writeValue(buffer, value.index);
-    } else if (value is CaptureMethodApi) {
+    } else if (value is SurchargeStatusApi) {
       buffer.putUint8(152);
       writeValue(buffer, value.index);
-    } else if (value is ConfirmationMethodApi) {
+    } else if (value is CaptureMethodApi) {
       buffer.putUint8(153);
       writeValue(buffer, value.index);
-    } else if (value is PaymentIntentUsageApi) {
+    } else if (value is ConfirmationMethodApi) {
       buffer.putUint8(154);
       writeValue(buffer, value.index);
-    } else if (value is TapToPayUxConfigurationTapZoneIndicatorApi) {
+    } else if (value is PaymentIntentUsageApi) {
       buffer.putUint8(155);
       writeValue(buffer, value.index);
-    } else if (value is TapToPayUxConfigurationDarkModeApi) {
+    } else if (value is SurchargeConsentCollectionApi) {
       buffer.putUint8(156);
       writeValue(buffer, value.index);
-    } else if (value is CardBrandApi) {
+    } else if (value is TapToPayUxConfigurationTapZoneIndicatorApi) {
       buffer.putUint8(157);
       writeValue(buffer, value.index);
-    } else if (value is CardFundingTypeApi) {
+    } else if (value is TapToPayUxConfigurationDarkModeApi) {
       buffer.putUint8(158);
       writeValue(buffer, value.index);
-    } else if (value is IncrementalAuthorizationStatusApi) {
+    } else if (value is CardBrandApi) {
       buffer.putUint8(159);
       writeValue(buffer, value.index);
-    } else if (value is CardPresentCaptureMethodApi) {
+    } else if (value is CardFundingTypeApi) {
       buffer.putUint8(160);
       writeValue(buffer, value.index);
-    } else if (value is CardPresentRoutingApi) {
+    } else if (value is IncrementalAuthorizationStatusApi) {
       buffer.putUint8(161);
       writeValue(buffer, value.index);
-    } else if (value is TerminalExceptionApi) {
+    } else if (value is CardPresentCaptureMethodApi) {
       buffer.putUint8(162);
-      writeValue(buffer, value.encode());
-    } else if (value is PaymentMethodApi) {
+      writeValue(buffer, value.index);
+    } else if (value is CardPresentRoutingApi) {
       buffer.putUint8(163);
-      writeValue(buffer, value.encode());
-    } else if (value is RefundApi) {
+      writeValue(buffer, value.index);
+    } else if (value is TerminalExceptionApi) {
       buffer.putUint8(164);
       writeValue(buffer, value.encode());
-    } else if (value is PaymentMethodDetailsApi) {
+    } else if (value is PaymentMethodApi) {
       buffer.putUint8(165);
       writeValue(buffer, value.encode());
-    } else if (value is ReaderApi) {
+    } else if (value is RefundApi) {
       buffer.putUint8(166);
       writeValue(buffer, value.encode());
-    } else if (value is ChargeApi) {
+    } else if (value is PaymentMethodDetailsApi) {
       buffer.putUint8(167);
       writeValue(buffer, value.encode());
-    } else if (value is TipApi) {
+    } else if (value is ReaderApi) {
       buffer.putUint8(168);
       writeValue(buffer, value.encode());
-    } else if (value is TippingConfigurationApi) {
+    } else if (value is ChargeApi) {
       buffer.putUint8(169);
       writeValue(buffer, value.encode());
-    } else if (value is InternetEasyConnectConfigurationApi) {
+    } else if (value is TipApi) {
       buffer.putUint8(170);
       writeValue(buffer, value.encode());
-    } else if (value is AppsOnDevicesEasyConnectionConfigurationApi) {
+    } else if (value is TippingConfigurationApi) {
       buffer.putUint8(171);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayEasyConnectConfigurationApi) {
+    } else if (value is InternetEasyConnectConfigurationApi) {
       buffer.putUint8(172);
       writeValue(buffer, value.encode());
-    } else if (value is SimulatorConfigurationApi) {
+    } else if (value is AppsOnDevicesEasyConnectionConfigurationApi) {
       buffer.putUint8(173);
       writeValue(buffer, value.encode());
-    } else if (value is SimulatedCardApi) {
+    } else if (value is TapToPayEasyConnectConfigurationApi) {
       buffer.putUint8(174);
       writeValue(buffer, value.encode());
-    } else if (value is ReaderSoftwareUpdateApi) {
+    } else if (value is SimulatorConfigurationApi) {
       buffer.putUint8(175);
       writeValue(buffer, value.encode());
-    } else if (value is SetupIntentApi) {
+    } else if (value is SimulatedCardApi) {
       buffer.putUint8(176);
       writeValue(buffer, value.encode());
-    } else if (value is SetupAttemptApi) {
+    } else if (value is ReaderSoftwareUpdateApi) {
       buffer.putUint8(177);
       writeValue(buffer, value.encode());
-    } else if (value is SetupAttemptPaymentMethodDetailsApi) {
+    } else if (value is SetupIntentApi) {
       buffer.putUint8(178);
       writeValue(buffer, value.encode());
-    } else if (value is SetupAttemptCardPresentDetailsApi) {
+    } else if (value is SetupAttemptApi) {
       buffer.putUint8(179);
       writeValue(buffer, value.encode());
-    } else if (value is LocationApi) {
+    } else if (value is SetupAttemptPaymentMethodDetailsApi) {
       buffer.putUint8(180);
       writeValue(buffer, value.encode());
-    } else if (value is AddressApi) {
+    } else if (value is SetupAttemptCardPresentDetailsApi) {
       buffer.putUint8(181);
       writeValue(buffer, value.encode());
-    } else if (value is BluetoothConnectionConfigurationApi) {
+    } else if (value is LocationApi) {
       buffer.putUint8(182);
       writeValue(buffer, value.encode());
-    } else if (value is AppsOnDevicesConnectionConfigurationApi) {
+    } else if (value is AddressApi) {
       buffer.putUint8(183);
       writeValue(buffer, value.encode());
-    } else if (value is InternetConnectionConfigurationApi) {
+    } else if (value is BluetoothConnectionConfigurationApi) {
       buffer.putUint8(184);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayConnectionConfigurationApi) {
+    } else if (value is AppsOnDevicesConnectionConfigurationApi) {
       buffer.putUint8(185);
       writeValue(buffer, value.encode());
-    } else if (value is UsbConnectionConfigurationApi) {
+    } else if (value is InternetConnectionConfigurationApi) {
       buffer.putUint8(186);
       writeValue(buffer, value.encode());
-    } else if (value is BluetoothDiscoveryConfigurationApi) {
+    } else if (value is TapToPayConnectionConfigurationApi) {
       buffer.putUint8(187);
       writeValue(buffer, value.encode());
-    } else if (value is BluetoothProximityDiscoveryConfigurationApi) {
+    } else if (value is UsbConnectionConfigurationApi) {
       buffer.putUint8(188);
       writeValue(buffer, value.encode());
-    } else if (value is AppsOnDevicesDiscoveryConfigurationApi) {
+    } else if (value is BluetoothDiscoveryConfigurationApi) {
       buffer.putUint8(189);
       writeValue(buffer, value.encode());
-    } else if (value is InternetDiscoveryConfigurationApi) {
+    } else if (value is BluetoothProximityDiscoveryConfigurationApi) {
       buffer.putUint8(190);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayDiscoveryConfigurationApi) {
+    } else if (value is AppsOnDevicesDiscoveryConfigurationApi) {
       buffer.putUint8(191);
       writeValue(buffer, value.encode());
-    } else if (value is UsbDiscoveryConfigurationApi) {
+    } else if (value is InternetDiscoveryConfigurationApi) {
       buffer.putUint8(192);
       writeValue(buffer, value.encode());
-    } else if (value is ClearCachedCredentialsResultApi) {
+    } else if (value is TapToPayDiscoveryConfigurationApi) {
       buffer.putUint8(193);
       writeValue(buffer, value.encode());
-    } else if (value is PaymentIntentApi) {
+    } else if (value is UsbDiscoveryConfigurationApi) {
       buffer.putUint8(194);
       writeValue(buffer, value.encode());
-    } else if (value is AmountDetailsApi) {
+    } else if (value is ClearCachedCredentialsResultApi) {
       buffer.putUint8(195);
       writeValue(buffer, value.encode());
-    } else if (value is PaymentIntentParametersApi) {
+    } else if (value is PaymentIntentApi) {
       buffer.putUint8(196);
       writeValue(buffer, value.encode());
-    } else if (value is PaymentMethodOptionsParametersApi) {
+    } else if (value is AmountDetailsApi) {
       buffer.putUint8(197);
       writeValue(buffer, value.encode());
-    } else if (value is ConfirmPaymentIntentConfigurationApi) {
+    } else if (value is SurchargeDetailsApi) {
       buffer.putUint8(198);
       writeValue(buffer, value.encode());
-    } else if (value is CartApi) {
+    } else if (value is PaymentIntentParametersApi) {
       buffer.putUint8(199);
       writeValue(buffer, value.encode());
-    } else if (value is CartLineItemApi) {
+    } else if (value is PaymentMethodOptionsParametersApi) {
       buffer.putUint8(200);
       writeValue(buffer, value.encode());
-    } else if (value is DiscoveryFilterByReaderIdApi) {
+    } else if (value is ConfirmPaymentIntentConfigurationApi) {
       buffer.putUint8(201);
       writeValue(buffer, value.encode());
-    } else if (value is DiscoveryFilterBySerialNumberApi) {
+    } else if (value is SurchargeConsentApi) {
       buffer.putUint8(202);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayUxConfigurationApi) {
+    } else if (value is SurchargeConfigurationApi) {
       buffer.putUint8(203);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayUxConfigurationTapZoneApi) {
+    } else if (value is CartApi) {
       buffer.putUint8(204);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayUxConfigurationTapZonePositionApi) {
+    } else if (value is CartLineItemApi) {
       buffer.putUint8(205);
       writeValue(buffer, value.encode());
-    } else if (value is TapToPayUxConfigurationColorSchemeApi) {
+    } else if (value is DiscoveryFilterByReaderIdApi) {
       buffer.putUint8(206);
       writeValue(buffer, value.encode());
-    } else if (value is CardDetailsApi) {
+    } else if (value is DiscoveryFilterBySerialNumberApi) {
       buffer.putUint8(207);
       writeValue(buffer, value.encode());
-    } else if (value is CardPresentDetailsApi) {
+    } else if (value is TapToPayUxConfigurationApi) {
       buffer.putUint8(208);
       writeValue(buffer, value.encode());
-    } else if (value is CardNetworksApi) {
+    } else if (value is TapToPayUxConfigurationTapZoneApi) {
       buffer.putUint8(209);
       writeValue(buffer, value.encode());
-    } else if (value is ReceiptDetailsApi) {
+    } else if (value is TapToPayUxConfigurationTapZonePositionApi) {
       buffer.putUint8(210);
       writeValue(buffer, value.encode());
-    } else if (value is CardPresentParametersApi) {
+    } else if (value is TapToPayUxConfigurationColorSchemeApi) {
       buffer.putUint8(211);
+      writeValue(buffer, value.encode());
+    } else if (value is CardDetailsApi) {
+      buffer.putUint8(212);
+      writeValue(buffer, value.encode());
+    } else if (value is CardPresentDetailsApi) {
+      buffer.putUint8(213);
+      writeValue(buffer, value.encode());
+    } else if (value is CardNetworksApi) {
+      buffer.putUint8(214);
+      writeValue(buffer, value.encode());
+    } else if (value is ReceiptDetailsApi) {
+      buffer.putUint8(215);
+      writeValue(buffer, value.encode());
+    } else if (value is CardPresentParametersApi) {
+      buffer.putUint8(216);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -5016,133 +5204,145 @@ class _PigeonCodec extends StandardMessageCodec {
         return value == null ? null : PaymentIntentStatusApi.values[value];
       case 152:
         final value = readValue(buffer) as int?;
-        return value == null ? null : CaptureMethodApi.values[value];
+        return value == null ? null : SurchargeStatusApi.values[value];
       case 153:
         final value = readValue(buffer) as int?;
-        return value == null ? null : ConfirmationMethodApi.values[value];
+        return value == null ? null : CaptureMethodApi.values[value];
       case 154:
         final value = readValue(buffer) as int?;
-        return value == null ? null : PaymentIntentUsageApi.values[value];
+        return value == null ? null : ConfirmationMethodApi.values[value];
       case 155:
         final value = readValue(buffer) as int?;
-        return value == null ? null : TapToPayUxConfigurationTapZoneIndicatorApi.values[value];
+        return value == null ? null : PaymentIntentUsageApi.values[value];
       case 156:
         final value = readValue(buffer) as int?;
-        return value == null ? null : TapToPayUxConfigurationDarkModeApi.values[value];
+        return value == null ? null : SurchargeConsentCollectionApi.values[value];
       case 157:
         final value = readValue(buffer) as int?;
-        return value == null ? null : CardBrandApi.values[value];
+        return value == null ? null : TapToPayUxConfigurationTapZoneIndicatorApi.values[value];
       case 158:
         final value = readValue(buffer) as int?;
-        return value == null ? null : CardFundingTypeApi.values[value];
+        return value == null ? null : TapToPayUxConfigurationDarkModeApi.values[value];
       case 159:
         final value = readValue(buffer) as int?;
-        return value == null ? null : IncrementalAuthorizationStatusApi.values[value];
+        return value == null ? null : CardBrandApi.values[value];
       case 160:
         final value = readValue(buffer) as int?;
-        return value == null ? null : CardPresentCaptureMethodApi.values[value];
+        return value == null ? null : CardFundingTypeApi.values[value];
       case 161:
         final value = readValue(buffer) as int?;
-        return value == null ? null : CardPresentRoutingApi.values[value];
+        return value == null ? null : IncrementalAuthorizationStatusApi.values[value];
       case 162:
-        return TerminalExceptionApi.decode(readValue(buffer)!);
+        final value = readValue(buffer) as int?;
+        return value == null ? null : CardPresentCaptureMethodApi.values[value];
       case 163:
-        return PaymentMethodApi.decode(readValue(buffer)!);
+        final value = readValue(buffer) as int?;
+        return value == null ? null : CardPresentRoutingApi.values[value];
       case 164:
-        return RefundApi.decode(readValue(buffer)!);
+        return TerminalExceptionApi.decode(readValue(buffer)!);
       case 165:
-        return PaymentMethodDetailsApi.decode(readValue(buffer)!);
+        return PaymentMethodApi.decode(readValue(buffer)!);
       case 166:
-        return ReaderApi.decode(readValue(buffer)!);
+        return RefundApi.decode(readValue(buffer)!);
       case 167:
-        return ChargeApi.decode(readValue(buffer)!);
+        return PaymentMethodDetailsApi.decode(readValue(buffer)!);
       case 168:
-        return TipApi.decode(readValue(buffer)!);
+        return ReaderApi.decode(readValue(buffer)!);
       case 169:
-        return TippingConfigurationApi.decode(readValue(buffer)!);
+        return ChargeApi.decode(readValue(buffer)!);
       case 170:
-        return InternetEasyConnectConfigurationApi.decode(readValue(buffer)!);
+        return TipApi.decode(readValue(buffer)!);
       case 171:
-        return AppsOnDevicesEasyConnectionConfigurationApi.decode(readValue(buffer)!);
+        return TippingConfigurationApi.decode(readValue(buffer)!);
       case 172:
-        return TapToPayEasyConnectConfigurationApi.decode(readValue(buffer)!);
+        return InternetEasyConnectConfigurationApi.decode(readValue(buffer)!);
       case 173:
-        return SimulatorConfigurationApi.decode(readValue(buffer)!);
+        return AppsOnDevicesEasyConnectionConfigurationApi.decode(readValue(buffer)!);
       case 174:
-        return SimulatedCardApi.decode(readValue(buffer)!);
+        return TapToPayEasyConnectConfigurationApi.decode(readValue(buffer)!);
       case 175:
-        return ReaderSoftwareUpdateApi.decode(readValue(buffer)!);
+        return SimulatorConfigurationApi.decode(readValue(buffer)!);
       case 176:
-        return SetupIntentApi.decode(readValue(buffer)!);
+        return SimulatedCardApi.decode(readValue(buffer)!);
       case 177:
-        return SetupAttemptApi.decode(readValue(buffer)!);
+        return ReaderSoftwareUpdateApi.decode(readValue(buffer)!);
       case 178:
-        return SetupAttemptPaymentMethodDetailsApi.decode(readValue(buffer)!);
+        return SetupIntentApi.decode(readValue(buffer)!);
       case 179:
-        return SetupAttemptCardPresentDetailsApi.decode(readValue(buffer)!);
+        return SetupAttemptApi.decode(readValue(buffer)!);
       case 180:
-        return LocationApi.decode(readValue(buffer)!);
+        return SetupAttemptPaymentMethodDetailsApi.decode(readValue(buffer)!);
       case 181:
-        return AddressApi.decode(readValue(buffer)!);
+        return SetupAttemptCardPresentDetailsApi.decode(readValue(buffer)!);
       case 182:
-        return BluetoothConnectionConfigurationApi.decode(readValue(buffer)!);
+        return LocationApi.decode(readValue(buffer)!);
       case 183:
-        return AppsOnDevicesConnectionConfigurationApi.decode(readValue(buffer)!);
+        return AddressApi.decode(readValue(buffer)!);
       case 184:
-        return InternetConnectionConfigurationApi.decode(readValue(buffer)!);
+        return BluetoothConnectionConfigurationApi.decode(readValue(buffer)!);
       case 185:
-        return TapToPayConnectionConfigurationApi.decode(readValue(buffer)!);
+        return AppsOnDevicesConnectionConfigurationApi.decode(readValue(buffer)!);
       case 186:
-        return UsbConnectionConfigurationApi.decode(readValue(buffer)!);
+        return InternetConnectionConfigurationApi.decode(readValue(buffer)!);
       case 187:
-        return BluetoothDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return TapToPayConnectionConfigurationApi.decode(readValue(buffer)!);
       case 188:
-        return BluetoothProximityDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return UsbConnectionConfigurationApi.decode(readValue(buffer)!);
       case 189:
-        return AppsOnDevicesDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return BluetoothDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 190:
-        return InternetDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return BluetoothProximityDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 191:
-        return TapToPayDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return AppsOnDevicesDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 192:
-        return UsbDiscoveryConfigurationApi.decode(readValue(buffer)!);
+        return InternetDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 193:
-        return ClearCachedCredentialsResultApi.decode(readValue(buffer)!);
+        return TapToPayDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 194:
-        return PaymentIntentApi.decode(readValue(buffer)!);
+        return UsbDiscoveryConfigurationApi.decode(readValue(buffer)!);
       case 195:
-        return AmountDetailsApi.decode(readValue(buffer)!);
+        return ClearCachedCredentialsResultApi.decode(readValue(buffer)!);
       case 196:
-        return PaymentIntentParametersApi.decode(readValue(buffer)!);
+        return PaymentIntentApi.decode(readValue(buffer)!);
       case 197:
-        return PaymentMethodOptionsParametersApi.decode(readValue(buffer)!);
+        return AmountDetailsApi.decode(readValue(buffer)!);
       case 198:
-        return ConfirmPaymentIntentConfigurationApi.decode(readValue(buffer)!);
+        return SurchargeDetailsApi.decode(readValue(buffer)!);
       case 199:
-        return CartApi.decode(readValue(buffer)!);
+        return PaymentIntentParametersApi.decode(readValue(buffer)!);
       case 200:
-        return CartLineItemApi.decode(readValue(buffer)!);
+        return PaymentMethodOptionsParametersApi.decode(readValue(buffer)!);
       case 201:
-        return DiscoveryFilterByReaderIdApi.decode(readValue(buffer)!);
+        return ConfirmPaymentIntentConfigurationApi.decode(readValue(buffer)!);
       case 202:
-        return DiscoveryFilterBySerialNumberApi.decode(readValue(buffer)!);
+        return SurchargeConsentApi.decode(readValue(buffer)!);
       case 203:
-        return TapToPayUxConfigurationApi.decode(readValue(buffer)!);
+        return SurchargeConfigurationApi.decode(readValue(buffer)!);
       case 204:
-        return TapToPayUxConfigurationTapZoneApi.decode(readValue(buffer)!);
+        return CartApi.decode(readValue(buffer)!);
       case 205:
-        return TapToPayUxConfigurationTapZonePositionApi.decode(readValue(buffer)!);
+        return CartLineItemApi.decode(readValue(buffer)!);
       case 206:
-        return TapToPayUxConfigurationColorSchemeApi.decode(readValue(buffer)!);
+        return DiscoveryFilterByReaderIdApi.decode(readValue(buffer)!);
       case 207:
-        return CardDetailsApi.decode(readValue(buffer)!);
+        return DiscoveryFilterBySerialNumberApi.decode(readValue(buffer)!);
       case 208:
-        return CardPresentDetailsApi.decode(readValue(buffer)!);
+        return TapToPayUxConfigurationApi.decode(readValue(buffer)!);
       case 209:
-        return CardNetworksApi.decode(readValue(buffer)!);
+        return TapToPayUxConfigurationTapZoneApi.decode(readValue(buffer)!);
       case 210:
-        return ReceiptDetailsApi.decode(readValue(buffer)!);
+        return TapToPayUxConfigurationTapZonePositionApi.decode(readValue(buffer)!);
       case 211:
+        return TapToPayUxConfigurationColorSchemeApi.decode(readValue(buffer)!);
+      case 212:
+        return CardDetailsApi.decode(readValue(buffer)!);
+      case 213:
+        return CardPresentDetailsApi.decode(readValue(buffer)!);
+      case 214:
+        return CardNetworksApi.decode(readValue(buffer)!);
+      case 215:
+        return ReceiptDetailsApi.decode(readValue(buffer)!);
+      case 216:
         return CardPresentParametersApi.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -5553,6 +5753,100 @@ class TerminalPlatformApi {
   Future<void> stopProcessPaymentIntent(int operationId) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopProcessPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
+  }
+
+  Future<PaymentIntentApi> startCollectPaymentMethod({
+    required int operationId,
+    required String paymentIntentId,
+    required bool requestDynamicCurrencyConversion,
+    required String? surchargeNotice,
+    required bool skipTipping,
+    required TippingConfigurationApi? tippingConfiguration,
+    required bool shouldUpdatePaymentIntent,
+    required bool customerCancellationEnabled,
+    required AllowRedisplayApi allowRedisplay,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startCollectPaymentMethod$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      paymentIntentId,
+      requestDynamicCurrencyConversion,
+      surchargeNotice,
+      skipTipping,
+      tippingConfiguration,
+      shouldUpdatePaymentIntent,
+      customerCancellationEnabled,
+      allowRedisplay,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as PaymentIntentApi;
+  }
+
+  Future<void> stopCollectPaymentMethod(int operationId) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopCollectPaymentMethod$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[operationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(pigeonVar_replyList, pigeonVar_channelName, isNullValid: true);
+  }
+
+  Future<PaymentIntentApi> startConfirmPaymentIntent({
+    required int operationId,
+    required String paymentIntentId,
+    required ConfirmPaymentIntentConfigurationApi confirmConfiguration,
+  }) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.startConfirmPaymentIntent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[
+      operationId,
+      paymentIntentId,
+      confirmConfiguration,
+    ]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
+    return pigeonVar_replyValue! as PaymentIntentApi;
+  }
+
+  Future<void> stopConfirmPaymentIntent(int operationId) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.mek_stripe_terminal.TerminalPlatformApi.stopConfirmPaymentIntent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,

@@ -10,6 +10,10 @@ typedef PaymentIntentStatus = PaymentIntentStatusApi;
 
 typedef AmountDetails = AmountDetailsApi;
 
+typedef SurchargeDetails = SurchargeDetailsApi;
+
+typedef SurchargeStatus = SurchargeStatusApi;
+
 typedef PaymentIntentParameters = PaymentIntentParametersApi;
 
 typedef CaptureMethod = CaptureMethodApi;
@@ -21,3 +25,9 @@ typedef PaymentIntentUsage = PaymentIntentUsageApi;
 typedef PaymentMethodOptionsParameters = PaymentMethodOptionsParametersApi;
 
 typedef ConfirmPaymentIntentConfiguration = ConfirmPaymentIntentConfigurationApi;
+
+typedef SurchargeConfiguration = SurchargeConfigurationApi;
+
+typedef SurchargeConsent = SurchargeConsentApi;
+
+typedef SurchargeConsentCollection = SurchargeConsentCollectionApi;

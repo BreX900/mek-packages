@@ -77,8 +77,29 @@ extension CaptureMethod {
 extension AmountDetails {
     func toApi() -> AmountDetailsApi {
         return AmountDetailsApi(
-            tip: tip?.toApi()
+            tip: tip?.toApi(),
+            surcharge: surcharge?.toApi()
         )
+    }
+}
+
+extension SurchargeDetails {
+    func toApi() -> SurchargeDetailsApi {
+        return SurchargeDetailsApi(
+            amount: amount?.int64Value,
+            maximumAmount: maximumAmount?.int64Value,
+            status: status.flatMap { SurchargeStatus(rawValue: $0.uintValue) }?.toApi()
+        )
+    }
+}
+
+extension SurchargeStatus {
+    func toApi() -> SurchargeStatusApi? {
+        switch self {
+        case .available: return .available
+        case .unavailable: return .unavailable
+        @unknown default: return nil
+        }
     }
 }
 
@@ -148,6 +169,7 @@ extension ConfirmPaymentIntentConfigurationApi {
     func toHost() throws -> ConfirmPaymentIntentConfiguration {
         let configuration = ConfirmPaymentIntentConfigurationBuilder();
         if let returnUrl = returnUrl { configuration.setReturnUrl(returnUrl) }
+        if let surcharge = surcharge { configuration.setSurchargeConfiguration(try surcharge.toHost()) }
         return try configuration.build()
     }
 }
@@ -167,6 +189,33 @@ extension PaymentStatus {
             return .processing
         @unknown default:
             fatalError("WTF")
+        }
+    }
+}
+
+extension SurchargeConfigurationApi {
+    func toHost() throws -> SurchargeConfiguration {
+        let builder = SurchargeConfigurationBuilder()
+        builder.setAmount(UInt(amount))
+        if let consent = consent { builder.setSurchargeConsent(try consent.toHost()) }
+        return try builder.build()
+    }
+}
+
+extension SurchargeConsentApi {
+    func toHost() throws -> SurchargeConsent {
+        let builder = SurchargeConsentBuilder()
+        builder.setCollection(collection.toHost())
+        if let notice = notice { builder.setNotice(notice) }
+        return try builder.build()
+    }
+}
+
+extension SurchargeConsentCollectionApi {
+    func toHost() -> SurchargeConsentCollection {
+        switch self {
+        case .disabled: return .disabled
+        case .enabled: return .enabled
         }
     }
 }

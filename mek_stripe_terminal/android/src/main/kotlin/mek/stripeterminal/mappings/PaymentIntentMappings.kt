@@ -1,5 +1,6 @@
 package mek.stripeterminal.mappings
 
+import com.stripe.stripeterminal.external.Surcharging
 import com.stripe.stripeterminal.external.models.AmountDetails
 import com.stripe.stripeterminal.external.models.CaptureMethod
 import com.stripe.stripeterminal.external.models.ConfirmPaymentIntentConfiguration
@@ -9,6 +10,11 @@ import com.stripe.stripeterminal.external.models.PaymentIntentStatus
 import com.stripe.stripeterminal.external.models.PaymentMethodOptionsParameters
 import com.stripe.stripeterminal.external.models.PaymentMethodType
 import com.stripe.stripeterminal.external.models.PaymentStatus
+import com.stripe.stripeterminal.external.models.SurchargeConfiguration
+import com.stripe.stripeterminal.external.models.SurchargeConsent
+import com.stripe.stripeterminal.external.models.SurchargeConsentCollection
+import com.stripe.stripeterminal.external.models.SurchargeDetails
+import com.stripe.stripeterminal.external.models.SurchargeStatus
 import AmountDetailsApi
 import CaptureMethodApi
 import ConfirmationMethodApi
@@ -20,6 +26,11 @@ import PaymentIntentUsageApi
 import PaymentMethodOptionsParametersApi
 import PaymentMethodTypeApi
 import PaymentStatusApi
+import SurchargeConfigurationApi
+import SurchargeConsentApi
+import SurchargeConsentCollectionApi
+import SurchargeDetailsApi
+import SurchargeStatusApi
 import mek.stripeterminal.toHashMap
 
 fun PaymentIntent.toApi(): PaymentIntentApi {
@@ -88,8 +99,24 @@ fun PaymentIntentStatus.toApi(): PaymentIntentStatusApi {
 
 fun AmountDetails.toApi(): AmountDetailsApi {
     return AmountDetailsApi(
-        tip = tip?.toApi()
+        tip = tip?.toApi(),
+        surcharge = surcharge?.toApi()
     )
+}
+
+fun SurchargeDetails.toApi(): SurchargeDetailsApi {
+    return SurchargeDetailsApi(
+        amount = amount,
+        maximumAmount = maximumAmount,
+        status = status?.toApi()
+    )
+}
+
+fun SurchargeStatus.toApi(): SurchargeStatusApi {
+    return when (this) {
+        SurchargeStatus.AVAILABLE -> SurchargeStatusApi.AVAILABLE
+        SurchargeStatus.UNAVAILABLE -> SurchargeStatusApi.UNAVAILABLE
+    }
 }
 
 // PARAMS
@@ -139,10 +166,34 @@ fun PaymentMethodOptionsParametersApi.toHost(): PaymentMethodOptionsParameters {
         .build()
 }
 
+@OptIn(Surcharging::class)
 fun ConfirmPaymentIntentConfigurationApi.toHost(): ConfirmPaymentIntentConfiguration {
     val builder = ConfirmPaymentIntentConfiguration.Builder()
     returnUrl?.let { builder.setReturnUrl(it) }
+    surcharge?.let { builder.setSurcharge(it.toHost()) }
     return builder.build()
+}
+
+@OptIn(Surcharging::class)
+fun SurchargeConfigurationApi.toHost(): SurchargeConfiguration {
+    val builder = SurchargeConfiguration.Builder(amount)
+    consent?.let { builder.setConsent(it.toHost()) }
+    return builder.build()
+}
+
+@OptIn(Surcharging::class)
+fun SurchargeConsentApi.toHost(): SurchargeConsent {
+    val builder = SurchargeConsent.Builder(collection.toHost())
+    notice?.let { builder.setNotice(it) }
+    return builder.build()
+}
+
+@OptIn(Surcharging::class)
+fun SurchargeConsentCollectionApi.toHost(): SurchargeConsentCollection {
+    return when (this) {
+        SurchargeConsentCollectionApi.DISABLED -> SurchargeConsentCollection.DISABLED
+        SurchargeConsentCollectionApi.ENABLED -> SurchargeConsentCollection.ENABLED
+    }
 }
 
 // EXTRA

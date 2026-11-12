@@ -213,11 +213,7 @@ class TerminalPlatformPlugin(
         operationId: Long,
         callback: (Result<Unit>) -> Unit
     ) {
-        easyConnectCancelables.remove(operationId)?.cancel(
-            object : TerminalErrorHandler<Unit>(callback), Callback {
-                override fun onSuccess() = callback(Result.success(Unit))
-            }
-        )
+        cancelOperation(easyConnectCancelables.remove(operationId), callback)
     }
 
     override fun getConnectedReader(): ReaderApi? = terminal.connectedReader?.toApi()
@@ -392,15 +388,124 @@ class TerminalPlatformPlugin(
         )
     }
 
-    override fun stopProcessPaymentIntent(
+    private var collectPaymentMethodCancelables = HashMap<Long, Cancelable>()
+
+    override fun startCollectPaymentMethod(
+        operationId: Long,
+        paymentIntentId: String,
+        requestDynamicCurrencyConversion: Boolean,
+        surchargeNotice: String?,
+        skipTipping: Boolean,
+        tippingConfiguration: TippingConfigurationApi?,
+        shouldUpdatePaymentIntent: Boolean,
+        customerCancellationEnabled: Boolean,
+        allowRedisplay: AllowRedisplayApi,
+        callback: (Result<PaymentIntentApi>) -> Unit
+    ) {
+        val paymentIntent = findPaymentIntent(paymentIntentId)
+        val collectConfig = buildCollectPaymentIntentConfiguration(
+            requestDynamicCurrencyConversion = requestDynamicCurrencyConversion,
+            surchargeNotice = surchargeNotice,
+            skipTipping = skipTipping,
+            tippingConfiguration = tippingConfiguration,
+            shouldUpdatePaymentIntent = shouldUpdatePaymentIntent,
+            customerCancellationEnabled = customerCancellationEnabled,
+            allowRedisplay = allowRedisplay
+        )
+
+        collectPaymentMethodCancelables[operationId] = terminal.collectPaymentMethod(
+            paymentIntent,
+            object : TerminalErrorHandler<PaymentIntentApi>(callback), PaymentIntentCallback {
+                override fun onFailure(e: TerminalException) {
+                    collectPaymentMethodCancelables.remove(operationId)
+                    val paymentIntentUpdated = e.paymentIntent
+                    if (paymentIntentUpdated != null) {
+                        paymentIntents[paymentIntentUpdated.id!!] = paymentIntentUpdated
+                    }
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess(paymentIntent: PaymentIntent) {
+                    collectPaymentMethodCancelables.remove(operationId)
+                    // Kept: confirmPaymentIntent needs the collected intent.
+                    paymentIntents[paymentIntent.id!!] = paymentIntent
+                    callback(Result.success(paymentIntent.toApi()))
+                }
+            },
+            collectConfig
+        )
+    }
+
+    override fun stopCollectPaymentMethod(
         operationId: Long,
         callback: (Result<Unit>) -> Unit
     ) {
-        processPaymentIntentCancelables.remove(operationId)?.cancel(
+        cancelOperation(collectPaymentMethodCancelables.remove(operationId), callback)
+    }
+
+    private var confirmPaymentIntentCancelables = HashMap<Long, Cancelable>()
+
+    override fun startConfirmPaymentIntent(
+        operationId: Long,
+        paymentIntentId: String,
+        confirmConfiguration: ConfirmPaymentIntentConfigurationApi,
+        callback: (Result<PaymentIntentApi>) -> Unit
+    ) {
+        val paymentIntent = findPaymentIntent(paymentIntentId)
+
+        confirmPaymentIntentCancelables[operationId] = terminal.confirmPaymentIntent(
+            paymentIntent,
+            object : TerminalErrorHandler<PaymentIntentApi>(callback), PaymentIntentCallback {
+                override fun onFailure(e: TerminalException) {
+                    confirmPaymentIntentCancelables.remove(operationId)
+                    val paymentIntentUpdated = e.paymentIntent
+                    if (paymentIntentUpdated != null) {
+                        paymentIntents[paymentIntentUpdated.id!!] = paymentIntentUpdated
+                    }
+                    super.onFailure(e)
+                }
+
+                override fun onSuccess(paymentIntent: PaymentIntent) {
+                    confirmPaymentIntentCancelables.remove(operationId)
+                    paymentIntents.remove(paymentIntent.id)
+                    callback(Result.success(paymentIntent.toApi()))
+                }
+            },
+            confirmConfiguration.toHost()
+        )
+    }
+
+    override fun stopConfirmPaymentIntent(
+        operationId: Long,
+        callback: (Result<Unit>) -> Unit
+    ) {
+        cancelOperation(confirmPaymentIntentCancelables.remove(operationId), callback)
+    }
+
+    /**
+     * Cancels [cancelable], always completing [callback].
+     *
+     * A null [cancelable] means the operation already finished (its callback removed it) or was
+     * never started: there is nothing to cancel, so this succeeds immediately, as iOS does.
+     * Before, the callback was never called and `CancelableFuture.cancel()` awaited forever.
+     */
+    private fun cancelOperation(cancelable: Cancelable?, callback: (Result<Unit>) -> Unit) {
+        if (cancelable == null) {
+            callback(Result.success(Unit))
+            return
+        }
+        cancelable.cancel(
             object : TerminalErrorHandler<Unit>(callback), Callback {
                 override fun onSuccess() = callback(Result.success(Unit))
             }
         )
+    }
+
+    override fun stopProcessPaymentIntent(
+        operationId: Long,
+        callback: (Result<Unit>) -> Unit
+    ) {
+        cancelOperation(processPaymentIntentCancelables.remove(operationId), callback)
     }
 
     override fun cancelPaymentIntent(
@@ -505,11 +610,7 @@ class TerminalPlatformPlugin(
         operationId: Long,
         callback: (Result<Unit>) -> Unit
     ) {
-        processSetupIntentCancelables.remove(operationId)?.cancel(
-            object : TerminalErrorHandler<Unit>(callback), Callback {
-                override fun onSuccess() = callback(Result.success(Unit))
-            }
-        )
+        cancelOperation(processSetupIntentCancelables.remove(operationId), callback)
     }
 
     override fun cancelSetupIntent(
@@ -586,11 +687,7 @@ class TerminalPlatformPlugin(
         operationId: Long,
         callback: (Result<Unit>) -> Unit
     ) {
-        processRefundCancelables.remove(operationId)?.cancel(
-            object : TerminalErrorHandler<Unit>(callback), Callback {
-                override fun onSuccess() = callback(Result.success(Unit))
-            }
-        )
+        cancelOperation(processRefundCancelables.remove(operationId), callback)
     }
     // endregion
 
@@ -694,6 +791,10 @@ class TerminalPlatformPlugin(
 
         processPaymentIntentCancelables.values.forEach { it.cancel(EmptyCallback()) }
         processPaymentIntentCancelables = hashMapOf()
+        collectPaymentMethodCancelables.values.forEach { it.cancel(EmptyCallback()) }
+        collectPaymentMethodCancelables = hashMapOf()
+        confirmPaymentIntentCancelables.values.forEach { it.cancel(EmptyCallback()) }
+        confirmPaymentIntentCancelables = hashMapOf()
         paymentIntents = hashMapOf()
 
         processSetupIntentCancelables.values.forEach { it.cancel(EmptyCallback()) }
